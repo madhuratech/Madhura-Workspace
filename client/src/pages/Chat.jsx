@@ -329,12 +329,7 @@ const Chat = () => {
               <Send size={16} />
             </button>
           </form>
-          <div className="flex justify-between items-center mt-2 px-2">
-            <p className="text-[10px] text-text-secondary"><strong>Return</strong> to send, <strong>Shift + Return</strong> to add a new line</p>
-            <div className="flex space-x-3 text-text-secondary">
-              <ImageIcon size={14} className="hover:text-text-primary cursor-pointer" />
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
