@@ -16,6 +16,7 @@ const ProjectDetails = () => {
   });
   const [workspaceId, setWorkspaceId] = useState(null);
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [project, setProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', priority: 'Medium', dueDate: '', assignees: [] });
   const [socket, setSocket] = useState(null);
@@ -45,6 +46,15 @@ const ProjectDetails = () => {
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
         setWorkspaceId(ws._id);
+        
+        // Fetch project details
+        try {
+          const projRes = await axios.get(`/workspaces/${ws._id}/projects/${id}`);
+          setProject(projRes.data);
+        } catch (e) {
+          console.error("Failed to load project details:", e);
+        }
+
         await fetchTasks(ws._id);
 
         if (user?.role !== 'employee') {
@@ -161,7 +171,9 @@ const ProjectDetails = () => {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-text-primary tracking-wide">Kanban Board</h1>
+            <h1 className="text-2xl font-bold text-text-primary tracking-wide">
+              {project ? project.title : 'Project'} <span className="text-text-secondary font-normal text-lg">| Kanban Board</span>
+            </h1>
             <p className="text-text-secondary text-sm mt-0.5">
               {user?.role === 'employee' ? 'Your assigned tasks' : 'Drag tasks between columns to update status'}
             </p>

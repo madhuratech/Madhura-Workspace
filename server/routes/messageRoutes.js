@@ -5,7 +5,9 @@ const {
   createChannel,
   getOrCreateDMChannel,
   getMessages,
-  createMessage
+  createMessage,
+  updateMessage,
+  deleteMessage
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
 
@@ -19,5 +21,9 @@ router.route('/dm')
 router.route('/:channelId/messages')
   .get(protect, getMessages)
   .post(protect, createMessage);
+
+router.route('/:channelId/messages/:messageId')
+  .put(protect, updateMessage)
+  .delete(protect, deleteMessage);
 
 module.exports = router;

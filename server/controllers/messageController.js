@@ -78,3 +78,55 @@ exports.createMessage = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.updateMessage = async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+    
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to edit this message' });
+    }
+    
+    message.text = req.body.text;
+    message.isEdited = true;
+    await message.save();
+    
+    const populatedMessage = await message.populate('sender', 'name email avatar');
+    
+    if (req.io) {
+      req.io.emit('message_updated', populatedMessage);
+    }
+    
+    res.status(200).json(populatedMessage);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteMessage = async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+    
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to delete this message' });
+    }
+    
+    await Message.findByIdAndDelete(req.params.messageId);
+    
+    if (req.io) {
+      req.io.emit('message_deleted', { messageId: req.params.messageId, channelId: req.params.channelId });
+    }
+    
+    res.status(200).json({ message: 'Message deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

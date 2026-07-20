@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon } from 'lucide-react';
+import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X } from 'lucide-react';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
@@ -11,6 +11,8 @@ const Chat = () => {
   const [activeChannel, setActiveChannel] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editMessageText, setEditMessageText] = useState('');
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const messagesEndRef = useRef(null);
@@ -22,17 +24,29 @@ const Chat = () => {
   useEffect(() => {
     if (socket) {
       const handleNewMessage = (msg) => {
-        // Only append if it belongs to our active channel
         if (activeChannel && String(msg.channel) === String(activeChannel._id)) {
           setMessages((prev) => {
-            // Prevent duplicates
             if (prev.find(m => String(m._id) === String(msg._id))) return prev;
             return [...prev, msg];
           });
         }
       };
 
+      const handleMessageUpdated = (msg) => {
+        if (activeChannel && String(msg.channel) === String(activeChannel._id)) {
+          setMessages((prev) => prev.map(m => String(m._id) === String(msg._id) ? msg : m));
+        }
+      };
+
+      const handleMessageDeleted = ({ messageId, channelId }) => {
+        if (activeChannel && String(channelId) === String(activeChannel._id)) {
+          setMessages((prev) => prev.filter(m => String(m._id) !== String(messageId)));
+        }
+      };
+
       socket.on('new_message', handleNewMessage);
+      socket.on('message_updated', handleMessageUpdated);
+      socket.on('message_deleted', handleMessageDeleted);
       
       socket.on('initial_status', (users) => {
         setOnlineUsers(new Set(users));
@@ -49,6 +63,8 @@ const Chat = () => {
 
       return () => {
         socket.off('new_message', handleNewMessage);
+        socket.off('message_updated', handleMessageUpdated);
+        socket.off('message_deleted', handleMessageDeleted);
       };
     }
   }, [socket, activeChannel]);
@@ -111,6 +127,27 @@ const Chat = () => {
     try {
       await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages`, { text: newMessage });
       setNewMessage('');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleEditMessage = async (msgId) => {
+    if (!editMessageText.trim() || !activeChannel || !workspace) return;
+    try {
+      await axios.put(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`, { text: editMessageText });
+      setEditingMessageId(null);
+      setEditMessageText('');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteMessage = async (msgId) => {
+    if (!activeChannel || !workspace) return;
+    if (!window.confirm("Are you sure you want to delete this message?")) return;
+    try {
+      await axios.delete(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`);
     } catch (error) {
       console.error(error);
     }
@@ -274,17 +311,52 @@ const Chat = () => {
                     )}
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    {showHeader && (
-                      <div className="flex items-baseline space-x-2 mb-1">
-                        <span className="font-bold text-text-primary text-sm">{msg.sender?.name || 'User'}</span>
-                        <span className="text-xs text-text-secondary">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                    )}
-                    <p className="text-sm text-text-primary bg-bg-primary border border-border inline-block p-3 rounded-2xl rounded-tl-sm shadow-sm">
-                      {msg.text}
-                    </p>
-                  </div>
+                    <div className="flex-1 min-w-0 group/msg relative">
+                      {showHeader && (
+                        <div className="flex items-baseline space-x-2 mb-1">
+                          <span className="font-bold text-text-primary text-sm">{msg.sender?.name || 'User'}</span>
+                          <span className="text-xs text-text-secondary">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                      )}
+                      
+                      {editingMessageId === msg._id ? (
+                        <div className="flex flex-col space-y-2 max-w-lg mt-1">
+                          <input 
+                            type="text"
+                            autoFocus
+                            value={editMessageText}
+                            onChange={(e) => setEditMessageText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleEditMessage(msg._id);
+                              if (e.key === 'Escape') setEditingMessageId(null);
+                            }}
+                            className="bg-bg-primary border border-accent-blue rounded-lg px-3 py-2 text-sm focus:outline-none"
+                          />
+                          <div className="flex space-x-2 text-xs">
+                            <button onClick={() => handleEditMessage(msg._id)} className="text-accent-blue font-bold">Save</button>
+                            <button onClick={() => setEditingMessageId(null)} className="text-text-secondary hover:text-text-primary">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative inline-block max-w-[85%]">
+                          <p className="text-sm text-text-primary bg-bg-primary border border-border inline-block p-3 rounded-2xl rounded-tl-sm shadow-sm pr-12">
+                            {msg.text}
+                            {msg.isEdited && <span className="text-[10px] text-text-secondary italic ml-2 opacity-60">(edited)</span>}
+                          </p>
+                          
+                          {user?._id === msg.sender._id && (
+                            <div className="absolute -right-10 top-2 hidden group-hover/msg:flex items-center space-x-1 bg-bg-secondary border border-border rounded-lg shadow-sm p-1 z-10">
+                              <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1 text-text-secondary hover:text-accent-blue transition-colors">
+                                <Edit2 size={12} />
+                              </button>
+                              <button onClick={() => handleDeleteMessage(msg._id)} className="p-1 text-text-secondary hover:text-danger transition-colors">
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                 </div>
               );
             })

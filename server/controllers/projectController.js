@@ -25,6 +25,19 @@ const getProjects = async (req, res) => {
   }
 };
 
+// @desc    Get single project
+// @route   GET /api/workspaces/:workspaceId/projects/:projectId
+// @access  Private
+const getProject = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId).populate('members', 'name email avatar');
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+    res.status(200).json(project);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Create new project
 // @route   POST /api/workspaces/:workspaceId/projects
 // @access  Private (super_admin, hr)
@@ -142,6 +155,7 @@ const getWorkspaceMembers = async (req, res) => {
 
 module.exports = {
   getProjects,
+  getProject,
   createProject,
   updateProject,
   deleteProject,
