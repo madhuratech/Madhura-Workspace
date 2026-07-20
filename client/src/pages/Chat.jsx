@@ -238,9 +238,6 @@ const Chat = () => {
 
           <div className="px-4 mb-2 flex items-center justify-between">
             <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Direct Messages</span>
-            <button className="text-text-secondary hover:text-text-primary transition-colors">
-              <Plus size={16} />
-            </button>
           </div>
           
           <div className="space-y-1 px-2">

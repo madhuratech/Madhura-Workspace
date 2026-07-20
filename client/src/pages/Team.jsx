@@ -109,7 +109,7 @@ const Team = () => {
           <h1 className="text-2xl font-bold text-text-primary tracking-wide">Team Management</h1>
           <p className="text-text-secondary mt-1">Manage access and roles for {workspace.name}</p>
         </div>
-        {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
+        {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && (
           <button 
             onClick={() => handleOpenModal()}
             className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"

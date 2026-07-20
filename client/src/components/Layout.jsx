@@ -147,8 +147,8 @@ const Layout = () => {
 
               {/* Notification Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-3 w-80 bg-bg-secondary border border-border rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col max-h-96">
-                  <div className="p-3 border-b border-border flex justify-between items-center bg-bg-primary/50">
+                <div className="absolute right-0 mt-3 w-80 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 flex flex-col max-h-[400px]">
+                  <div className="p-3 border-b border-border flex justify-between items-center bg-bg-secondary rounded-t-xl shrink-0">
                     <h3 className="font-bold text-text-primary text-sm">Notifications</h3>
                     {unreadCount > 0 && (
                       <button 
@@ -159,7 +159,7 @@ const Layout = () => {
                       </button>
                     )}
                   </div>
-                  <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar">
+                  <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar bg-bg-secondary rounded-b-xl">
                     {notifications.length === 0 ? (
                       <div className="p-4 text-center text-text-secondary text-sm">
                         No notifications yet.

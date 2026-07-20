@@ -133,8 +133,15 @@ const addMember = async (req, res) => {
 
     // Check auth
     const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id.toString());
-    if (workspace.owner.toString() !== req.user._id.toString() && (!currentMember || currentMember.role !== 'super_admin')) {
+    const isAuthorized = workspace.owner.toString() === req.user._id.toString() || 
+                        (currentMember && ['super_admin', 'hr', 'team_leader'].includes(currentMember.role));
+    
+    if (!isAuthorized) {
       return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    if (currentMember && currentMember.role === 'team_leader' && role !== 'employee') {
+      return res.status(403).json({ message: 'Team leaders can only add employees' });
     }
 
     let userToAdd = await User.findOne({ email });
@@ -183,7 +190,10 @@ const updateMember = async (req, res) => {
 
     // Check auth
     const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id.toString());
-    if (workspace.owner.toString() !== req.user._id.toString() && (!currentMember || currentMember.role !== 'super_admin')) {
+    const isAuthorized = workspace.owner.toString() === req.user._id.toString() || 
+                        (currentMember && ['super_admin', 'hr'].includes(currentMember.role));
+                        
+    if (!isAuthorized) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
