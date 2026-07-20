@@ -14,12 +14,29 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
+// Setup CORS allowed origins
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://madhura-workspace-ruddy.vercel.app'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+};
+
 // Setup Socket.io
 const io = new Server(server, {
-  cors: {
-    origin: '*', // To be restricted in production
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  },
+  cors: corsOptions
 });
 
 // Keep track of connected users
@@ -58,7 +75,7 @@ app.use((req, res, next) => {
 });
 
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Basic Route

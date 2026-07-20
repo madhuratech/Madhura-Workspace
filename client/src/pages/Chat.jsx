@@ -20,7 +20,8 @@ const Chat = () => {
     fetchWorkspaceAndChannels();
 
     // Initialize Socket
-    const newSocket = io('http://localhost:5000');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const newSocket = io(API_URL);
     setSocket(newSocket);
     
     if (user?._id) {

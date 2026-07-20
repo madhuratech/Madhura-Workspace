@@ -13,8 +13,9 @@ export const AuthProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   // Setup Axios defaults
-  axios.defaults.baseURL = 'http://localhost:5000/api';
+  axios.defaults.baseURL = `${API_URL}/api`;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -31,7 +32,8 @@ export const AuthProvider = ({ children }) => {
   // Initialize Socket and fetch notifications when user logs in
   useEffect(() => {
     if (user) {
-      const newSocket = io('http://localhost:5000');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const newSocket = io(API_URL);
       setSocket(newSocket);
       
       newSocket.on('connect', () => {
