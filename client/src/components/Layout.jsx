@@ -5,11 +5,18 @@ import { ThemeContext } from '../context/ThemeContext';
 import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3 } from 'lucide-react';
 
 const Layout = () => {
-  const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead } = useContext(AuthContext);
+  const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, socket } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [toastNotif, setToastNotif] = useState(null);
+  const toastTimerRef = React.useRef(null);
+
+  const showToast = (title, message) => {
+    setToastNotif({ title, message });
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastNotif(null), 4000);
+  };
 
   // Show a toast when a new notification comes in
   React.useEffect(() => {
@@ -17,12 +24,28 @@ const Layout = () => {
       // Check if it was created in the last 5 seconds (roughly real-time)
       const diff = new Date() - new Date(notifications[0].createdAt);
       if (diff < 5000) {
-        setToastNotif(notifications[0]);
-        const timer = setTimeout(() => setToastNotif(null), 4000);
-        return () => clearTimeout(timer);
+        showToast(notifications[0].title, notifications[0].message);
       }
     }
   }, [notifications]);
+
+  // Show a toast when a new chat message comes in
+  React.useEffect(() => {
+    if (socket && user) {
+      const handleNewMessage = (msg) => {
+        // Don't toast for our own messages, and maybe don't toast if we are on the chat page?
+        // Let's toast anyway, it's nice to see when you're in another tab.
+        if (msg.sender._id !== user._id && msg.sender._id !== user.id) {
+          showToast(`New message from ${msg.sender.name || 'User'}`, msg.text);
+        }
+      };
+      
+      socket.on('new_message', handleNewMessage);
+      return () => {
+        socket.off('new_message', handleNewMessage);
+      };
+    }
+  }, [socket, user]);
 
   const handleLogout = () => {
     logout();
