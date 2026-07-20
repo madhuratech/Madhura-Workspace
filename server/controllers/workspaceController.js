@@ -8,7 +8,7 @@ const { sendNotification } = require('./notificationController');
 const getWorkspaces = async (req, res) => {
   try {
     const workspaces = await Workspace.find({
-      $or: [{ owner: req.user._id }, { 'members.user': req.user._id }],
+      $or: [{ owner: req.user.id }, { 'members.user': req.user.id }],
     }).populate('owner', 'name email').populate('members.user', 'name email avatar');
 
     res.status(200).json(workspaces);
@@ -31,8 +31,8 @@ const createWorkspace = async (req, res) => {
     const workspace = await Workspace.create({
       name,
       description,
-      owner: req.user.id,
-      members: [{ user: req.user.id, role: 'super_admin' }],
+      owner: req.user._id,
+      members: [{ user: req.user._id, role: 'super_admin' }],
     });
 
     res.status(201).json(workspace);
@@ -55,8 +55,8 @@ const getWorkspace = async (req, res) => {
     }
 
     // Check if user is member or owner
-    const isMember = workspace.members.find(m => m.user._id.toString() === req.user.id);
-    if (workspace.owner._id.toString() !== req.user.id && !isMember) {
+    const isMember = workspace.members.find(m => m.user && m.user._id.toString() === req.user._id);
+    if (workspace.owner._id.toString() !== req.user._id && !isMember) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
@@ -78,8 +78,8 @@ const updateWorkspace = async (req, res) => {
     }
 
     // Only owner or super_admin can update
-    const member = workspace.members.find(m => m.user.toString() === req.user.id);
-    if (workspace.owner.toString() !== req.user.id && (!member || member.role !== 'super_admin')) {
+    const member = workspace.members.find(m => m.user && m.user.toString() === req.user._id);
+    if (workspace.owner.toString() !== req.user._id && (!member || member.role !== 'super_admin')) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
@@ -106,7 +106,7 @@ const deleteWorkspace = async (req, res) => {
       return res.status(404).json({ message: 'Workspace not found' });
     }
 
-    if (workspace.owner.toString() !== req.user.id) {
+    if (workspace.owner.toString() !== req.user._id) {
       return res.status(401).json({ message: 'Not authorized. Only owner can delete.' });
     }
 
@@ -132,8 +132,8 @@ const addMember = async (req, res) => {
     }
 
     // Check auth
-    const currentMember = workspace.members.find(m => m.user.toString() === req.user.id);
-    if (workspace.owner.toString() !== req.user.id && (!currentMember || currentMember.role !== 'super_admin')) {
+    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id);
+    if (workspace.owner.toString() !== req.user._id && (!currentMember || currentMember.role !== 'super_admin')) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
@@ -157,12 +157,12 @@ const addMember = async (req, res) => {
     }
 
     // Check if user is already in the workspace
-    const memberExists = workspace.members.find(m => m.user.toString() === userToAdd.id);
+    const memberExists = workspace.members.find(m => m.user && m.user.toString() === userToAdd._id.toString());
     if (memberExists) {
       return res.status(400).json({ message: 'User already in workspace' });
     }
 
-    workspace.members.push({ user: userToAdd.id, role: role || 'employee' });
+    workspace.members.push({ user: userToAdd._id, role: role || 'employee' });
     await workspace.save();
 
     res.status(200).json(workspace);
@@ -182,12 +182,12 @@ const updateMember = async (req, res) => {
     if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
 
     // Check auth
-    const currentMember = workspace.members.find(m => m.user.toString() === req.user.id);
-    if (workspace.owner.toString() !== req.user.id && (!currentMember || currentMember.role !== 'super_admin')) {
+    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id);
+    if (workspace.owner.toString() !== req.user._id && (!currentMember || currentMember.role !== 'super_admin')) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    const memberIndex = workspace.members.findIndex(m => m.user.toString() === req.params.userId);
+    const memberIndex = workspace.members.findIndex(m => m.user && m.user.toString() === req.params.userId);
     if (memberIndex === -1) return res.status(404).json({ message: 'Member not found' });
 
     if (action === 'remove') {
