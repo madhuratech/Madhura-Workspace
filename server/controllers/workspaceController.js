@@ -8,7 +8,7 @@ const { sendNotification } = require('./notificationController');
 const getWorkspaces = async (req, res) => {
   try {
     const workspaces = await Workspace.find({
-      $or: [{ owner: req.user.id }, { 'members.user': req.user.id }],
+      $or: [{ owner: req.user._id }, { 'members.user': req.user._id }],
     }).populate('owner', 'name email').populate('members.user', 'name email avatar');
 
     res.status(200).json(workspaces);

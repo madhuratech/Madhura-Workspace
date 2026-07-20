@@ -154,30 +154,15 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div className="lg:col-span-2 bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-6 flex items-center"><Activity className="mr-2 text-accent-blue" size={20}/> Recent Activity</h3>
-              <div className="space-y-4">
-                {[1,2,3].map((i) => (
-                  <div key={i} className="flex items-start space-x-4 p-3 hover:bg-bg-primary rounded-xl transition-colors">
-                    <div className="h-10 w-10 rounded-full bg-accent-blue/20 flex items-center justify-center font-bold text-sm text-accent-blue shrink-0">A</div>
-                    <div>
-                      <p className="text-sm text-text-secondary"><span className="font-semibold text-text-primary">Alex Johnson</span> moved task <span className="text-accent-blue">"Update UI Components"</span> to In Progress.</p>
-                      <span className="text-xs text-text-secondary opacity-80">2 hours ago</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-4 text-center py-6">
+                <p className="text-sm text-text-secondary">No recent activity.</p>
               </div>
             </div>
 
             <div className="bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm">
               <h3 className="text-xl font-bold text-text-primary mb-6 flex items-center"><CalendarDays className="mr-2 text-accent-blue" size={20}/> Upcoming</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-bg-primary rounded-xl border border-border border-l-4 border-l-accent-blue">
-                  <h4 className="font-semibold text-text-primary">Project Sync</h4>
-                  <p className="text-sm text-text-secondary mt-1">Today, 2:00 PM</p>
-                </div>
-                <div className="p-4 bg-bg-primary rounded-xl border border-border border-l-4 border-l-purple-500">
-                  <h4 className="font-semibold text-text-primary">Design Review</h4>
-                  <p className="text-sm text-text-secondary mt-1">Tomorrow, 10:00 AM</p>
-                </div>
+              <div className="space-y-4 text-center py-6">
+                <p className="text-sm text-text-secondary">No upcoming meetings.</p>
               </div>
             </div>
           </div>

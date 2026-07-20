@@ -42,35 +42,35 @@ const Layout = () => {
         
         <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
           <p className="text-[0.65rem] font-bold text-text-secondary uppercase tracking-wider mb-2 mt-4 px-2">Main</p>
-          <Link to="/" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all duration-300">
+          <Link to="/" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <LayoutDashboard size={18} />
             <span className="font-medium text-sm">Dashboard</span>
           </Link>
           {user?.role === 'super_admin' && (
-            <Link to="/team" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all group">
+            <Link to="/team" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all group">
               <Users size={20} className="group-hover:scale-110 transition-transform" />
               <span className="font-medium">Team Management</span>
             </Link>
           )}
           {user?.role === 'team_leader' && (
-            <Link to="/tl-dashboard" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all group">
+            <Link to="/tl-dashboard" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all group">
               <BarChart3 size={20} className="group-hover:scale-110 transition-transform" />
               <span className="font-medium">TL Overview</span>
             </Link>
           )}
-          <Link to="/projects" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all duration-300">
+          <Link to="/projects" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <FolderKanban size={18} />
             <span className="font-medium text-sm">Projects</span>
           </Link>
-          <Link to="/chat" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all duration-300">
+          <Link to="/chat" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <Mail size={18} />
             <span className="font-medium text-sm">Chat & Comms</span>
           </Link>
-          <Link to="/meetings" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all duration-300">
+          <Link to="/meetings" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <CalendarDays size={18} />
             <span className="font-medium text-sm">Meetings</span>
           </Link>
-          <Link to="/documents" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all duration-300">
+          <Link to="/documents" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <FileText size={18} />
             <span className="font-medium text-sm">Documents</span>
           </Link>
@@ -78,7 +78,7 @@ const Layout = () => {
 
         {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
           <div className="p-4 border-t border-border">
-            <Link to="/settings" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-slate-800/10 dark:hover:bg-slate-800 hover:text-text-primary rounded-lg transition-all group">
+            <Link to="/settings" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all group">
               <Settings size={20} className="group-hover:rotate-90 transition-transform duration-300" />
               <span className="font-medium">Settings</span>
             </Link>
