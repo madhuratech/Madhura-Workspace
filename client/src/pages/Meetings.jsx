@@ -112,7 +112,7 @@ const Meetings = () => {
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Date</label>
                 <input 
-                  type="date" required 
+                  type="date" required min={new Date().toISOString().split('T')[0]}
                   value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})}
                   className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
                 />

@@ -159,6 +159,14 @@ const Chat = () => {
   const getChannelDisplayName = (channel) => {
     if (!channel) return 'select-channel';
     if (channel.name.startsWith('dm-')) {
+      const userIds = channel.name.replace('dm-', '').split('-');
+      const otherUserId = userIds.find(id => id !== user?._id);
+      if (otherUserId && workspace?.members) {
+        const otherMember = workspace.members.find(m => m.user && m.user._id === otherUserId);
+        if (otherMember) {
+          return otherMember.user.name || otherMember.user.email.split('@')[0];
+        }
+      }
       return 'Direct Message';
     }
     return channel.name;
@@ -325,7 +333,6 @@ const Chat = () => {
             <p className="text-[10px] text-text-secondary"><strong>Return</strong> to send, <strong>Shift + Return</strong> to add a new line</p>
             <div className="flex space-x-3 text-text-secondary">
               <ImageIcon size={14} className="hover:text-text-primary cursor-pointer" />
-              <span className="font-bold text-[10px] hover:text-text-primary cursor-pointer">@</span>
             </div>
           </div>
         </div>

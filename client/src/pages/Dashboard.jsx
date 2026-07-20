@@ -9,6 +9,7 @@ const Dashboard = () => {
   const [workspaces, setWorkspaces] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [stats, setStats] = useState({ projects: 0, tasks: 0, members: 0, meetings: 0 });
 
   useEffect(() => {
     fetchWorkspaces();
@@ -18,6 +19,20 @@ const Dashboard = () => {
     try {
       const res = await axios.get('/workspaces');
       setWorkspaces(res.data);
+      if (res.data.length > 0) {
+        const ws = res.data[0];
+        const [projectsRes, tasksRes, meetingsRes] = await Promise.all([
+          axios.get(`/workspaces/${ws._id}/projects`).catch(() => ({ data: [] })),
+          axios.get('/tasks').catch(() => ({ data: [] })),
+          axios.get('/meetings').catch(() => ({ data: [] }))
+        ]);
+        setStats({
+          projects: projectsRes.data.length || 0,
+          tasks: tasksRes.data.length || 0,
+          members: ws.members?.length || 1,
+          meetings: meetingsRes.data.length || 0
+        });
+      }
     } catch (error) {
       console.error(error);
     }
@@ -135,19 +150,19 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 mt-8">
             <div className="bg-bg-secondary p-6 rounded-2xl border border-border flex items-center space-x-4 shadow-sm">
               <div className="p-4 bg-accent-blue/10 rounded-xl text-accent-blue"><Briefcase size={28} /></div>
-              <div><p className="text-sm text-text-secondary">Total Projects</p><p className="text-2xl font-bold text-text-primary">12</p></div>
+              <div><p className="text-sm text-text-secondary">Total Projects</p><p className="text-2xl font-bold text-text-primary">{stats.projects}</p></div>
             </div>
             <div className="bg-bg-secondary p-6 rounded-2xl border border-border flex items-center space-x-4 shadow-sm">
               <div className="p-4 bg-success/10 rounded-xl text-success"><CheckCircle2 size={28} /></div>
-              <div><p className="text-sm text-text-secondary">Active Tasks</p><p className="text-2xl font-bold text-text-primary">48</p></div>
+              <div><p className="text-sm text-text-secondary">Active Tasks</p><p className="text-2xl font-bold text-text-primary">{stats.tasks}</p></div>
             </div>
             <div className="bg-bg-secondary p-6 rounded-2xl border border-border flex items-center space-x-4 shadow-sm">
               <div className="p-4 bg-purple-500/10 rounded-xl text-purple-500"><Users size={28} /></div>
-              <div><p className="text-sm text-text-secondary">Team Members</p><p className="text-2xl font-bold text-text-primary">8</p></div>
+              <div><p className="text-sm text-text-secondary">Team Members</p><p className="text-2xl font-bold text-text-primary">{stats.members}</p></div>
             </div>
             <div className="bg-bg-secondary p-6 rounded-2xl border border-border flex items-center space-x-4 shadow-sm">
               <div className="p-4 bg-orange-500/10 rounded-xl text-orange-500"><CalendarDays size={28} /></div>
-              <div><p className="text-sm text-text-secondary">Upcoming Meetings</p><p className="text-2xl font-bold text-text-primary">3</p></div>
+              <div><p className="text-sm text-text-secondary">Upcoming Meetings</p><p className="text-2xl font-bold text-text-primary">{stats.meetings}</p></div>
             </div>
           </div>
 

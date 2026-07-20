@@ -4,7 +4,7 @@ import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Plus, X, ArrowLeft, Users, Calendar, Flag } from 'lucide-react';
+import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2 } from 'lucide-react';
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -88,12 +88,12 @@ const ProjectDetails = () => {
 
     if (source.droppableId !== destination.droppableId) {
       destItems.splice(destination.index, 0, { ...removed, status: destination.droppableId });
-      try { await axios.put(`/tasks/${removed._id}`, { status: destination.droppableId }); } catch (e) { console.error(e); }
       setColumns({
         ...columns,
         [source.droppableId]: { ...sourceCol, items: sourceItems },
         [destination.droppableId]: { ...destCol, items: destItems }
       });
+      try { await axios.put(`/tasks/${removed._id}`, { status: destination.droppableId }); } catch (e) { console.error(e); }
     } else {
       sourceItems.splice(destination.index, 0, removed);
       setColumns({ ...columns, [source.droppableId]: { ...sourceCol, items: sourceItems } });
@@ -114,6 +114,17 @@ const ProjectDetails = () => {
       fetchTasks(workspaceId);
     } catch (error) {
       alert(error.response?.data?.message || 'Error creating task');
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm('Are you sure you want to delete this task?')) return;
+    try {
+      await axios.delete(`/tasks/${taskId}`);
+      fetchTasks(workspaceId);
+    } catch (error) {
+      console.error(error);
+      alert('Error deleting task');
     }
   };
 
@@ -211,6 +222,11 @@ const ProjectDetails = () => {
                                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${priorityColor(item.priority)}`}>
                                   {item.priority}
                                 </span>
+                                {user?.role !== 'employee' && (
+                                  <button onClick={() => handleDeleteTask(item._id)} className="text-text-secondary hover:text-danger transition-colors p-1 rounded-full hover:bg-danger/10">
+                                    <Trash2 size={12} />
+                                  </button>
+                                )}
                               </div>
                               <h3 className="text-sm font-semibold text-text-primary mb-1">{item.title}</h3>
                               {item.description && (
@@ -293,6 +309,7 @@ const ProjectDetails = () => {
                   <label className="block text-sm font-medium text-text-secondary mb-1 flex items-center"><Calendar size={12} className="mr-1" /> Due Date</label>
                   <input
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={formData.dueDate} onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
                     className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
                   />
