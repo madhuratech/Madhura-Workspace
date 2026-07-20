@@ -5,44 +5,34 @@ import { AuthContext } from '../context/AuthContext';
 import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon } from 'lucide-react';
 
 const Chat = () => {
-  const { user } = useContext(AuthContext);
+  const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
   const [workspace, setWorkspace] = useState(null);
   const [channels, setChannels] = useState([]);
   const [activeChannel, setActiveChannel] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     fetchWorkspaceAndChannels();
-
-    // Initialize Socket
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const newSocket = io(API_URL);
-    setSocket(newSocket);
-    
-    if (user?._id) {
-      newSocket.emit('user_connected', user._id);
-    }
-
-    return () => newSocket.close();
   }, [user]);
 
   useEffect(() => {
     if (socket) {
-      socket.on('new_message', (msg) => {
+      const handleNewMessage = (msg) => {
         // Only append if it belongs to our active channel
-        if (activeChannel && msg.channel === activeChannel._id) {
+        if (activeChannel && String(msg.channel) === String(activeChannel._id)) {
           setMessages((prev) => {
             // Prevent duplicates
-            if (prev.find(m => m._id === msg._id)) return prev;
+            if (prev.find(m => String(m._id) === String(msg._id))) return prev;
             return [...prev, msg];
           });
         }
-      });
+      };
+
+      socket.on('new_message', handleNewMessage);
       
       socket.on('initial_status', (users) => {
         setOnlineUsers(new Set(users));
@@ -56,10 +46,11 @@ const Chat = () => {
           return newSet;
         });
       });
+
+      return () => {
+        socket.off('new_message', handleNewMessage);
+      };
     }
-    return () => {
-      if (socket) socket.off('new_message');
-    };
   }, [socket, activeChannel]);
 
   useEffect(() => {
