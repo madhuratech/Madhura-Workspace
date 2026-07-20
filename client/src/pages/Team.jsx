@@ -30,10 +30,12 @@ const Team = () => {
         
         // Fetch full workspace details to get members
         const detailRes = await axios.get(`/workspaces/${currentWs._id}`);
-        setMembers(detailRes.data.members || []);
+        // Filter out any orphaned members where user is null
+        const validMembers = (detailRes.data.members || []).filter(m => m.user);
+        setMembers(validMembers);
         
         // Find current user's role
-        const me = detailRes.data.members.find(m => m.user._id === user._id);
+        const me = validMembers.find(m => m.user._id === user._id);
         if (me) {
           setCurrentUserRole(me.role);
         }
