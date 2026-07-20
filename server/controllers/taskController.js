@@ -92,7 +92,7 @@ const updateTask = async (req, res) => {
     // If status changed, notify assignees (excluding the person who made the change)
     if (req.body.status) {
       task.assignees.forEach(assignee => {
-        if (assignee._id.toString() !== req.user._id) {
+        if (assignee._id.toString() !== req.user._id.toString()) {
           sendNotification(
             req,
             assignee._id,

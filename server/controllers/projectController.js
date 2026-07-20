@@ -56,7 +56,7 @@ const createProject = async (req, res) => {
 
     // Send notifications to project members
     populated.members.forEach(member => {
-      if (member._id.toString() !== req.user._id) {
+      if (member._id.toString() !== req.user._id.toString()) {
         sendNotification(
           req,
           member._id,
