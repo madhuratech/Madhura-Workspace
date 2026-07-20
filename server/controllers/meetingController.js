@@ -30,8 +30,8 @@ const createMeeting = async (req, res) => {
       title,
       date,
       workspace: req.params.workspaceId,
-      participants: participants || [req.user.id],
-      createdBy: req.user.id
+      participants: participants || [req.user._id],
+      createdBy: req.user._id
     });
     
     // Emit event via socket.io

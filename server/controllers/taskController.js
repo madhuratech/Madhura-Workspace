@@ -11,7 +11,7 @@ const getTasks = async (req, res) => {
     // Employees only see tasks assigned to them
     // team_leader, hr, super_admin see all
     if (req.user.role === 'employee') {
-      query.assignees = req.user.id;
+      query.assignees = req.user._id;
     }
 
     const tasks = await Task.find(query)
@@ -46,7 +46,7 @@ const createTask = async (req, res) => {
       dueDate,
       project: req.params.projectId,
       workspace,
-      assignees: assignees && assignees.length > 0 ? assignees : [req.user.id]
+      assignees: assignees && assignees.length > 0 ? assignees : [req.user._id]
     });
 
     const populated = await task.populate('assignees', 'name email avatar');
@@ -92,7 +92,7 @@ const updateTask = async (req, res) => {
     // If status changed, notify assignees (excluding the person who made the change)
     if (req.body.status) {
       task.assignees.forEach(assignee => {
-        if (assignee._id.toString() !== req.user.id) {
+        if (assignee._id.toString() !== req.user._id) {
           sendNotification(
             req,
             assignee._id,

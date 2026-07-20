@@ -8,7 +8,7 @@ const { sendNotification } = require('./notificationController');
 const getWorkspaces = async (req, res) => {
   try {
     const workspaces = await Workspace.find({
-      $or: [{ owner: req.user.id }, { 'members.user': req.user.id }],
+      $or: [{ owner: req.user._id }, { 'members.user': req.user._id }],
     }).populate('owner', 'name email').populate('members.user', 'name email avatar');
 
     res.status(200).json(workspaces);
@@ -55,8 +55,8 @@ const getWorkspace = async (req, res) => {
     }
 
     // Check if user is member or owner
-    const isMember = workspace.members.find(m => m.user && m.user._id.toString() === req.user.id);
-    if (workspace.owner._id.toString() !== req.user.id && !isMember) {
+    const isMember = workspace.members.find(m => m.user && m.user._id.toString() === req.user._id);
+    if (workspace.owner._id.toString() !== req.user._id && !isMember) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
@@ -78,8 +78,8 @@ const updateWorkspace = async (req, res) => {
     }
 
     // Only owner or super_admin can update
-    const member = workspace.members.find(m => m.user && m.user.toString() === req.user.id);
-    if (workspace.owner.toString() !== req.user.id && (!member || member.role !== 'super_admin')) {
+    const member = workspace.members.find(m => m.user && m.user.toString() === req.user._id);
+    if (workspace.owner.toString() !== req.user._id && (!member || member.role !== 'super_admin')) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
@@ -106,7 +106,7 @@ const deleteWorkspace = async (req, res) => {
       return res.status(404).json({ message: 'Workspace not found' });
     }
 
-    if (workspace.owner.toString() !== req.user.id) {
+    if (workspace.owner.toString() !== req.user._id) {
       return res.status(401).json({ message: 'Not authorized. Only owner can delete.' });
     }
 
@@ -132,8 +132,8 @@ const addMember = async (req, res) => {
     }
 
     // Check auth
-    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user.id);
-    if (workspace.owner.toString() !== req.user.id && (!currentMember || currentMember.role !== 'super_admin')) {
+    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id);
+    if (workspace.owner.toString() !== req.user._id && (!currentMember || currentMember.role !== 'super_admin')) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
@@ -182,8 +182,8 @@ const updateMember = async (req, res) => {
     if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
 
     // Check auth
-    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user.id);
-    if (workspace.owner.toString() !== req.user.id && (!currentMember || currentMember.role !== 'super_admin')) {
+    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id);
+    if (workspace.owner.toString() !== req.user._id && (!currentMember || currentMember.role !== 'super_admin')) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 

@@ -31,8 +31,8 @@ const createDocument = async (req, res) => {
       content,
       project: req.params.projectId,
       workspace,
-      author: req.user.id,
-      lastUpdatedBy: req.user.id
+      author: req.user._id,
+      lastUpdatedBy: req.user._id
     });
     
     if(req.io) {
@@ -58,7 +58,7 @@ const updateDocument = async (req, res) => {
     
     document.title = req.body.title || document.title;
     document.content = req.body.content || document.content;
-    document.lastUpdatedBy = req.user.id;
+    document.lastUpdatedBy = req.user._id;
     
     await document.save();
 

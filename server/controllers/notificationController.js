@@ -5,7 +5,7 @@ const Notification = require('../models/Notification');
 // @access  Private
 const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ recipient: req.user.id })
+    const notifications = await Notification.find({ recipient: req.user._id })
       .sort({ createdAt: -1 })
       .limit(50); // Keep it reasonable
     res.status(200).json(notifications);
@@ -25,7 +25,7 @@ const markAsRead = async (req, res) => {
       return res.status(404).json({ message: 'Notification not found' });
     }
 
-    if (notification.recipient.toString() !== req.user.id) {
+    if (notification.recipient.toString() !== req.user._id) {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
@@ -44,7 +44,7 @@ const markAsRead = async (req, res) => {
 const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
-      { recipient: req.user.id, read: false },
+      { recipient: req.user._id, read: false },
       { $set: { read: true } }
     );
     res.status(200).json({ message: 'All notifications marked as read' });
@@ -59,7 +59,7 @@ const sendNotification = async (req, recipientId, type, title, message, link) =>
     // 1. Save to DB
     const notification = await Notification.create({
       recipient: recipientId,
-      sender: req.user ? req.user.id : null,
+      sender: req.user ? req.user._id : null,
       type,
       title,
       message,

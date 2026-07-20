@@ -13,7 +13,7 @@ const getProjects = async (req, res) => {
     // Employees only see projects they are assigned to
     // team_leader, hr, super_admin see all
     if (req.user.role === 'employee') {
-      query.members = req.user.id;
+      query.members = req.user._id;
     }
 
     const projects = await Project.find(query)
@@ -45,7 +45,7 @@ const createProject = async (req, res) => {
       title,
       description,
       workspace: req.params.workspaceId,
-      members: members && members.length > 0 ? members : [req.user.id]
+      members: members && members.length > 0 ? members : [req.user._id]
     });
 
     const populated = await project.populate('members', 'name email avatar');
@@ -56,7 +56,7 @@ const createProject = async (req, res) => {
 
     // Send notifications to project members
     populated.members.forEach(member => {
-      if (member._id.toString() !== req.user.id) {
+      if (member._id.toString() !== req.user._id) {
         sendNotification(
           req,
           member._id,

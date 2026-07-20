@@ -26,7 +26,7 @@ exports.createChannel = async (req, res) => {
 exports.getOrCreateDMChannel = async (req, res) => {
   try {
     const { targetUserId } = req.body;
-    const currentUserId = req.user.id;
+    const currentUserId = req.user._id;
     
     // Sort IDs to ensure consistency
     const sortedIds = [currentUserId, targetUserId].sort();
@@ -64,7 +64,7 @@ exports.createMessage = async (req, res) => {
     const message = await Message.create({
       text: req.body.text,
       channel: req.params.channelId,
-      sender: req.user.id
+      sender: req.user._id
     });
     const populatedMessage = await message.populate('sender', 'name email avatar');
     
