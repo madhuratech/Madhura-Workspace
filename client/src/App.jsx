@@ -1,0 +1,56 @@
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from './context/AuthContext';
+
+// Pages
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import ProjectDetails from './pages/ProjectDetails';
+import Projects from './pages/Projects';
+import Team from './pages/Team';
+import Meetings from './pages/Meetings';
+import Documents from './pages/Documents';
+import Settings from './pages/Settings';
+import WorkspaceOverview from './pages/WorkspaceOverview';
+import Chat from './pages/Chat';
+import TeamLeaderDashboard from './pages/TeamLeaderDashboard';
+import Layout from './components/Layout';
+
+const ProtectedRoute = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      
+      {/* Protected Routes wrapped in Layout (Sidebar + Navbar) */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          <Layout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Dashboard />} />
+        <Route path="projects" element={<Projects />} />
+        <Route path="team" element={<Team />} />
+        <Route path="meetings" element={<Meetings />} />
+        <Route path="documents" element={<Documents />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="workspace/:id" element={<WorkspaceOverview />} />
+        <Route path="project/:id" element={<ProjectDetails />} />
+        <Route path="tl-dashboard" element={<TeamLeaderDashboard />} />
+        {/* We can add tasks and documents nested inside project or separate */}
+      </Route>
+    </Routes>
+  );
+}
+
+export default App;
