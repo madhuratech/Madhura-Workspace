@@ -208,7 +208,7 @@ const Chat = () => {
           </div>
           
           <div className="space-y-1 px-2">
-            {workspace.members && workspace.members.filter(m => m.user._id !== user?._id).map(member => {
+            {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user?._id).map(member => {
               const isOnline = onlineUsers.has(member.user._id);
               return (
                 <button 

@@ -35,7 +35,7 @@ const Projects = () => {
         // Get workspace members for assignment (only for super_admin/hr)
         if (user?.role !== 'employee') {
           const membersRes = await axios.get(`/workspaces/${ws._id}/projects/members`);
-          setWorkspaceMembers(membersRes.data);
+          setWorkspaceMembers((membersRes.data || []).filter(m => m.user));
         }
       }
     } catch (error) {
