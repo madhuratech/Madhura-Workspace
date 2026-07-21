@@ -20,7 +20,7 @@ const getMeetings = async (req, res) => {
 // @access  Private
 const createMeeting = async (req, res) => {
   try {
-    const { title, date, participants } = req.body;
+    const { title, date, participants, type, link, description } = req.body;
 
     if (!title || !date) {
       return res.status(400).json({ message: 'Please add title and date' });
@@ -29,6 +29,9 @@ const createMeeting = async (req, res) => {
     const meeting = await Meeting.create({
       title,
       date,
+      type: type || 'direct_meet',
+      link: link || '',
+      description: description || '',
       workspace: req.params.workspaceId,
       participants: participants || [req.user._id],
       createdBy: req.user._id

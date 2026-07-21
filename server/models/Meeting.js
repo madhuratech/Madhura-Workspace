@@ -10,6 +10,19 @@ const MeetingSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Please provide a meeting date']
   },
+  type: {
+    type: String,
+    enum: ['google_meet', 'direct_meet'],
+    default: 'direct_meet'
+  },
+  link: {
+    type: String,
+    default: ''
+  },
+  description: {
+    type: String,
+    default: ''
+  },
   workspace: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Workspace',

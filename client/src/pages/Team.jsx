@@ -249,7 +249,19 @@ const Team = () => {
                     </td>
                     <td className="font-bold text-text-primary">{team.name}</td>
                     <td className="text-text-secondary">{team.leader?.name || 'No Leader'}</td>
-                    <td className="text-text-secondary">{team.members?.length || 0} Members</td>
+                    <td className="text-text-secondary">
+                      <div className="flex flex-wrap gap-1">
+                        {team.members && team.members.length > 0 ? (
+                          team.members.map(m => (
+                            <span key={m._id} className="bg-bg-primary border border-border px-2 py-1 rounded-md text-[10px] font-medium text-text-primary">
+                              {m.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-text-secondary italic">No members</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="text-right whitespace-nowrap space-x-3">
                       {(currentUserRole === 'super_admin' || currentUserRole === 'hr') ? (
                         <>
@@ -278,9 +290,9 @@ const Team = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-bg-secondary z-10 pt-2 pb-4">
               <h3 className="text-xl font-bold text-text-primary flex items-center">
                 <Shield className="text-accent-blue mr-2" size={24}/>
                 {editItem ? 'Edit Member Role' : 'Create Employee Account'}
@@ -363,7 +375,7 @@ const Team = () => {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-text-secondary mb-2">Assign Members</label>
-                    <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-2 bg-bg-secondary space-y-1">
+                    <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 bg-bg-secondary space-y-1 custom-scrollbar">
                       {members.filter(m => m.user._id !== user._id).map(m => (
                         <label key={m.user._id} className="flex items-center space-x-3 p-1.5 hover:bg-bg-primary rounded-lg cursor-pointer">
                           <input 
