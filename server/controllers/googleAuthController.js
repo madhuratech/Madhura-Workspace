@@ -2,10 +2,14 @@ const { google } = require('googleapis');
 const User = require('../models/User');
 
 const getOAuth2Client = () => {
+  let backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+  backendUrl = backendUrl.replace(/\/api\/auth\/google\/callback\/?$/, '');
+  backendUrl = backendUrl.replace(/\/$/, '');
+  
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`
+    `${backendUrl}/api/auth/google/callback`
   );
 };
 

@@ -3,10 +3,14 @@ const nodemailer = require('nodemailer');
 const User = require('../models/User');
 
 const getOAuth2Client = (user) => {
+  let backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+  backendUrl = backendUrl.replace(/\/api\/auth\/google\/callback\/?$/, '');
+  backendUrl = backendUrl.replace(/\/$/, '');
+
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`
+    `${backendUrl}/api/auth/google/callback`
   );
   oauth2Client.setCredentials({
     access_token: user.googleAccessToken,
