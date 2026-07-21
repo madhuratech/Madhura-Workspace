@@ -15,6 +15,8 @@ const Chat = () => {
   const [editMessageText, setEditMessageText] = useState('');
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
+  const [newChannelData, setNewChannelData] = useState({ name: '', description: '', members: [] });
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -153,16 +155,34 @@ const Chat = () => {
     }
   };
 
-  const handleCreateChannel = async () => {
-    const name = prompt('Enter new channel name (e.g. engineering, marketing):');
-    if (!name || !workspace) return;
+  const handleCreateChannelSubmit = async (e) => {
+    e.preventDefault();
+    if (!newChannelData.name || !workspace) return;
     try {
-      const res = await axios.post(`/workspaces/${workspace._id}/channels`, { name: name.toLowerCase().replace(/\s+/g, '-') });
+      const formattedName = newChannelData.name.toLowerCase().replace(/\s+/g, '-');
+      // Ensure the creator is in the members list if it's a private channel
+      let finalMembers = newChannelData.members;
+      if (finalMembers.length > 0 && !finalMembers.includes(user._id)) {
+        finalMembers.push(user._id);
+      }
+      
+      const res = await axios.post(`/workspaces/${workspace._id}/channels`, { 
+        name: formattedName, 
+        description: newChannelData.description,
+        members: finalMembers
+      });
       setChannels([...channels, res.data]);
       setActiveChannel(res.data);
+      setIsChannelModalOpen(false);
+      setNewChannelData({ name: '', description: '', members: [] });
     } catch (error) {
       alert('Failed to create channel');
     }
+  };
+
+  const handleOpenChannelModal = () => {
+    setNewChannelData({ name: '', description: '', members: [] });
+    setIsChannelModalOpen(true);
   };
 
   const handleDMClick = async (targetUserId) => {
@@ -214,9 +234,11 @@ const Chat = () => {
         <div className="flex-1 overflow-y-auto py-4">
           <div className="px-4 mb-2 flex items-center justify-between group">
             <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Channels</span>
-            <button onClick={handleCreateChannel} className="text-text-secondary hover:text-text-primary transition-colors">
-              <Plus size={16} />
-            </button>
+            {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
+              <button onClick={handleOpenChannelModal} className="text-text-secondary hover:text-text-primary transition-colors">
+                <Plus size={16} />
+              </button>
+            )}
           </div>
           
           <div className="space-y-0.5 px-2 mb-6">
@@ -392,6 +414,76 @@ const Chat = () => {
 
         </div>
       </div>
+
+      {/* Channel Creation Modal */}
+      {isChannelModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-bg-secondary z-10 pt-2 pb-4">
+              <h3 className="text-xl font-bold text-text-primary">Create Channel</h3>
+              <button onClick={() => setIsChannelModalOpen(false)} className="text-text-secondary hover:text-text-primary">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateChannelSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Channel Name</label>
+                <input 
+                  type="text" required 
+                  value={newChannelData.name} onChange={e => setNewChannelData({...newChannelData, name: e.target.value})}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  placeholder="e.g. frontend-team"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Description (Optional)</label>
+                <input 
+                  type="text"
+                  value={newChannelData.description} onChange={e => setNewChannelData({...newChannelData, description: e.target.value})}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  placeholder="What is this channel about?"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Private Channel Members</label>
+                <p className="text-[10px] text-text-secondary mb-2">Leave all unchecked to make this a public channel for everyone in the workspace.</p>
+                <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 bg-bg-secondary space-y-1 custom-scrollbar">
+                  {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user._id).map(m => (
+                    <label key={m.user._id} className="flex items-center space-x-3 p-1.5 hover:bg-bg-primary rounded-lg cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="accent-accent-blue"
+                        checked={newChannelData.members.includes(m.user._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewChannelData({...newChannelData, members: [...newChannelData.members, m.user._id]});
+                          } else {
+                            setNewChannelData({...newChannelData, members: newChannelData.members.filter(id => id !== m.user._id)});
+                          }
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-medium text-text-primary">{m.user.name}</span>
+                        <span className="text-[10px] text-text-secondary">{m.role.replace('_', ' ')}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="pt-4 flex justify-end space-x-3">
+                <button type="button" onClick={() => setIsChannelModalOpen(false)} className="px-4 py-2 text-text-secondary hover:text-text-primary font-medium">Cancel</button>
+                <button type="submit" className="px-6 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600 font-medium transition-colors">
+                  Create Channel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

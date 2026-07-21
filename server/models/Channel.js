@@ -13,7 +13,13 @@ const ChannelSchema = new mongoose.Schema({
   },
   description: {
     type: String
-  }
+  },
+  members: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Channel', ChannelSchema);

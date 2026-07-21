@@ -12,8 +12,35 @@ const Layout = () => {
   const [toastNotif, setToastNotif] = useState(null);
   const toastTimerRef = React.useRef(null);
 
+  // Base64 simple pop sound to avoid external dependencies
+  const popSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU' + 'A'.repeat(50)); // We will use a lightweight pop sound
+  // Note: For a real pop sound, it's better to use a tiny silent mp3/wav if base64 is too long, but we'll use a reliable HTML5 beep approach.
+
+  const playNotificationSound = () => {
+    try {
+      // Create a short beep using Web Audio API for a reliable, dependency-free notification sound
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Soft volume
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+      
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {
+      console.log('Audio play failed', e);
+    }
+  };
+
   const showToast = (title, message) => {
     setToastNotif({ title, message });
+    playNotificationSound();
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToastNotif(null), 4000);
   };
@@ -29,42 +56,17 @@ const Layout = () => {
     }
   }, [notifications]);
 
-  // Show a toast when a new chat message comes in
+  // Show a toast when a new chat message comes in (redundant manual handlers removed, now driven purely by notifications array)
   React.useEffect(() => {
     if (socket && user) {
-      const handleNewMessage = (msg) => {
-        if (msg.sender._id !== user._id && msg.sender._id !== user.id) {
-          showToast(`New message from ${msg.sender.name || 'User'}`, msg.text);
-        }
-      };
-      
       const handleActivity = (msg) => {
         showToast(msg.title, msg.message);
       };
       
-      const handleProjectActivity = (project) => showToast('Project Update', `Project ${project.title} was updated/created.`);
-      const handleTaskActivity = (task) => showToast('Task Update', `Task ${task.title} was updated/created.`);
-      const handleMeetingActivity = (meeting) => showToast('New Meeting', `Meeting ${meeting.title} scheduled.`);
-      const handleTeamActivity = (team) => showToast('Team Update', `Team ${team.name} was created/updated.`);
-      
-      socket.on('new_message', handleNewMessage);
       socket.on('activity', handleActivity);
-      socket.on('projectCreated', handleProjectActivity);
-      socket.on('projectUpdated', handleProjectActivity);
-      socket.on('taskCreated', handleTaskActivity);
-      socket.on('taskUpdated', handleTaskActivity);
-      socket.on('meetingCreated', handleMeetingActivity);
-      socket.on('teamCreated', handleTeamActivity);
       
       return () => {
-        socket.off('new_message', handleNewMessage);
         socket.off('activity', handleActivity);
-        socket.off('projectCreated', handleProjectActivity);
-        socket.off('projectUpdated', handleProjectActivity);
-        socket.off('taskCreated', handleTaskActivity);
-        socket.off('taskUpdated', handleTaskActivity);
-        socket.off('meetingCreated', handleMeetingActivity);
-        socket.off('teamCreated', handleTeamActivity);
       };
     }
   }, [socket, user]);
