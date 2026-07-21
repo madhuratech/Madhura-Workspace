@@ -146,7 +146,12 @@ const Meetings = () => {
     );
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary h-full animate-fade-in">
+      <div className="w-12 h-12 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
+      <p className="text-text-secondary font-medium">Loading workspace...</p>
+    </div>
+  );
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (

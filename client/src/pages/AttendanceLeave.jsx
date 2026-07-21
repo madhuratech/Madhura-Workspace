@@ -8,6 +8,7 @@ const AttendanceLeave = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   const [workspace, setWorkspace] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState('employee');
   const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' or 'leave'
   
@@ -45,6 +46,8 @@ const AttendanceLeave = () => {
       }
     } catch (error) {
       console.error('Error fetching workspace:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,6 +125,12 @@ const AttendanceLeave = () => {
     }
   };
 
+  if (loading) return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary h-full animate-fade-in">
+      <div className="w-12 h-12 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
+      <p className="text-text-secondary font-medium">Loading workspace...</p>
+    </div>
+  );
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (
