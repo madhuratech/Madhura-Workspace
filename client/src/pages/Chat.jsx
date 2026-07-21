@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video } from 'lucide-react';
+import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 
 const Chat = () => {
