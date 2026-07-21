@@ -57,6 +57,8 @@ const Meetings = () => {
       }
     } catch (error) {
       console.error('Error fetching workspace data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -144,6 +146,7 @@ const Meetings = () => {
     );
   };
 
+  if (loading) return null;
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (

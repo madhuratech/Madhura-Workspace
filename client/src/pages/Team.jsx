@@ -53,6 +53,8 @@ const Team = () => {
       }
     } catch (error) {
       console.error('Error fetching workspace:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -123,6 +125,7 @@ const Team = () => {
     }
   };
 
+  if (loading) return null;
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (

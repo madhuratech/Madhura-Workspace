@@ -53,6 +53,8 @@ const Projects = () => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,6 +151,8 @@ const Projects = () => {
   const filtered = projects.filter(p =>
     p.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) return null;
 
   return (
     <div className="h-full flex flex-col font-sans">

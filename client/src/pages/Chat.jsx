@@ -107,6 +107,8 @@ const Chat = () => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -218,7 +220,8 @@ const Chat = () => {
     return channel.name;
   };
 
-  if (!workspace) return null;
+  if (loading) return null;
+  if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (
     <div className="h-full flex font-sans border border-border rounded-2xl overflow-hidden shadow-sm bg-bg-secondary">

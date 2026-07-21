@@ -16,6 +16,7 @@ import Settings from './pages/Settings';
 import WorkspaceOverview from './pages/WorkspaceOverview';
 import Chat from './pages/Chat';
 import TeamLeaderDashboard from './pages/TeamLeaderDashboard';
+import AttendanceLeave from './pages/AttendanceLeave';
 import Layout from './components/Layout';
 
 const ProtectedRoute = ({ children }) => {
@@ -46,6 +47,7 @@ function App() {
           <Route path="documents" element={<Documents />} />
           <Route path="settings" element={<Settings />} />
           <Route path="chat" element={<Chat />} />
+          <Route path="attendance" element={<AttendanceLeave />} />
           <Route path="workspace/:id" element={<WorkspaceOverview />} />
           <Route path="project/:id" element={<ProjectDetails />} />
           <Route path="tl-dashboard" element={<TeamLeaderDashboard />} />
