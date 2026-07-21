@@ -17,6 +17,8 @@ const Team = () => {
   const [editItem, setEditItem] = useState(null);
   
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee' });
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
+  const [newTeamName, setNewTeamName] = useState('');
 
   useEffect(() => {
     fetchWorkspaceData();
@@ -61,6 +63,8 @@ const Team = () => {
     } else {
       setEditItem(null);
       setFormData({ name: '', email: '', password: '', role: 'employee' });
+      setSelectedTeamMembers([]);
+      setNewTeamName('');
     }
     setIsModalOpen(true);
   };
@@ -80,12 +84,21 @@ const Team = () => {
         await axios.put(`/workspaces/${workspace._id}/members/${editItem.user._id}`, { role: formData.role });
       } else {
         // Create employee account and add to workspace
-        await axios.post(`/workspaces/${workspace._id}/members`, {
+        const res = await axios.post(`/workspaces/${workspace._id}/members`, {
           name: formData.name,
           email: formData.email,
           password: formData.password,
           role: formData.role
         });
+        
+        // If creating a team leader, optionally create their team right away
+        if (formData.role === 'team_leader' && res.data.userId) {
+          await axios.post(`/workspaces/${workspace._id}/teams`, {
+            name: newTeamName || `${formData.name}'s Team`,
+            leader: res.data.userId,
+            members: selectedTeamMembers
+          });
+        }
       }
       fetchWorkspaceData();
       handleCloseModal();
@@ -335,6 +348,47 @@ const Team = () => {
                   </select>
                 </div>
               </div>
+
+              {!editItem && formData.role === 'team_leader' && (
+                <div className="bg-bg-primary p-4 rounded-lg border border-border space-y-4">
+                  <h4 className="font-medium text-text-primary text-sm">Initial Team Setup (Optional)</h4>
+                  <div>
+                    <label className="block text-xs font-medium text-text-secondary mb-1">Team Name</label>
+                    <input 
+                      type="text" 
+                      value={newTeamName} onChange={e => setNewTeamName(e.target.value)}
+                      className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-1.5 text-text-primary focus:outline-none focus:border-accent-blue text-sm"
+                      placeholder={`e.g. ${formData.name || 'User'}'s Team`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-text-secondary mb-2">Assign Members</label>
+                    <div className="max-h-32 overflow-y-auto border border-border rounded-lg p-2 bg-bg-secondary space-y-1">
+                      {members.filter(m => m.user._id !== user._id).map(m => (
+                        <label key={m.user._id} className="flex items-center space-x-3 p-1.5 hover:bg-bg-primary rounded-lg cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            className="accent-accent-blue"
+                            checked={selectedTeamMembers.includes(m.user._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTeamMembers([...selectedTeamMembers, m.user._id]);
+                              } else {
+                                setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== m.user._id));
+                              }
+                            }}
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium text-text-primary">{m.user.name}</span>
+                            <span className="text-[10px] text-text-secondary">{m.role.replace('_', ' ')}</span>
+                          </div>
+                        </label>
+                      ))}
+                      {members.length <= 1 && <p className="text-xs text-text-secondary p-1">No other members available.</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="flex justify-end space-x-3 mt-8">
                 <button 
@@ -397,9 +451,9 @@ const Team = () => {
                   className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
                   required
                 >
-                  <option value="">-- Select a User --</option>
-                  {members.map(m => (
-                    <option key={m.user._id} value={m.user._id}>{m.user.name} ({m.role})</option>
+                  <option value="">-- Select a Team Leader --</option>
+                  {members.filter(m => m.role === 'team_leader' || m.role === 'super_admin' || m.role === 'hr').map(m => (
+                    <option key={m.user._id} value={m.user._id}>{m.user.name} ({m.role.replace('_', ' ')})</option>
                   ))}
                 </select>
               </div>

@@ -193,7 +193,7 @@ const addMember = async (req, res) => {
     workspace.members.push({ user: userToAdd._id, role: role || 'employee' });
     await workspace.save();
 
-    res.status(200).json(workspace);
+    res.status(200).json({ workspace, userId: userToAdd._id });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
