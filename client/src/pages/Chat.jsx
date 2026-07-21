@@ -10,6 +10,8 @@ const Chat = () => {
   const [workspace, setWorkspace] = useState(null);
   const [channels, setChannels] = useState([]);
   const [activeChannel, setActiveChannel] = useState(null);
+  const [activeDM, setActiveDM] = useState(null);
+  const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -29,12 +31,19 @@ const Chat = () => {
 
   useEffect(() => {
     fetchWorkspaceAndChannels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
     if (socket) {
       const handleNewMessage = (msg) => {
-        if (activeChannel && String(msg.channel) === String(activeChannel._id)) {
+        if (activeChannel && msg.channel && String(msg.channel) === String(activeChannel._id)) {
+          setMessages((prev) => {
+            if (prev.find(m => String(m._id) === String(msg._id))) return prev;
+            return [...prev, msg];
+          });
+        }
+        if (activeDM && msg.dm && String(msg.dm) === String(activeDM.dmId)) {
           setMessages((prev) => {
             if (prev.find(m => String(m._id) === String(msg._id))) return prev;
             return [...prev, msg];
@@ -43,7 +52,10 @@ const Chat = () => {
       };
 
       const handleMessageUpdated = (msg) => {
-        if (activeChannel && String(msg.channel) === String(activeChannel._id)) {
+        if (activeChannel && msg.channel && String(msg.channel) === String(activeChannel._id)) {
+          setMessages((prev) => prev.map(m => String(m._id) === String(msg._id) ? msg : m));
+        }
+        if (activeDM && msg.dm && String(msg.dm) === String(activeDM.dmId)) {
           setMessages((prev) => prev.map(m => String(m._id) === String(msg._id) ? msg : m));
         }
       };
@@ -81,9 +93,11 @@ const Chat = () => {
 
   useEffect(() => {
     if (activeChannel) {
-      fetchMessages(activeChannel._id);
+      fetchMessages(activeChannel._id, 'channel');
+    } else if (activeDM) {
+      fetchMessages(activeDM.dmId, 'dm');
     }
-  }, [activeChannel]);
+  }, [activeChannel, activeDM]);
 
   useEffect(() => {
     scrollToBottom();
@@ -101,16 +115,20 @@ const Chat = () => {
         
         // Fetch full workspace to get members
         const detailRes = await axios.get(`/workspaces/${ws._id}`);
-        setWorkspace(detailRes.data);
+        setWorkspace(ws);
         
-        const chRes = await axios.get(`/workspaces/${ws._id}/channels`);
-        if (chRes.data.length === 0) {
-          const defCh = await axios.post(`/workspaces/${ws._id}/channels`, { name: 'general', description: 'Company-wide announcements and work-based matters' });
-          setChannels([defCh.data]);
-          setActiveChannel(defCh.data);
-        } else {
-          setChannels(chRes.data);
-          setActiveChannel(chRes.data[0]);
+        // Extract members that are not the current user
+        if (ws.members) {
+          const members = ws.members
+            .filter(m => m.user && String(m.user._id) !== String(user._id))
+            .map(m => m.user);
+          setWorkspaceMembers(members);
+        }
+
+        const channelsRes = await axios.get(`/workspaces/${ws._id}/channels`);
+        setChannels(channelsRes.data);
+        if (channelsRes.data.length > 0) {
+          setActiveChannel(channelsRes.data[0]);
         }
       }
     } catch (error) {
@@ -120,10 +138,14 @@ const Chat = () => {
     }
   };
 
-  const fetchMessages = async (channelId) => {
-    if (!workspace) return;
+  const fetchMessages = async (id, type) => {
     try {
-      const res = await axios.get(`/workspaces/${workspace._id}/channels/${channelId}/messages`);
+      let res;
+      if (type === 'channel') {
+        res = await axios.get(`/workspaces/${workspace._id}/channels/${id}/messages`);
+      } else {
+        res = await axios.get(`/workspaces/${workspace._id}/dms/${id}/messages`);
+      }
       setMessages(res.data);
     } catch (error) {
       console.error(error);
@@ -133,13 +155,20 @@ const Chat = () => {
   const handleSendMessage = async (e, customAttachment = null) => {
     if (e) e.preventDefault();
     if (!customAttachment && !newMessage.trim()) return;
-    if (!activeChannel || !workspace) return;
+    if (!workspace) return;
+    if (!activeChannel && !activeDM) return;
     
     try {
-      await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages`, { 
+      const payload = { 
         text: newMessage,
         attachment: customAttachment
-      });
+      };
+
+      if (activeChannel) {
+        await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages`, payload);
+      } else if (activeDM) {
+        await axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages`, payload);
+      }
       setNewMessage('');
     } catch (error) {
       console.error(error);
@@ -175,9 +204,14 @@ const Chat = () => {
   };
 
   const handleEditMessage = async (msgId) => {
-    if (!editMessageText.trim() || !activeChannel || !workspace) return;
+    if (!editMessageText.trim() || !workspace) return;
     try {
-      await axios.put(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`, { text: editMessageText });
+      if (activeChannel) {
+        await axios.put(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`, { text: editMessageText });
+      } else if (activeDM) {
+        // Assume DM messages don't have update route yet, or just log for now
+        console.log("DM message edit not implemented yet");
+      }
       setEditingMessageId(null);
       setEditMessageText('');
     } catch (error) {
@@ -186,10 +220,15 @@ const Chat = () => {
   };
 
   const handleDeleteMessage = async (msgId) => {
-    if (!activeChannel || !workspace) return;
+    if (!workspace) return;
     if (!window.confirm("Are you sure you want to delete this message?")) return;
     try {
-      await axios.delete(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`);
+      if (activeChannel) {
+        await axios.delete(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`);
+      } else if (activeDM) {
+        // Assume DM messages don't have delete route yet, or just log for now
+        console.log("DM message delete not implemented yet");
+      }
     } catch (error) {
       console.error(error);
     }
@@ -225,42 +264,29 @@ const Chat = () => {
     setIsChannelModalOpen(true);
   };
 
-  const handleDMClick = async (targetUserId) => {
+  const handleDMClick = async (memberUser) => {
     if (!workspace) return;
     try {
-      const res = await axios.post(`/workspaces/${workspace._id}/channels/dm`, { targetUserId });
-      
-      // Add to channels if not already in the list
-      setChannels(prev => {
-        if (!prev.find(c => c._id === res.data._id)) {
-          return [...prev, res.data];
-        }
-        return prev;
-      });
-      
-      setActiveChannel(res.data);
-    } catch (error) {
-      console.error(error);
+      const res = await axios.get(`/workspaces/${workspace._id}/dms/${memberUser._id}`);
+      setActiveDM({ user: memberUser, dmId: res.data._id });
+      setActiveChannel(null);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const getChannelDisplayName = (channel) => {
-    if (!channel) return 'select-channel';
-    if (channel.name.startsWith('dm-')) {
-      const userIds = channel.name.replace('dm-', '').split('-');
-      const otherUserId = userIds.find(id => id !== user?._id);
-      if (otherUserId && workspace?.members) {
-        const otherMember = workspace.members.find(m => m.user && m.user._id === otherUserId);
-        if (otherMember) {
-          return otherMember.user.name || otherMember.user.email.split('@')[0];
-        }
-      }
-      return 'Direct Message';
-    }
-    return channel.name;
+  const getChannelDisplayName = (channel, dm) => {
+    if (channel) return `# ${channel.name}`;
+    if (dm) return dm.user.name;
+    return '';
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary h-full animate-fade-in">
+      <div className="w-12 h-12 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
+      <p className="text-text-secondary font-medium">Loading workspace...</p>
+    </div>
+  );
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (
@@ -305,14 +331,19 @@ const Chat = () => {
           <div className="space-y-1 px-2">
             {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user?._id).map(member => {
               const isOnline = onlineUsers.has(member.user._id);
+              const isActiveDM = activeDM?.user?._id === member.user._id;
               return (
                 <button 
                   key={member.user._id} 
-                  onClick={() => handleDMClick(member.user._id)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm text-text-secondary hover:bg-bg-secondary hover:text-text-primary transition-colors group"
+                  onClick={() => handleDMClick(member.user)}
+                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors group ${
+                    isActiveDM
+                      ? 'bg-accent-blue/10 text-accent-blue font-medium' 
+                      : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                  }`}
                 >
                   <div className="flex items-center truncate">
-                    <div className={`h-2 w-2 rounded-full mr-2 ${isOnline ? 'bg-success shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'border border-border'}`}></div>
+                    <div className={`h-2 w-2 rounded-full mr-2 ${isOnline ? 'bg-success shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'border border-border bg-border'}`}></div>
                     <span className="truncate group-hover:font-medium">{member.user.name || member.user.email.split('@')[0]}</span>
                   </div>
                   <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
@@ -336,8 +367,14 @@ const Chat = () => {
         <div className="h-16 flex items-center justify-between px-6 border-b border-border shadow-sm z-10 bg-bg-secondary/90 backdrop-blur">
           <div className="flex items-center">
             <h3 className="font-bold text-text-primary flex items-center text-lg">
-              <Hash size={20} className="text-text-secondary mr-2" />
-              {getChannelDisplayName(activeChannel)}
+              {activeChannel ? (
+                <Hash size={20} className="text-text-secondary mr-2" />
+              ) : (
+                <div className="h-6 w-6 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center mr-3 text-xs font-bold">
+                  {activeDM?.user?.name?.charAt(0) || '?'}
+                </div>
+              )}
+              {getChannelDisplayName(activeChannel, activeDM)}
             </h3>
           </div>
         </div>
@@ -506,7 +543,7 @@ const Chat = () => {
 
             <textarea 
               rows="1"
-              placeholder={`Message ${getChannelDisplayName(activeChannel)}`}
+              placeholder={`Message ${getChannelDisplayName(activeChannel, activeDM)}`}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={(e) => {

@@ -9,6 +9,7 @@ const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   const [workspaces, setWorkspaces] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [stats, setStats] = useState({ projects: 0, tasks: 0, members: 0, meetings: 0 });
@@ -21,6 +22,7 @@ const Dashboard = () => {
 
   const fetchWorkspaces = async () => {
     try {
+      setLoading(true);
       const res = await axios.get('/workspaces');
       setWorkspaces(res.data);
       if (user?.role === 'super_admin') {
@@ -43,6 +45,8 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -94,7 +98,12 @@ const Dashboard = () => {
         )}
       </div>
 
-      {workspaces.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center h-64 animate-fade-in">
+          <div className="w-12 h-12 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
+          <p className="text-text-secondary font-medium">Loading your workspace...</p>
+        </div>
+      ) : workspaces.length === 0 ? (
         <div className="text-center mt-20">
           <h2 className="text-2xl font-bold text-text-primary mb-4">
             {user?.role === 'super_admin' ? 'Welcome to MadhuraWS!' : 'You are not in a workspace yet'}
