@@ -134,8 +134,8 @@ const Email = () => {
   if (!workspace) return <div className="p-8">Loading workspace...</div>;
 
   return (
-    <div className="h-full flex flex-col font-sans">
-      <div className="mb-6 flex justify-between items-center">
+    <div className="absolute inset-6 flex flex-col font-sans bg-bg-primary">
+      <div className="mb-6 flex justify-between items-center shrink-0">
         <h1 className="text-2xl font-bold text-text-primary">Email</h1>
       </div>
 
@@ -364,7 +364,7 @@ const Email = () => {
                             <button onClick={(e) => { e.stopPropagation(); toggleStar(email._id); }} className="hover:text-warning transition-colors">
                               <Star size={18} className={isStarred ? 'fill-warning text-warning' : ''} />
                             </button>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
                               <div className="w-6 h-6 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs shrink-0">
                                 {displayUser ? displayUser.charAt(0).toUpperCase() : '?'}
                               </div>
