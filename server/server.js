@@ -4,6 +4,7 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
+const path = require('path');
 
 // Load env vars
 dotenv.config();
@@ -70,6 +71,8 @@ app.use((req, res, next) => {
 app.use(cors(corsOptions));
 app.use(express.json());
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.get('/', (req, res) => {
   res.send('Madhura Workspace API is running...');
 });
@@ -82,6 +85,7 @@ app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/documents', require('./routes/documentRoutes'));
 app.use('/api/meetings', require('./routes/meetingRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 const PORT = process.env.PORT || 5000;
 

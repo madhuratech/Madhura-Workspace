@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X, Video, Folder, Link as LinkIcon } from 'lucide-react';
+import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X, Video, Folder, Link as LinkIcon, File } from 'lucide-react';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
@@ -16,12 +16,13 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
-  const [newChannelData, setNewChannelData] = useState({ name: '', description: '', members: [] });
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const folderInputRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     fetchWorkspaceAndChannels();
@@ -126,15 +127,47 @@ const Chat = () => {
     }
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !activeChannel || !workspace) return;
+  const handleSendMessage = async (e, customAttachment = null) => {
+    if (e) e.preventDefault();
+    if (!customAttachment && !newMessage.trim()) return;
+    if (!activeChannel || !workspace) return;
     
     try {
-      await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages`, { text: newMessage });
+      await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages`, { 
+        text: newMessage,
+        attachment: customAttachment
+      });
       setNewMessage('');
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingFile(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await axios.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      // Send message with attachment
+      await handleSendMessage(null, {
+        url: res.data.url,
+        fileType: res.data.fileType,
+        fileName: res.data.fileName
+      });
+    } catch (error) {
+      console.error('File upload failed', error);
+      alert('Failed to upload file');
+    } finally {
+      setUploadingFile(false);
+      // Reset input
+      e.target.value = null;
     }
   };
 
@@ -357,10 +390,24 @@ const Chat = () => {
                         </div>
                       ) : (
                         <div className="relative inline-block max-w-[85%]">
-                          <p className="text-sm text-text-primary bg-bg-primary border border-border inline-block p-3 rounded-2xl rounded-tl-sm shadow-sm pr-12">
-                            {msg.text}
+                          <div className="text-sm text-text-primary bg-bg-primary border border-border p-3 rounded-2xl rounded-tl-sm shadow-sm">
+                            {msg.attachment && (
+                              <div className="mb-2">
+                                {msg.attachment.fileType.startsWith('image/') ? (
+                                  <img src={`${API_URL}${msg.attachment.url}`} alt={msg.attachment.fileName} className="max-w-xs rounded-lg border border-border" />
+                                ) : msg.attachment.fileType.startsWith('video/') ? (
+                                  <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-xs rounded-lg border border-border" />
+                                ) : (
+                                  <a href={`${API_URL}${msg.attachment.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-accent-blue bg-accent-blue/10 px-3 py-2 rounded-lg hover:underline">
+                                    <File size={16} />
+                                    <span className="truncate max-w-[200px]">{msg.attachment.fileName}</span>
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                            {msg.text && <p className="pr-12">{msg.text}</p>}
                             {msg.isEdited && <span className="text-[10px] text-text-secondary italic ml-2 opacity-60">(edited)</span>}
-                          </p>
+                          </div>
                           
                           {user?._id === msg.sender._id && (
                             <div className="absolute -right-10 top-2 hidden group-hover/msg:flex items-center space-x-1 bg-bg-secondary border border-border rounded-lg shadow-sm p-1 z-10">
@@ -417,9 +464,11 @@ const Chat = () => {
               )}
             </div>
 
-            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
-            <input type="file" ref={videoInputRef} className="hidden" accept="video/*" />
-            <input type="file" ref={folderInputRef} className="hidden" webkitdirectory="true" directory="true" />
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*" />
+            <input type="file" ref={videoInputRef} onChange={handleFileUpload} className="hidden" accept="video/*" />
+            <input type="file" ref={folderInputRef} onChange={handleFileUpload} className="hidden" />
+
+            {uploadingFile && <div className="absolute -top-8 left-0 text-xs text-accent-blue font-bold animate-pulse">Uploading file...</div>}
 
             <textarea 
               rows="1"

@@ -3,7 +3,12 @@ const mongoose = require('mongoose');
 const MessageSchema = new mongoose.Schema({
   text: {
     type: String,
-    required: [true, 'Please add message text']
+    default: ''
+  },
+  attachment: {
+    url: String,
+    fileType: String,
+    fileName: String
   },
   channel: {
     type: mongoose.Schema.Types.ObjectId,

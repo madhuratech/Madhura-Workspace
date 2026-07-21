@@ -137,7 +137,7 @@ const Email = () => {
         <div className="w-64 flex flex-col shrink-0">
           <button 
             onClick={() => setIsComposing(true)}
-            className="w-full bg-accent-green hover:bg-green-600 text-white py-3 rounded-lg flex items-center justify-center font-medium transition-colors mb-6 shadow-sm"
+            className="w-full bg-accent-blue hover:bg-green-600 text-white py-3 rounded-lg flex items-center justify-center font-medium transition-colors mb-6 shadow-sm"
           >
             <span className="mr-2 text-xl font-light">◇</span> Compose New
           </button>
@@ -153,7 +153,7 @@ const Email = () => {
                   <li key={folder.id}>
                     <button 
                       onClick={() => { setActiveFolder(folder.id); setIsComposing(false); }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing ? 'bg-accent-green/10 text-accent-green font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
                     >
                       <div className="flex items-center">
                         <span className="mr-3 opacity-80">{folder.icon}</span>
@@ -178,7 +178,7 @@ const Email = () => {
                   <li key={folder.id}>
                     <button 
                       onClick={() => { setActiveFolder(folder.id); setIsComposing(false); }}
-                      className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing ? 'bg-accent-green/10 text-accent-green font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
+                      className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
                     >
                       <span className="mr-3 opacity-80">{folder.icon}</span>
                       {folder.name}
@@ -200,7 +200,7 @@ const Email = () => {
               <div className="flex gap-4 mb-4">
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-text-secondary mb-1">From *</label>
-                  <select disabled className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-green appearance-none">
+                  <select disabled className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none">
                     <option>{user.email}</option>
                   </select>
                 </div>
@@ -209,7 +209,7 @@ const Email = () => {
                   <select 
                     value={composeData.to}
                     onChange={(e) => setComposeData({...composeData, to: e.target.value})}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-green appearance-none"
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
                   >
                     <option value="">Select recipient</option>
                     {workspaceMembers.map(m => (
@@ -225,7 +225,7 @@ const Email = () => {
                   <select 
                     value={composeData.bcc}
                     onChange={(e) => setComposeData({...composeData, bcc: e.target.value})}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-green appearance-none"
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
                   >
                     <option value="">Select</option>
                     {workspaceMembers.map(m => (
@@ -239,7 +239,7 @@ const Email = () => {
                     type="text" 
                     value={composeData.subject}
                     onChange={(e) => setComposeData({...composeData, subject: e.target.value})}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-green"
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
                   />
                 </div>
               </div>
@@ -250,7 +250,7 @@ const Email = () => {
                   placeholder="Type Here"
                   value={composeData.message}
                   onChange={(e) => setComposeData({...composeData, message: e.target.value})}
-                  className="flex-1 w-full bg-bg-primary border border-border rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-accent-green resize-none custom-scrollbar"
+                  className="flex-1 w-full bg-bg-primary border border-border rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-accent-blue resize-none custom-scrollbar"
                 ></textarea>
               </div>
 
@@ -276,7 +276,7 @@ const Email = () => {
                 </button>
                 <button 
                   onClick={() => handleSendEmail(false)}
-                  className="flex items-center px-6 py-2 bg-accent-green hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+                  className="flex items-center px-6 py-2 bg-accent-blue hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
                 >
                   <Send size={16} className="mr-2" /> Send Email
                 </button>
@@ -291,7 +291,7 @@ const Email = () => {
                   <div className="w-10 flex justify-center">
                     <input 
                       type="checkbox" 
-                      className="accent-accent-green"
+                      className="accent-accent-blue"
                       checked={emails.length > 0 && selectedEmails.length === emails.length}
                       onChange={(e) => {
                         if (e.target.checked) setSelectedEmails(emails.map(m => m._id));
@@ -309,7 +309,7 @@ const Email = () => {
                   <input 
                     type="text" 
                     placeholder="Search" 
-                    className="pl-9 pr-4 py-1.5 bg-bg-primary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent-green w-64"
+                    className="pl-9 pr-4 py-1.5 bg-bg-primary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent-blue w-64"
                   />
                 </div>
               </div>
@@ -336,12 +336,12 @@ const Email = () => {
                       return (
                         <div 
                           key={email._id} 
-                          className={`flex items-center px-4 py-3 hover:shadow-md transition-all cursor-pointer border-l-2 ${isSelected ? 'bg-bg-primary border-accent-green' : isUnread ? 'bg-bg-primary/50 border-accent-green/50' : 'bg-transparent border-transparent'}`}
+                          className={`flex items-center px-4 py-3 hover:shadow-md transition-all cursor-pointer border-l-2 ${isSelected ? 'bg-bg-primary border-accent-blue' : isUnread ? 'bg-bg-primary/50 border-accent-blue/50' : 'bg-transparent border-transparent'}`}
                         >
                           <div className="flex items-center gap-4 w-48 shrink-0 text-text-secondary">
                             <input 
                               type="checkbox" 
-                              className="accent-accent-green"
+                              className="accent-accent-blue"
                               checked={isSelected}
                               onChange={() => toggleSelectEmail(email._id)}
                             />

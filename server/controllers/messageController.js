@@ -70,8 +70,15 @@ exports.getMessages = async (req, res) => {
 
 exports.createMessage = async (req, res) => {
   try {
+    const { text, attachment } = req.body;
+
+    if (!text && !attachment) {
+      return res.status(400).json({ message: 'Please add message text or an attachment' });
+    }
+
     const message = await Message.create({
-      text: req.body.text,
+      text: text || '',
+      attachment,
       channel: req.params.channelId,
       sender: req.user._id
     });
