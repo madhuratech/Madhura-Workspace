@@ -285,7 +285,7 @@ const Email = () => {
             </div>
           ) : !viewingEmail ? (
             // Email List View
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-h-0">
               {/* Toolbar */}
               <div className="p-4 border-b border-border flex items-center justify-between bg-bg-secondary">
                 <div className="flex items-center gap-2 text-text-secondary">
@@ -395,7 +395,7 @@ const Email = () => {
             </div>
           ) : viewingEmail ? (
             // Read Email View
-            <div className="flex-1 flex flex-col h-full bg-bg-secondary">
+            <div className="flex-1 flex flex-col h-full bg-bg-secondary min-h-0">
               <div className="p-4 border-b border-border flex items-center gap-4 bg-bg-primary shrink-0">
                 <button onClick={() => setViewingEmail(null)} className="text-text-secondary hover:text-text-primary font-medium text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-bg-secondary transition-colors">
                   &larr; Back to {activeFolder}
