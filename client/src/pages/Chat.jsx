@@ -495,6 +495,7 @@ const Chat = () => {
                   />
                 </div>
               )}
+              </div>
             </div>
 
             <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept="image/*" />
