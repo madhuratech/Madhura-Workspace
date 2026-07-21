@@ -88,6 +88,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const deleteAllNotifications = async () => {
+    try {
+      await axios.delete('/notifications/delete-all');
+      setNotifications([]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const login = async (email, password) => {
     try {
       const res = await axios.post('/auth/login', { email, password });
@@ -132,7 +141,7 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{ 
       user, loading, login, register, logout, 
-      socket, notifications, unreadCount, markAsRead, markAllAsRead 
+      socket, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications 
     }}>
       {!loading && children}
     </AuthContext.Provider>

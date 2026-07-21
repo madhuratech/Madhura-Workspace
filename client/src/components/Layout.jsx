@@ -5,7 +5,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock } from 'lucide-react';
 
 const Layout = () => {
-  const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, socket } = useContext(AuthContext);
+  const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -177,14 +177,24 @@ const Layout = () => {
                 <div className="absolute right-0 mt-3 w-80 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 flex flex-col max-h-[400px]">
                   <div className="p-3 border-b border-border flex justify-between items-center bg-bg-secondary rounded-t-xl shrink-0">
                     <h3 className="font-bold text-text-primary text-sm">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button 
-                        onClick={markAllAsRead}
-                        className="text-[10px] text-accent-blue font-semibold hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
+                    <div className="flex space-x-3">
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={markAllAsRead}
+                          className="text-[10px] text-accent-blue font-semibold hover:underline"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                      {notifications.length > 0 && (
+                        <button 
+                          onClick={deleteAllNotifications}
+                          className="text-[10px] text-danger font-semibold hover:underline"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar bg-bg-secondary rounded-b-xl">
                     {notifications.length === 0 ? (

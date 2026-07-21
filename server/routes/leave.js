@@ -22,6 +22,38 @@ router.post('/', async (req, res) => {
     });
 
     await leave.save();
+
+    // Send Notification to Admins/HR/TL
+    const workspace = await Workspace.findById(workspaceId).populate('members.user');
+    const memberObj = workspace.members.find(m => m.user._id.toString() === req.user._id.toString());
+    const role = memberObj ? memberObj.role : 'employee';
+
+    const notifRecipients = workspace.members.filter(m => {
+      if (m.user._id.toString() === req.user._id.toString()) return false;
+      if (role === 'employee' && (m.role === 'team_leader' || m.role === 'hr' || m.role === 'super_admin')) return true;
+      if (role === 'team_leader' && (m.role === 'hr' || m.role === 'super_admin')) return true;
+      if (role === 'hr' && m.role === 'super_admin') return true;
+      return false;
+    });
+
+    const Notification = require('../models/Notification');
+    for (const rec of notifRecipients) {
+      const notif = new Notification({
+        recipient: rec.user._id,
+        sender: req.user._id,
+        type: 'general',
+        title: 'New Leave Request',
+        message: `${req.user.name} has applied for ${type} leave.`,
+        link: '/attendance'
+      });
+      await notif.save();
+
+      const socketId = req.onlineUsers ? req.onlineUsers.get(rec.user._id.toString()) : null;
+      if (socketId && req.io) {
+        req.io.to(socketId).emit('activity', notif);
+      }
+    }
+
     res.status(201).json(leave);
   } catch (error) {
     console.error(error);
@@ -92,6 +124,24 @@ router.put('/:id/status', async (req, res) => {
     await leave.save();
 
     res.json(leave);
+
+    // Notify the user
+    const Notification = require('../models/Notification');
+    const notif = new Notification({
+      recipient: leave.user,
+      sender: req.user._id,
+      type: 'general',
+      title: 'Leave Request Updated',
+      message: `Your leave request has been ${status.toLowerCase()} by ${req.user.name}.`,
+      link: '/attendance'
+    });
+    await notif.save();
+
+    const socketId = req.onlineUsers ? req.onlineUsers.get(leave.user.toString()) : null;
+    if (socketId && req.io) {
+      req.io.to(socketId).emit('activity', notif);
+    }
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

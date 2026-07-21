@@ -53,6 +53,18 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
+// @desc    Delete all notifications
+// @route   DELETE /api/notifications/delete-all
+// @access  Private
+const deleteAllNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({ recipient: req.user._id });
+    res.status(200).json({ message: 'All notifications deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Helper function to send notification internally from other controllers
 const sendNotification = async (req, recipientId, type, title, message, link) => {
   try {
@@ -82,5 +94,6 @@ module.exports = {
   getNotifications,
   markAsRead,
   markAllAsRead,
+  deleteAllNotifications,
   sendNotification
 };

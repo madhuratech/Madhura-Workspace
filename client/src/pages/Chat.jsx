@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X } from 'lucide-react';
+import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X, Video, Folder, Link as LinkIcon } from 'lucide-react';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
@@ -17,6 +17,7 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [newChannelData, setNewChannelData] = useState({ name: '', description: '', members: [] });
+  const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -381,9 +382,38 @@ const Chat = () => {
         {/* Message Input */}
         <div className="p-4 bg-bg-secondary border-t border-border">
           <form onSubmit={handleSendMessage} className="relative flex items-end">
-            <button type="button" className="absolute left-3 bottom-3 text-text-secondary hover:text-accent-blue transition-colors">
-              <Plus size={20} />
-            </button>
+            <div className="relative">
+              <button 
+                type="button" 
+                onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
+                className="absolute left-3 bottom-3 text-text-secondary hover:text-accent-blue transition-colors z-10"
+              >
+                <Plus size={20} />
+              </button>
+              
+              {isAttachMenuOpen && (
+                <div className="absolute bottom-12 left-0 bg-white dark:bg-bg-secondary border border-border shadow-xl rounded-xl w-48 py-2 z-50 animate-fade-in-up">
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Share Image clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <ImageIcon size={16} className="mr-3 text-accent-blue" />
+                    Share Image
+                  </button>
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Share Video clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <Video size={16} className="mr-3 text-danger" />
+                    Share Video
+                  </button>
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Share Folder clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <Folder size={16} className="mr-3 text-orange-500" />
+                    Share Folder
+                  </button>
+                  <div className="h-px bg-border my-1 mx-4"></div>
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Google Drive clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <LinkIcon size={16} className="mr-3 text-success" />
+                    Google Drive link
+                  </button>
+                </div>
+              )}
+            </div>
+
             <textarea 
               rows="1"
               placeholder={`Message ${getChannelDisplayName(activeChannel)}`}
