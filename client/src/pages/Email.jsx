@@ -194,7 +194,7 @@ const Email = () => {
         <div className="flex-1 bg-bg-secondary border border-border rounded-xl flex flex-col overflow-hidden shadow-sm">
           {isComposing ? (
             // Compose View
-            <div className="flex-1 flex flex-col p-6">
+            <div className="flex-1 flex flex-col p-6 overflow-y-auto custom-scrollbar">
               <h2 className="text-lg font-bold text-text-primary mb-6">New Message</h2>
               
               <div className="flex gap-4 mb-4">

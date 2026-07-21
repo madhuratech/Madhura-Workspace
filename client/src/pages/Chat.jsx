@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X, Video, Folder, Link as LinkIcon, File } from 'lucide-react';
+import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X, Video, Folder, Link as LinkIcon, File, Smile } from 'lucide-react';
+import EmojiPicker from 'emoji-picker-react';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
@@ -17,6 +18,8 @@ const Chat = () => {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [fullScreenImage, setFullScreenImage] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -394,7 +397,12 @@ const Chat = () => {
                             {msg.attachment && (
                               <div className="mb-2">
                                 {msg.attachment.fileType.startsWith('image/') ? (
-                                  <img src={`${API_URL}${msg.attachment.url}`} alt={msg.attachment.fileName} className="max-w-xs rounded-lg border border-border" />
+                                  <img 
+                                    src={`${API_URL}${msg.attachment.url}`} 
+                                    alt={msg.attachment.fileName} 
+                                    className="max-w-xs rounded-lg border border-border cursor-pointer hover:opacity-90 transition-opacity" 
+                                    onClick={() => setFullScreenImage(`${API_URL}${msg.attachment.url}`)}
+                                  />
                                 ) : msg.attachment.fileType.startsWith('video/') ? (
                                   <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-xs rounded-lg border border-border" />
                                 ) : (
@@ -432,34 +440,59 @@ const Chat = () => {
         {/* Message Input */}
         <div className="p-4 bg-bg-secondary border-t border-border">
           <form onSubmit={handleSendMessage} className="relative flex items-end">
-            <div className="relative">
-              <button 
-                type="button" 
-                onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
-                className="absolute left-3 bottom-3 text-text-secondary hover:text-accent-blue transition-colors z-10"
-              >
-                <Plus size={20} />
-              </button>
+            
+            <div className="absolute left-2 bottom-2 flex items-center space-x-1 z-10">
+              <div className="relative">
+                <button 
+                  type="button" 
+                  onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
+                  className="p-1.5 text-text-secondary hover:text-accent-blue hover:bg-bg-primary rounded-lg transition-colors"
+                >
+                  <Plus size={20} />
+                </button>
+                
+                {isAttachMenuOpen && (
+                  <div className="absolute bottom-12 left-0 bg-white dark:bg-bg-secondary border border-border shadow-xl rounded-xl w-48 py-2 z-50 animate-fade-in-up">
+                    <button type="button" onClick={() => { setIsAttachMenuOpen(false); fileInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                      <ImageIcon size={16} className="mr-3 text-accent-blue" />
+                      Share Image
+                    </button>
+                    <button type="button" onClick={() => { setIsAttachMenuOpen(false); videoInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                      <Video size={16} className="mr-3 text-danger" />
+                      Share Video
+                    </button>
+                    <button type="button" onClick={() => { setIsAttachMenuOpen(false); folderInputRef.current?.click(); }} className="w-full flex items-center space-x-3 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 text-text-primary transition-colors text-sm text-left">
+                      <File size={16} className="mr-1 text-warning" />
+                      <span>Share File</span>
+                    </button>
+                    <div className="h-px bg-border my-1 mx-4"></div>
+                    <button type="button" onClick={() => { setIsAttachMenuOpen(false); window.open('https://drive.google.com', '_blank'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                      <LinkIcon size={16} className="mr-3 text-success" />
+                      Google Drive link
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="relative">
+                <button 
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="p-1.5 text-text-secondary hover:text-accent-blue hover:bg-bg-primary rounded-lg transition-colors"
+                >
+                  <Smile size={20} />
+                </button>
+
               
-              {isAttachMenuOpen && (
-                <div className="absolute bottom-12 left-0 bg-white dark:bg-bg-secondary border border-border shadow-xl rounded-xl w-48 py-2 z-50 animate-fade-in-up">
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); fileInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                    <ImageIcon size={16} className="mr-3 text-accent-blue" />
-                    Share Image
-                  </button>
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); videoInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                    <Video size={16} className="mr-3 text-danger" />
-                    Share Video
-                  </button>
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); folderInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                    <Folder size={16} className="mr-3 text-orange-500" />
-                    Share Folder
-                  </button>
-                  <div className="h-px bg-border my-1 mx-4"></div>
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); window.open('https://drive.google.com', '_blank'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
-                    <LinkIcon size={16} className="mr-3 text-success" />
-                    Google Drive link
-                  </button>
+              {showEmojiPicker && (
+                <div className="absolute bottom-12 left-0 z-50">
+                  <EmojiPicker 
+                    theme={document.documentElement.classList.contains('dark') ? 'dark' : 'light'}
+                    onEmojiClick={(emoji) => {
+                      setNewMessage(prev => prev + emoji.emoji);
+                      setShowEmojiPicker(false);
+                    }} 
+                  />
                 </div>
               )}
             </div>
@@ -481,7 +514,7 @@ const Chat = () => {
                   handleSendMessage(e);
                 }
               }}
-              className="w-full bg-bg-primary border border-border rounded-xl pl-12 pr-12 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors resize-none overflow-hidden"
+              className="w-full bg-bg-primary border border-border rounded-xl pl-[5.5rem] pr-12 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors resize-none overflow-hidden"
               style={{ minHeight: '46px', maxHeight: '120px' }}
             />
             <button 
@@ -565,6 +598,24 @@ const Chat = () => {
           </div>
         </div>
       )}
+      {/* Full Screen Image Viewer Modal */}
+      {fullScreenImage && (
+        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center animate-fade-in" onClick={() => setFullScreenImage(null)}>
+          <button 
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-full"
+            onClick={() => setFullScreenImage(null)}
+          >
+            <X size={24} />
+          </button>
+          <img 
+            src={fullScreenImage} 
+            alt="Full screen preview" 
+            className="max-w-[95vw] max-h-[95vh] object-contain rounded-lg animate-zoom-in"
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
+
     </div>
   );
 };
