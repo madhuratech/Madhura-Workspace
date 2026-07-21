@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 
 // Pages
 import Login from './pages/Login';
@@ -27,29 +28,31 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      
-      {/* Protected Routes wrapped in Layout (Sidebar + Navbar) */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<Dashboard />} />
-        <Route path="projects" element={<Projects />} />
-        <Route path="team" element={<Team />} />
-        <Route path="meetings" element={<Meetings />} />
-        <Route path="documents" element={<Documents />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="chat" element={<Chat />} />
-        <Route path="workspace/:id" element={<WorkspaceOverview />} />
-        <Route path="project/:id" element={<ProjectDetails />} />
-        <Route path="tl-dashboard" element={<TeamLeaderDashboard />} />
-        {/* We can add tasks and documents nested inside project or separate */}
-      </Route>
-    </Routes>
+    <ToastProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        {/* Protected Routes wrapped in Layout (Sidebar + Navbar) */}
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Dashboard />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="team" element={<Team />} />
+          <Route path="meetings" element={<Meetings />} />
+          <Route path="documents" element={<Documents />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="chat" element={<Chat />} />
+          <Route path="workspace/:id" element={<WorkspaceOverview />} />
+          <Route path="project/:id" element={<ProjectDetails />} />
+          <Route path="tl-dashboard" element={<TeamLeaderDashboard />} />
+          {/* We can add tasks and documents nested inside project or separate */}
+        </Route>
+      </Routes>
+    </ToastProvider>
   );
 }
 

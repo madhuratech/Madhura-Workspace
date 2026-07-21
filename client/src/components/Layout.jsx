@@ -82,7 +82,7 @@ const Layout = () => {
       <aside className="w-64 bg-bg-secondary border-r border-border hidden md:flex flex-col z-20">
         <div className="p-5 flex items-center space-x-3">
           <div className="h-10 w-10 bg-accent-blue rounded flex items-center justify-center text-white font-bold text-xl">
-            E
+            M
           </div>
           <h2 className="text-xl font-bold text-text-primary tracking-wide">MadhuraWS</h2>
         </div>
@@ -155,7 +155,6 @@ const Layout = () => {
             <button onClick={toggleTheme} className="hover:text-text-primary transition-colors">
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button className="hover:text-text-primary transition-colors"><Search size={18} /></button>
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}

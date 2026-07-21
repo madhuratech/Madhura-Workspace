@@ -1,12 +1,14 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -14,66 +16,68 @@ const Login = () => {
     setError('');
     const success = await login(email, password);
     if (success) {
+      showToast('Login Successful! Welcome back.', 'success');
       navigate('/');
     } else {
+      showToast('Invalid email or password', 'error');
       setError('Invalid email or password');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark font-sans relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-bg-primary font-sans relative overflow-hidden transition-colors duration-300">
       {/* Background decoration */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary rounded-full blur-[120px] opacity-50 pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-blue rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-blue rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
 
-      <div className="glass p-10 rounded-2xl w-full max-w-md z-10 shadow-2xl border border-slate-700/50">
+      <div className="bg-bg-secondary p-10 rounded-2xl w-full max-w-md z-10 shadow-2xl border border-border">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-white tracking-wide mb-2">
-            MADHURA<span className="text-accent">WS</span>
+          <h1 className="text-4xl font-bold text-text-primary tracking-wide mb-2">
+            MADHURA<span className="text-accent-blue">WS</span>
           </h1>
-          <p className="text-slate-400">Sign in to your workspace</p>
+          <p className="text-text-secondary">Sign in to your workspace</p>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 text-sm text-center">
+          <div className="bg-danger/10 border border-danger/50 text-danger px-4 py-3 rounded-lg mb-6 text-sm text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Email Address</label>
             <input 
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+              className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
               placeholder="you@company.com"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2">Password</label>
             <input 
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+              className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
               placeholder="••••••••"
               required
             />
           </div>
           <button 
             type="submit" 
-            className="w-full bg-accent hover:bg-yellow-400 text-dark font-bold py-3 px-4 rounded-xl shadow-[0_0_15px_rgba(255,215,0,0.3)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full bg-accent-blue hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             Sign In
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-slate-400">
+        <p className="mt-8 text-center text-sm text-text-secondary">
           Don't have an account?{' '}
-          <Link to="/register" className="text-accent hover:text-yellow-300 font-medium underline underline-offset-4">
+          <Link to="/register" className="text-accent-blue hover:underline font-medium underline-offset-4">
             Create one
           </Link>
         </p>

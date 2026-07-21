@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import { Search, Plus, UserPlus, Shield, X, Mail } from 'lucide-react';
 
 const Team = () => {
   const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const [workspace, setWorkspace] = useState(null);
   const [members, setMembers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -51,8 +53,6 @@ const Team = () => {
       }
     } catch (error) {
       console.error('Error fetching workspace:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -99,11 +99,13 @@ const Team = () => {
             members: selectedTeamMembers
           });
         }
+        showToast('Member added successfully!', 'success');
       }
       fetchWorkspaceData();
       handleCloseModal();
     } catch (error) {
-      alert(error.response?.data?.message || 'Error updating member');
+      console.error(error);
+      showToast(error.response?.data?.message || 'Error updating member', 'error');
     }
   };
 
@@ -112,14 +114,15 @@ const Team = () => {
     if (window.confirm('Are you sure you want to remove this member?')) {
       try {
         await axios.put(`/workspaces/${workspace._id}/members/${userId}`, { action: 'remove' });
+        showToast('Member removed successfully!', 'success');
         fetchWorkspaceData();
       } catch (error) {
-        alert(error.response?.data?.message || 'Error removing member');
+        console.error(error);
+        showToast(error.response?.data?.message || 'Error removing member', 'error');
       }
     }
   };
 
-  if (loading) return <div className="p-8 text-text-secondary">Loading team data...</div>;
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (
@@ -268,7 +271,11 @@ const Team = () => {
                           <button onClick={() => {
                              if(window.confirm('Delete team?')) {
                                axios.delete(`/workspaces/${workspace._id}/teams/${team._id}`)
-                                .then(() => fetchWorkspaceData());
+                                .then(() => {
+                                  showToast('Team deleted successfully!', 'success');
+                                  fetchWorkspaceData();
+                                })
+                                .catch(() => showToast('Failed to delete team', 'error'));
                              }
                           }} className="text-danger hover:underline text-sm font-medium">Delete</button>
                         </>
@@ -433,17 +440,19 @@ const Team = () => {
               </button>
             </div>
             
-            <form onSubmit={async (e) => {
+             <form onSubmit={async (e) => {
               e.preventDefault();
               try {
                  await axios.post(`/workspaces/${workspace._id}/teams`, {
                     name: e.target.teamName.value,
                     leader: e.target.teamLeader.value,
                  });
+                 showToast('Team created successfully!', 'success');
                  fetchWorkspaceData();
                  setIsTeamModalOpen(false);
               } catch(err) {
-                 alert(err.response?.data?.message || 'Error creating team');
+                 console.error(err);
+                 showToast(err.response?.data?.message || 'Error creating team', 'error');
               }
             }} className="space-y-4">
               <div>

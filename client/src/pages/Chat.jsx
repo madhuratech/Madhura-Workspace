@@ -107,8 +107,6 @@ const Chat = () => {
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -220,8 +218,7 @@ const Chat = () => {
     return channel.name;
   };
 
-  if (loading) return <div className="p-8 text-text-secondary">Loading chat environment...</div>;
-  if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
+  if (!workspace) return null;
 
   return (
     <div className="h-full flex font-sans border border-border rounded-2xl overflow-hidden shadow-sm bg-bg-secondary">
@@ -299,11 +296,6 @@ const Chat = () => {
               <Hash size={20} className="text-text-secondary mr-2" />
               {getChannelDisplayName(activeChannel)}
             </h3>
-          </div>
-          
-          <div className="flex items-center space-x-4 text-text-secondary">
-            <button className="hover:text-text-primary transition-colors"><Search size={18} /></button>
-            <button className="hover:text-text-primary transition-colors"><Info size={18} /></button>
           </div>
         </div>
         

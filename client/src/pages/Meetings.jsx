@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -8,6 +9,7 @@ import { Plus, X, Video, Users as UsersIcon, Link as LinkIcon, Info } from 'luci
 
 const Meetings = () => {
   const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const [workspace, setWorkspace] = useState(null);
   const [meetings, setMeetings] = useState([]);
   const [members, setMembers] = useState([]);
@@ -55,8 +57,6 @@ const Meetings = () => {
       }
     } catch (error) {
       console.error('Error fetching workspace data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -117,10 +117,12 @@ const Meetings = () => {
         description: formData.description,
         participants: participantsIds
       });
+      showToast('Meeting created successfully!', 'success');
       fetchWorkspaceData();
       setIsModalOpen(false);
     } catch (error) {
-      alert(error.response?.data?.message || 'Error creating meeting');
+      console.error(error);
+      showToast(error.response?.data?.message || 'Error creating meeting', 'error');
     }
   };
 
@@ -142,7 +144,6 @@ const Meetings = () => {
     );
   };
 
-  if (loading) return <div className="p-8 text-text-secondary">Loading calendar...</div>;
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (

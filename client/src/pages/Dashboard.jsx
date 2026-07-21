@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
 import { Plus, Briefcase, CheckCircle2, Users, CalendarDays, Activity } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const [workspaces, setWorkspaces] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
@@ -51,9 +53,11 @@ const Dashboard = () => {
       setNewWorkspaceName('');
       setSelectedMembers([]);
       setShowModal(false);
+      showToast('Workspace created successfully!', 'success');
       fetchWorkspaces();
     } catch (error) {
       console.error(error);
+      showToast('Failed to create workspace.', 'error');
     }
   };
 
@@ -141,13 +145,15 @@ const Dashboard = () => {
             </div>
           ))}
           
-          <button 
-            onClick={() => setShowModal(true)}
-            className="bg-bg-primary border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center text-text-secondary hover:text-accent-blue hover:border-accent-blue hover:bg-accent-blue/5 transition-all p-6 shadow-sm min-h-[200px]"
-          >
-            <Plus size={32} className="mb-2" />
-            <span className="font-medium">Create New Workspace</span>
-          </button>
+          {user?.role === 'super_admin' && (
+            <button 
+              onClick={() => setShowModal(true)}
+              className="bg-bg-primary border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center text-text-secondary hover:text-accent-blue hover:border-accent-blue hover:bg-accent-blue/5 transition-all p-6 shadow-sm min-h-[200px]"
+            >
+              <Plus size={32} className="mb-2" />
+              <span className="font-medium">Create New Workspace</span>
+            </button>
+          )}
         </div>
       )}
 

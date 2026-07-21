@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import { Search, Calendar, Plus, FolderKanban, X, Users, CheckCircle2, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Projects = () => {
   const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const [projects, setProjects] = useState([]);
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -51,8 +53,6 @@ const Projects = () => {
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -112,13 +112,16 @@ const Projects = () => {
     try {
       if (editItem) {
         await axios.put(`/workspaces/${workspaceId}/projects/${editItem._id}`, payload);
+        showToast('Project updated successfully!', 'success');
       } else {
         await axios.post(`/workspaces/${workspaceId}/projects`, payload);
+        showToast('Project created successfully!', 'success');
       }
       fetchData();
       setIsModalOpen(false);
     } catch (error) {
-      alert(error.response?.data?.message || 'Error saving project');
+      console.error(error);
+      showToast(error.response?.data?.message || 'Error saving project', 'error');
     }
   };
 
@@ -127,8 +130,10 @@ const Projects = () => {
     try {
       await axios.delete(`/workspaces/${workspaceId}/projects/${projectId}`);
       setProjects(projects.filter(p => p._id !== projectId));
+      showToast('Project deleted successfully!', 'success');
     } catch (error) {
-      alert('Failed to delete project');
+      console.error(error);
+      showToast('Failed to delete project', 'error');
     }
   };
 
@@ -144,8 +149,6 @@ const Projects = () => {
   const filtered = projects.filter(p =>
     p.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  if (loading) return <div className="p-8 text-text-secondary">Loading projects...</div>;
 
   return (
     <div className="h-full flex flex-col font-sans">
