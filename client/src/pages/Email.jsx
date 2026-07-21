@@ -10,9 +10,10 @@ const Email = () => {
   const [loading, setLoading] = useState(true);
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [isComposing, setIsComposing] = useState(false);
-  const [composeData, setComposeData] = useState({ to: '', bcc: '', subject: '', message: '' });
+  const [composeData, setComposeData] = useState({ to: '', bcc: '', subject: '', body: '' }); // Changed 'message' to 'body' for compose
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [selectedEmails, setSelectedEmails] = useState([]);
+  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
     fetchWorkspace();
@@ -40,12 +41,26 @@ const Email = () => {
   const fetchEmails = async () => {
     try {
       setLoading(true);
+      setAuthRequired(false);
       const res = await axios.get(`/workspaces/${workspace._id}/emails?folder=${activeFolder}`);
       setEmails(res.data);
     } catch (error) {
+      if (error.response?.status === 401 && error.response?.data?.authRequired) {
+        setAuthRequired(true);
+      }
       console.error('Failed to fetch emails', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConnectGmail = async () => {
+    try {
+      const res = await axios.get('/auth/google/url');
+      window.location.href = res.data.url;
+    } catch (error) {
+      console.error('Failed to get auth URL', error);
+      alert('Failed to initialize Google Authentication');
     }
   };
 
@@ -62,14 +77,14 @@ const Email = () => {
     if (!composeData.to && !composeData.bcc) return alert('Please specify a recipient');
     try {
       await axios.post(`/workspaces/${workspace._id}/emails`, {
-        recipients: composeData.to ? [composeData.to] : [],
+        recipients: composeData.to.split(',').map(e => e.trim()).filter(e => e),
         bcc: composeData.bcc ? [composeData.bcc] : [],
         subject: composeData.subject,
-        message: composeData.message,
+        body: composeData.body, // Google API uses body
         isDraft
       });
       setIsComposing(false);
-      setComposeData({ to: '', bcc: '', subject: '', message: '' });
+      setComposeData({ to: '', bcc: '', subject: '', body: '' });
       fetchEmails();
     } catch (error) {
       console.error('Failed to send email', error);
@@ -206,32 +221,26 @@ const Email = () => {
                 </div>
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-text-secondary mb-1">To *</label>
-                  <select 
+                  <input 
+                    type="text"
+                    placeholder="example@gmail.com, team@company.com"
                     value={composeData.to}
                     onChange={(e) => setComposeData({...composeData, to: e.target.value})}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
-                  >
-                    <option value="">Select recipient</option>
-                    {workspaceMembers.map(m => (
-                      <option key={m.user._id} value={m.user._id}>{m.user.name} ({m.user.email})</option>
-                    ))}
-                  </select>
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  />
                 </div>
               </div>
 
               <div className="flex gap-4 mb-4">
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-text-secondary mb-1">BCC</label>
-                  <select 
+                  <input 
+                    type="text"
+                    placeholder="hidden@company.com"
                     value={composeData.bcc}
                     onChange={(e) => setComposeData({...composeData, bcc: e.target.value})}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
-                  >
-                    <option value="">Select</option>
-                    {workspaceMembers.map(m => (
-                      <option key={m.user._id} value={m.user._id}>{m.user.name} ({m.user.email})</option>
-                    ))}
-                  </select>
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  />
                 </div>
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-text-secondary mb-1">Subject *</label>
@@ -248,8 +257,8 @@ const Email = () => {
                 <label className="block text-sm font-medium text-text-secondary mb-1">Message</label>
                 <textarea 
                   placeholder="Type Here"
-                  value={composeData.message}
-                  onChange={(e) => setComposeData({...composeData, message: e.target.value})}
+                  value={composeData.body}
+                  onChange={(e) => setComposeData({...composeData, body: e.target.value})}
                   className="flex-1 w-full bg-bg-primary border border-border rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-accent-blue resize-none custom-scrollbar"
                 ></textarea>
               </div>
@@ -316,7 +325,24 @@ const Email = () => {
 
               {/* List */}
               <div className="flex-1 overflow-y-auto custom-scrollbar">
-                {loading ? (
+                {authRequired ? (
+                  <div className="h-full flex flex-col items-center justify-center p-8 bg-bg-secondary text-center animate-fade-in">
+                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                      <Mail size={40} className="text-blue-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-text-primary mb-3">Connect your Google Workspace</h2>
+                    <p className="text-text-secondary max-w-md mb-8">
+                      To read and send real emails from this module, you need to authorize Madhura Workspace to access your Gmail.
+                    </p>
+                    <button 
+                      onClick={handleConnectGmail}
+                      className="px-6 py-3 bg-[#4285f4] text-white font-medium rounded-lg hover:bg-blue-600 transition-colors shadow-md flex items-center"
+                    >
+                      <svg className="w-5 h-5 mr-3 bg-white rounded-full p-1" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                      Sign in with Google
+                    </button>
+                  </div>
+                ) : loading ? (
                   <div className="p-8 flex justify-center text-text-secondary">Loading emails...</div>
                 ) : emails.length === 0 ? (
                   <div className="p-12 flex flex-col items-center justify-center text-text-secondary">
@@ -326,12 +352,10 @@ const Email = () => {
                 ) : (
                   <div className="divide-y divide-border">
                     {emails.map((email) => {
-                      const isUnread = activeFolder === 'inbox' && (!email.readBy || !email.readBy.includes(user._id));
-                      const isStarred = email.starredBy && email.starredBy.includes(user._id);
+                      const isUnread = !email.isRead;
+                      const isStarred = false; // Starred feature would need actual Gmail label modifications
                       const isSelected = selectedEmails.includes(email._id);
-                      const displayUser = activeFolder === 'sent' || activeFolder === 'drafts' ? 
-                        email.recipients?.[0]?.name || 'Unknown' : 
-                        email.sender?.name || 'Unknown';
+                      const displayUser = activeFolder === 'sent' ? email.to : email.from;
                       
                       return (
                         <div 
@@ -350,26 +374,25 @@ const Email = () => {
                             </button>
                             <div className="flex items-center gap-3">
                               <div className="w-6 h-6 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs shrink-0">
-                                {displayUser.charAt(0).toUpperCase()}
+                                {displayUser ? displayUser.charAt(0).toUpperCase() : '?'}
                               </div>
                               <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-bold' : 'text-text-primary'}`}>
-                                {displayUser}
-                                {activeFolder !== 'sent' && activeFolder !== 'drafts' && email.sender?._id === user._id && ', me'}
+                                {displayUser ? displayUser.split('<')[0].trim() : 'Unknown'}
                               </span>
                             </div>
                           </div>
                           
-                          <div className="flex-1 flex items-center min-w-0 pr-4" onClick={() => {/* Open Email Detail (For now just mark read) */}}>
+                          <div className="flex-1 flex items-center min-w-0 pr-4" onClick={() => {/* Open Email Detail */}}>
                             <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-bold' : 'text-text-secondary'}`}>
                               {email.subject || '(No Subject)'} 
                               <span className="font-normal opacity-70 ml-2">
-                                - {email.message ? email.message.substring(0, 50) + '...' : ''}
+                                - {email.snippet ? email.snippet.replace(/&quot;/g, '"').substring(0, 50) + '...' : ''}
                               </span>
                             </span>
                           </div>
                           
                           <div className="text-xs text-text-secondary shrink-0">
-                            {new Date(email.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            {new Date(email.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                           </div>
                         </div>
                       );

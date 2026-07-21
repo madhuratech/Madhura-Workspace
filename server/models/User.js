@@ -29,6 +29,15 @@ const UserSchema = new mongoose.Schema({
     type: String,
     enum: ['super_admin', 'hr', 'team_leader', 'employee'],
     default: 'employee'
+  },
+  googleAccessToken: {
+    type: String
+  },
+  googleRefreshToken: {
+    type: String
+  },
+  googleTokenExpiry: {
+    type: Number
   }
 }, { timestamps: true });
 
