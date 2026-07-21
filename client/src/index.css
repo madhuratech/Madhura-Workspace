@@ -40,22 +40,14 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Hidden visually but functional */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none; /* Hide scrollbar for Chrome, Safari and Opera */
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-slate-800 rounded-full;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-600 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-500;
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Custom Table Styles */

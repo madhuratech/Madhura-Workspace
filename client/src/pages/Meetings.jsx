@@ -13,6 +13,7 @@ const Meetings = () => {
   const [members, setMembers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'logs'
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ 
@@ -160,101 +161,137 @@ const Meetings = () => {
         </button>
       </div>
 
-      <div className="bg-bg-primary flex-1 flex flex-col overflow-hidden relative border-none">
-        <style>{`
-          .fc {
-            --fc-page-bg-color: transparent;
-            --fc-neutral-bg-color: transparent;
-            --fc-neutral-text-color: var(--text-primary);
-            --fc-border-color: rgba(150, 150, 150, 0.1); /* Very subtle borders */
-            --fc-button-text-color: var(--text-secondary);
-            --fc-button-bg-color: transparent;
-            --fc-button-border-color: transparent;
-            --fc-button-hover-bg-color: var(--bg-secondary);
-            --fc-button-hover-border-color: transparent;
-            --fc-button-active-bg-color: var(--bg-secondary);
-            --fc-button-active-border-color: transparent;
-            --fc-event-bg-color: transparent;
-            --fc-event-border-color: transparent;
-            font-family: 'Inter', sans-serif;
-            color: var(--text-primary);
-          }
-          
-          .fc-theme-standard td, .fc-theme-standard th {
-            border-color: var(--fc-border-color);
-            border-width: 1px;
-            border-style: solid;
-          }
-          
-          /* Remove outer border for minimalist look */
-          .fc-scrollgrid {
-             border: none !important;
-          }
-          
-          .fc .fc-toolbar-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-primary);
-          }
-          
-          .fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active {
-            color: var(--text-primary);
-            font-weight: 600;
-            box-shadow: none;
-          }
-          
-          .fc .fc-button-primary:focus {
-            box-shadow: none;
-          }
+      {/* Tabs */}
+      <div className="flex border-b border-border mb-6">
+        <button 
+          onClick={() => setActiveTab('calendar')}
+          className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'calendar' ? 'text-accent-blue' : 'text-text-secondary hover:text-text-primary'}`}
+        >
+          Calendar View
+          {activeTab === 'calendar' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-blue"></div>}
+        </button>
+        <button 
+          onClick={() => setActiveTab('logs')}
+          className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'logs' ? 'text-accent-blue' : 'text-text-secondary hover:text-text-primary'}`}
+        >
+          Meeting Logs
+          {activeTab === 'logs' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-blue"></div>}
+        </button>
+      </div>
 
-          .fc-daygrid-day-number {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            font-weight: 500;
-            padding: 8px !important;
-          }
-          
-          .fc-daygrid-day.fc-day-today {
-            background-color: var(--accent-blue) !important;
-            opacity: 0.05;
-          }
-          
-          .fc-daygrid-day-top {
-            flex-direction: row;
-            justify-content: flex-end;
-          }
-          
-          .fc-event {
-             background-color: var(--accent-blue);
-             color: white;
-             border-radius: 6px;
-             margin: 2px 4px;
-             border: none;
-             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-             transition: transform 0.2s, box-shadow 0.2s;
-             cursor: pointer;
-          }
-          
-          .fc-event:hover {
-             transform: translateY(-1px);
-             box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-             background-color: #3b82f6; /* slightly lighter blue */
-          }
-        `}</style>
-        
-        <FullCalendar
-          plugins={[dayGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          events={calendarEvents}
-          dateClick={handleDateClick}
-          eventContent={renderEventContent}
-          height="100%"
-          headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,dayGridWeek'
-          }}
-        />
+      <div className="bg-bg-primary flex-1 flex flex-col overflow-hidden relative border-none">
+        {activeTab === 'calendar' ? (
+          <div className="max-w-5xl w-full mx-auto h-[600px] flex flex-col bg-bg-secondary rounded-2xl shadow-sm p-4 border border-border">
+            <style>{`
+              .fc {
+                --fc-page-bg-color: transparent;
+                --fc-neutral-bg-color: transparent;
+                --fc-neutral-text-color: var(--text-primary);
+                --fc-border-color: rgba(150, 150, 150, 0.1);
+                --fc-button-text-color: var(--text-secondary);
+                --fc-button-bg-color: transparent;
+                --fc-button-border-color: transparent;
+                --fc-button-hover-bg-color: var(--bg-primary);
+                --fc-button-hover-border-color: transparent;
+                --fc-button-active-bg-color: var(--bg-primary);
+                --fc-button-active-border-color: transparent;
+                --fc-event-bg-color: transparent;
+                --fc-event-border-color: transparent;
+                font-family: 'Inter', sans-serif;
+                color: var(--text-primary);
+              }
+              
+              .fc-theme-standard td, .fc-theme-standard th {
+                border-color: var(--fc-border-color);
+                border-width: 1px;
+                border-style: solid;
+              }
+              
+              .fc-scrollgrid { border: none !important; }
+              .fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+              .fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active {
+                color: var(--text-primary); font-weight: 600; box-shadow: none;
+              }
+              .fc .fc-button-primary:focus { box-shadow: none; }
+              .fc-daygrid-day-number { color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; padding: 4px !important; }
+              .fc-daygrid-day.fc-day-today { background-color: var(--accent-blue) !important; opacity: 0.05; }
+              .fc-daygrid-day-top { flex-direction: row; justify-content: flex-end; }
+              .fc-event {
+                 background-color: var(--accent-blue);
+                 color: white;
+                 border-radius: 4px;
+                 margin: 1px 2px;
+                 border: none;
+                 box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                 transition: transform 0.2s, box-shadow 0.2s;
+                 cursor: pointer;
+              }
+              .fc-event:hover {
+                 transform: translateY(-1px);
+                 box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+                 background-color: #3b82f6;
+              }
+            `}</style>
+            
+            <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              events={calendarEvents}
+              dateClick={handleDateClick}
+              eventContent={renderEventContent}
+              height="100%"
+              headerToolbar={{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,dayGridWeek'
+              }}
+            />
+          </div>
+        ) : (
+          <div className="bg-bg-secondary border border-border rounded-xl shadow-sm overflow-hidden flex flex-col max-h-full">
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th className="text-left">Date</th>
+                    <th className="text-left">Meeting Title</th>
+                    <th className="text-left">Type</th>
+                    <th className="text-left">Participants</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {meetings.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="text-center py-8 text-text-secondary">No meetings scheduled yet.</td>
+                    </tr>
+                  ) : (
+                    meetings.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => (
+                      <tr key={m._id}>
+                        <td className="font-medium">{new Date(m.date).toLocaleDateString()}</td>
+                        <td className="font-bold text-text-primary">{m.title}</td>
+                        <td>
+                          {m.type === 'google_meet' ? (
+                            <div className="flex items-center text-accent-blue">
+                              <Video size={14} className="mr-1.5" /> Google Meet
+                              {m.link && <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-2 text-[10px] bg-accent-blue/10 px-2 py-0.5 rounded">Join</a>}
+                            </div>
+                          ) : (
+                            <div className="flex items-center text-text-secondary">
+                              <UsersIcon size={14} className="mr-1.5" /> Direct Meet
+                            </div>
+                          )}
+                        </td>
+                        <td className="text-text-secondary text-xs">
+                          {m.participants?.length || 0} Members invited
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

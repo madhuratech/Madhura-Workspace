@@ -1,4 +1,5 @@
 const Meeting = require('../models/Meeting');
+const { sendNotification } = require('./notificationController');
 
 // @desc    Get meetings for a workspace
 // @route   GET /api/workspaces/:workspaceId/meetings
@@ -41,6 +42,20 @@ const createMeeting = async (req, res) => {
     if(req.io) {
        req.io.emit('meetingCreated', meeting);
     }
+    
+    // Send persistent notifications to all participants
+    meeting.participants.forEach(participantId => {
+      if (participantId.toString() !== req.user._id.toString()) {
+        sendNotification(
+          req,
+          participantId,
+          'meeting_scheduled',
+          'New Meeting Scheduled',
+          `You have been invited to: ${title} on ${new Date(date).toLocaleDateString()}`,
+          `/meetings`
+        );
+      }
+    });
 
     res.status(201).json(meeting);
   } catch (error) {
