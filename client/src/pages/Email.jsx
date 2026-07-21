@@ -4,7 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, X, Search, MoreVertical, Trash2, Archive } from 'lucide-react';
 
 const Email = () => {
-  const { user, workspace } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const [workspace, setWorkspace] = useState(null);
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFolder, setActiveFolder] = useState('inbox');
@@ -14,11 +15,27 @@ const Email = () => {
   const [selectedEmails, setSelectedEmails] = useState([]);
 
   useEffect(() => {
+    fetchWorkspace();
+  }, [user]);
+
+  useEffect(() => {
     if (workspace) {
       fetchEmails();
       fetchWorkspaceMembers();
     }
   }, [workspace, activeFolder]);
+
+  const fetchWorkspace = async () => {
+    try {
+      const wsRes = await axios.get('/workspaces');
+      if (wsRes.data.length > 0) {
+        const detailRes = await axios.get(`/workspaces/${wsRes.data[0]._id}`);
+        setWorkspace(detailRes.data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const fetchEmails = async () => {
     try {
