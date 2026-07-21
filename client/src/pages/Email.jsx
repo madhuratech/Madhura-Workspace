@@ -10,10 +10,10 @@ const Email = () => {
   const [loading, setLoading] = useState(true);
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [isComposing, setIsComposing] = useState(false);
-  const [composeData, setComposeData] = useState({ to: '', bcc: '', subject: '', body: '' }); // Changed 'message' to 'body' for compose
-  const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [composeData, setComposeData] = useState({ to: '', bcc: '', subject: '', body: '' });
   const [selectedEmails, setSelectedEmails] = useState([]);
   const [authRequired, setAuthRequired] = useState(false);
+  const [viewingEmail, setViewingEmail] = useState(null);
 
   useEffect(() => {
     fetchWorkspace();
@@ -22,7 +22,6 @@ const Email = () => {
   useEffect(() => {
     if (workspace) {
       fetchEmails();
-      fetchWorkspaceMembers();
     }
   }, [workspace, activeFolder]);
 
@@ -64,14 +63,7 @@ const Email = () => {
     }
   };
 
-  const fetchWorkspaceMembers = async () => {
-    try {
-      const res = await axios.get(`/workspaces/${workspace._id}/members`);
-      setWorkspaceMembers(res.data.filter(m => m.user && m.user._id !== user._id));
-    } catch (error) {
-      console.error('Failed to fetch members', error);
-    }
-  };
+  // Removed workspace members fetch
 
   const handleSendEmail = async (isDraft = false) => {
     if (!composeData.to && !composeData.bcc) return alert('Please specify a recipient');
@@ -167,8 +159,8 @@ const Email = () => {
                 {folders.map(folder => (
                   <li key={folder.id}>
                     <button 
-                      onClick={() => { setActiveFolder(folder.id); setIsComposing(false); }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
+                      onClick={() => { setActiveFolder(folder.id); setIsComposing(false); setViewingEmail(null); }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing && !viewingEmail ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
                     >
                       <div className="flex items-center">
                         <span className="mr-3 opacity-80">{folder.icon}</span>
@@ -291,7 +283,7 @@ const Email = () => {
                 </button>
               </div>
             </div>
-          ) : (
+          ) : !viewingEmail ? (
             // Email List View
             <div className="flex-1 flex flex-col">
               {/* Toolbar */}
@@ -382,7 +374,7 @@ const Email = () => {
                             </div>
                           </div>
                           
-                          <div className="flex-1 flex items-center min-w-0 pr-4" onClick={() => {/* Open Email Detail */}}>
+                          <div className="flex-1 flex items-center min-w-0 pr-4" onClick={() => setViewingEmail(email)}>
                             <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-bold' : 'text-text-secondary'}`}>
                               {email.subject || '(No Subject)'} 
                               <span className="font-normal opacity-70 ml-2">
@@ -401,7 +393,43 @@ const Email = () => {
                 )}
               </div>
             </div>
-          )}
+          ) : viewingEmail ? (
+            // Read Email View
+            <div className="flex-1 flex flex-col h-full bg-bg-secondary">
+              <div className="p-4 border-b border-border flex items-center gap-4 bg-bg-primary shrink-0">
+                <button onClick={() => setViewingEmail(null)} className="text-text-secondary hover:text-text-primary font-medium text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-bg-secondary transition-colors">
+                  &larr; Back to {activeFolder}
+                </button>
+                <div className="flex gap-2">
+                  <button className="p-1.5 hover:bg-bg-secondary text-text-secondary rounded-lg transition-colors border border-transparent"><Archive size={18} /></button>
+                  <button className="p-1.5 hover:bg-bg-secondary text-text-secondary rounded-lg transition-colors border border-transparent"><Trash2 size={18} /></button>
+                </div>
+              </div>
+              
+              <div className="flex-1 p-8 overflow-y-auto custom-scrollbar">
+                <h2 className="text-2xl font-bold text-text-primary mb-6">{viewingEmail.subject || '(No Subject)'}</h2>
+                <div className="flex items-start justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-lg shrink-0">
+                      {(viewingEmail.from ? viewingEmail.from.charAt(0) : '?').toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="font-bold text-text-primary">{viewingEmail.from}</div>
+                      <div className="text-sm text-text-secondary">to {viewingEmail.to}</div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-text-secondary">
+                    {new Date(viewingEmail.date).toLocaleString()}
+                  </div>
+                </div>
+                
+                <div className="text-text-primary leading-relaxed whitespace-pre-wrap font-sans bg-bg-primary p-6 rounded-xl border border-border shadow-sm min-h-[300px]">
+                  {/* Google snippet since we don't have full body fetched in list yet. This gives the user enough to see the email content for now. */}
+                  {viewingEmail.snippet.replace(/&quot;/g, '"')}
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

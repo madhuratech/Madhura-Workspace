@@ -109,29 +109,36 @@ exports.sendEmail = async (req, res) => {
     }
 
     const oauth2Client = getOAuth2Client(user);
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        type: 'OAuth2',
-        user: user.email,
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken: user.googleRefreshToken,
-        accessToken: user.googleAccessToken
+    const makeEmail = (to, from, subject, message) => {
+      const str = [
+        `To: ${to}`,
+        `From: ${from}`,
+        `Subject: =?utf-8?B?${Buffer.from(subject).toString('base64')}?=`,
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=utf-8',
+        '',
+        message,
+      ].join('\n');
+      return Buffer.from(str).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    };
+
+    const rawMessage = makeEmail(
+      recipients.join(', '),
+      'me',
+      subject || '',
+      body || ''
+    );
+
+    const result = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: rawMessage
       }
     });
 
-    const mailOptions = {
-      from: user.email,
-      to: recipients.join(', '), // array of emails
-      subject: subject,
-      html: body
-    };
-
-    const result = await transporter.sendMail(mailOptions);
-
-    res.status(201).json({ message: 'Email sent successfully', result });
+    res.status(201).json({ message: 'Email sent successfully', result: result.data });
   } catch (error) {
     console.error('Gmail send error:', error);
     res.status(500).json({ message: 'Failed to send email' });
