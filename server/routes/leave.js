@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
 
       const socketId = req.onlineUsers ? req.onlineUsers.get(rec.user._id.toString()) : null;
       if (socketId && req.io) {
-        req.io.to(socketId).emit('activity', notif);
+        req.io.to(socketId).emit('new_notification', notif);
       }
     }
 
@@ -139,7 +139,7 @@ router.put('/:id/status', async (req, res) => {
 
     const socketId = req.onlineUsers ? req.onlineUsers.get(leave.user.toString()) : null;
     if (socketId && req.io) {
-      req.io.to(socketId).emit('activity', notif);
+      req.io.to(socketId).emit('new_notification', notif);
     }
 
   } catch (error) {

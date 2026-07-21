@@ -18,6 +18,9 @@ const Chat = () => {
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [newChannelData, setNewChannelData] = useState({ name: '', description: '', members: [] });
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+  const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const folderInputRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -393,26 +396,30 @@ const Chat = () => {
               
               {isAttachMenuOpen && (
                 <div className="absolute bottom-12 left-0 bg-white dark:bg-bg-secondary border border-border shadow-xl rounded-xl w-48 py-2 z-50 animate-fade-in-up">
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Share Image clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); fileInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                     <ImageIcon size={16} className="mr-3 text-accent-blue" />
                     Share Image
                   </button>
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Share Video clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); videoInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                     <Video size={16} className="mr-3 text-danger" />
                     Share Video
                   </button>
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Share Folder clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); folderInputRef.current?.click(); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                     <Folder size={16} className="mr-3 text-orange-500" />
                     Share Folder
                   </button>
                   <div className="h-px bg-border my-1 mx-4"></div>
-                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); alert('Google Drive clicked'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                  <button type="button" onClick={() => { setIsAttachMenuOpen(false); window.open('https://drive.google.com', '_blank'); }} className="w-full flex items-center px-4 py-2 text-sm text-text-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                     <LinkIcon size={16} className="mr-3 text-success" />
                     Google Drive link
                   </button>
                 </div>
               )}
             </div>
+
+            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
+            <input type="file" ref={videoInputRef} className="hidden" accept="video/*" />
+            <input type="file" ref={folderInputRef} className="hidden" webkitdirectory="true" directory="true" />
 
             <textarea 
               rows="1"
