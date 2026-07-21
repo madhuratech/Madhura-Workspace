@@ -195,14 +195,14 @@ const Projects = () => {
                     </span>
                   </td>
                   {user?.role !== 'employee' && (
-                    <td className="text-right space-x-3">
+                    <td className="text-right whitespace-nowrap space-x-3">
                       <Link to={`/project/${project._id}`} className="text-accent-blue hover:underline text-sm font-medium">Board</Link>
                       <button onClick={() => handleOpenModal(project)} className="text-text-secondary hover:text-text-primary text-sm font-medium">Edit</button>
                       <button onClick={() => handleDelete(project._id)} className="text-danger hover:underline text-sm font-medium">Delete</button>
                     </td>
                   )}
                   {user?.role === 'employee' && (
-                    <td className="text-right">
+                    <td className="text-right whitespace-nowrap">
                       <Link to={`/project/${project._id}`} className="text-accent-blue hover:underline text-sm font-medium">View Board</Link>
                     </td>
                   )}

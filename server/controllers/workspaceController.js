@@ -22,17 +22,38 @@ const getWorkspaces = async (req, res) => {
 // @access  Private
 const createWorkspace = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, members } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: 'Please add a workspace name' });
+    }
+
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Only super admin can create workspaces' });
+    }
+
+    // Prepare members list: Owner is super_admin. Other selected members get their global roles or default to employee.
+    const workspaceMembers = [{ user: req.user._id, role: 'super_admin' }];
+    
+    if (members && Array.isArray(members)) {
+      // members should be an array of objects { user: id, role: string } or just an array of user IDs
+      for (const memberId of members) {
+        if (memberId.toString() !== req.user._id.toString()) {
+           // We could fetch user to get role, but for simplicity let's default to employee if role not specified in request, 
+           // though the client could send it. For now, default to employee if just IDs are sent.
+           const userDetails = await User.findById(memberId);
+           if (userDetails) {
+             workspaceMembers.push({ user: memberId, role: userDetails.role || 'employee' });
+           }
+        }
+      }
     }
 
     const workspace = await Workspace.create({
       name,
       description,
       owner: req.user._id,
-      members: [{ user: req.user._id, role: 'super_admin' }],
+      members: workspaceMembers,
     });
 
     res.status(201).json(workspace);

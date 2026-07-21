@@ -33,16 +33,38 @@ const Layout = () => {
   React.useEffect(() => {
     if (socket && user) {
       const handleNewMessage = (msg) => {
-        // Don't toast for our own messages, and maybe don't toast if we are on the chat page?
-        // Let's toast anyway, it's nice to see when you're in another tab.
         if (msg.sender._id !== user._id && msg.sender._id !== user.id) {
           showToast(`New message from ${msg.sender.name || 'User'}`, msg.text);
         }
       };
       
+      const handleActivity = (msg) => {
+        showToast(msg.title, msg.message);
+      };
+      
+      const handleProjectActivity = (project) => showToast('Project Update', `Project ${project.title} was updated/created.`);
+      const handleTaskActivity = (task) => showToast('Task Update', `Task ${task.title} was updated/created.`);
+      const handleMeetingActivity = (meeting) => showToast('New Meeting', `Meeting ${meeting.title} scheduled.`);
+      const handleTeamActivity = (team) => showToast('Team Update', `Team ${team.name} was created/updated.`);
+      
       socket.on('new_message', handleNewMessage);
+      socket.on('activity', handleActivity);
+      socket.on('projectCreated', handleProjectActivity);
+      socket.on('projectUpdated', handleProjectActivity);
+      socket.on('taskCreated', handleTaskActivity);
+      socket.on('taskUpdated', handleTaskActivity);
+      socket.on('meetingCreated', handleMeetingActivity);
+      socket.on('teamCreated', handleTeamActivity);
+      
       return () => {
         socket.off('new_message', handleNewMessage);
+        socket.off('activity', handleActivity);
+        socket.off('projectCreated', handleProjectActivity);
+        socket.off('projectUpdated', handleProjectActivity);
+        socket.off('taskCreated', handleTaskActivity);
+        socket.off('taskUpdated', handleTaskActivity);
+        socket.off('meetingCreated', handleMeetingActivity);
+        socket.off('teamCreated', handleTeamActivity);
       };
     }
   }, [socket, user]);
@@ -212,7 +234,7 @@ const Layout = () => {
 
         {/* Real-time Toast Popup */}
         {toastNotif && (
-          <div className="absolute bottom-6 right-6 bg-bg-secondary border border-border shadow-2xl rounded-xl p-4 pr-10 min-w-[300px] animate-bounce-in z-50">
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-bg-secondary border border-border shadow-2xl rounded-xl p-4 pr-10 min-w-[300px] animate-bounce-in z-50">
             <div className="flex items-center space-x-3 mb-1">
               <div className="h-2 w-2 rounded-full bg-accent-blue"></div>
               <h4 className="font-bold text-text-primary text-sm">{toastNotif.title}</h4>

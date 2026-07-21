@@ -10,6 +10,8 @@ const Dashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [stats, setStats] = useState({ projects: 0, tasks: 0, members: 0, meetings: 0 });
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedMembers, setSelectedMembers] = useState([]);
 
   useEffect(() => {
     fetchWorkspaces();
@@ -19,6 +21,10 @@ const Dashboard = () => {
     try {
       const res = await axios.get('/workspaces');
       setWorkspaces(res.data);
+      if (user?.role === 'super_admin') {
+        const usersRes = await axios.get('/users').catch(() => ({ data: [] }));
+        setAllUsers(usersRes.data);
+      }
       if (res.data.length > 0) {
         const ws = res.data[0];
         const [projectsRes, tasksRes, meetingsRes] = await Promise.all([
@@ -41,8 +47,9 @@ const Dashboard = () => {
   const createWorkspace = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/workspaces', { name: newWorkspaceName });
+      await axios.post('/workspaces', { name: newWorkspaceName, members: selectedMembers });
       setNewWorkspaceName('');
+      setSelectedMembers([]);
       setShowModal(false);
       fetchWorkspaces();
     } catch (error) {
@@ -200,6 +207,32 @@ const Dashboard = () => {
                   placeholder="e.g. Acme Corp"
                   required
                 />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-text-secondary mb-2">Assign Members</label>
+                <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 bg-bg-primary space-y-2">
+                  {allUsers.filter(u => u._id !== user._id).map(u => (
+                    <label key={u._id} className="flex items-center space-x-3 p-2 hover:bg-bg-secondary rounded-lg cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="accent-accent-blue"
+                        checked={selectedMembers.includes(u._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedMembers([...selectedMembers, u._id]);
+                          } else {
+                            setSelectedMembers(selectedMembers.filter(id => id !== u._id));
+                          }
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-text-primary">{u.name}</span>
+                        <span className="text-xs text-text-secondary">{u.email} - {u.role?.replace('_', ' ')}</span>
+                      </div>
+                    </label>
+                  ))}
+                  {allUsers.length <= 1 && <p className="text-xs text-text-secondary text-center p-2">No other users found.</p>}
+                </div>
               </div>
               <div className="flex justify-end space-x-3">
                 <button 
