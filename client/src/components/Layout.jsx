@@ -121,6 +121,10 @@ const Layout = () => {
             <CalendarDays size={18} />
             <span className="font-medium text-sm">Meetings</span>
           </Link>
+          <Link to="/email" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
+            <Mail size={18} />
+            <span className="font-medium text-sm">Email</span>
+          </Link>
           <Link to="/documents" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <FileText size={18} />
             <span className="font-medium text-sm">Documents</span>

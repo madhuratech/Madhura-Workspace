@@ -13,6 +13,7 @@ import Team from './pages/Team';
 import Meetings from './pages/Meetings';
 import Documents from './pages/Documents';
 import Settings from './pages/Settings';
+import Email from './pages/Email';
 import WorkspaceOverview from './pages/WorkspaceOverview';
 import Chat from './pages/Chat';
 import TeamLeaderDashboard from './pages/TeamLeaderDashboard';
@@ -48,6 +49,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="chat" element={<Chat />} />
           <Route path="attendance" element={<AttendanceLeave />} />
+          <Route path="email" element={<Email />} />
           <Route path="workspace/:id" element={<WorkspaceOverview />} />
           <Route path="project/:id" element={<ProjectDetails />} />
           <Route path="tl-dashboard" element={<TeamLeaderDashboard />} />

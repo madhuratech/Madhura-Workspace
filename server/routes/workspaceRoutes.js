@@ -16,8 +16,10 @@ const messageRouter = require('./messageRoutes');
 const teamRouter = require('./teamRoutes');
 const attendanceRouter = require('./attendance');
 const leaveRouter = require('./leave');
+const emailRouter = require('./emailRoutes');
 
 router.use('/:workspaceId/projects', projectRouter);
+router.use('/:workspaceId/emails', emailRouter);
 router.use('/:workspaceId/meetings', meetingRouter);
 router.use('/:workspaceId/channels', messageRouter);
 router.use('/:workspaceId/teams', teamRouter);

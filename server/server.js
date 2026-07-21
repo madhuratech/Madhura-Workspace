@@ -22,7 +22,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
@@ -39,7 +38,6 @@ const io = new Server(server, {
   cors: corsOptions
 });
 
-// Keep track of connected users
 const onlineUsers = new Map();
 
 io.on('connection', (socket) => {
@@ -48,15 +46,11 @@ io.on('connection', (socket) => {
   socket.on('user_connected', (userId) => {
     onlineUsers.set(userId, socket.id);
     io.emit('user_status', { userId, status: 'online' });
-    
-    // Send currently online users to the newly connected user
     socket.emit('initial_status', Array.from(onlineUsers.keys()));
   });
   
   socket.on('disconnect', () => {
     console.log(`Socket disconnected: ${socket.id}`);
-    
-    // Find and remove user from online list, then broadcast offline
     for (const [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
         onlineUsers.delete(userId);
@@ -67,18 +61,15 @@ io.on('connection', (socket) => {
   });
 });
 
-// Pass socket and onlineUsers to request to emit events in controllers
 app.use((req, res, next) => {
   req.io = io;
   req.onlineUsers = onlineUsers;
   next();
 });
 
-// Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Basic Route
 app.get('/', (req, res) => {
   res.send('Madhura Workspace API is running...');
 });
@@ -87,7 +78,6 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/workspaces', require('./routes/workspaceRoutes'));
-// app.use('/api/projects', require('./routes/projects'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/documents', require('./routes/documentRoutes'));
 app.use('/api/meetings', require('./routes/meetingRoutes'));
