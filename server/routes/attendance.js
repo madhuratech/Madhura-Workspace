@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const Attendance = require('../models/Attendance');
 const Workspace = require('../models/Workspace');
-const authMiddleware = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
-router.use(authMiddleware);
+router.use(protect);
 
 // Get attendance records
 router.get('/', async (req, res) => {
@@ -15,14 +15,14 @@ router.get('/', async (req, res) => {
     const workspace = await Workspace.findById(workspaceId).populate('members.user');
     if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
     
-    const member = workspace.members.find(m => m.user._id.toString() === req.userId);
+    const member = workspace.members.find(m => m.user._id.toString() === req.user._id.toString());
     if (!member) return res.status(403).json({ message: 'Access denied' });
 
     let filter = { workspace: workspaceId };
     
     // Employees can only see their own attendance
     if (member.role === 'employee') {
-      filter.user = req.userId;
+      filter.user = req.user._id;
     }
 
     const records = await Attendance.find(filter).populate('user', 'name email').sort({ date: -1 });
@@ -39,14 +39,14 @@ router.post('/checkin', async (req, res) => {
     const { workspaceId } = req.params;
     const dateStr = new Date().toISOString().split('T')[0];
 
-    const existing = await Attendance.findOne({ workspace: workspaceId, user: req.userId, date: dateStr });
+    const existing = await Attendance.findOne({ workspace: workspaceId, user: req.user._id, date: dateStr });
     if (existing) {
       return res.status(400).json({ message: 'Already checked in today' });
     }
 
     const record = new Attendance({
       workspace: workspaceId,
-      user: req.userId,
+      user: req.user._id,
       date: dateStr,
       checkIn: new Date(),
       status: 'Present'
@@ -66,7 +66,7 @@ router.put('/checkout', async (req, res) => {
     const { workspaceId } = req.params;
     const dateStr = new Date().toISOString().split('T')[0];
 
-    const record = await Attendance.findOne({ workspace: workspaceId, user: req.userId, date: dateStr });
+    const record = await Attendance.findOne({ workspace: workspaceId, user: req.user._id, date: dateStr });
     if (!record) {
       return res.status(400).json({ message: 'No check-in found for today' });
     }

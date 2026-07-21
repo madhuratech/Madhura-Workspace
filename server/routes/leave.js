@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const Leave = require('../models/Leave');
 const Workspace = require('../models/Workspace');
-const authMiddleware = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
-router.use(authMiddleware);
+router.use(protect);
 
 // Apply for leave
 router.post('/', async (req, res) => {
@@ -14,7 +14,7 @@ router.post('/', async (req, res) => {
 
     const leave = new Leave({
       workspace: workspaceId,
-      user: req.userId,
+      user: req.user._id,
       type,
       startDate,
       endDate,
@@ -37,14 +37,14 @@ router.get('/', async (req, res) => {
     
     if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
     
-    const member = workspace.members.find(m => m.user._id.toString() === req.userId);
+    const member = workspace.members.find(m => m.user._id.toString() === req.user._id.toString());
     if (!member) return res.status(403).json({ message: 'Access denied' });
 
     let filter = { workspace: workspaceId };
     
     // Employees can only see their own leaves
     if (member.role === 'employee') {
-      filter.user = req.userId;
+      filter.user = req.user._id;
     }
 
     const leaves = await Leave.find(filter)
@@ -66,7 +66,7 @@ router.put('/:id/status', async (req, res) => {
     const { status } = req.body;
 
     const workspace = await Workspace.findById(workspaceId);
-    const member = workspace.members.find(m => m.user.toString() === req.userId);
+    const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
     
     if (!member || (member.role !== 'super_admin' && member.role !== 'hr' && member.role !== 'team_leader')) {
       return res.status(403).json({ message: 'Not authorized to approve leaves' });
@@ -76,7 +76,7 @@ router.put('/:id/status', async (req, res) => {
     if (!leave) return res.status(404).json({ message: 'Leave not found' });
 
     leave.status = status;
-    leave.approvedBy = req.userId;
+    leave.approvedBy = req.user._id;
     await leave.save();
 
     res.json(leave);
