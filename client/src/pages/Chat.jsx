@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Send, Hash, MessageSquare, Plus, Info, Search, Image as ImageIcon, Edit2, Trash2, X, Video, Folder, Link as LinkIcon, File, Smile } from 'lucide-react';
+import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 
 const Chat = () => {
@@ -388,85 +388,110 @@ const Chat = () => {
             </div>
           ) : (
             messages.map((msg, idx) => {
+              const isMine = user?._id === msg.sender._id;
               const showHeader = idx === 0 || messages[idx - 1].sender._id !== msg.sender._id;
               
               return (
-                <div key={msg._id} className={`flex ${!showHeader ? 'mt-1' : 'mt-6'}`}>
-                  <div className="w-10 flex-shrink-0 mr-3 flex justify-center">
-                    {showHeader ? (
-                      <div className="h-10 w-10 rounded-xl bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-sm">
-                        {msg.sender?.name?.charAt(0).toUpperCase() || 'U'}
+                <div key={msg._id} className={`flex w-full mb-2 ${isMine ? 'justify-end' : 'justify-start'}`}>
+                  
+                  {/* WhatsApp-style avatar for received messages in channels (groups) */}
+                  {!isMine && activeChannel && showHeader && (
+                    <div className="w-8 h-8 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs mr-2 mt-auto flex-shrink-0">
+                      {msg.sender?.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  {!isMine && activeChannel && !showHeader && (
+                    <div className="w-8 mr-2 flex-shrink-0"></div>
+                  )}
+
+                  <div className={`relative max-w-[85%] group/msg flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+                    
+                    {/* Sender Name (only for received in groups, like WhatsApp) */}
+                    {!isMine && activeChannel && showHeader && (
+                      <span className="text-xs font-bold text-[#53bdeb] mb-1 ml-1">{msg.sender?.name || 'User'}</span>
+                    )}
+                    
+                    {editingMessageId === msg._id ? (
+                      <div className="flex flex-col space-y-2 max-w-lg mt-1 w-full">
+                        <input 
+                          type="text"
+                          autoFocus
+                          value={editMessageText}
+                          onChange={(e) => setEditMessageText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleEditMessage(msg._id);
+                            if (e.key === 'Escape') setEditingMessageId(null);
+                          }}
+                          className="bg-bg-primary border border-accent-blue rounded-lg px-3 py-2 text-sm focus:outline-none w-full"
+                        />
+                        <div className="flex space-x-2 text-xs">
+                          <button onClick={() => handleEditMessage(msg._id)} className="text-accent-blue font-bold">Save</button>
+                          <button onClick={() => setEditingMessageId(null)} className="text-text-secondary hover:text-text-primary">Cancel</button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="w-10"></div>
-                    )}
-                  </div>
-                  
-                    <div className="flex-1 min-w-0 group/msg relative">
-                      {showHeader && (
-                        <div className="flex items-baseline space-x-2 mb-1">
-                          <span className="font-bold text-text-primary text-sm">{msg.sender?.name || 'User'}</span>
-                          <span className="text-xs text-text-secondary">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                      )}
-                      
-                      {editingMessageId === msg._id ? (
-                        <div className="flex flex-col space-y-2 max-w-lg mt-1">
-                          <input 
-                            type="text"
-                            autoFocus
-                            value={editMessageText}
-                            onChange={(e) => setEditMessageText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleEditMessage(msg._id);
-                              if (e.key === 'Escape') setEditingMessageId(null);
-                            }}
-                            className="bg-bg-primary border border-accent-blue rounded-lg px-3 py-2 text-sm focus:outline-none"
-                          />
-                          <div className="flex space-x-2 text-xs">
-                            <button onClick={() => handleEditMessage(msg._id)} className="text-accent-blue font-bold">Save</button>
-                            <button onClick={() => setEditingMessageId(null)} className="text-text-secondary hover:text-text-primary">Cancel</button>
+                      <div className="relative flex items-center">
+                        {/* Hover Actions (Delete/Edit) */}
+                        {isMine && (
+                          <div className="hidden group-hover/msg:flex items-center space-x-1 mr-2 opacity-60">
+                            <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1 hover:text-accent-blue transition-colors">
+                              <Edit2 size={14} />
+                            </button>
+                            <button onClick={() => handleDeleteMessage(msg._id)} className="p-1 hover:text-danger transition-colors">
+                              <Trash2 size={14} />
+                            </button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="relative inline-block max-w-[85%]">
-                          <div className="text-sm text-text-primary bg-bg-primary border border-border p-3 rounded-2xl rounded-tl-sm shadow-sm">
-                            {msg.attachment && (
-                              <div className="mb-2">
-                                {msg.attachment.fileType.startsWith('image/') ? (
-                                  <img 
-                                    src={`${API_URL}${msg.attachment.url}`} 
-                                    alt={msg.attachment.fileName} 
-                                    className="max-w-xs rounded-lg border border-border cursor-pointer hover:opacity-90 transition-opacity" 
-                                    onClick={() => setFullScreenImage(`${API_URL}${msg.attachment.url}`)}
-                                  />
-                                ) : msg.attachment.fileType.startsWith('video/') ? (
-                                  <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-xs rounded-lg border border-border" />
-                                ) : (
-                                  <a href={`${API_URL}${msg.attachment.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-accent-blue bg-accent-blue/10 px-3 py-2 rounded-lg hover:underline">
-                                    <File size={16} />
-                                    <span className="truncate max-w-[200px]">{msg.attachment.fileName}</span>
-                                  </a>
-                                )}
-                              </div>
-                            )}
-                            {msg.text && <p className="pr-12">{msg.text}</p>}
-                            {msg.isEdited && <span className="text-[10px] text-text-secondary italic ml-2 opacity-60">(edited)</span>}
-                          </div>
+                        )}
+
+                        {/* Message Bubble */}
+                        <div className={`relative px-3 py-2 text-[14px] shadow-sm min-w-[80px] ${
+                          isMine 
+                            ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-[#e9edef] rounded-2xl rounded-tr-sm' 
+                            : 'bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] rounded-2xl rounded-tl-sm border border-border/50'
+                        }`}>
                           
-                          {user?._id === msg.sender._id && (
-                            <div className="absolute -right-10 top-2 hidden group-hover/msg:flex items-center space-x-1 bg-bg-secondary border border-border rounded-lg shadow-sm p-1 z-10">
-                              <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1 text-text-secondary hover:text-accent-blue transition-colors">
-                                <Edit2 size={12} />
-                              </button>
-                              <button onClick={() => handleDeleteMessage(msg._id)} className="p-1 text-text-secondary hover:text-danger transition-colors">
-                                <Trash2 size={12} />
-                              </button>
+                          {/* Attachment rendering */}
+                          {msg.attachment && (
+                            <div className="mb-2">
+                              {msg.attachment.fileType.startsWith('image/') ? (
+                                <img 
+                                  src={`${API_URL}${msg.attachment.url}`} 
+                                  alt={msg.attachment.fileName} 
+                                  className="max-w-xs rounded-lg border border-border cursor-pointer hover:opacity-90 transition-opacity" 
+                                  onClick={() => setFullScreenImage(`${API_URL}${msg.attachment.url}`)}
+                                />
+                              ) : msg.attachment.fileType.startsWith('video/') ? (
+                                <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-xs rounded-lg border border-border" />
+                              ) : (
+                                <a href={`${API_URL}${msg.attachment.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-accent-blue bg-accent-blue/10 px-3 py-2 rounded-lg hover:underline">
+                                  <File size={16} />
+                                  <span className="truncate max-w-[200px]">{msg.attachment.fileName}</span>
+                                </a>
+                              )}
                             </div>
                           )}
+
+                          {/* Text Content */}
+                          {msg.text && (
+                            <div className="whitespace-pre-wrap break-words leading-relaxed">
+                              {msg.text}
+                              {/* Invisible spacer to push the timestamp below text if it's long */}
+                              <span className="inline-block w-14"></span>
+                            </div>
+                          )}
+
+                          {/* Inline Timestamp and Read Receipt at bottom right */}
+                          <div className={`absolute bottom-1 right-2 flex items-center space-x-1 text-[10px] ${isMine ? 'text-black/50 dark:text-white/50' : 'text-black/50 dark:text-white/50'}`}>
+                            {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
+                            <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            {isMine && (
+                              <CheckCheck size={14} className="text-[#53bdeb] ml-1" />
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })
