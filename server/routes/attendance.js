@@ -20,8 +20,8 @@ router.get('/', async (req, res) => {
 
     let filter = { workspace: workspaceId };
     
-    // Employees can only see their own attendance
-    if (member.role === 'employee') {
+    // Employees and TLs can only see their own attendance
+    if (member.role === 'employee' || member.role === 'team_leader') {
       filter.user = req.user._id;
     }
 

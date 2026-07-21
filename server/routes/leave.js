@@ -40,19 +40,31 @@ router.get('/', async (req, res) => {
     const member = workspace.members.find(m => m.user._id.toString() === req.user._id.toString());
     if (!member) return res.status(403).json({ message: 'Access denied' });
 
-    let filter = { workspace: workspaceId };
-    
-    // Employees can only see their own leaves
-    if (member.role === 'employee') {
-      filter.user = req.user._id;
-    }
-
-    const leaves = await Leave.find(filter)
+    const leaves = await Leave.find({ workspace: workspaceId })
       .populate('user', 'name email')
       .populate('approvedBy', 'name')
       .sort({ createdAt: -1 });
-      
-    res.json(leaves);
+
+    let filteredLeaves = leaves;
+
+    if (member.role === 'employee') {
+      filteredLeaves = leaves.filter(l => l.user._id.toString() === req.user._id.toString());
+    } else if (member.role === 'team_leader') {
+      filteredLeaves = leaves.filter(l => {
+        if (l.user._id.toString() === req.user._id.toString()) return true; // Own leaves
+        const lMember = workspace.members.find(m => m.user._id.toString() === l.user._id.toString());
+        return lMember && lMember.role === 'employee'; // Leaves of employees
+      });
+    } else if (member.role === 'hr') {
+      filteredLeaves = leaves.filter(l => {
+        if (l.user._id.toString() === req.user._id.toString()) return true; // Own leaves
+        const lMember = workspace.members.find(m => m.user._id.toString() === l.user._id.toString());
+        return lMember && (lMember.role === 'employee' || lMember.role === 'team_leader'); // Leaves of employees & TLs
+      });
+    }
+    // super_admin sees all
+
+    res.json(filteredLeaves);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
