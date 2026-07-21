@@ -152,13 +152,15 @@ const Meetings = () => {
           <h1 className="text-2xl font-bold text-text-primary tracking-wide">Meetings</h1>
           <p className="text-text-secondary mt-1">Schedule and view team meetings</p>
         </div>
-        <button 
-          onClick={handleOpenModal}
-          className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"
-        >
-          <Plus size={16} />
-          <span>Schedule Meeting</span>
-        </button>
+        {user?.role !== 'employee' && (
+          <button 
+            onClick={handleOpenModal}
+            className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"
+          >
+            <Plus size={16} />
+            <span>Schedule Meeting</span>
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -181,55 +183,55 @@ const Meetings = () => {
 
       <div className="bg-bg-primary flex-1 flex flex-col overflow-hidden relative border-none">
         {activeTab === 'calendar' ? (
-          <div className="max-w-5xl w-full mx-auto h-[600px] flex flex-col bg-bg-secondary rounded-2xl shadow-sm p-4 border border-border">
+          <div className="max-w-6xl w-full mx-auto h-[700px] flex flex-col bg-bg-secondary rounded-2xl shadow-sm p-4 border border-border">
             <style>{`
               .fc {
                 --fc-page-bg-color: transparent;
-                --fc-neutral-bg-color: transparent;
+                --fc-neutral-bg-color: var(--bg-primary);
                 --fc-neutral-text-color: var(--text-primary);
-                --fc-border-color: rgba(150, 150, 150, 0.1);
+                --fc-border-color: var(--border-color);
                 --fc-button-text-color: var(--text-secondary);
                 --fc-button-bg-color: transparent;
-                --fc-button-border-color: transparent;
+                --fc-button-border-color: var(--border-color);
                 --fc-button-hover-bg-color: var(--bg-primary);
-                --fc-button-hover-border-color: transparent;
+                --fc-button-hover-border-color: var(--border-color);
                 --fc-button-active-bg-color: var(--bg-primary);
-                --fc-button-active-border-color: transparent;
-                --fc-event-bg-color: transparent;
-                --fc-event-border-color: transparent;
+                --fc-button-active-border-color: var(--border-color);
+                --fc-today-bg-color: rgba(59, 130, 246, 0.05);
                 font-family: 'Inter', sans-serif;
                 color: var(--text-primary);
+                height: 100%;
               }
               
-              .fc-theme-standard td, .fc-theme-standard th {
-                border-color: var(--fc-border-color);
-                border-width: 1px;
-                border-style: solid;
-              }
-              
-              .fc-scrollgrid { border: none !important; }
-              .fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
-              .fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active {
-                color: var(--text-primary); font-weight: 600; box-shadow: none;
-              }
-              .fc .fc-button-primary:focus { box-shadow: none; }
-              .fc-daygrid-day-number { color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; padding: 4px !important; }
-              .fc-daygrid-day.fc-day-today { background-color: var(--accent-blue) !important; opacity: 0.05; }
+              .fc .fc-toolbar-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); }
+              .fc .fc-button-primary { box-shadow: none !important; border-radius: 6px; }
+              .fc-daygrid-day-number { color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; padding: 4px 8px !important; }
               .fc-daygrid-day-top { flex-direction: row; justify-content: flex-end; }
+              .fc-col-header-cell { padding: 8px 0; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; color: var(--text-secondary); }
+              
+              /* Custom scrollbar for FullCalendar internal scrolling */
+              .fc-scroller {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+              }
+              .fc-scroller::-webkit-scrollbar {
+                display: none;
+              }
+              
               .fc-event {
                  background-color: var(--accent-blue);
                  color: white;
                  border-radius: 4px;
-                 margin: 1px 2px;
+                 margin: 2px 4px;
                  border: none;
                  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                 transition: transform 0.2s, box-shadow 0.2s;
+                 transition: transform 0.2s;
                  cursor: pointer;
+                 padding: 2px;
               }
               .fc-event:hover {
                  transform: translateY(-1px);
-                 box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-                 background-color: #3b82f6;
+                 background-color: #2563eb;
               }
             `}</style>
             
@@ -243,7 +245,7 @@ const Meetings = () => {
               headerToolbar={{
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,dayGridWeek'
+                right: 'dayGridMonth'
               }}
             />
           </div>
@@ -273,7 +275,11 @@ const Meetings = () => {
                           {m.type === 'google_meet' ? (
                             <div className="flex items-center text-accent-blue">
                               <Video size={14} className="mr-1.5" /> Google Meet
-                              {m.link && <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-2 text-[10px] bg-accent-blue/10 px-2 py-0.5 rounded">Join</a>}
+                              {m.link && (
+                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-3 text-xs bg-accent-blue text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors">
+                                  Attend Meeting
+                                </a>
+                              )}
                             </div>
                           ) : (
                             <div className="flex items-center text-text-secondary">
