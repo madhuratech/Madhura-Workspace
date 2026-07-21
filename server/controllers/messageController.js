@@ -181,3 +181,29 @@ exports.deleteMessage = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.markMessagesRead = async (req, res) => {
+  try {
+    const { channelId } = req.params;
+    
+    // Find messages in the channel not sent by the user and where the user is not in readBy
+    const result = await Message.updateMany(
+      { 
+        channel: channelId, 
+        sender: { $ne: req.user._id },
+        readBy: { $ne: req.user._id }
+      },
+      { 
+        $addToSet: { readBy: req.user._id } 
+      }
+    );
+    
+    if (result.modifiedCount > 0 && req.io) {
+      req.io.emit('messages_read', { channelId, userId: req.user._id });
+    }
+    
+    res.status(200).json({ message: 'Messages marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

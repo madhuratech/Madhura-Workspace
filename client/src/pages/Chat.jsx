@@ -69,6 +69,28 @@ const Chat = () => {
       socket.on('new_message', handleNewMessage);
       socket.on('message_updated', handleMessageUpdated);
       socket.on('message_deleted', handleMessageDeleted);
+
+      socket.on('messages_read', ({ channelId, userId }) => {
+        if (activeChannel && String(channelId) === String(activeChannel._id)) {
+          setMessages((prev) => prev.map(m => {
+            if (String(m.sender._id) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+              return { ...m, readBy: [...(m.readBy || []), userId] };
+            }
+            return m;
+          }));
+        }
+      });
+
+      socket.on('dm_messages_read', ({ dmId, userId }) => {
+        if (activeDM && String(dmId) === String(activeDM.dmId)) {
+          setMessages((prev) => prev.map(m => {
+            if (String(m.sender._id) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+              return { ...m, readBy: [...(m.readBy || []), userId] };
+            }
+            return m;
+          }));
+        }
+      });
       
       socket.on('initial_status', (users) => {
         setOnlineUsers(new Set(users));
@@ -87,9 +109,11 @@ const Chat = () => {
         socket.off('new_message', handleNewMessage);
         socket.off('message_updated', handleMessageUpdated);
         socket.off('message_deleted', handleMessageDeleted);
+        socket.off('messages_read');
+        socket.off('dm_messages_read');
       };
     }
-  }, [socket, activeChannel]);
+  }, [socket, activeChannel, activeDM]);
 
   useEffect(() => {
     if (activeChannel) {
@@ -101,7 +125,19 @@ const Chat = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    
+    // Mark messages as read when viewing them
+    if (messages.length > 0 && workspace) {
+      const hasUnread = messages.some(m => String(m.sender._id || m.sender) !== String(user._id) && (!m.readBy || !m.readBy.includes(user._id)));
+      if (hasUnread) {
+        if (activeChannel) {
+          axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/mark-read`).catch(console.error);
+        } else if (activeDM) {
+          axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/mark-read`).catch(console.error);
+        }
+      }
+    }
+  }, [messages, workspace, activeChannel, activeDM, user._id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -209,8 +245,7 @@ const Chat = () => {
       if (activeChannel) {
         await axios.put(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`, { text: editMessageText });
       } else if (activeDM) {
-        // Assume DM messages don't have update route yet, or just log for now
-        console.log("DM message edit not implemented yet");
+        await axios.put(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/${msgId}`, { text: editMessageText });
       }
       setEditingMessageId(null);
       setEditMessageText('');
@@ -226,8 +261,7 @@ const Chat = () => {
       if (activeChannel) {
         await axios.delete(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`);
       } else if (activeDM) {
-        // Assume DM messages don't have delete route yet, or just log for now
-        console.log("DM message delete not implemented yet");
+        await axios.delete(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/${msgId}`);
       }
     } catch (error) {
       console.error(error);
@@ -430,14 +464,16 @@ const Chat = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="relative flex items-center">
+                      <div className="relative flex items-center group/msg">
                         {/* Hover Actions (Delete/Edit) */}
                         {isMine && (
                           <div className="hidden group-hover/msg:flex items-center space-x-1 mr-2 opacity-60">
-                            <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1 hover:text-accent-blue transition-colors">
-                              <Edit2 size={14} />
-                            </button>
-                            <button onClick={() => handleDeleteMessage(msg._id)} className="p-1 hover:text-danger transition-colors">
+                            {msg.text && (
+                              <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1 hover:text-accent-blue transition-colors bg-bg-secondary rounded shadow-sm">
+                                <Edit2 size={14} />
+                              </button>
+                            )}
+                            <button onClick={() => handleDeleteMessage(msg._id)} className="p-1 hover:text-danger transition-colors bg-bg-secondary rounded shadow-sm">
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -463,7 +499,7 @@ const Chat = () => {
                               ) : msg.attachment.fileType.startsWith('video/') ? (
                                 <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-xs rounded-xl w-full" />
                               ) : (
-                                <a href={`${API_URL}${msg.attachment.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-accent-blue bg-accent-blue/10 px-3 py-2 rounded-lg hover:underline mt-1 mx-1">
+                                <a href={`${API_URL}${msg.attachment.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-accent-blue bg-accent-blue/10 px-3 py-2 rounded-lg hover:underline mt-1 mx-1 mb-1">
                                   <File size={16} />
                                   <span className="truncate max-w-[200px]">{msg.attachment.fileName}</span>
                                 </a>
@@ -472,15 +508,17 @@ const Chat = () => {
                           )}
 
                           {/* Text Content & Timestamp Container */}
-                          <div className={`relative flex flex-wrap items-end ${msg.attachment && !msg.text ? 'absolute bottom-2 right-2' : 'px-3 py-1.5'}`}>
+                          <div className={`relative px-2 py-1 flex flex-col ${msg.attachment && !msg.text ? 'absolute bottom-2 right-2 p-0' : ''}`}>
                             {msg.text && (
-                              <div className="whitespace-pre-wrap break-words leading-relaxed text-[15px] pr-2 pb-3">
+                              <div className="whitespace-pre-wrap break-words leading-relaxed text-[15px] inline-block relative max-w-full">
                                 {msg.text}
+                                {/* WhatsApp Spacer to prevent overlap and push time to corner */}
+                                <span className="inline-block w-[75px] h-1" aria-hidden="true"></span>
                               </div>
                             )}
 
                             {/* Timestamp and Read Receipt at bottom */}
-                            <div className={`flex items-center space-x-1 text-[10.5px] ${msg.attachment && !msg.text ? 'bg-black/50 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm' : 'text-black/50 ml-auto absolute bottom-1 right-2'}`}>
+                            <div className={`flex items-center justify-end space-x-1 text-[10.5px] ${msg.attachment && !msg.text ? 'bg-black/50 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm' : 'text-black/50 -mt-3.5 ml-auto z-10 mr-1'}`}>
                               {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
                               <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                               {isMine && (

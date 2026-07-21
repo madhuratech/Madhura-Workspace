@@ -7,7 +7,8 @@ const {
   getMessages,
   createMessage,
   updateMessage,
-  deleteMessage
+  deleteMessage,
+  markMessagesRead
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
 
@@ -21,6 +22,9 @@ router.route('/dm')
 router.route('/:channelId/messages')
   .get(protect, getMessages)
   .post(protect, createMessage);
+
+router.route('/:channelId/messages/mark-read')
+  .post(protect, markMessagesRead);
 
 router.route('/:channelId/messages/:messageId')
   .put(protect, updateMessage)

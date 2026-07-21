@@ -94,3 +94,80 @@ exports.sendDMMessage = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+exports.markDMMessagesRead = async (req, res) => {
+  try {
+    const { dmId } = req.params;
+    
+    const result = await DMMessage.updateMany(
+      { 
+        dm: dmId, 
+        sender: { $ne: req.user._id },
+        readBy: { $ne: req.user._id }
+      },
+      { 
+        $addToSet: { readBy: req.user._id } 
+      }
+    );
+    
+    if (result.modifiedCount > 0 && req.io) {
+      req.io.emit('dm_messages_read', { dmId, userId: req.user._id });
+    }
+    
+    res.status(200).json({ message: 'DM Messages marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateDMMessage = async (req, res) => {
+  try {
+    const message = await DMMessage.findById(req.params.messageId);
+    
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to edit this message' });
+    }
+    
+    message.text = req.body.text;
+    message.isEdited = true;
+    await message.save();
+    
+    const populatedMessage = await message.populate('sender', 'name email avatar');
+    
+    if (req.io) {
+      req.io.emit('message_updated', populatedMessage);
+    }
+    
+    res.status(200).json(populatedMessage);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteDMMessage = async (req, res) => {
+  try {
+    const message = await DMMessage.findById(req.params.messageId);
+    
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized to delete this message' });
+    }
+    
+    await DMMessage.findByIdAndDelete(req.params.messageId);
+    
+    if (req.io) {
+      req.io.emit('message_deleted', { messageId: req.params.messageId, channelId: req.params.dmId });
+    }
+    
+    res.status(200).json({ message: 'Message deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

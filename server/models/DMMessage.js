@@ -23,7 +23,11 @@ const DMMessageSchema = new mongoose.Schema({
   isEdited: {
     type: Boolean,
     default: false
-  }
+  },
+  readBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('DMMessage', DMMessageSchema);
