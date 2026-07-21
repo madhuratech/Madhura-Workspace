@@ -72,7 +72,7 @@ exports.googleAuthCallback = async (req, res) => {
 
     // Redirect back to frontend Email module
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    res.redirect(`${frontendUrl}/workspace/placeholder/emails`); // The frontend will handle routing to the exact workspace
+    res.redirect(`${frontendUrl}/email`);
   } catch (error) {
     console.error('Error in Google Auth Callback:', error);
     res.status(500).send('Authentication failed.');
