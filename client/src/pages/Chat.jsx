@@ -444,26 +444,26 @@ const Chat = () => {
                         )}
 
                         {/* Message Bubble */}
-                        <div className={`relative px-3 py-2 text-[14px] shadow-sm min-w-[80px] ${
+                        <div className={`relative min-w-[80px] max-w-[85%] shadow-sm flex flex-col ${
                           isMine 
-                            ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-[#e9edef] rounded-2xl rounded-tr-sm' 
-                            : 'bg-white dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] rounded-2xl rounded-tl-sm border border-border/50'
+                            ? 'bg-[#d9fdd3] text-[#111b21] rounded-2xl rounded-tr-sm' 
+                            : 'bg-bg-primary text-text-primary rounded-2xl rounded-tl-sm border border-border/50'
                         }`}>
                           
                           {/* Attachment rendering */}
                           {msg.attachment && (
-                            <div className="mb-2">
+                            <div className={`relative ${msg.text ? 'p-1 pb-0' : 'p-1'}`}>
                               {msg.attachment.fileType.startsWith('image/') ? (
                                 <img 
                                   src={`${API_URL}${msg.attachment.url}`} 
                                   alt={msg.attachment.fileName} 
-                                  className="max-w-xs rounded-lg border border-border cursor-pointer hover:opacity-90 transition-opacity" 
+                                  className={`max-w-xs rounded-xl cursor-pointer hover:opacity-90 transition-opacity w-full ${!msg.text ? 'mb-0' : ''}`} 
                                   onClick={() => setFullScreenImage(`${API_URL}${msg.attachment.url}`)}
                                 />
                               ) : msg.attachment.fileType.startsWith('video/') ? (
-                                <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-xs rounded-lg border border-border" />
+                                <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-xs rounded-xl w-full" />
                               ) : (
-                                <a href={`${API_URL}${msg.attachment.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-accent-blue bg-accent-blue/10 px-3 py-2 rounded-lg hover:underline">
+                                <a href={`${API_URL}${msg.attachment.url}`} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-accent-blue bg-accent-blue/10 px-3 py-2 rounded-lg hover:underline mt-1 mx-1">
                                   <File size={16} />
                                   <span className="truncate max-w-[200px]">{msg.attachment.fileName}</span>
                                 </a>
@@ -471,22 +471,22 @@ const Chat = () => {
                             </div>
                           )}
 
-                          {/* Text Content */}
-                          {msg.text && (
-                            <div className="whitespace-pre-wrap break-words leading-relaxed">
-                              {msg.text}
-                              {/* Invisible spacer to push the timestamp below text if it's long */}
-                              <span className="inline-block w-14"></span>
-                            </div>
-                          )}
-
-                          {/* Inline Timestamp and Read Receipt at bottom right */}
-                          <div className={`absolute bottom-1 right-2 flex items-center space-x-1 text-[10px] ${isMine ? 'text-black/50 dark:text-white/50' : 'text-black/50 dark:text-white/50'}`}>
-                            {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
-                            <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            {isMine && (
-                              <CheckCheck size={14} className="text-[#53bdeb] ml-1" />
+                          {/* Text Content & Timestamp Container */}
+                          <div className={`relative flex flex-wrap items-end ${msg.attachment && !msg.text ? 'absolute bottom-2 right-2' : 'px-3 py-1.5'}`}>
+                            {msg.text && (
+                              <div className="whitespace-pre-wrap break-words leading-relaxed text-[15px] pr-2 pb-3">
+                                {msg.text}
+                              </div>
                             )}
+
+                            {/* Timestamp and Read Receipt at bottom */}
+                            <div className={`flex items-center space-x-1 text-[10.5px] ${msg.attachment && !msg.text ? 'bg-black/50 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm' : 'text-black/50 ml-auto absolute bottom-1 right-2'}`}>
+                              {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
+                              <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              {isMine && (
+                                <CheckCheck size={14} className={msg.readBy?.length > 0 || msg.isRead ? "text-[#53bdeb] ml-0.5" : (msg.attachment && !msg.text ? "text-white/80 ml-0.5" : "text-black/40 ml-0.5")} />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
