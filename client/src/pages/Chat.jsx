@@ -64,6 +64,9 @@ const Chat = () => {
         if (activeChannel && String(channelId) === String(activeChannel._id)) {
           setMessages((prev) => prev.filter(m => String(m._id) !== String(messageId)));
         }
+        if (activeDM && String(channelId) === String(activeDM.dmId)) {
+          setMessages((prev) => prev.filter(m => String(m._id) !== String(messageId)));
+        }
       };
 
       socket.on('new_message', handleNewMessage);
@@ -73,7 +76,7 @@ const Chat = () => {
       socket.on('messages_read', ({ channelId, userId }) => {
         if (activeChannel && String(channelId) === String(activeChannel._id)) {
           setMessages((prev) => prev.map(m => {
-            if (String(m.sender._id) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+            if (String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
               return { ...m, readBy: [...(m.readBy || []), userId] };
             }
             return m;
@@ -84,7 +87,7 @@ const Chat = () => {
       socket.on('dm_messages_read', ({ dmId, userId }) => {
         if (activeDM && String(dmId) === String(activeDM.dmId)) {
           setMessages((prev) => prev.map(m => {
-            if (String(m.sender._id) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+            if (String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
               return { ...m, readBy: [...(m.readBy || []), userId] };
             }
             return m;
@@ -242,10 +245,14 @@ const Chat = () => {
   const handleEditMessage = async (msgId) => {
     if (!editMessageText.trim() || !workspace) return;
     try {
+      let res;
       if (activeChannel) {
-        await axios.put(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`, { text: editMessageText });
+        res = await axios.put(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}`, { text: editMessageText });
       } else if (activeDM) {
-        await axios.put(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/${msgId}`, { text: editMessageText });
+        res = await axios.put(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/${msgId}`, { text: editMessageText });
+      }
+      if (res && res.data) {
+        setMessages(messages.map(m => m._id === msgId ? res.data : m));
       }
       setEditingMessageId(null);
       setEditMessageText('');
@@ -263,6 +270,7 @@ const Chat = () => {
       } else if (activeDM) {
         await axios.delete(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/${msgId}`);
       }
+      setMessages(messages.filter(m => m._id !== msgId));
     } catch (error) {
       console.error(error);
     }
