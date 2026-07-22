@@ -235,58 +235,100 @@ const AttendanceLeave = () => {
               </table>
             </div>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th className="text-left w-48">EMPLOYEE</th>
-                  <th className="text-left w-32">TYPE</th>
-                  <th className="text-left">DURATION</th>
-                  <th className="text-left w-32">STATUS</th>
-                  {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && (
-                    <th className="text-right w-32">ACTIONS</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {leaveRecords.map(leave => (
-                  <tr key={leave._id}>
-                    <td className="font-medium text-text-primary">{leave.user?.name}</td>
-                    <td className="text-text-secondary">{leave.type}</td>
-                    <td className="text-text-secondary">
-                      {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
-                      <br />
-                      <span className="text-xs opacity-70">{leave.reason}</span>
-                    </td>
-                    <td>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        leave.status === 'Approved' ? 'text-success bg-success/10' :
-                        leave.status === 'Rejected' ? 'text-danger bg-danger/10' :
-                        'text-orange-500 bg-orange-500/10'
-                      }`}>
-                        {leave.status}
-                      </span>
-                    </td>
-                    {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && (
-                      <td className="text-right space-x-2 whitespace-nowrap">
-                        {leave.status === 'Pending' ? (
-                          <>
-                            <button onClick={() => handleLeaveStatus(leave._id, 'Approved')} className="text-success hover:bg-success/10 p-1.5 rounded transition-colors" title="Approve"><Check size={18} /></button>
-                            <button onClick={() => handleLeaveStatus(leave._id, 'Rejected')} className="text-danger hover:bg-danger/10 p-1.5 rounded transition-colors" title="Reject"><X size={18} /></button>
-                          </>
-                        ) : (
-                          <span className="text-xs text-text-secondary">By: {leave.approvedBy?.name}</span>
-                        )}
-                      </td>
+            <div className="space-y-8 p-2">
+              <div>
+                <h3 className="text-lg font-bold text-text-primary mb-4 px-2">My Leaves</h3>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th className="text-left w-32">TYPE</th>
+                      <th className="text-left">DURATION</th>
+                      <th className="text-left w-32">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaveRecords.filter(l => l.user?._id === user._id).map(leave => (
+                      <tr key={leave._id}>
+                        <td className="font-medium text-text-primary">{leave.type}</td>
+                        <td className="text-text-secondary">
+                          {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
+                          <br />
+                          <span className="text-xs opacity-70">{leave.reason}</span>
+                        </td>
+                        <td>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            leave.status === 'Approved' ? 'text-success bg-success/10' :
+                            leave.status === 'Rejected' ? 'text-danger bg-danger/10' :
+                            'text-orange-500 bg-orange-500/10'
+                          }`}>
+                            {leave.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {leaveRecords.filter(l => l.user?._id === user._id).length === 0 && (
+                      <tr>
+                        <td colSpan="3" className="text-center py-8 text-text-secondary">No leave requests found.</td>
+                      </tr>
                     )}
-                  </tr>
-                ))}
-                {leaveRecords.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="text-center py-8 text-text-secondary">No leave requests found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  </tbody>
+                </table>
+              </div>
+
+              {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && (
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary mb-4 px-2">Team Leave Requests</h3>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th className="text-left w-48">EMPLOYEE</th>
+                        <th className="text-left w-32">TYPE</th>
+                        <th className="text-left">DURATION</th>
+                        <th className="text-left w-32">STATUS</th>
+                        <th className="text-right w-32">ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaveRecords.filter(l => l.user?._id !== user._id).map(leave => (
+                        <tr key={leave._id}>
+                          <td className="font-medium text-text-primary">{leave.user?.name}</td>
+                          <td className="text-text-secondary">{leave.type}</td>
+                          <td className="text-text-secondary">
+                            {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
+                            <br />
+                            <span className="text-xs opacity-70">{leave.reason}</span>
+                          </td>
+                          <td>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              leave.status === 'Approved' ? 'text-success bg-success/10' :
+                              leave.status === 'Rejected' ? 'text-danger bg-danger/10' :
+                              'text-orange-500 bg-orange-500/10'
+                            }`}>
+                              {leave.status}
+                            </span>
+                          </td>
+                          <td className="text-right space-x-2 whitespace-nowrap">
+                            {leave.status === 'Pending' ? (
+                              <>
+                                <button onClick={() => handleLeaveStatus(leave._id, 'Approved')} className="text-success hover:bg-success/10 p-1.5 rounded transition-colors" title="Approve"><Check size={18} /></button>
+                                <button onClick={() => handleLeaveStatus(leave._id, 'Rejected')} className="text-danger hover:bg-danger/10 p-1.5 rounded transition-colors" title="Reject"><X size={18} /></button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-text-secondary">By: {leave.approvedBy?.name}</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {leaveRecords.filter(l => l.user?._id !== user._id).length === 0 && (
+                        <tr>
+                          <td colSpan="5" className="text-center py-8 text-text-secondary">No team leave requests found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

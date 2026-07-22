@@ -475,13 +475,13 @@ const Chat = () => {
                       <div className="relative flex items-center group/msg">
                         {/* Hover Actions (Delete/Edit) */}
                         {isMine && (
-                          <div className="hidden group-hover/msg:flex items-center space-x-1 mr-2 opacity-60">
+                          <div className="absolute top-0 right-[100%] pr-2 opacity-0 group-hover/msg:opacity-100 flex items-center space-x-1 transition-opacity duration-200 z-10">
                             {msg.text && (
-                              <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1 hover:text-accent-blue transition-colors bg-bg-secondary rounded shadow-sm">
+                              <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1.5 hover:text-accent-blue transition-colors bg-bg-secondary border border-border rounded-lg shadow-sm text-text-secondary">
                                 <Edit2 size={14} />
                               </button>
                             )}
-                            <button onClick={() => handleDeleteMessage(msg._id)} className="p-1 hover:text-danger transition-colors bg-bg-secondary rounded shadow-sm">
+                            <button onClick={() => handleDeleteMessage(msg._id)} className="p-1.5 hover:text-danger transition-colors bg-bg-secondary border border-border rounded-lg shadow-sm text-text-secondary">
                               <Trash2 size={14} />
                             </button>
                           </div>
@@ -509,7 +509,11 @@ const Chat = () => {
                                     <div className="absolute bottom-1.5 right-1.5 flex items-center justify-end space-x-1 text-[10.5px] bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm z-10 pointer-events-none">
                                       <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                       {isMine && (
-                                        <CheckCheck size={14} className={msg.readBy?.length > 0 || msg.isRead ? "text-[#53bdeb] ml-0.5" : "text-white/80 ml-0.5"} />
+                                        msg.readBy?.length > 0 || msg.isRead ? (
+                                          <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />
+                                        ) : (
+                                          <Check size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />
+                                        )
                                       )}
                                     </div>
                                   )}
@@ -521,7 +525,11 @@ const Chat = () => {
                                     <div className="absolute bottom-1.5 right-1.5 flex items-center justify-end space-x-1 text-[10.5px] bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm z-10 pointer-events-none">
                                       <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                       {isMine && (
-                                        <CheckCheck size={14} className={msg.readBy?.length > 0 || msg.isRead ? "text-[#53bdeb] ml-0.5" : "text-white/80 ml-0.5"} />
+                                        msg.readBy?.length > 0 || msg.isRead ? (
+                                          <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />
+                                        ) : (
+                                          <Check size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />
+                                        )
                                       )}
                                     </div>
                                   )}
@@ -549,7 +557,11 @@ const Chat = () => {
                                 {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
                                 <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 {isMine && (
-                                  <CheckCheck size={14} className={msg.readBy?.length > 0 || msg.isRead ? "text-[#53bdeb] ml-0.5" : "text-black/40 ml-0.5"} />
+                                  msg.readBy?.length > 0 || msg.isRead ? (
+                                    <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />
+                                  ) : (
+                                    <Check size={16} strokeWidth={2.5} className="text-black/40 ml-0.5" />
+                                  )
                                 )}
                               </div>
                             </div>
