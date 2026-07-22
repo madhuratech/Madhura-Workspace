@@ -202,7 +202,7 @@ const AttendanceLeave = () => {
                 </div>
               </div>
 
-              <table className="data-table flex-1">
+              <table className="data-table">
                 <thead>
                   <tr>
                     <th className="text-left w-48">DATE</th>
