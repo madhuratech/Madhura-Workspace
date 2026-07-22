@@ -18,6 +18,7 @@ const Chat = () => {
   const [editMessageText, setEditMessageText] = useState('');
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [unreadCounts, setUnreadCounts] = useState({});
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -42,12 +43,23 @@ const Chat = () => {
             if (prev.find(m => String(m._id) === String(msg._id))) return prev;
             return [...prev, msg];
           });
-        }
-        if (activeDM && msg.dm && String(msg.dm) === String(activeDM.dmId)) {
+        } else if (activeDM && msg.channel && String(msg.channel) === String(activeDM.dmId)) {
+          // If it's a DM, msg.channel is the dmId
           setMessages((prev) => {
             if (prev.find(m => String(m._id) === String(msg._id))) return prev;
             return [...prev, msg];
           });
+        } else {
+          // Message is not for the active view, increment unread badge if not sent by me
+          if (String(msg.sender._id || msg.sender) !== String(user._id)) {
+            const isDM = msg.channel && msg.channel.name && msg.channel.name.startsWith('dm-');
+            const channelKey = isDM ? msg.channel.name : (msg.channel._id || msg.channel);
+            
+            setUnreadCounts(prev => ({
+              ...prev,
+              [channelKey]: (prev[channelKey] || 0) + 1
+            }));
+          }
         }
       };
 
@@ -135,8 +147,10 @@ const Chat = () => {
       if (hasUnread) {
         if (activeChannel) {
           axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/mark-read`).catch(console.error);
+          setUnreadCounts(prev => ({ ...prev, [activeChannel._id]: 0 }));
         } else if (activeDM) {
-          axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/mark-read`).catch(console.error);
+          axios.post(`/workspaces/${workspace._id}/channels/${activeDM.dmId}/messages/mark-read`).catch(console.error);
+          setUnreadCounts(prev => ({ ...prev, [activeDM.dmId]: 0 }));
         }
       }
     }
@@ -169,6 +183,14 @@ const Chat = () => {
         if (channelsRes.data.length > 0) {
           setActiveChannel(channelsRes.data[0]);
         }
+
+        // Fetch unread counts
+        try {
+          const unreadRes = await axios.get(`/workspaces/${ws._id}/channels/unread`);
+          setUnreadCounts(unreadRes.data || {});
+        } catch (err) {
+          console.error("Error fetching unread counts", err);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -182,8 +204,10 @@ const Chat = () => {
       let res;
       if (type === 'channel') {
         res = await axios.get(`/workspaces/${workspace._id}/channels/${id}/messages`);
+        setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
       } else {
-        res = await axios.get(`/workspaces/${workspace._id}/dms/${id}/messages`);
+        res = await axios.get(`/workspaces/${workspace._id}/channels/${id}/messages`);
+        setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
       }
       setMessages(res.data);
     } catch (error) {
@@ -353,15 +377,22 @@ const Chat = () => {
             {channels.filter(c => !c.name.startsWith('dm-')).map(channel => (
               <button 
                 key={channel._id}
-                onClick={() => setActiveChannel(channel)}
-                className={`w-full flex items-center px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                onClick={() => { setActiveChannel(channel); setActiveDM(null); }}
+                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors ${
                   activeChannel?._id === channel._id 
                     ? 'bg-accent-blue/10 text-accent-blue font-medium' 
                     : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
                 }`}
               >
-                <Hash size={16} className="mr-2 opacity-70" />
-                <span className="truncate">{channel.name}</span>
+                <div className="flex items-center truncate">
+                  <Hash size={16} className="mr-2 opacity-70" />
+                  <span className="truncate">{channel.name}</span>
+                </div>
+                {unreadCounts[channel._id] > 0 && activeChannel?._id !== channel._id && (
+                  <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-zoom-in shadow-sm">
+                    {unreadCounts[channel._id]}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -374,6 +405,12 @@ const Chat = () => {
             {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user?._id).map(member => {
               const isOnline = onlineUsers.has(member.user._id);
               const isActiveDM = activeDM?.user?._id === member.user._id;
+              
+              // Calculate DM Name to check unread counts
+              const sortedIds = [user._id, member.user._id].sort();
+              const dmName = `dm-${sortedIds[0]}-${sortedIds[1]}`;
+              const unreadCount = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || 0;
+
               return (
                 <button 
                   key={member.user._id} 
@@ -386,16 +423,23 @@ const Chat = () => {
                 >
                   <div className="flex items-center truncate">
                     <div className={`h-2 w-2 rounded-full mr-2 ${isOnline ? 'bg-success shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'border border-border bg-border'}`}></div>
-                    <span className="truncate group-hover:font-medium">{member.user.name || member.user.email.split('@')[0]}</span>
+                    <span className="truncate group-hover:font-medium mr-2">{member.user.name || member.user.email.split('@')[0]}</span>
                   </div>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                    member.role === 'super_admin' ? 'bg-purple-500/10 text-purple-500' :
-                    member.role === 'hr' ? 'bg-accent-blue/10 text-accent-blue' :
-                    member.role === 'team_leader' ? 'bg-orange-400/10 text-orange-400' :
-                    'bg-success/10 text-success'
-                  }`}>
-                    {member.role === 'super_admin' ? 'S.ADMIN' : member.role === 'team_leader' ? 'TL' : member.role.toUpperCase()}
-                  </span>
+                  <div className="flex items-center space-x-2">
+                    {unreadCount > 0 && !isActiveDM && (
+                      <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-zoom-in shadow-sm">
+                        {unreadCount}
+                      </span>
+                    )}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                      member.role === 'super_admin' ? 'bg-purple-500/10 text-purple-500' :
+                      member.role === 'hr' ? 'bg-accent-blue/10 text-accent-blue' :
+                      member.role === 'team_leader' ? 'bg-orange-400/10 text-orange-400' :
+                      'bg-success/10 text-success'
+                    }`}>
+                      {member.role === 'super_admin' ? 'S.ADMIN' : member.role === 'team_leader' ? 'TL' : member.role.toUpperCase()}
+                    </span>
+                  </div>
                 </button>
               );
             })}

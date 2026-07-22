@@ -10,6 +10,10 @@ const MeetingSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Please provide a meeting date']
   },
+  time: {
+    type: String,
+    default: ''
+  },
   type: {
     type: String,
     enum: ['google_meet', 'direct_meet'],

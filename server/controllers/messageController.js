@@ -207,3 +207,41 @@ exports.markMessagesRead = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.getUnreadCounts = async (req, res) => {
+  try {
+    const unreadMessages = await Message.aggregate([
+      {
+        $match: {
+          sender: { $ne: req.user._id },
+          readBy: { $ne: req.user._id }
+        }
+      },
+      {
+        $group: {
+          _id: "$channel",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Populate channel details to get names
+    const Channel = require('../models/Channel');
+    await Channel.populate(unreadMessages, { path: '_id', select: 'name' });
+
+    const unreadCounts = {};
+    unreadMessages.forEach(item => {
+      if (item._id) {
+        // item._id is now the populated channel document
+        unreadCounts[item._id._id.toString()] = item.count;
+        if (item._id.name) {
+          unreadCounts[item._id.name] = item.count;
+        }
+      }
+    });
+
+    res.status(200).json(unreadCounts);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -8,9 +8,13 @@ const {
   createMessage,
   updateMessage,
   deleteMessage,
-  markMessagesRead
+  markMessagesRead,
+  getUnreadCounts
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
+
+router.route('/unread')
+  .get(protect, getUnreadCounts);
 
 router.route('/')
   .get(protect, getChannels)

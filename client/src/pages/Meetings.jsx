@@ -2,10 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import { Plus, X, Video, Users as UsersIcon, Link as LinkIcon, Info } from 'lucide-react';
+import { Plus, X, Video, Users as UsersIcon, Link as LinkIcon, Info, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 
 const Meetings = () => {
   const { user } = useContext(AuthContext);
@@ -21,6 +18,7 @@ const Meetings = () => {
   const [formData, setFormData] = useState({ 
     title: '', 
     date: '', 
+    time: '',
     type: 'direct_meet', 
     link: '', 
     description: '',
@@ -76,6 +74,7 @@ const Meetings = () => {
     setFormData({ 
       title: '', 
       date: dateVal, 
+      time: '',
       type: 'direct_meet', 
       link: '', 
       description: '',
@@ -114,6 +113,7 @@ const Meetings = () => {
       await axios.post(`/workspaces/${workspace._id}/meetings`, {
         title: formData.title,
         date: formData.date,
+        time: formData.time,
         type: formData.type,
         link: formData.link,
         description: formData.description,
@@ -128,20 +128,105 @@ const Meetings = () => {
     }
   };
 
-  // Convert meetings to calendar events
-  const calendarEvents = meetings.map(m => ({
-    id: m._id,
-    title: m.title,
-    date: new Date(m.date).toISOString().split('T')[0],
-    extendedProps: { ...m }
-  }));
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  const renderEventContent = (eventInfo) => {
-    const isGoogleMeet = eventInfo.event.extendedProps.type === 'google_meet';
+  const renderCustomCalendar = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const days = [];
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
     return (
-      <div className="flex items-center space-x-1 p-0.5 px-1 truncate w-full">
-        {isGoogleMeet ? <Video size={10} className="shrink-0" /> : <UsersIcon size={10} className="shrink-0" />}
-        <span className="text-[10px] font-medium truncate">{eventInfo.event.title}</span>
+      <div className="flex flex-col h-full animate-fade-in">
+        {/* Calendar Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg-secondary sticky top-0 z-10">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-black text-text-primary flex items-center tracking-tight">
+              {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </h2>
+          </div>
+          <div className="flex space-x-2 bg-bg-primary p-1 rounded-xl border border-border shadow-sm">
+            <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors text-text-secondary hover:text-accent-blue"><ChevronLeft size={20} /></button>
+            <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 hover:bg-bg-secondary rounded-lg transition-colors font-bold text-sm text-text-primary">Today</button>
+            <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors text-text-secondary hover:text-accent-blue"><ChevronRight size={20} /></button>
+          </div>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-bg-primary/30">
+          <div className="grid grid-cols-7 gap-3 h-full">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+              <div key={d} className={`text-center text-xs font-black uppercase tracking-wider py-2 ${i === 0 || i === 6 ? 'text-text-secondary/60' : 'text-text-secondary'}`}>
+                {d}
+              </div>
+            ))}
+            
+            {days.map((day, idx) => {
+              if (!day) return <div key={`empty-${idx}`} className="min-h-[120px] rounded-2xl bg-transparent"></div>;
+              
+              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const dayEvents = meetings.filter(m => new Date(m.date).toISOString().split('T')[0] === dateStr);
+              // Sort events by time if available
+              dayEvents.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+              
+              const isToday = dateStr === new Date().toISOString().split('T')[0];
+              const isPast = new Date(dateStr) < new Date(new Date().setHours(0,0,0,0));
+              
+              return (
+                <div 
+                  key={day} 
+                  onClick={() => { resetForm(dateStr); setIsModalOpen(true); }}
+                  className={`min-h-[120px] p-2.5 border-2 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col group relative overflow-hidden
+                    ${isToday 
+                      ? 'border-accent-blue bg-accent-blue/5 hover:bg-accent-blue/10 shadow-[0_4px_20px_-4px_rgba(59,130,246,0.2)] hover:-translate-y-1' 
+                      : 'border-border bg-bg-secondary hover:border-accent-blue/40 hover:shadow-lg hover:-translate-y-1'}
+                    ${isPast && !isToday ? 'opacity-60 hover:opacity-100 grayscale hover:grayscale-0' : ''}
+                  `}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-black transition-colors ${
+                      isToday ? 'bg-accent-blue text-white shadow-md' : 'text-text-primary group-hover:text-accent-blue'
+                    }`}>
+                      {day}
+                    </span>
+                    {dayEvents.length > 0 && (
+                      <span className="text-[10px] font-bold text-text-secondary bg-bg-primary px-2 py-0.5 rounded-full shadow-inner">
+                        {dayEvents.length} {dayEvents.length === 1 ? 'Meet' : 'Meets'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-1.5 mt-1 flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
+                    {dayEvents.map((evt, eIdx) => (
+                      <div 
+                        key={evt._id} 
+                        className={`text-xs px-2 py-1.5 rounded-xl border flex flex-col space-y-1 transition-all hover:scale-[1.02] ${
+                          evt.type === 'google_meet' 
+                            ? 'bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-300' 
+                            : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                        }`}
+                        title={evt.title}
+                        style={{ animationDelay: `${eIdx * 50}ms` }}
+                      >
+                        <div className="flex items-center justify-between font-bold">
+                          <span className="truncate pr-1">{evt.title}</span>
+                        </div>
+                        <div className="flex items-center text-[10px] opacity-80 font-semibold space-x-2">
+                          {evt.time && <span>{evt.time}</span>}
+                          {evt.type === 'google_meet' ? <Video size={10}/> : <UsersIcon size={10}/>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   };
@@ -192,71 +277,8 @@ const Meetings = () => {
 
       <div className="bg-bg-primary flex-1 flex flex-col overflow-hidden relative border-none">
         {activeTab === 'calendar' ? (
-          <div className="max-w-6xl w-full mx-auto h-[700px] flex flex-col bg-bg-secondary rounded-2xl shadow-sm p-4 border border-border">
-            <style>{`
-              .fc {
-                --fc-page-bg-color: transparent;
-                --fc-neutral-bg-color: var(--bg-primary);
-                --fc-neutral-text-color: var(--text-primary);
-                --fc-border-color: var(--border-color);
-                --fc-button-text-color: var(--text-secondary);
-                --fc-button-bg-color: transparent;
-                --fc-button-border-color: var(--border-color);
-                --fc-button-hover-bg-color: var(--bg-primary);
-                --fc-button-hover-border-color: var(--border-color);
-                --fc-button-active-bg-color: var(--bg-primary);
-                --fc-button-active-border-color: var(--border-color);
-                --fc-today-bg-color: rgba(59, 130, 246, 0.05);
-                font-family: 'Inter', sans-serif;
-                color: var(--text-primary);
-                height: 100%;
-              }
-              
-              .fc .fc-toolbar-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); }
-              .fc .fc-button-primary { box-shadow: none !important; border-radius: 6px; }
-              .fc-daygrid-day-number { color: var(--text-secondary); font-size: 0.85rem; font-weight: 500; padding: 4px 8px !important; }
-              .fc-daygrid-day-top { flex-direction: row; justify-content: flex-end; }
-              .fc-col-header-cell { padding: 8px 0; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; color: var(--text-secondary); }
-              
-              /* Custom scrollbar for FullCalendar internal scrolling */
-              .fc-scroller {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-              }
-              .fc-scroller::-webkit-scrollbar {
-                display: none;
-              }
-              
-              .fc-event {
-                 background-color: var(--accent-blue);
-                 color: white;
-                 border-radius: 4px;
-                 margin: 2px 4px;
-                 border: none;
-                 box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                 transition: transform 0.2s;
-                 cursor: pointer;
-                 padding: 2px;
-              }
-              .fc-event:hover {
-                 transform: translateY(-1px);
-                 background-color: #2563eb;
-              }
-            `}</style>
-            
-            <FullCalendar
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              events={calendarEvents}
-              dateClick={handleDateClick}
-              eventContent={renderEventContent}
-              height="100%"
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth'
-              }}
-            />
+          <div className="w-full mx-auto h-[800px] flex flex-col bg-bg-secondary rounded-3xl shadow-sm border border-border overflow-hidden">
+            {renderCustomCalendar()}
           </div>
         ) : (
           <div className="bg-bg-secondary border border-border rounded-xl shadow-sm overflow-hidden flex flex-col max-h-full">
@@ -279,11 +301,11 @@ const Meetings = () => {
                     meetings.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => (
                       <tr key={m._id}>
                         <td className="font-medium">{new Date(m.date).toLocaleDateString()}</td>
-                        <td className="font-bold text-text-primary">{m.title}</td>
+                        <td className="font-bold text-text-primary">{m.title} <span className="text-xs font-normal text-text-secondary ml-2">{m.time}</span></td>
                         <td>
                           {m.type === 'google_meet' ? (
                             <div className="flex items-center text-accent-blue">
-                              <Video size={14} className="mr-1.5" /> Google Meet
+                              <Video size={14} className="mr-1.5" /> Online meeting
                               {m.link && (
                                 <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-3 text-xs bg-accent-blue text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors">
                                   Attend Meeting
@@ -328,12 +350,20 @@ const Meetings = () => {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">Date</label>
                   <input 
                     type="date" required min={new Date().toISOString().split('T')[0]}
                     value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})}
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Time</label>
+                  <input 
+                    type="time"
+                    value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})}
                     className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
                   />
                 </div>
@@ -344,7 +374,7 @@ const Meetings = () => {
                     className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
                   >
                     <option value="direct_meet">Direct Meet (In Person)</option>
-                    <option value="google_meet">Google Meet (Online)</option>
+                    <option value="google_meet">Online meeting</option>
                   </select>
                 </div>
               </div>
