@@ -218,7 +218,7 @@ const ProjectDetails = () => {
                       }`}
                     >
                       {column.items.map((item, index) => (
-                        <Draggable key={item._id} draggableId={item._id} index={index} isDragDisabled={user?.role === 'employee'}>
+                        <Draggable key={item._id} draggableId={item._id} index={index} isDragDisabled={user?.role === 'employee' && (!item.assignees || !item.assignees.some(a => a._id === user._id))}>
                           {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}

@@ -19,6 +19,8 @@ const leaveRouter = require('./leave');
 const emailRouter = require('./emailRoutes');
 const dmRouter = require('./dmRoutes');
 
+const { getMyTasks } = require('../controllers/taskController');
+
 router.use('/:workspaceId/projects', projectRouter);
 router.use('/:workspaceId/emails', emailRouter);
 router.use('/:workspaceId/dms', dmRouter);
@@ -27,6 +29,8 @@ router.use('/:workspaceId/channels', messageRouter);
 router.use('/:workspaceId/teams', teamRouter);
 router.use('/:workspaceId/attendance', attendanceRouter);
 router.use('/:workspaceId/leaves', leaveRouter);
+
+router.get('/:workspaceId/my-tasks', protect, getMyTasks);
 
 router.route('/').get(protect, getWorkspaces).post(protect, createWorkspace);
 router.route('/:id').get(protect, getWorkspace).put(protect, updateWorkspace).delete(protect, deleteWorkspace);

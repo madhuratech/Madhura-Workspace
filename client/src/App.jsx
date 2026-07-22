@@ -18,6 +18,7 @@ import WorkspaceOverview from './pages/WorkspaceOverview';
 import Chat from './pages/Chat';
 import TeamLeaderDashboard from './pages/TeamLeaderDashboard';
 import AttendanceLeave from './pages/AttendanceLeave';
+import MyTasks from './pages/MyTasks';
 import Layout from './components/Layout';
 
 const ProtectedRoute = ({ children }) => {
@@ -43,6 +44,7 @@ function App() {
         }>
           <Route index element={<Dashboard />} />
           <Route path="projects" element={<Projects />} />
+          <Route path="my-tasks" element={<MyTasks />} />
           <Route path="team" element={<Team />} />
           <Route path="meetings" element={<Meetings />} />
           <Route path="documents" element={<Documents />} />

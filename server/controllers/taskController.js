@@ -1,4 +1,5 @@
 const Task = require('../models/Task');
+const Workspace = require('../models/Workspace');
 const { sendNotification } = require('./notificationController');
 
 // @desc    Get tasks for a project
@@ -16,6 +17,25 @@ const getTasks = async (req, res) => {
 
     const tasks = await Task.find(query)
       .populate('assignees', 'name email avatar');
+
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all tasks assigned to the current user across a workspace
+// @route   GET /api/workspaces/:workspaceId/my-tasks
+// @access  Private
+const getMyTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({
+      workspace: req.params.workspaceId,
+      assignees: req.user._id
+    })
+    .populate('project', 'title')
+    .populate('assignees', 'name email avatar')
+    .sort({ dueDate: 1 });
 
     res.status(200).json(tasks);
   } catch (error) {
@@ -103,6 +123,21 @@ const updateTask = async (req, res) => {
           );
         }
       });
+
+      // If marked as Done by an employee, notify the workspace admin
+      if (req.body.status === 'Done' && req.user.role === 'employee') {
+        const workspace = await Workspace.findById(task.workspace).populate('owner');
+        if (workspace && workspace.owner) {
+          sendNotification(
+            req,
+            workspace.owner._id,
+            'task_completed',
+            'Task Completed',
+            `${req.user.name} has completed the task: "${task.title}"`,
+            `/project/${task.project}`
+          );
+        }
+      }
     }
 
     res.status(200).json(task);
@@ -113,6 +148,7 @@ const updateTask = async (req, res) => {
 
 module.exports = {
   getTasks,
+  getMyTasks,
   createTask,
   updateTask
 };

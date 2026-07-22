@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket } = useContext(AuthContext);
@@ -108,6 +108,10 @@ const Layout = () => {
           <Link to="/projects" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <FolderKanban size={18} />
             <span className="font-medium text-sm">Projects</span>
+          </Link>
+          <Link to="/my-tasks" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
+            <CheckSquare size={18} />
+            <span className="font-medium text-sm">My Tasks</span>
           </Link>
           <Link to="/chat" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
             <Mail size={18} />
