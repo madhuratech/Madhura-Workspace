@@ -8,6 +8,7 @@ const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [toastNotif, setToastNotif] = useState(null);
@@ -105,57 +106,57 @@ const Layout = () => {
         
         <nav className="flex-1 px-4 space-y-1.5 mt-6 overflow-y-auto custom-scrollbar">
           <p className="text-[0.65rem] font-bold text-text-sidebar/50 uppercase tracking-wider mb-3 mt-4 px-3 font-outfit">Main</p>
-          <Link to="/" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <LayoutDashboard size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">Dashboard</span>
+          <Link to="/" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname === '/' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <LayoutDashboard size={18} className={`${location.pathname === '/' ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">Dashboard</span>
           </Link>
           {user?.role === 'super_admin' && (
-            <Link to="/team" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-              <Users size={18} className="group-hover:text-accent-blue transition-colors" />
-              <span className="font-medium text-sm">Team Management</span>
+            <Link to="/team" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/team') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+              <Users size={18} className={`${location.pathname.startsWith('/team') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+              <span className="text-sm">Team Management</span>
             </Link>
           )}
           {user?.role === 'team_leader' && (
-            <Link to="/tl-dashboard" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-              <BarChart3 size={18} className="group-hover:text-accent-blue transition-colors" />
-              <span className="font-medium text-sm">TL Overview</span>
+            <Link to="/tl-dashboard" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/tl-dashboard') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+              <BarChart3 size={18} className={`${location.pathname.startsWith('/tl-dashboard') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+              <span className="text-sm">TL Overview</span>
             </Link>
           )}
-          <Link to="/projects" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <FolderKanban size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">Projects</span>
+          <Link to="/projects" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/project') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <FolderKanban size={18} className={`${location.pathname.startsWith('/project') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">Projects</span>
           </Link>
-          <Link to="/my-tasks" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <CheckSquare size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">My Tasks</span>
+          <Link to="/my-tasks" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/my-tasks') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <CheckSquare size={18} className={`${location.pathname.startsWith('/my-tasks') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">My Tasks</span>
           </Link>
-          <Link to="/chat" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <Mail size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">Chat & Comms</span>
+          <Link to="/chat" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/chat') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <Mail size={18} className={`${location.pathname.startsWith('/chat') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">Chat & Comms</span>
           </Link>
-          <Link to="/attendance" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <Clock size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">Attendance</span>
+          <Link to="/attendance" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/attendance') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <Clock size={18} className={`${location.pathname.startsWith('/attendance') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">Attendance</span>
           </Link>
-          <Link to="/meetings" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <CalendarDays size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">Meetings</span>
+          <Link to="/meetings" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/meeting') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <CalendarDays size={18} className={`${location.pathname.startsWith('/meeting') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">Meetings</span>
           </Link>
-          <Link to="/email" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <Mail size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">Email</span>
+          <Link to="/email" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/email') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <Mail size={18} className={`${location.pathname.startsWith('/email') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">Email</span>
           </Link>
-          <Link to="/documents" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-            <FileText size={18} className="group-hover:text-accent-blue transition-colors" />
-            <span className="font-medium text-sm">Documents</span>
+          <Link to="/documents" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/document') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+            <FileText size={18} className={`${location.pathname.startsWith('/document') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+            <span className="text-sm">Documents</span>
           </Link>
         </nav>
 
         {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
           <div className="p-4 border-t border-white/5">
-            <Link to="/settings" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
-              <Settings size={18} className="group-hover:rotate-90 transition-transform duration-300 group-hover:text-accent-blue" />
-              <span className="font-medium text-sm">Settings</span>
+            <Link to="/settings" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/settings') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+              <Settings size={18} className={`group-hover:rotate-90 transition-transform duration-300 ${location.pathname.startsWith('/settings') ? 'text-accent-blue' : 'group-hover:text-accent-blue'}`} />
+              <span className="text-sm">Settings</span>
             </Link>
           </div>
         )}

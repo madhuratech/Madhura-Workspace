@@ -78,3 +78,24 @@ exports.googleAuthCallback = async (req, res) => {
     res.status(500).send('Authentication failed.');
   }
 };
+
+// @desc    Revoke Google OAuth Access
+// @route   DELETE /api/auth/google/revoke
+// @access  Private
+exports.revokeGoogleAccess = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    // Clear tokens
+    user.googleAccessToken = undefined;
+    user.googleRefreshToken = undefined;
+    user.googleTokenExpiry = undefined;
+    
+    await user.save();
+    
+    res.status(200).json({ message: 'Google access revoked successfully' });
+  } catch (error) {
+    console.error('Error revoking Google access:', error);
+    res.status(500).json({ message: 'Error revoking access' });
+  }
+};

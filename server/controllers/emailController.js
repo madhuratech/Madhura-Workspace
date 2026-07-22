@@ -31,7 +31,7 @@ exports.getEmails = async (req, res) => {
       return res.status(401).json({ authRequired: true, message: 'Google Authentication required' });
     }
 
-    const { folder = 'inbox' } = req.query; // inbox, sent, drafts, starred, trash
+    const { folder = 'inbox' } = req.query; // inbox, sent, drafts, starred, trash, etc.
     
     let q = '';
     if (folder === 'inbox') q = 'in:inbox';
@@ -39,6 +39,11 @@ exports.getEmails = async (req, res) => {
     if (folder === 'drafts') q = 'is:draft';
     if (folder === 'starred') q = 'is:starred';
     if (folder === 'trash') q = 'in:trash';
+    if (folder === 'important') q = 'is:important';
+    if (folder === 'snoozed') q = 'is:snoozed';
+    if (folder === 'chats') q = 'is:chat';
+    if (folder === 'spam') q = 'in:spam';
+    if (folder === 'all') q = ''; // No filter means all
 
     const oauth2Client = getOAuth2Client(user);
     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });

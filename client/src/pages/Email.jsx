@@ -63,6 +63,18 @@ const Email = () => {
     }
   };
 
+  const handleDisconnectGmail = async () => {
+    if(!window.confirm('Are you sure you want to disconnect your Google account?')) return;
+    try {
+      await axios.delete('/auth/google/revoke');
+      setAuthRequired(true);
+      setEmails([]);
+    } catch (error) {
+      console.error('Failed to disconnect Google', error);
+      alert('Failed to disconnect Google account');
+    }
+  };
+
   // Removed workspace members fetch
 
   const handleSendEmail = async (isDraft = false) => {
@@ -194,6 +206,17 @@ const Email = () => {
                 ))}
               </ul>
             </div>
+
+            {!authRequired && (
+              <div className="mt-8 px-2">
+                <button 
+                  onClick={handleDisconnectGmail}
+                  className="w-full flex items-center justify-center px-4 py-2 bg-danger/10 text-danger hover:bg-danger hover:text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Disconnect Gmail
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

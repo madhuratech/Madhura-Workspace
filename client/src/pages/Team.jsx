@@ -198,6 +198,7 @@ const Team = () => {
               <tr>
                 <th className="text-left w-16">USER</th>
                 <th className="text-left">NAME</th>
+                <th className="text-left">STATUS</th>
                 <th className="text-left">DESIGNATION</th>
                 <th className="text-left">EMAIL</th>
                 <th className="text-left w-32">ROLE</th>
@@ -217,6 +218,22 @@ const Team = () => {
                     </div>
                   </td>
                   <td className="font-bold text-text-primary">{member.user.name || 'Pending User'}</td>
+                  <td>
+                    <span className={`flex items-center space-x-1.5 text-xs font-semibold ${
+                      member.user.presenceStatus === 'Active' || !member.user.presenceStatus ? 'text-success' :
+                      member.user.presenceStatus === 'Busy' ? 'text-danger' :
+                      member.user.presenceStatus === 'Break' ? 'text-warning' :
+                      'text-orange-400'
+                    }`}>
+                      <div className={`h-2 w-2 rounded-full ${
+                        member.user.presenceStatus === 'Active' || !member.user.presenceStatus ? 'bg-success' :
+                        member.user.presenceStatus === 'Busy' ? 'bg-danger' :
+                        member.user.presenceStatus === 'Break' ? 'bg-warning' :
+                        'bg-orange-400'
+                      }`}></div>
+                      <span>{member.user.presenceStatus || 'Active'}</span>
+                    </span>
+                  </td>
                   <td className="text-text-secondary">{member.user.designation || '-'}</td>
                   <td className="text-text-secondary">{member.user.email}</td>
                   <td className="whitespace-nowrap">
