@@ -121,21 +121,21 @@ const MyTasks = () => {
   return (
     <div className="h-full flex flex-col font-sans">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-wide">My Tasks</h1>
+          <h1 className="text-3xl font-bold text-text-primary tracking-wide font-outfit">My Tasks</h1>
           <p className="text-text-secondary text-sm mt-1">Manage your daily assigned tasks across all projects</p>
         </div>
-        <div className="flex bg-bg-secondary rounded-lg p-1 border border-border shadow-sm">
+        <div className="flex bg-bg-secondary rounded-xl p-1.5 border border-border shadow-soft">
           <button 
             onClick={() => setViewMode('list')} 
-            className={`flex items-center space-x-2 px-4 py-1.5 rounded-md transition-colors text-sm font-medium ${viewMode === 'list' ? 'bg-bg-primary text-accent-blue shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+            className={`flex items-center space-x-2 px-5 py-2 rounded-lg transition-all text-sm font-semibold ${viewMode === 'list' ? 'bg-bg-primary text-accent-blue shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5'}`}
           >
             <LayoutList size={16} /> <span>List</span>
           </button>
           <button 
             onClick={() => setViewMode('kanban')} 
-            className={`flex items-center space-x-2 px-4 py-1.5 rounded-md transition-colors text-sm font-medium ${viewMode === 'kanban' ? 'bg-bg-primary text-accent-blue shadow-sm' : 'text-text-secondary hover:text-text-primary'}`}
+            className={`flex items-center space-x-2 px-5 py-2 rounded-lg transition-all text-sm font-semibold ${viewMode === 'kanban' ? 'bg-bg-primary text-accent-blue shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-black/5 dark:hover:bg-white/5'}`}
           >
             <KanbanSquare size={16} /> <span>Board</span>
           </button>
@@ -233,10 +233,10 @@ const MyTasks = () => {
                       <div
                         {...provided.droppableProps}
                         ref={provided.innerRef}
-                        className={`flex-1 rounded-2xl p-3 transition-all min-h-[400px] border ${
+                        className={`flex-1 rounded-3xl p-4 transition-all min-h-[500px] border ${
                           snapshot.isDraggingOver
-                            ? 'bg-accent-blue/5 border-accent-blue/30'
-                            : 'bg-bg-secondary border-border'
+                            ? 'bg-accent-blue/5 border-accent-blue/30 shadow-inner'
+                            : 'bg-bg-primary/50 border-border/60 backdrop-blur-md'
                         }`}
                       >
                         {column.items.map((item, index) => (
@@ -246,10 +246,10 @@ const MyTasks = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={`p-4 mb-3 rounded-xl border transition-all ${
+                                className={`p-5 mb-4 rounded-2xl border transition-all ${
                                   snapshot.isDragging
-                                    ? 'bg-bg-primary border-accent-blue shadow-lg shadow-accent-blue/10 rotate-1'
-                                    : 'bg-bg-primary border-border hover:border-accent-blue/50'
+                                    ? 'bg-bg-secondary border-accent-blue shadow-2xl rotate-2 z-50'
+                                    : 'bg-bg-secondary border-border shadow-sm hover:shadow-hover hover:border-accent-blue/30'
                                 }`}
                               >
                                 <div className="flex justify-between items-start mb-2">
@@ -260,14 +260,14 @@ const MyTasks = () => {
                                     {item.project?.title}
                                   </Link>
                                 </div>
-                                <h3 className={`text-sm font-semibold mb-1 ${item.status === 'Done' ? 'text-text-secondary line-through' : 'text-text-primary'}`}>{item.title}</h3>
+                                <h3 className={`text-base font-bold mb-1.5 font-outfit leading-tight ${item.status === 'Done' ? 'text-text-secondary line-through' : 'text-text-primary'}`}>{item.title}</h3>
                                 {item.description && (
-                                  <p className="text-xs text-text-secondary line-clamp-2 mb-3">{item.description}</p>
+                                  <p className="text-xs text-text-secondary line-clamp-2 mb-4 leading-relaxed">{item.description}</p>
                                 )}
-                                <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
-                                  <div className="flex -space-x-1.5">
+                                <div className="flex justify-between items-center mt-4 pt-3 border-t border-border/50">
+                                  <div className="avatar-stack">
                                     {item.assignees?.map((a) => (
-                                      <div key={a._id} title={a.name} className="h-6 w-6 rounded-full bg-accent-blue/20 border-2 border-bg-primary flex items-center justify-center text-[10px] text-accent-blue font-bold">
+                                      <div key={a._id} title={a.name} className="h-7 w-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-[10px] text-accent-blue font-bold shadow-sm">
                                         {a.name?.charAt(0).toUpperCase()}
                                       </div>
                                     ))}

@@ -165,16 +165,17 @@ const ProjectDetails = () => {
   return (
     <div className="h-full flex flex-col font-sans">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-3">
-          <Link to="/projects" className="text-text-secondary hover:text-text-primary transition-colors">
-            <ArrowLeft size={20} />
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center space-x-4">
+          <Link to="/projects" className="bg-bg-secondary p-2 rounded-full border border-border shadow-sm text-text-secondary hover:text-accent-blue hover:border-accent-blue/30 transition-all">
+            <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-text-primary tracking-wide">
-              {project ? project.title : 'Project'} <span className="text-text-secondary font-normal text-lg">| Kanban Board</span>
+            <h1 className="text-3xl font-bold text-text-primary tracking-wide font-outfit flex items-center">
+              {project ? project.title : 'Project'} 
+              <span className="text-text-secondary font-medium text-lg ml-3 pl-3 border-l-2 border-border">Kanban Board</span>
             </h1>
-            <p className="text-text-secondary text-sm mt-0.5">
+            <p className="text-text-secondary text-sm mt-1">
               {user?.role === 'employee' ? 'Your assigned tasks' : 'Drag tasks between columns to update status'}
             </p>
           </div>
@@ -182,9 +183,9 @@ const ProjectDetails = () => {
         {user?.role !== 'employee' && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"
+            className="bg-accent-blue text-white px-5 py-2.5 rounded-xl hover:bg-blue-600 shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
           >
-            <Plus size={16} />
+            <Plus size={18} />
             <span>Add Task</span>
           </button>
         )}
@@ -211,10 +212,10 @@ const ProjectDetails = () => {
                     <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
-                      className={`flex-1 rounded-2xl p-3 transition-all min-h-[400px] border ${
+                      className={`flex-1 rounded-3xl p-4 transition-all min-h-[500px] border ${
                         snapshot.isDraggingOver
-                          ? 'bg-accent-blue/5 border-accent-blue/30'
-                          : 'bg-bg-secondary border-border'
+                          ? 'bg-accent-blue/5 border-accent-blue/30 shadow-inner'
+                          : 'bg-bg-primary/50 border-border/60 backdrop-blur-md'
                       }`}
                     >
                       {column.items.map((item, index) => (
@@ -224,10 +225,10 @@ const ProjectDetails = () => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
-                              className={`p-4 mb-3 rounded-xl border transition-all ${
+                              className={`p-5 mb-4 rounded-2xl border transition-all ${
                                 snapshot.isDragging
-                                  ? 'bg-bg-primary border-accent-blue shadow-lg shadow-accent-blue/10 rotate-1'
-                                  : 'bg-bg-primary border-border hover:border-accent-blue/50'
+                                  ? 'bg-bg-secondary border-accent-blue shadow-2xl rotate-2 z-50'
+                                  : 'bg-bg-secondary border-border shadow-sm hover:shadow-hover hover:border-accent-blue/30'
                               }`}
                             >
                               <div className="flex justify-between items-start mb-2">
@@ -240,14 +241,14 @@ const ProjectDetails = () => {
                                   </button>
                                 )}
                               </div>
-                              <h3 className="text-sm font-semibold text-text-primary mb-1">{item.title}</h3>
+                              <h3 className="text-base font-bold text-text-primary mb-1.5 font-outfit leading-tight">{item.title}</h3>
                               {item.description && (
-                                <p className="text-xs text-text-secondary line-clamp-2 mb-3">{item.description}</p>
+                                <p className="text-xs text-text-secondary line-clamp-2 mb-4 leading-relaxed">{item.description}</p>
                               )}
-                              <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
-                                <div className="flex -space-x-1.5">
+                              <div className="flex justify-between items-center mt-4 pt-3 border-t border-border/50">
+                                <div className="avatar-stack">
                                   {item.assignees?.map((a) => (
-                                    <div key={a._id} title={a.name} className="h-6 w-6 rounded-full bg-accent-blue/20 border-2 border-bg-primary flex items-center justify-center text-[10px] text-accent-blue font-bold">
+                                    <div key={a._id} title={a.name} className="h-7 w-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-[10px] text-accent-blue font-bold shadow-sm">
                                       {a.name?.charAt(0).toUpperCase()}
                                     </div>
                                   ))}
@@ -278,39 +279,40 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      {/* Add Task Modal */}
+      {/* Premium Add Task Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-text-primary">Create New Task</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-secondary border border-border p-8 rounded-3xl w-full max-w-lg shadow-2xl animate-bounce-in max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-8 sticky top-0 bg-bg-secondary z-10 pt-2 pb-4">
+              <h3 className="text-2xl font-bold text-text-primary font-outfit">Create New Task</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger bg-bg-primary p-2 rounded-full transition-colors"><X size={20} /></button>
             </div>
 
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Task Title</label>
+                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Task Title</label>
                 <input
                   type="text" required
                   value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  className="premium-input"
                   placeholder="e.g. Design landing page"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Description</label>
+                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Description</label>
                 <textarea
                   rows={2}
                   value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue resize-none"
+                  className="premium-input resize-none"
+                  placeholder="What needs to be done?"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1 flex items-center"><Flag size={12} className="mr-1" /> Priority</label>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide flex items-center"><Flag size={12} className="mr-1" /> Priority</label>
                   <select
                     value={formData.priority} onChange={e => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                    className="premium-input"
                   >
                     <option>Low</option>
                     <option>Medium</option>
@@ -318,47 +320,50 @@ const ProjectDetails = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1 flex items-center"><Calendar size={12} className="mr-1" /> Due Date</label>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide flex items-center"><Calendar size={12} className="mr-1" /> Due Date</label>
                   <input
                     type="date"
                     min={new Date().toISOString().split('T')[0]}
                     value={formData.dueDate} onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                    className="premium-input"
                   />
                 </div>
               </div>
 
               {/* Assign to employees */}
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2 flex items-center"><Users size={12} className="mr-1" /> Assign To</label>
-                <div className="space-y-1.5 max-h-36 overflow-y-auto border border-border rounded-lg p-2 bg-bg-primary">
+              <div className="bg-bg-primary/50 p-5 rounded-2xl border border-border mt-4">
+                <label className="block text-xs font-bold text-text-secondary mb-3 uppercase tracking-wide flex items-center"><Users size={12} className="mr-1" /> Assign Members</label>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-secondary custom-scrollbar">
                   {workspaceMembers.length === 0 ? (
-                    <p className="text-xs text-text-secondary text-center py-2">No team members yet.</p>
+                    <p className="text-xs text-text-secondary text-center py-4">No team members yet.</p>
                   ) : (
                     workspaceMembers.map(member => (
-                      <label key={member.user._id} className="flex items-center space-x-2 p-1.5 hover:bg-bg-secondary rounded-lg cursor-pointer">
+                      <label key={member.user._id} className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-colors ${formData.assignees.includes(member.user._id) ? 'bg-accent-blue/10 border border-accent-blue/20' : 'hover:bg-bg-primary border border-transparent'}`}>
+                        <div className="relative flex items-center justify-center">
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${formData.assignees.includes(member.user._id) ? 'bg-accent-blue text-white' : 'bg-bg-primary text-text-secondary border border-border'}`}>
+                            {member.user.name?.charAt(0).toUpperCase()}
+                          </div>
+                          {formData.assignees.includes(member.user._id) && <div className="absolute -bottom-1 -right-1 bg-success h-3.5 w-3.5 rounded-full border-2 border-bg-secondary"></div>}
+                        </div>
+                        <div className="flex flex-col flex-1">
+                          <span className={`text-sm font-semibold ${formData.assignees.includes(member.user._id) ? 'text-accent-blue' : 'text-text-primary'}`}>{member.user.name}</span>
+                          <span className="text-[10px] text-text-secondary uppercase tracking-wider">{member.role.replace('_', ' ')}</span>
+                        </div>
                         <input
                           type="checkbox"
                           checked={formData.assignees.includes(member.user._id)}
                           onChange={() => toggleAssignee(member.user._id)}
-                          className="accent-accent-blue"
+                          className="hidden"
                         />
-                        <div className="h-6 w-6 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue text-xs font-bold">
-                          {member.user.name?.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">{member.user.name}</p>
-                          <p className="text-xs text-text-secondary capitalize">{member.role.replace('_', ' ')}</p>
-                        </div>
                       </label>
                     ))
                   )}
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-text-secondary hover:text-text-primary font-medium">Cancel</button>
-                <button type="submit" className="px-6 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600 font-medium transition-colors">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-border mt-6">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-text-secondary hover:text-text-primary font-medium transition-colors">Cancel</button>
+                <button type="submit" className="px-6 py-2.5 bg-accent-blue text-white rounded-xl hover:bg-blue-600 shadow-soft hover:shadow-hover font-semibold transition-all">
                   Create Task
                 </button>
               </div>

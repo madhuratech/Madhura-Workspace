@@ -79,67 +79,67 @@ const Layout = () => {
   return (
     <div className="flex h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
       {/* Sidebar */}
-      <aside className="w-64 bg-bg-secondary border-r border-border hidden md:flex flex-col z-20">
-        <div className="p-5 flex items-center space-x-3">
-          <div className="h-10 w-10 bg-accent-blue rounded flex items-center justify-center text-white font-bold text-xl">
+      <aside className="w-[260px] bg-bg-sidebar text-text-sidebar hidden md:flex flex-col z-20 shadow-2xl transition-all duration-300">
+        <div className="p-6 flex items-center space-x-3 border-b border-white/5">
+          <div className="h-10 w-10 bg-gradient-to-br from-accent-blue to-accent-indigo rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
             M
           </div>
-          <h2 className="text-xl font-bold text-text-primary tracking-wide">MadhuraWS</h2>
+          <h2 className="text-xl font-bold text-white tracking-wide font-outfit">MadhuraWS</h2>
         </div>
         
-        <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto">
-          <p className="text-[0.65rem] font-bold text-text-secondary uppercase tracking-wider mb-2 mt-4 px-2">Main</p>
-          <Link to="/" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <LayoutDashboard size={18} />
+        <nav className="flex-1 px-4 space-y-1.5 mt-6 overflow-y-auto custom-scrollbar">
+          <p className="text-[0.65rem] font-bold text-text-sidebar/50 uppercase tracking-wider mb-3 mt-4 px-3 font-outfit">Main</p>
+          <Link to="/" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <LayoutDashboard size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">Dashboard</span>
           </Link>
           {user?.role === 'super_admin' && (
-            <Link to="/team" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all group">
-              <Users size={20} className="group-hover:scale-110 transition-transform" />
-              <span className="font-medium">Team Management</span>
+            <Link to="/team" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+              <Users size={18} className="group-hover:text-accent-blue transition-colors" />
+              <span className="font-medium text-sm">Team Management</span>
             </Link>
           )}
           {user?.role === 'team_leader' && (
-            <Link to="/tl-dashboard" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all group">
-              <BarChart3 size={20} className="group-hover:scale-110 transition-transform" />
-              <span className="font-medium">TL Overview</span>
+            <Link to="/tl-dashboard" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+              <BarChart3 size={18} className="group-hover:text-accent-blue transition-colors" />
+              <span className="font-medium text-sm">TL Overview</span>
             </Link>
           )}
-          <Link to="/projects" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <FolderKanban size={18} />
+          <Link to="/projects" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <FolderKanban size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">Projects</span>
           </Link>
-          <Link to="/my-tasks" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <CheckSquare size={18} />
+          <Link to="/my-tasks" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <CheckSquare size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">My Tasks</span>
           </Link>
-          <Link to="/chat" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <Mail size={18} />
+          <Link to="/chat" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <Mail size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">Chat & Comms</span>
           </Link>
-          <Link to="/attendance" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <Clock size={18} />
+          <Link to="/attendance" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <Clock size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">Attendance</span>
           </Link>
-          <Link to="/meetings" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <CalendarDays size={18} />
+          <Link to="/meetings" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <CalendarDays size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">Meetings</span>
           </Link>
-          <Link to="/email" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <Mail size={18} />
+          <Link to="/email" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <Mail size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">Email</span>
           </Link>
-          <Link to="/documents" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all duration-300">
-            <FileText size={18} />
+          <Link to="/documents" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+            <FileText size={18} className="group-hover:text-accent-blue transition-colors" />
             <span className="font-medium text-sm">Documents</span>
           </Link>
         </nav>
 
         {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
-          <div className="p-4 border-t border-border">
-            <Link to="/settings" className="flex items-center space-x-3 px-3 py-2.5 text-text-secondary hover:bg-black/5 dark:hover:bg-white/5 hover:text-text-primary rounded-lg transition-all group">
-              <Settings size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-              <span className="font-medium">Settings</span>
+          <div className="p-4 border-t border-white/5">
+            <Link to="/settings" className="flex items-center space-x-3 px-3 py-2.5 text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white rounded-lg transition-all duration-300 group">
+              <Settings size={18} className="group-hover:rotate-90 transition-transform duration-300 group-hover:text-accent-blue" />
+              <span className="font-medium text-sm">Settings</span>
             </Link>
           </div>
         )}
@@ -157,25 +157,24 @@ const Layout = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-bg-primary relative">
         {/* Floating Top Navbar */}
-        <header className="mx-6 mt-4 h-16 bg-bg-secondary border border-border rounded-xl flex items-center justify-between px-6 z-40 relative shrink-0 shadow-sm">
+        <header className="mx-6 mt-6 h-16 glass rounded-2xl flex items-center justify-between px-6 z-40 relative shrink-0 shadow-soft">
           <div className="flex-1">
-            <p className="text-xs text-text-secondary">Welcome back,</p>
-            <p className="text-sm font-bold text-text-primary">{user?.name || 'ad a'}</p>
+            <p className="text-xs text-text-secondary font-medium uppercase tracking-wider">Welcome back,</p>
+            <p className="text-sm font-bold text-text-primary font-outfit">{user?.name || 'User'}</p>
           </div>
           
-          <div className="flex items-center space-x-5 text-text-secondary">
-            <button onClick={toggleTheme} className="hover:text-text-primary transition-colors">
+          <div className="flex items-center space-x-4 text-text-secondary">
+            <button onClick={toggleTheme} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="hover:text-text-primary transition-colors relative mt-1"
+                className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors relative"
               >
                 <Bell size={18} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-danger rounded-full flex items-center justify-center text-[9px] text-white font-bold border-2 border-bg-secondary">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                  <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-danger rounded-full border-2 border-bg-secondary">
                   </span>
                 )}
               </button>
