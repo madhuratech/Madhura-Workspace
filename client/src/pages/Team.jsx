@@ -16,6 +16,7 @@ const Team = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [editTeamItem, setEditTeamItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [viewMember, setViewMember] = useState(null); // New state for details modal
   
@@ -153,7 +154,7 @@ const Team = () => {
         )}
         {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && activeTab === 'teams' && (
           <button 
-            onClick={() => setIsTeamModalOpen(true)}
+            onClick={() => { setEditTeamItem(null); setIsTeamModalOpen(true); }}
             className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"
           >
             <Plus size={16} />
@@ -284,6 +285,7 @@ const Team = () => {
                     <td className="text-right whitespace-nowrap space-x-3">
                       {(currentUserRole === 'super_admin' || currentUserRole === 'hr') ? (
                         <>
+                          <button onClick={() => { setEditTeamItem(team); setIsTeamModalOpen(true); }} className="text-accent-blue hover:underline text-sm font-medium">Edit</button>
                           <button onClick={() => {
                              if(window.confirm('Delete team?')) {
                                axios.delete(`/workspaces/${workspace._id}/teams/${team._id}`)
@@ -455,12 +457,12 @@ const Team = () => {
         </div>
       )}
 
-      {/* TEAM CREATION MODAL */}
+      {/* TEAM CREATION / EDIT MODAL */}
       {isTeamModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-md shadow-2xl">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-text-primary">Create Team</h3>
+              <h3 className="text-xl font-bold text-text-primary">{editTeamItem ? 'Edit Team' : 'Create Team'}</h3>
               <button onClick={() => setIsTeamModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors">
                 <X size={20} />
               </button>
@@ -469,16 +471,24 @@ const Team = () => {
              <form onSubmit={async (e) => {
               e.preventDefault();
               try {
-                 await axios.post(`/workspaces/${workspace._id}/teams`, {
-                    name: e.target.teamName.value,
-                    leader: e.target.teamLeader.value,
-                 });
-                 showToast('Team created successfully!', 'success');
+                 if (editTeamItem) {
+                   await axios.put(`/workspaces/${workspace._id}/teams/${editTeamItem._id}`, {
+                      name: e.target.teamName.value,
+                      leader: e.target.teamLeader.value,
+                   });
+                   showToast('Team updated successfully!', 'success');
+                 } else {
+                   await axios.post(`/workspaces/${workspace._id}/teams`, {
+                      name: e.target.teamName.value,
+                      leader: e.target.teamLeader.value,
+                   });
+                   showToast('Team created successfully!', 'success');
+                 }
                  fetchWorkspaceData();
                  setIsTeamModalOpen(false);
               } catch(err) {
                  console.error(err);
-                 showToast(err.response?.data?.message || 'Error creating team', 'error');
+                 showToast(err.response?.data?.message || 'Error saving team', 'error');
               }
             }} className="space-y-4">
               <div>
@@ -486,6 +496,7 @@ const Team = () => {
                 <input 
                   type="text" 
                   name="teamName"
+                  defaultValue={editTeamItem ? editTeamItem.name : ''}
                   className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
                   placeholder="e.g. Frontend Team"
                   required
@@ -495,6 +506,7 @@ const Team = () => {
                 <label className="block text-sm font-medium text-text-secondary mb-1">Select Team Leader</label>
                 <select 
                   name="teamLeader"
+                  defaultValue={editTeamItem ? (editTeamItem.leader?._id || editTeamItem.leader) : ''}
                   className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
                   required
                 >
@@ -517,7 +529,7 @@ const Team = () => {
                   type="submit" 
                   className="px-6 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
                 >
-                  Create Team
+                  {editTeamItem ? 'Save Changes' : 'Create Team'}
                 </button>
               </div>
             </form>

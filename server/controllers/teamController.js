@@ -21,7 +21,14 @@ const getTeams = async (req, res) => {
 // @access  Private
 const createTeam = async (req, res) => {
   try {
-    if (req.user.role !== 'super_admin' && req.user.role !== 'hr') {
+    const workspace = await Workspace.findById(req.params.workspaceId);
+    if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
+    
+    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id.toString());
+    const isAuthorized = workspace.owner.toString() === req.user._id.toString() || 
+                        (currentMember && ['super_admin', 'hr'].includes(currentMember.role));
+    
+    if (!isAuthorized) {
       return res.status(403).json({ message: 'Only super admin and hr can create teams' });
     }
 
@@ -57,7 +64,12 @@ const createTeam = async (req, res) => {
 // @access  Private
 const updateTeam = async (req, res) => {
   try {
-    if (req.user.role !== 'super_admin' && req.user.role !== 'hr') {
+    const workspace = await Workspace.findById(req.params.workspaceId);
+    const currentMember = workspace ? workspace.members.find(m => m.user && m.user.toString() === req.user._id.toString()) : null;
+    const isAuthorized = workspace && (workspace.owner.toString() === req.user._id.toString() || 
+                        (currentMember && ['super_admin', 'hr'].includes(currentMember.role)));
+    
+    if (!isAuthorized) {
       return res.status(403).json({ message: 'Only super admin and hr can update teams' });
     }
 
@@ -77,7 +89,12 @@ const updateTeam = async (req, res) => {
 // @access  Private
 const deleteTeam = async (req, res) => {
   try {
-    if (req.user.role !== 'super_admin' && req.user.role !== 'hr') {
+    const workspace = await Workspace.findById(req.params.workspaceId);
+    const currentMember = workspace ? workspace.members.find(m => m.user && m.user.toString() === req.user._id.toString()) : null;
+    const isAuthorized = workspace && (workspace.owner.toString() === req.user._id.toString() || 
+                        (currentMember && ['super_admin', 'hr'].includes(currentMember.role)));
+
+    if (!isAuthorized) {
       return res.status(403).json({ message: 'Only super admin and hr can delete teams' });
     }
 

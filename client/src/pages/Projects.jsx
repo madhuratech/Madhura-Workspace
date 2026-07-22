@@ -175,18 +175,18 @@ const Projects = () => {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-bg-secondary border border-border rounded-2xl p-5 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
-          <div className="p-3 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={24} /></div>
-          <div><p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Total Projects</p><p className="text-3xl font-bold text-text-primary font-outfit">{projects.length}</p></div>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-2 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={20} /></div>
+          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Total Projects</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.length}</p></div>
         </div>
-        <div className="bg-bg-secondary border border-border rounded-2xl p-5 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
-          <div className="p-3 bg-success/10 rounded-xl text-success"><CheckCircle2 size={24} /></div>
-          <div><p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Completed</p><p className="text-3xl font-bold text-text-primary font-outfit">{projects.filter(p => p.status === 'Completed').length}</p></div>
+        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-2 bg-success/10 rounded-xl text-success"><CheckCircle2 size={20} /></div>
+          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Completed</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Completed').length}</p></div>
         </div>
-        <div className="bg-bg-secondary border border-border rounded-2xl p-5 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
-          <div className="p-3 bg-orange-500/10 rounded-xl text-orange-500"><Clock size={24} /></div>
-          <div><p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-1">Active Now</p><p className="text-3xl font-bold text-text-primary font-outfit">{projects.filter(p => p.status === 'Active').length}</p></div>
+        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-2 bg-orange-500/10 rounded-xl text-orange-500"><Clock size={20} /></div>
+          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Active Now</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Active').length}</p></div>
         </div>
       </div>
 
