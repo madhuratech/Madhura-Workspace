@@ -354,8 +354,8 @@ const Projects = () => {
                           {formData.members.includes(m.user._id) && <div className="absolute -bottom-1 -right-1 bg-success h-3.5 w-3.5 rounded-full border-2 border-bg-secondary"></div>}
                         </div>
                         <div className="flex flex-col flex-1">
-                          <span className={`text-sm font-semibold ${formData.members.includes(m.user._id) ? 'text-accent-blue' : 'text-text-primary'}`}>{m.user.name}</span>
-                          <span className="text-[10px] text-text-secondary uppercase tracking-wider">{m.role.replace('_', ' ')}</span>
+                          <span className={`text-sm font-semibold ${formData.members.includes(m.user._id) ? 'text-accent-blue' : 'text-text-primary'}`}>{m.user?.name || 'Unknown'}</span>
+                          <span className="text-[10px] text-text-secondary uppercase tracking-wider">{(m.role || m.user?.role || 'employee').replace('_', ' ')}</span>
                         </div>
                         <input 
                           type="checkbox" 

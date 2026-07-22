@@ -166,7 +166,7 @@ const Meetings = () => {
             ))}
             
             {days.map((day, idx) => {
-              if (!day) return <div key={`empty-${idx}`} className="min-h-[120px] rounded-2xl bg-transparent"></div>;
+              if (!day) return <div key={`empty-${idx}`} className="min-h-[80px] rounded-2xl bg-transparent"></div>;
               
               const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const dayEvents = meetings.filter(m => new Date(m.date).toISOString().split('T')[0] === dateStr);
@@ -180,7 +180,7 @@ const Meetings = () => {
                 <div 
                   key={day} 
                   onClick={() => { resetForm(dateStr); setIsModalOpen(true); }}
-                  className={`min-h-[120px] p-2.5 border-2 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col group relative overflow-hidden
+                  className={`min-h-[80px] p-2.5 border-2 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col group relative overflow-hidden
                     ${isToday 
                       ? 'border-accent-blue bg-accent-blue/5 hover:bg-accent-blue/10 shadow-[0_4px_20px_-4px_rgba(59,130,246,0.2)] hover:-translate-y-1' 
                       : 'border-border bg-bg-secondary hover:border-accent-blue/40 hover:shadow-lg hover:-translate-y-1'}
@@ -277,7 +277,7 @@ const Meetings = () => {
 
       <div className="bg-bg-primary flex-1 flex flex-col overflow-hidden relative border-none">
         {activeTab === 'calendar' ? (
-          <div className="w-full mx-auto h-[800px] flex flex-col bg-bg-secondary rounded-3xl shadow-sm border border-border overflow-hidden">
+          <div className="w-full mx-auto flex-1 flex flex-col bg-bg-secondary rounded-3xl shadow-sm border border-border overflow-hidden">
             {renderCustomCalendar()}
           </div>
         ) : (
