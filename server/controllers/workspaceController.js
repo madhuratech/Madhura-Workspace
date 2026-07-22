@@ -144,7 +144,7 @@ const deleteWorkspace = async (req, res) => {
 // @access  Private
 const addMember = async (req, res) => {
   try {
-    const { email, role, name, password } = req.body;
+    const { email, role, name, password, designation } = req.body;
 
     const workspace = await Workspace.findById(req.params.id);
 
@@ -176,11 +176,15 @@ const addMember = async (req, res) => {
         name,
         email,
         password,
-        role: role || 'employee'   // ← Set global role so backend filters work
+        role: role || 'employee',   // ← Set global role so backend filters work
+        designation: designation || ''
       });
     } else {
       // If user exists, sync their global role too
       userToAdd.role = role || 'employee';
+      if (designation !== undefined) {
+        userToAdd.designation = designation;
+      }
       await userToAdd.save();
     }
 
@@ -204,7 +208,7 @@ const addMember = async (req, res) => {
 // @access  Private
 const updateMember = async (req, res) => {
   try {
-    const { role, action } = req.body;
+    const { role, action, designation } = req.body;
     const workspace = await Workspace.findById(req.params.id);
 
     if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
@@ -226,7 +230,9 @@ const updateMember = async (req, res) => {
     } else {
       workspace.members[memberIndex].role = role;
       // Sync global User role so backend filters (tasks, projects) work correctly
-      await User.findByIdAndUpdate(req.params.userId, { role });
+      const updateData = { role };
+      if (designation !== undefined) updateData.designation = designation;
+      await User.findByIdAndUpdate(req.params.userId, updateData);
 
       sendNotification(
         req,

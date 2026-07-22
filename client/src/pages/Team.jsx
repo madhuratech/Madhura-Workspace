@@ -17,8 +17,9 @@ const Team = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
+  const [viewMember, setViewMember] = useState(null); // New state for details modal
   
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee', designation: '' });
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [newTeamName, setNewTeamName] = useState('');
 
@@ -61,10 +62,10 @@ const Team = () => {
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditItem(item);
-      setFormData({ name: item.user.name, email: item.user.email, password: '', role: item.role });
+      setFormData({ name: item.user.name, email: item.user.email, password: '', role: item.role, designation: item.user.designation || '' });
     } else {
       setEditItem(null);
-      setFormData({ name: '', email: '', password: '', role: 'employee' });
+      setFormData({ name: '', email: '', password: '', role: 'employee', designation: '' });
       setSelectedTeamMembers([]);
       setNewTeamName('');
     }
@@ -82,15 +83,16 @@ const Team = () => {
 
     try {
       if (editItem) {
-        // Update role
-        await axios.put(`/workspaces/${workspace._id}/members/${editItem.user._id}`, { role: formData.role });
+        // Update role and designation
+        await axios.put(`/workspaces/${workspace._id}/members/${editItem.user._id}`, { role: formData.role, designation: formData.designation });
       } else {
         // Create employee account and add to workspace
         const res = await axios.post(`/workspaces/${workspace._id}/members`, {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role
+          role: formData.role,
+          designation: formData.designation
         });
         
         // If creating a team leader, optionally create their team right away
@@ -195,6 +197,7 @@ const Team = () => {
               <tr>
                 <th className="text-left w-16">USER</th>
                 <th className="text-left">NAME</th>
+                <th className="text-left">DESIGNATION</th>
                 <th className="text-left">EMAIL</th>
                 <th className="text-left w-32">ROLE</th>
                 <th className="text-right w-40">ACTION</th>
@@ -202,13 +205,18 @@ const Team = () => {
             </thead>
             <tbody>
               {members.map((member) => (
-                <tr key={member.user._id}>
+                <tr 
+                  key={member.user._id} 
+                  onClick={() => setViewMember(member)}
+                  className="cursor-pointer hover:bg-bg-primary/50"
+                >
                   <td>
                     <div className="h-8 w-8 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs">
                       {member.user.name ? member.user.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                   </td>
                   <td className="font-bold text-text-primary">{member.user.name || 'Pending User'}</td>
+                  <td className="text-text-secondary">{member.user.designation || '-'}</td>
                   <td className="text-text-secondary">{member.user.email}</td>
                   <td className="whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
@@ -223,8 +231,8 @@ const Team = () => {
                   <td className="text-right whitespace-nowrap space-x-3">
                     {(currentUserRole === 'super_admin' || currentUserRole === 'hr') ? (
                       <>
-                        <button onClick={() => handleOpenModal(member)} className="text-accent-blue hover:underline text-sm font-medium">Edit Role</button>
-                        <button onClick={() => handleDelete(member.user._id)} className="text-danger hover:underline text-sm font-medium">Remove</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleOpenModal(member); }} className="text-accent-blue hover:underline text-sm font-medium">Edit Role</button>
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(member.user._id); }} className="text-danger hover:underline text-sm font-medium">Remove</button>
                       </>
                     ) : (
                       <span className="text-text-secondary text-sm">No access</span>
@@ -360,6 +368,16 @@ const Team = () => {
                   />
                 </div>
               )}
+              
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Job Title / Designation</label>
+                <input 
+                  type="text" 
+                  value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  placeholder="e.g. Full Stack Developer, BDM"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Access Role</label>
                 <div className="relative">
@@ -503,6 +521,55 @@ const Team = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW MEMBER MODAL */}
+      {viewMember && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-secondary border border-border p-8 rounded-3xl w-full max-w-sm shadow-2xl animate-bounce-in relative">
+            <button onClick={() => setViewMember(null)} className="absolute top-6 right-6 text-text-secondary hover:text-danger bg-bg-primary p-2 rounded-full transition-colors"><X size={20} /></button>
+            
+            <div className="flex flex-col items-center mb-6">
+              <div className="h-24 w-24 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-4xl mb-4 border-4 border-bg-secondary shadow-lg">
+                {viewMember.user.name ? viewMember.user.name.charAt(0).toUpperCase() : 'U'}
+              </div>
+              <h3 className="text-2xl font-bold text-text-primary font-outfit text-center">{viewMember.user.name || 'Pending User'}</h3>
+              <p className="text-text-secondary text-sm font-medium mt-1">{viewMember.user.designation || 'No Designation Set'}</p>
+            </div>
+
+            <div className="space-y-4 bg-bg-primary/50 p-5 rounded-2xl border border-border">
+              <div>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1">Email</p>
+                <p className="text-sm font-medium text-text-primary flex items-center"><Mail className="mr-2 text-accent-blue" size={14}/> {viewMember.user.email}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1">Access Role</p>
+                <span className={`inline-block px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
+                      viewMember.role === 'super_admin' ? 'text-purple-500 bg-purple-500/10' : 
+                      viewMember.role === 'hr' ? 'text-accent-blue bg-accent-blue/10' :
+                      viewMember.role === 'team_leader' ? 'text-orange-400 bg-orange-400/10' :
+                      'text-success bg-success/10'
+                    }`}>
+                  {viewMember.role.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <div>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1">Teams</p>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {teams.filter(t => t.members.some(m => m._id === viewMember.user._id) || (t.leader && t.leader._id === viewMember.user._id)).length > 0 ? (
+                    teams.filter(t => t.members.some(m => m._id === viewMember.user._id) || (t.leader && t.leader._id === viewMember.user._id)).map(t => (
+                       <span key={t._id} className="bg-bg-secondary border border-border px-2 py-1 rounded text-xs font-medium text-text-primary">
+                         {t.name} {t.leader?._id === viewMember.user._id ? '(Leader)' : ''}
+                       </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-text-secondary italic">Not assigned to any teams</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
