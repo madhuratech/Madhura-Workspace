@@ -1,14 +1,15 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle } from 'lucide-react';
 
 const Layout = () => {
-  const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket } = useContext(AuthContext);
+  const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [toastNotif, setToastNotif] = useState(null);
   const toastTimerRef = React.useRef(null);
 
@@ -74,6 +75,21 @@ const Layout = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Active': return 'bg-success';
+      case 'Busy': return 'bg-danger';
+      case 'Break': return 'bg-warning';
+      case 'Away': return 'bg-orange-400';
+      default: return 'bg-success';
+    }
+  };
+
+  const handleStatusChange = (status) => {
+    updateUserStatus(status);
+    setShowProfileMenu(false);
   };
 
   return (
@@ -243,8 +259,56 @@ const Layout = () => {
               )}
             </div>
             <button className="hover:text-text-primary transition-colors"><Mail size={18} /></button>
-            <div className="h-8 w-8 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-sm shadow-sm ml-2">
-              {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
+            <div className="relative ml-2">
+              <button 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="relative flex items-center justify-center focus:outline-none"
+              >
+                <div className="h-9 w-9 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-sm shadow-sm border border-accent-blue/20 hover:bg-accent-blue/20 transition-colors">
+                  {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
+                </div>
+                <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-bg-secondary ${getStatusColor(user?.presenceStatus)}`}></div>
+              </button>
+
+              {/* Profile Dropdown */}
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-3 w-64 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="p-4 border-b border-border bg-bg-primary/30 flex flex-col items-center">
+                    <div className="relative mb-2">
+                      <div className="h-16 w-16 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-2xl shadow-sm border-2 border-accent-blue/20">
+                        {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
+                      </div>
+                      <div className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-bg-primary ${getStatusColor(user?.presenceStatus)}`}></div>
+                    </div>
+                    <h3 className="font-bold text-text-primary text-base font-outfit">{user?.name}</h3>
+                    <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mt-0.5">{user?.role?.replace('_', ' ')}</p>
+                  </div>
+                  
+                  <div className="p-2">
+                    <p className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Set Status</p>
+                    {['Active', 'Busy', 'Break', 'Away'].map(status => (
+                      <button 
+                        key={status}
+                        onClick={() => handleStatusChange(status)}
+                        className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-bg-primary rounded-lg flex items-center space-x-3 transition-colors"
+                      >
+                        <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)}`}></div>
+                        <span className={user?.presenceStatus === status ? 'font-bold' : 'font-medium'}>{status}</span>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="p-2 border-t border-border">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg flex items-center space-x-3 transition-colors font-medium"
+                    >
+                      <LogOut size={16} />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>

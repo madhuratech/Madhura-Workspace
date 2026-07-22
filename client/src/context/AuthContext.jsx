@@ -138,9 +138,21 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUserStatus = async (status) => {
+    try {
+      const res = await axios.put('/users/status', { status });
+      setUser(res.data);
+      localStorage.setItem('user', JSON.stringify(res.data));
+      return true;
+    } catch (error) {
+      console.error('Error updating status', error);
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ 
-      user, loading, login, register, logout, 
+      user, loading, login, register, logout, updateUserStatus,
       socket, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications 
     }}>
       {!loading && children}

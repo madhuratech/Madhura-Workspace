@@ -34,6 +34,11 @@ const UserSchema = new mongoose.Schema({
     enum: ['super_admin', 'hr', 'team_leader', 'employee'],
     default: 'employee'
   },
+  presenceStatus: {
+    type: String,
+    enum: ['Active', 'Busy', 'Break', 'Away'],
+    default: 'Active'
+  },
   googleAccessToken: {
     type: String
   },

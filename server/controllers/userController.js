@@ -18,6 +18,29 @@ const getUsers = async (req, res) => {
   }
 };
 
+// @desc    Update user presence status
+// @route   PUT /api/users/status
+// @access  Private
+const updatePresence = async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['Active', 'Busy', 'Break', 'Away'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+    
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { presenceStatus: status },
+      { new: true }
+    ).select('-password');
+    
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
-  getUsers
+  getUsers,
+  updatePresence
 };
