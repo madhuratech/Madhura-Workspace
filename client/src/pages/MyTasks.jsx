@@ -69,12 +69,37 @@ const MyTasks = () => {
     }
   };
 
-  const updateTaskStatus = async (taskId, newStatus) => {
+  const updateTaskStatus = async (taskId, newStatus, skipColumnUpdate = false) => {
+    // Optimistic UI Update: update tasks array for List view
+    setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
+
+    if (!skipColumnUpdate) {
+      // Optimistic UI Update: update columns for Kanban view
+      setColumns(prev => {
+        let taskToMove = null;
+        const newCols = { ...prev };
+        Object.keys(newCols).forEach(key => {
+          const itemIdx = newCols[key].items.findIndex(t => t._id === taskId);
+          if (itemIdx > -1) {
+            taskToMove = newCols[key].items[itemIdx];
+            newCols[key] = { ...newCols[key], items: newCols[key].items.filter(t => t._id !== taskId) };
+          }
+        });
+        if (taskToMove && newCols[newStatus]) {
+          newCols[newStatus].items.push({ ...taskToMove, status: newStatus });
+        }
+        return newCols;
+      });
+    }
+
     try {
       await axios.put(`/tasks/${taskId}`, { status: newStatus });
-      fetchMyTasks(workspaceId);
+      // We don't fetchMyTasks here immediately to prevent flickering, 
+      // the socket will handle real-time sync if needed.
     } catch (e) {
       console.error('Error updating task status', e);
+      // Revert on error
+      if (workspaceId) fetchMyTasks(workspaceId);
     }
   };
 
@@ -96,7 +121,7 @@ const MyTasks = () => {
         [source.droppableId]: { ...sourceCol, items: sourceItems },
         [destination.droppableId]: { ...destCol, items: destItems }
       });
-      updateTaskStatus(removed._id, destination.droppableId);
+      updateTaskStatus(removed._id, destination.droppableId, true);
     } else {
       sourceItems.splice(destination.index, 0, removed);
       setColumns({ ...columns, [source.droppableId]: { ...sourceCol, items: sourceItems } });

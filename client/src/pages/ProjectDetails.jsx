@@ -283,7 +283,7 @@ const ProjectDetails = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
           <div className="bg-bg-secondary border border-border p-8 rounded-3xl w-full max-w-lg shadow-2xl animate-bounce-in max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="flex justify-between items-center mb-8 sticky top-0 bg-bg-secondary z-10 pt-2 pb-4">
+            <div className="flex justify-between items-center mb-8 pt-2 pb-4">
               <h3 className="text-2xl font-bold text-text-primary font-outfit">Create New Task</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger bg-bg-primary p-2 rounded-full transition-colors"><X size={20} /></button>
             </div>
