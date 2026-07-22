@@ -221,10 +221,10 @@ const Projects = () => {
               {filtered.map((project) => (
                 <tr key={project._id}>
                   <td className="font-bold text-text-primary">
-                    <div className="flex items-center space-x-4">
-                      <div className="p-2.5 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={18} /></div>
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={16} /></div>
                       <div>
-                        <p className="font-outfit text-base">{project.title}</p>
+                        <p className="font-outfit text-sm font-semibold">{project.title}</p>
                         {project.description && <p className="text-xs text-text-secondary font-normal mt-0.5 line-clamp-1 max-w-sm">{project.description}</p>}
                       </div>
                     </div>
@@ -232,12 +232,12 @@ const Projects = () => {
                   <td>
                     <div className="avatar-stack">
                       {project.members?.slice(0, 4).map(m => (
-                        <div key={m._id} title={m.name} className="h-8 w-8 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue text-xs font-bold shadow-sm">
+                        <div key={m._id} title={m.name} className="h-7 w-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue text-[10px] font-bold shadow-sm">
                           {m.name?.charAt(0).toUpperCase()}
                         </div>
                       ))}
                       {project.members?.length > 4 && (
-                        <div className="h-8 w-8 rounded-full bg-bg-primary flex items-center justify-center text-text-secondary text-xs font-bold border-2 border-bg-secondary shadow-sm">
+                        <div className="h-7 w-7 rounded-full bg-bg-primary flex items-center justify-center text-text-secondary text-[10px] font-bold border-2 border-bg-secondary shadow-sm">
                           +{project.members.length - 4}
                         </div>
                       )}

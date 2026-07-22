@@ -42,6 +42,10 @@
   }
 }
 
+html {
+  font-size: 14px; /* Scales down all Tailwind rem-based utilities */
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -95,13 +99,13 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 1.25rem 1rem;
+  padding: 0.875rem 1rem;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border-color);
 }
 .data-table td {
-  padding: 1.25rem 1rem;
-  font-size: 0.875rem;
+  padding: 0.875rem 1rem;
+  font-size: 0.8125rem;
   border-bottom: 1px solid var(--border-color);
   transition: background-color 0.2s ease;
 }
