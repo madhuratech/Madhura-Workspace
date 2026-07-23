@@ -1,13 +1,27 @@
 const Document = require('../models/Document');
 
-// @desc    Get documents for a project
-// @route   GET /api/projects/:projectId/documents
+// @desc    Get documents
+// @route   GET /api/documents
 // @access  Private
 const getDocuments = async (req, res) => {
   try {
-    const documents = await Document.find({ project: req.params.projectId })
+    let query = {};
+    
+    // Role-based access control
+    // If super_admin or hr, they can see all documents
+    // If employee or team_leader, they can only see their own uploaded documents
+    if (req.user.role === 'employee' || req.user.role === 'team_leader') {
+      query.author = req.user._id;
+    }
+    
+    // Optional filtering by project or workspace
+    if (req.query.projectId) query.project = req.query.projectId;
+    if (req.query.workspaceId) query.workspace = req.query.workspaceId;
+
+    const documents = await Document.find(query)
       .populate('author', 'name email avatar')
-      .populate('lastUpdatedBy', 'name email avatar');
+      .populate('lastUpdatedBy', 'name email avatar')
+      .sort({ createdAt: -1 });
 
     res.status(200).json(documents);
   } catch (error) {
@@ -16,21 +30,25 @@ const getDocuments = async (req, res) => {
 };
 
 // @desc    Create new document
-// @route   POST /api/projects/:projectId/documents
+// @route   POST /api/documents
 // @access  Private
 const createDocument = async (req, res) => {
   try {
-    const { title, content, workspace } = req.body;
+    const { title, content, fileUrl, originalName, mimeType, size, project, workspace } = req.body;
 
-    if (!title || !workspace) {
-      return res.status(400).json({ message: 'Please add title and workspace ID' });
+    if (!title) {
+      return res.status(400).json({ message: 'Please add a title' });
     }
 
     const document = await Document.create({
       title,
       content,
-      project: req.params.projectId,
-      workspace,
+      fileUrl,
+      originalName,
+      mimeType,
+      size,
+      project: project || undefined,
+      workspace: workspace || undefined,
       author: req.user._id,
       lastUpdatedBy: req.user._id
     });

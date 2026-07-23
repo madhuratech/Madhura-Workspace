@@ -10,15 +10,25 @@ const DocumentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  fileUrl: {
+    type: String,
+  },
+  originalName: {
+    type: String,
+  },
+  mimeType: {
+    type: String,
+  },
+  size: {
+    type: Number,
+  },
   project: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Project',
-    required: true
+    ref: 'Project'
   },
   workspace: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true
+    ref: 'Workspace'
   },
   author: {
     type: mongoose.Schema.Types.ObjectId,
