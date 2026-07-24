@@ -1,154 +1,217 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  ActivityIndicator, ScrollView, Animated,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, CheckCircle2, Circle, Clock, Calendar } from 'lucide-react-native';
+import { ArrowLeft, CheckCircle2, Clock, Circle, Calendar, Users, BarChart2 } from 'lucide-react-native';
 import axios from 'axios';
 
+const FILTERS = ['All', 'To Do', 'In Progress', 'Done'];
+
+const STATUS_CONFIG = {
+  'To Do':       { icon: Circle,        color: '#94A3B8' },
+  'In Progress': { icon: Clock,         color: '#3B82F6' },
+  'Done':        { icon: CheckCircle2,  color: '#10B981' },
+};
+
+const PRIORITY_CONFIG = {
+  High:   { bg: '#FEF2F2', border: '#FECACA', text: '#DC2626' },
+  Medium: { bg: '#FFFBEB', border: '#FDE68A', text: '#D97706' },
+  Low:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#16A34A' },
+};
+
 export default function ProjectDetailsScreen({ route, navigation }) {
-  const { projectId, workspaceId } = route.params;
+  const { projectId } = route.params;
   const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState('All');
+  const [workspaceId, setWorkspaceId] = useState(null);
+
+  const headerFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    fetchData();
+    Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    initData();
   }, []);
 
-  const fetchData = async () => {
+  const initData = async () => {
     try {
-      // Get Project Details
-      const projRes = await axios.get(`/workspaces/${workspaceId}/projects/${projectId}`);
-      setProject(projRes.data);
-      
-      // Get Project Tasks
-      const tasksRes = await axios.get(`/workspaces/${workspaceId}/projects/${projectId}/tasks`);
-      setTasks(tasksRes.data);
-    } catch (error) {
-      console.error(error);
+      const wsRes = await axios.get('/workspaces');
+      if (wsRes.data.length > 0) {
+        const wsId = wsRes.data[0]._id;
+        setWorkspaceId(wsId);
+        await fetchData(wsId);
+      }
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  const toggleTaskStatus = async (task) => {
-    const nextStatusMap = {
-      'To Do': 'In Progress',
-      'In Progress': 'Done',
-      'Done': 'To Do'
-    };
-    const newStatus = nextStatusMap[task.status] || 'To Do';
-    
-    // Optimistic update
-    setTasks(prev => prev.map(t => t._id === task._id ? { ...t, status: newStatus } : t));
+  const fetchData = async (wsId) => {
+    try {
+      const [projRes, tasksRes] = await Promise.all([
+        axios.get(`/workspaces/${wsId}/projects/${projectId}`),
+        axios.get(`/workspaces/${wsId}/projects/${projectId}/tasks`),
+      ]);
+      setProject(projRes.data);
+      setTasks(tasksRes.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
+  const toggleTaskStatus = async (task) => {
+    const cycle = { 'To Do': 'In Progress', 'In Progress': 'Done', 'Done': 'To Do' };
+    const newStatus = cycle[task.status] || 'To Do';
+    setTasks(prev => prev.map(t => t._id === task._id ? { ...t, status: newStatus } : t));
     try {
       await axios.put(`/tasks/${task._id}`, { status: newStatus });
-    } catch (error) {
-      console.error('Failed to update status', error);
-      fetchData(); // Revert
+    } catch (err) {
+      console.error('Failed to update task', err);
+      if (workspaceId) fetchData(workspaceId);
     }
   };
 
-  const getPriorityColor = (priority) => {
-    switch(priority) {
-      case 'High': return '#EF4444';
-      case 'Medium': return '#F59E0B';
-      case 'Low': return '#10B981';
-      default: return '#64748B';
-    }
-  };
+  // Computed stats
+  const totalTasks = tasks.length;
+  const doneTasks = tasks.filter(t => t.status === 'Done').length;
+  const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
+  const progress = totalTasks > 0 ? doneTasks / totalTasks : 0;
 
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'Done': return <CheckCircle2 color="#10B981" size={24} />;
-      case 'In Progress': return <Clock color="#3B82F6" size={24} />;
-      default: return <Circle color="#CBD5E1" size={24} />;
-    }
-  };
+  const filteredTasks = filter === 'All' ? tasks : tasks.filter(t => t.status === filter);
 
-  const renderItem = ({ item }) => (
-    <View style={[styles.card, item.status === 'Done' && styles.cardDone]}>
-      <TouchableOpacity 
-        style={styles.statusBtn} 
-        onPress={() => toggleTaskStatus(item)}
-      >
-        {getStatusIcon(item.status)}
-      </TouchableOpacity>
-      
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <Text style={[
-            styles.titleText, 
-            item.status === 'Done' && styles.titleDone
-          ]}>
+  const renderTask = ({ item, index }) => {
+    const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG['To Do'];
+    const StatusIcon = statusCfg.icon;
+    const priorityCfg = PRIORITY_CONFIG[item.priority];
+    const isDone = item.status === 'Done';
+
+    return (
+      <View style={[styles.taskCard, isDone && styles.taskCardDone]}>
+        <TouchableOpacity onPress={() => toggleTaskStatus(item)} style={styles.statusBtn}>
+          <StatusIcon color={statusCfg.color} size={24} />
+        </TouchableOpacity>
+        <View style={styles.taskContent}>
+          <Text style={[styles.taskTitle, isDone && styles.taskTitleDone]} numberOfLines={2}>
             {item.title}
           </Text>
-        </View>
-        
-        {item.description ? (
-          <Text style={styles.descText} numberOfLines={2}>{item.description}</Text>
-        ) : null}
-        
-        <View style={styles.metaRow}>
-          <View style={[styles.priorityBadge, { borderColor: getPriorityColor(item.priority) }]}>
-            <Text style={[styles.priorityText, { color: getPriorityColor(item.priority) }]}>
-              {item.priority}
-            </Text>
+          {item.description ? (
+            <Text style={styles.taskDesc} numberOfLines={2}>{item.description}</Text>
+          ) : null}
+          <View style={styles.taskBadges}>
+            {priorityCfg && (
+              <View style={[styles.badge, { backgroundColor: priorityCfg.bg, borderColor: priorityCfg.border }]}>
+                <Text style={[styles.badgeText, { color: priorityCfg.text }]}>{item.priority}</Text>
+              </View>
+            )}
+            {item.dueDate && (
+              <View style={styles.dateRow}>
+                <Calendar color="#94A3B8" size={12} />
+                <Text style={styles.dateText}>
+                  {new Date(item.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </Text>
+              </View>
+            )}
+            {item.assignedTo?.name && (
+              <View style={styles.assigneeChip}>
+                <Text style={styles.assigneeText}>{item.assignedTo.name.split(' ')[0]}</Text>
+              </View>
+            )}
           </View>
-          
-          {item.dueDate && (
-            <View style={styles.dateRow}>
-              <Calendar size={12} color="#94A3B8" />
-              <Text style={styles.dateText}>
-                {new Date(item.dueDate).toLocaleDateString()}
-              </Text>
-            </View>
-          )}
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <ArrowLeft color="#64748B" size={24} />
+      {/* ── Header ─────────────────────────────── */}
+      <Animated.View style={[styles.header, { opacity: headerFade }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <ArrowLeft color="#0F172A" size={22} />
         </TouchableOpacity>
-        <View style={styles.headerTextContainer}>
+        <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {project?.title || 'Loading...'}
+            {project?.name || 'Loading…'}
           </Text>
-          <Text style={styles.headerSubtitle}>Project Tasks</Text>
+          <Text style={styles.headerSub}>{totalTasks} tasks</Text>
         </View>
-      </View>
+      </Animated.View>
 
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#3B82F6" />
         </View>
-      ) : tasks.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <CheckCircle2 size={48} color="#CBD5E1" style={{ marginBottom: 16 }} />
-          <Text style={styles.emptyTitle}>No tasks yet</Text>
-        </View>
       ) : (
         <FlatList
-          data={tasks}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
+          data={filteredTasks}
+          keyExtractor={item => item._id}
+          renderItem={renderTask}
           contentContainerStyle={styles.listContent}
           refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true);
-            fetchData();
-          }}
+          onRefresh={() => { setRefreshing(true); initData(); }}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              {/* Stats row */}
+              <Animated.View style={[styles.statsRow, { opacity: headerFade }]}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>{totalTasks}</Text>
+                  <Text style={styles.statLbl}>Total</Text>
+                </View>
+                <View style={[styles.statBox, { borderColor: '#BFDBFE', backgroundColor: '#EFF6FF' }]}>
+                  <Text style={[styles.statVal, { color: '#2563EB' }]}>{inProgressTasks}</Text>
+                  <Text style={[styles.statLbl, { color: '#2563EB' }]}>In Progress</Text>
+                </View>
+                <View style={[styles.statBox, { borderColor: '#BBF7D0', backgroundColor: '#F0FDF4' }]}>
+                  <Text style={[styles.statVal, { color: '#16A34A' }]}>{doneTasks}</Text>
+                  <Text style={[styles.statLbl, { color: '#16A34A' }]}>Done</Text>
+                </View>
+              </Animated.View>
+
+              {/* Progress bar */}
+              {totalTasks > 0 && (
+                <Animated.View style={[styles.progressCard, { opacity: headerFade }]}>
+                  <View style={styles.progressHeader}>
+                    <Text style={styles.progressLabel}>Overall Progress</Text>
+                    <Text style={styles.progressPct}>{Math.round(progress * 100)}%</Text>
+                  </View>
+                  <View style={styles.progressTrack}>
+                    <View style={[
+                      styles.progressFill,
+                      { width: `${Math.round(progress * 100)}%` },
+                    ]} />
+                  </View>
+                </Animated.View>
+              )}
+
+              {/* Filter chips */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+                {FILTERS.map(f => (
+                  <TouchableOpacity
+                    key={f}
+                    style={[styles.filterChip, filter === f && styles.filterChipActive]}
+                    onPress={() => setFilter(f)}
+                  >
+                    <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {filteredTasks.length === 0 && (
+                <View style={styles.emptyBox}>
+                  <CheckCircle2 color="#CBD5E1" size={44} />
+                  <Text style={styles.emptyTitle}>No {filter === 'All' ? '' : `"${filter}" `}tasks</Text>
+                </View>
+              )}
+            </>
+          }
         />
       )}
     </SafeAreaView>
@@ -157,111 +220,77 @@ export default function ProjectDetailsScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 24, 
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9'
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   backBtn: {
-    padding: 8,
-    marginRight: 12,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
+    width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
+    justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  headerTextContainer: {
-    flex: 1,
-  },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#0F172A' },
-  headerSubtitle: { fontSize: 14, color: '#64748B' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
+  headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  listContent: { padding: 24, paddingTop: 16 },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-    alignItems: 'flex-start'
+  listContent: { padding: 16, paddingBottom: 120 },
+
+  // Stats row
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  statBox: {
+    flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9',
   },
-  cardDone: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
-    borderWidth: 1,
-    elevation: 0,
-    shadowOpacity: 0,
+  statVal: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
+  statLbl: { fontSize: 11, color: '#64748B', fontWeight: '500', marginTop: 2 },
+
+  // Progress card
+  progressCard: {
+    backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 14,
+    borderWidth: 1, borderColor: '#F1F5F9',
   },
-  statusBtn: {
-    marginRight: 16,
-    paddingTop: 2,
+  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  progressLabel: { fontSize: 13, fontWeight: '600', color: '#334155' },
+  progressPct: { fontSize: 13, fontWeight: '700', color: '#3B82F6' },
+  progressTrack: { height: 8, backgroundColor: '#F1F5F9', borderRadius: 4, overflow: 'hidden' },
+  progressFill: { height: 8, backgroundColor: '#3B82F6', borderRadius: 4 },
+
+  // Filter
+  filterRow: { marginBottom: 14 },
+  filterChip: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, marginRight: 8,
+    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0',
   },
-  cardContent: {
-    flex: 1,
+  filterChipActive: { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
+  filterText: { fontSize: 13, fontWeight: '500', color: '#64748B' },
+  filterTextActive: { color: '#2563EB', fontWeight: '700' },
+
+  // Task cards
+  taskCard: {
+    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 14,
+    marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9', alignItems: 'flex-start',
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
+  taskCardDone: { backgroundColor: '#F8FAFC', shadowOpacity: 0, elevation: 0 },
+  statusBtn: { marginRight: 12, marginTop: 2 },
+  taskContent: { flex: 1 },
+  taskTitle: { fontSize: 15, fontWeight: '600', color: '#0F172A', lineHeight: 21, marginBottom: 4 },
+  taskTitleDone: { textDecorationLine: 'line-through', color: '#94A3B8' },
+  taskDesc: { fontSize: 13, color: '#64748B', lineHeight: 18, marginBottom: 8 },
+  taskBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
+  badge: {
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1,
   },
-  titleText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1E293B',
+  badgeText: { fontSize: 11, fontWeight: '600' },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dateText: { fontSize: 12, color: '#94A3B8' },
+  assigneeChip: {
+    backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 6, borderWidth: 1, borderColor: '#BFDBFE',
   },
-  titleDone: {
-    textDecorationLine: 'line-through',
-    color: '#94A3B8',
-  },
-  descText: {
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 12,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  priorityBadge: {
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: '#fff'
-  },
-  priorityText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 12,
-    color: '#94A3B8',
-    marginLeft: 4,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#334155',
-  }
+  assigneeText: { fontSize: 11, color: '#2563EB', fontWeight: '600' },
+
+  // Empty
+  emptyBox: { alignItems: 'center', paddingVertical: 48 },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#94A3B8', marginTop: 12 },
 });

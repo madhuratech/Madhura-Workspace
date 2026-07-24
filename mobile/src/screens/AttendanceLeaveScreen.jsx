@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 4 },
   addBtn: { padding: 4 },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#111827', letterSpacing: -0.5 },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#111827' },
   tabContainer: {
     flexDirection: 'row', paddingHorizontal: 24, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB',
     backgroundColor: '#FFFFFF'

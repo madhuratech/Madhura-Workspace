@@ -1,39 +1,68 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Animated } from 'react-native';
+import {
+  View, Text, StyleSheet, FlatList,
+  TouchableOpacity, ActivityIndicator, Animated,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, ArrowLeft } from 'lucide-react-native';
+import { Mail, ArrowLeft, Users } from 'lucide-react-native';
 import axios from 'axios';
 
-const MemberCard = ({ member, delay }) => {
+const AVATAR_COLORS = [
+  '#3B82F6','#8B5CF6','#F97316','#10B981','#EC4899',
+  '#06B6D4','#EF4444','#84CC16','#F59E0B',
+];
+
+const ROLE_CONFIG = {
+  super_admin: { bg: '#F5F3FF', border: '#DDD6FE', text: '#7C3AED', label: 'Super Admin' },
+  hr:          { bg: '#EFF6FF', border: '#BFDBFE', text: '#2563EB', label: 'HR'          },
+  team_leader: { bg: '#FFF7ED', border: '#FED7AA', text: '#C2410C', label: 'Team Leader' },
+  employee:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', label: 'Employee'    },
+};
+
+const MemberCard = ({ member, delay, colorIdx }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(10)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, speed: 12, bounciness: 4, delay, useNativeDriver: true })
+      Animated.timing(fadeAnim, { toValue: 1, duration: 380, delay, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, speed: 14, bounciness: 4, delay, useNativeDriver: true }),
     ]).start();
   }, []);
 
+  const memberUser = member.user || member;
+  const name = memberUser?.name || 'Unknown';
+  const email = memberUser?.email || '';
+  const role = member.role || memberUser?.role || 'employee';
+  const initial = name.charAt(0).toUpperCase();
+  const color = AVATAR_COLORS[colorIdx % AVATAR_COLORS.length];
+  const roleCfg = ROLE_CONFIG[role] || ROLE_CONFIG.employee;
+
   return (
     <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-      <View style={styles.cardHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{member.user?.name ? member.user.name.charAt(0).toUpperCase() : 'U'}</Text>
-        </View>
-        <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{member.user?.name || 'Unknown'}</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>{member.role.replace('_', ' ').toUpperCase()}</Text>
-          </View>
+      {/* Avatar */}
+      <View style={[styles.avatar, { backgroundColor: color + '20' }]}>
+        <Text style={[styles.avatarText, { color }]}>{initial}</Text>
+      </View>
+
+      {/* Info */}
+      <View style={styles.info}>
+        <Text style={styles.name}>{name}</Text>
+        {memberUser?.designation && (
+          <Text style={styles.designation}>{memberUser.designation}</Text>
+        )}
+        {/* Role badge */}
+        <View style={[styles.roleBadge, { backgroundColor: roleCfg.bg, borderColor: roleCfg.border }]}>
+          <Text style={[styles.roleText, { color: roleCfg.text }]}>{roleCfg.label}</Text>
         </View>
       </View>
-      <View style={styles.cardFooter}>
-        <View style={styles.contactItem}>
-          <Mail color="#6B7280" size={14} />
-          <Text style={styles.contactText}>{member.user?.email || 'No email'}</Text>
+
+      {/* Email */}
+      {email ? (
+        <View style={styles.emailBtn}>
+          <Mail color="#94A3B8" size={18} strokeWidth={1.6} />
         </View>
-      </View>
+      ) : null}
     </Animated.View>
   );
 };
@@ -41,7 +70,6 @@ const MemberCard = ({ member, delay }) => {
 export default function TeamScreen({ navigation }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  
   const headerFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -57,8 +85,8 @@ export default function TeamScreen({ navigation }) {
         const detailRes = await axios.get(`/workspaces/${ws._id}`);
         setMembers(detailRes.data.members || []);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -68,24 +96,33 @@ export default function TeamScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <Animated.View style={[styles.header, { opacity: headerFade }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#111827" size={24} />
+          <ArrowLeft color="#0F172A" size={22} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Team Directory</Text>
-          <Text style={styles.headerSubtitle}>{members.length} Members</Text>
+          <Text style={styles.headerSub}>{members.length} member{members.length !== 1 ? 's' : ''}</Text>
         </View>
       </Animated.View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#111827" />
+          <ActivityIndicator size="large" color="#3B82F6" />
         </View>
       ) : (
         <FlatList
           data={members}
-          keyExtractor={item => item.user?._id || Math.random().toString()}
-          renderItem={({ item, index }) => <MemberCard member={item} delay={index * 50} />}
+          keyExtractor={(item, index) => item.user?._id || String(index)}
+          renderItem={({ item, index }) => (
+            <MemberCard member={item} delay={index * 50} colorIdx={index} />
+          )}
           contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyBox}>
+              <Users color="#CBD5E1" size={48} />
+              <Text style={styles.emptyTitle}>No team members yet.</Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
         />
       )}
     </SafeAreaView>
@@ -93,43 +130,48 @@ export default function TeamScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', backgroundColor: '#FFFFFF' },
-  backBtn: { padding: 8, marginRight: 16 },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: '#111827', letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 13, color: '#6B7280', marginTop: 4 },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 16, paddingVertical: 14,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  },
+  backBtn: {
+    width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
+    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+  },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
+  headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  listContent: { padding: 24, paddingBottom: 140 },
-  
+  listContent: { padding: 16, paddingBottom: 140 },
+
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 8,
-    elevation: 1,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    borderRadius: 18, padding: 16, marginBottom: 10,
+    borderWidth: 1, borderColor: '#F1F5F9',
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   avatar: {
-    width: 48, height: 48, borderRadius: 12, backgroundColor: '#EFF6FF',
-    justifyContent: 'center', alignItems: 'center', marginRight: 16,
-    borderWidth: 1, borderColor: '#BFDBFE'
+    width: 52, height: 52, borderRadius: 16,
+    justifyContent: 'center', alignItems: 'center', marginRight: 14,
   },
-  avatarText: { fontSize: 20, fontWeight: '700', color: '#2563EB' },
-  memberInfo: { flex: 1 },
-  memberName: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 6 },
+  avatarText: { fontSize: 22, fontWeight: '700' },
+
+  info: { flex: 1 },
+  name: { fontSize: 16, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
+  designation: { fontSize: 12, color: '#64748B', marginBottom: 6 },
   roleBadge: {
-    alignSelf: 'flex-start', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB',
-    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
+    alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: 20, borderWidth: 1,
   },
-  roleText: { fontSize: 10, fontWeight: '600', color: '#4B5563', letterSpacing: 0.5 },
-  
-  cardFooter: { borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 16 },
-  contactItem: { flexDirection: 'row', alignItems: 'center' },
-  contactText: { fontSize: 13, color: '#6B7280', marginLeft: 8, fontWeight: '500' }
+  roleText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
+
+  emailBtn: {
+    width: 36, height: 36, borderRadius: 10, backgroundColor: '#F8FAFC',
+    borderWidth: 1, borderColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center',
+  },
+
+  emptyBox: { alignItems: 'center', marginTop: 80 },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#94A3B8', marginTop: 14 },
 });

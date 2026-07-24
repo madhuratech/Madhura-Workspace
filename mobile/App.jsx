@@ -3,25 +3,29 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
-import { ActivityIndicator, View, Text, TouchableOpacity } from 'react-native';
-import { Home, FolderKanban, CheckSquare, Menu, Settings, LogOut, FileText, Users } from 'lucide-react-native';
+import { ActivityIndicator, View, Text, Platform } from 'react-native';
+import { Home, FolderKanban, CheckSquare, Menu, MessageSquare } from 'lucide-react-native';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import DocumentsScreen from './src/screens/DocumentsScreen';
 import MyTasksScreen from './src/screens/MyTasksScreen';
 import ProjectsScreen from './src/screens/ProjectsScreen';
 import ProjectDetailsScreen from './src/screens/ProjectDetailsScreen';
 import TeamScreen from './src/screens/TeamScreen';
 import MoreScreen from './src/screens/MoreScreen';
+import ChatScreen from './src/screens/ChatScreen';
+import ChatWindowScreen from './src/screens/ChatWindowScreen';
+import EmailScreen from './src/screens/EmailScreen';
+import MeetingsScreen from './src/screens/MeetingsScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import AttendanceLeaveScreen from './src/screens/AttendanceLeaveScreen';
+import DocumentsScreen from './src/screens/DocumentsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// --- Navigators ---
-
-// 1. Projects Stack
+// ─── Projects Stack ────────────────────────────────────────────────────────
 const ProjectsStack = createNativeStackNavigator();
 function ProjectsNavigator() {
   return (
@@ -32,11 +36,7 @@ function ProjectsNavigator() {
   );
 }
 
-// 2. Chat Stack
-import ChatScreen from './src/screens/ChatScreen';
-import ChatWindowScreen from './src/screens/ChatWindowScreen';
-import { MessageSquare } from 'lucide-react-native';
-
+// ─── Chat Stack ────────────────────────────────────────────────────────────
 const ChatStack = createNativeStackNavigator();
 function ChatNavigator() {
   return (
@@ -47,12 +47,7 @@ function ChatNavigator() {
   );
 }
 
-// 3. More Stack (For things that don't fit in the bottom bar)
-import EmailScreen from './src/screens/EmailScreen';
-import MeetingsScreen from './src/screens/MeetingsScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
-import AttendanceLeaveScreen from './src/screens/AttendanceLeaveScreen';
-
+// ─── More Stack ────────────────────────────────────────────────────────────
 const MoreStack = createNativeStackNavigator();
 function MoreNavigator() {
   return (
@@ -68,118 +63,137 @@ function MoreNavigator() {
   );
 }
 
-// 4. Main Bottom Tabs
+// ─── Tab Bar Icon Component ────────────────────────────────────────────────
+function TabIcon({ icon: Icon, label, focused, color }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', paddingTop: 4 }}>
+      <Icon
+        color={color}
+        size={21}
+        strokeWidth={focused ? 2.5 : 1.8}
+      />
+      <Text
+        numberOfLines={1}
+        style={{
+          fontSize: 9,
+          marginTop: 3,
+          fontWeight: focused ? '700' : '500',
+          color: color,
+        }}
+      >
+        {label}
+      </Text>
+      {focused && (
+        <View
+          style={{
+            marginTop: 3,
+            width: 4,
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: '#3B82F6',
+          }}
+        />
+      )}
+    </View>
+  );
+}
+
+// ─── Tab style helper ──────────────────────────────────────────────────────
+const tabBarStyle = {
+  backgroundColor: '#ffffff',
+  position: 'absolute',
+  bottom: 16,
+  left: 16,
+  right: 16,
+  elevation: 8,
+  shadowColor: '#0F172A',
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.12,
+  shadowRadius: 24,
+  borderRadius: 28,
+  height: Platform.OS === 'ios' ? 80 : 72,
+  paddingBottom: Platform.OS === 'ios' ? 14 : 4,
+  paddingTop: 0,
+  borderWidth: 1,
+  borderColor: '#F1F5F9',
+};
+
+const hiddenTabBarStyle = { ...tabBarStyle, display: 'none' };
+
+// ─── Bottom Tab Navigator ──────────────────────────────────────────────────
 function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: '#3B82F6',
+        tabBarInactiveTintColor: '#94A3B8',
         tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          position: 'absolute',
-          bottom: 24,
-          left: 24,
-          right: 24,
-          elevation: 0,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.05,
-          shadowRadius: 15,
-          borderRadius: 32,
-          height: 64,
-          paddingBottom: 0,
-          borderWidth: 1,
-          borderColor: '#E5E7EB',
-        },
+        tabBarStyle,
         headerShown: false,
       }}
     >
-      <Tab.Screen 
-        name="Dashboard" 
-        component={DashboardScreen} 
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon={Home} label="Home" focused={focused} color={color} />
+          ),
         }}
       />
-      <Tab.Screen 
-        name="Tasks" 
+      <Tab.Screen
+        name="Tasks"
         component={MyTasksScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <CheckSquare color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon={CheckSquare} label="Tasks" focused={focused} color={color} />
+          ),
         }}
       />
-      <Tab.Screen 
-        name="Projects" 
+      <Tab.Screen
+        name="Projects"
         component={ProjectsNavigator}
         options={({ route }) => {
-          // Hide tab bar on ProjectDetails
-          const routeName = require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'ProjectsList';
+          const routeName =
+            require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ??
+            'ProjectsList';
           return {
-            tabBarStyle: {
-              display: routeName === 'ProjectDetails' ? 'none' : 'flex',
-              backgroundColor: '#ffffff',
-              position: 'absolute',
-              bottom: 24,
-              left: 24,
-              right: 24,
-              elevation: 0,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.05,
-              shadowRadius: 15,
-              borderRadius: 32,
-              height: 64,
-              paddingBottom: 0,
-              borderWidth: 1,
-              borderColor: '#E5E7EB',
-            },
-            tabBarIcon: ({ color, size }) => <FolderKanban color={color} size={size} />
+            tabBarStyle: routeName === 'ProjectDetails' ? hiddenTabBarStyle : tabBarStyle,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon icon={FolderKanban} label="Projects" focused={focused} color={color} />
+            ),
           };
         }}
       />
-      <Tab.Screen 
-        name="Chat" 
+      <Tab.Screen
+        name="Chat"
         component={ChatNavigator}
         options={({ route }) => {
-          // Hide tab bar on ChatWindow
-          const routeName = require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'ChatList';
+          const routeName =
+            require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ??
+            'ChatList';
           return {
-            tabBarStyle: {
-              display: routeName === 'ChatWindow' ? 'none' : 'flex',
-              backgroundColor: '#ffffff',
-              position: 'absolute',
-              bottom: 24,
-              left: 24,
-              right: 24,
-              elevation: 0,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.05,
-              shadowRadius: 15,
-              borderRadius: 32,
-              height: 64,
-              paddingBottom: 0,
-              borderWidth: 1,
-              borderColor: '#E5E7EB',
-            },
-            tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} />
+            tabBarStyle: routeName === 'ChatWindow' ? hiddenTabBarStyle : tabBarStyle,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon icon={MessageSquare} label="Chat" focused={focused} color={color} />
+            ),
           };
         }}
       />
-      <Tab.Screen 
-        name="Menu" 
+      <Tab.Screen
+        name="Menu"
         component={MoreNavigator}
         options={{
-          tabBarIcon: ({ color, size }) => <Menu color={color} size={size} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon icon={Menu} label="More" focused={focused} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>
   );
 }
 
-// 4. Root App
+// ─── Root Navigator ────────────────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading } = useContext(AuthContext);
 
