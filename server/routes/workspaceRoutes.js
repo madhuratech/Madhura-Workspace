@@ -20,6 +20,7 @@ const emailRouter = require('./emailRoutes');
 const dmRouter = require('./dmRoutes');
 
 const { getMyTasks } = require('../controllers/taskController');
+const { getWorkspaceAnalytics } = require('../controllers/analyticsController');
 
 router.use('/:workspaceId/projects', projectRouter);
 router.use('/:workspaceId/emails', emailRouter);
@@ -31,6 +32,7 @@ router.use('/:workspaceId/attendance', attendanceRouter);
 router.use('/:workspaceId/leaves', leaveRouter);
 
 router.get('/:workspaceId/my-tasks', protect, getMyTasks);
+router.get('/:workspaceId/analytics', protect, getWorkspaceAnalytics);
 
 router.route('/').get(protect, getWorkspaces).post(protect, createWorkspace);
 router.route('/:id').get(protect, getWorkspace).put(protect, updateWorkspace).delete(protect, deleteWorkspace);

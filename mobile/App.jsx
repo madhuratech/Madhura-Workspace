@@ -3,9 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
-import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity } from 'react-native';
-import { Home, FolderKanban, CheckSquare, Menu, MessageSquare } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet } from 'react-native';
+import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react-native';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -26,7 +25,9 @@ import DocumentsScreen from './src/screens/DocumentsScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// ─── Projects Stack ────────────────────────────────────────────────────────
+const PRIMARY = '#5B5BD6';
+
+// ─── Stacks ────────────────────────────────────────────────────────────────
 const ProjectsStack = createNativeStackNavigator();
 function ProjectsNavigator() {
   return (
@@ -37,7 +38,6 @@ function ProjectsNavigator() {
   );
 }
 
-// ─── Chat Stack ────────────────────────────────────────────────────────────
 const ChatStack = createNativeStackNavigator();
 function ChatNavigator() {
   return (
@@ -48,7 +48,6 @@ function ChatNavigator() {
   );
 }
 
-// ─── More Stack ────────────────────────────────────────────────────────────
 const MoreStack = createNativeStackNavigator();
 function MoreNavigator() {
   return (
@@ -64,134 +63,27 @@ function MoreNavigator() {
   );
 }
 
-// ─── Premium Tab Bar Icon ──────────────────────────────────────────────────
-function TabIcon({ icon: Icon, label, focused }) {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
+// ─── Custom Tab Bar ────────────────────────────────────────────────────────
+const TAB_CONFIG = [
+  { name: 'Dashboard', label: 'Home',     Icon: Home },
+  { name: 'Tasks',     label: 'Tasks',    Icon: CheckSquare },
+  { name: 'Projects',  label: 'Projects', Icon: FolderKanban },
+  { name: 'Chat',      label: 'Chat',     Icon: MessageSquare },
+  { name: 'Menu',      label: 'More',     Icon: MoreHorizontal },
+];
 
-  useEffect(() => {
-    if (focused) {
-      Animated.parallel([
-        Animated.spring(scaleAnim, { toValue: 1.12, speed: 20, bounciness: 8, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 1, duration: 200, useNativeDriver: false }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.spring(scaleAnim, { toValue: 1, speed: 20, bounciness: 4, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0, duration: 200, useNativeDriver: false }),
-      ]).start();
-    }
-  }, [focused]);
-
-  const ACTIVE_COLOR = '#818CF8';   // indigo-400
-  const INACTIVE_COLOR = '#475569'; // slate-600
-
+function CustomTabBar({ state, descriptors, navigation }) {
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center', paddingTop: 2 }}>
-      <Animated.View
-        style={{
-          transform: [{ scale: scaleAnim }],
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: 44,
-          height: 36,
-          borderRadius: 12,
-          backgroundColor: focused ? 'rgba(129,140,248,0.15)' : 'transparent',
-        }}
-      >
-        <Icon
-          color={focused ? ACTIVE_COLOR : INACTIVE_COLOR}
-          size={20}
-          strokeWidth={focused ? 2.5 : 1.8}
-        />
-      </Animated.View>
-      <Text
-        numberOfLines={1}
-        style={{
-          fontSize: 10,
-          marginTop: 2,
-          fontWeight: focused ? '700' : '500',
-          color: focused ? ACTIVE_COLOR : INACTIVE_COLOR,
-          letterSpacing: 0.3,
-        }}
-      >
-        {label}
-      </Text>
-      {focused && (
-        <View
-          style={{
-            marginTop: 3,
-            width: 20,
-            height: 3,
-            borderRadius: 2,
-            backgroundColor: ACTIVE_COLOR,
-            shadowColor: ACTIVE_COLOR,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.8,
-            shadowRadius: 4,
-          }}
-        />
-      )}
-    </View>
-  );
-}
-
-// ─── Custom Tab Bar Background ──────────────────────────────────────────────
-function PremiumTabBar({ state, descriptors, navigation }) {
-  return (
-    <View
-      style={{
-        position: 'absolute',
-        bottom: 16,
-        left: 16,
-        right: 16,
-        borderRadius: 28,
-        overflow: 'hidden',
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.35,
-        shadowRadius: 24,
-        elevation: 20,
-      }}
-    >
-      <LinearGradient
-        colors={['#0F172A', '#1E293B']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          flexDirection: 'row',
-          height: Platform.OS === 'ios' ? 78 : 68,
-          paddingBottom: Platform.OS === 'ios' ? 16 : 6,
-          paddingTop: 8,
-          borderRadius: 28,
-          borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.08)',
-        }}
-      >
+    <View style={tabStyles.wrapper}>
+      <View style={tabStyles.container}>
         {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
           const isFocused = state.index === index;
-
-          const iconMap = {
-            Dashboard: Home,
-            Tasks: CheckSquare,
-            Projects: FolderKanban,
-            Chat: MessageSquare,
-            Menu: Menu,
-          };
-          const labelMap = {
-            Dashboard: 'Home',
-            Tasks: 'Tasks',
-            Projects: 'Projects',
-            Chat: 'Chat',
-            Menu: 'More',
-          };
+          const cfg = TAB_CONFIG.find(t => t.name === route.name) || TAB_CONFIG[0];
+          const { Icon } = cfg;
 
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
+            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
           };
 
           return (
@@ -199,34 +91,83 @@ function PremiumTabBar({ state, descriptors, navigation }) {
               key={route.key}
               onPress={onPress}
               activeOpacity={0.7}
-              style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+              style={tabStyles.tab}
             >
-              <TabIcon
-                icon={iconMap[route.name] || Home}
-                label={labelMap[route.name] || route.name}
-                focused={isFocused}
-              />
+              <View style={[tabStyles.pill, isFocused && tabStyles.pillActive]}>
+                <Icon
+                  color={isFocused ? '#fff' : '#9CA3AF'}
+                  size={20}
+                  strokeWidth={isFocused ? 2.5 : 1.8}
+                />
+              </View>
+              <Text style={[tabStyles.label, isFocused && tabStyles.labelActive]}>
+                {cfg.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
-      </LinearGradient>
+      </View>
     </View>
   );
 }
 
-const tabBarStyle = {
-  display: 'flex',
-};
-const hiddenTabBarStyle = { display: 'none' };
+const tabStyles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+  },
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    shadowColor: '#1a1a2e',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 16,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  pill: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  pillActive: {
+    backgroundColor: PRIMARY,
+  },
+  label: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    fontWeight: '500',
+  },
+  labelActive: {
+    color: PRIMARY,
+    fontWeight: '700',
+  },
+});
 
-// ─── Bottom Tab Navigator ──────────────────────────────────────────────────
+// ─── Tab Navigator ──────────────────────────────────────────────────────────
+const HIDE_TAB = { tabBarStyle: { display: 'none' } };
+
 function TabNavigator() {
   return (
     <Tab.Navigator
-      tabBar={(props) => <PremiumTabBar {...props} />}
-      screenOptions={{
-        headerShown: false,
-      }}
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
       <Tab.Screen name="Tasks" component={MyTasksScreen} />
@@ -234,22 +175,16 @@ function TabNavigator() {
         name="Projects"
         component={ProjectsNavigator}
         options={({ route }) => {
-          const routeName =
-            require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'ProjectsList';
-          return {
-            tabBarStyle: routeName === 'ProjectDetails' ? hiddenTabBarStyle : tabBarStyle,
-          };
+          const n = require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'ProjectsList';
+          return n === 'ProjectDetails' ? HIDE_TAB : {};
         }}
       />
       <Tab.Screen
         name="Chat"
         component={ChatNavigator}
         options={({ route }) => {
-          const routeName =
-            require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'ChatList';
-          return {
-            tabBarStyle: routeName === 'ChatWindow' ? hiddenTabBarStyle : tabBarStyle,
-          };
+          const n = require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'ChatList';
+          return n === 'ChatWindow' ? HIDE_TAB : {};
         }}
       />
       <Tab.Screen name="Menu" component={MoreNavigator} />
@@ -257,30 +192,23 @@ function TabNavigator() {
   );
 }
 
-// ─── Root Navigator ────────────────────────────────────────────────────────
+// ─── Root ──────────────────────────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) {
     return (
-      <LinearGradient
-        colors={['#0F172A', '#1E293B', '#0F172A']}
-        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-      >
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
         <View style={{
-          width: 72, height: 72, borderRadius: 22,
-          backgroundColor: '#6366F1',
+          width: 64, height: 64, borderRadius: 20,
+          backgroundColor: PRIMARY,
           justifyContent: 'center', alignItems: 'center',
-          shadowColor: '#6366F1', shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.5, shadowRadius: 20, elevation: 12, marginBottom: 24,
+          marginBottom: 20,
         }}>
-          <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>M</Text>
+          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800' }}>M</Text>
         </View>
-        <ActivityIndicator size="large" color="#818CF8" />
-        <Text style={{ color: '#475569', fontSize: 13, marginTop: 16, fontWeight: '500' }}>
-          Loading your workspace...
-        </Text>
-      </LinearGradient>
+        <ActivityIndicator color={PRIMARY} />
+      </View>
     );
   }
 

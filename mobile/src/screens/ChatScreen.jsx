@@ -1,247 +1,247 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, ScrollView, Animated,
+  ScrollView, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Hash, MessageCircle, Search, Users, Zap } from 'lucide-react-native';
+import { Hash, MessageCircle, Search, Users } from 'lucide-react-native';
 import { cachedGet } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 
-const CHANNEL_GRADIENTS = [
-  ['#6366F1','#818CF8'],
-  ['#8B5CF6','#A78BFA'],
-  ['#3B82F6','#60A5FA'],
-  ['#10B981','#34D399'],
-  ['#F97316','#FB923C'],
-  ['#EC4899','#F472B6'],
-];
+const PRIMARY = '#5B5BD6';
 
-const getInitials = (name) => name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
+const CHANNEL_COLORS = [PRIMARY, '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2'];
 
-// ── Channel Item ─────────────────────────────────────────────────────────
-const ChannelItem = ({ channel, onPress, idx, delay }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(14)).current;
+const getInitials = (name) =>
+  name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
+
+// ── Skeleton ──────────────────────────────────────────────────────────────
+const Skel = ({ w, h, r = 6, style }) => {
+  const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(Animated.sequence([
+      Animated.timing(a, { toValue: 1, duration: 800, useNativeDriver: false }),
+      Animated.timing(a, { toValue: 0, duration: 800, useNativeDriver: false }),
+    ])).start();
+  }, []);
+  const bg = a.interpolate({ inputRange: [0, 1], outputRange: ['#F3F4F6', '#E5E7EB'] });
+  return <Animated.View style={[{ width: w, height: h, borderRadius: r, backgroundColor: bg }, style]} />;
+};
+
+const SkeletonRow = () => (
+  <View style={styles.skeletonRow}>
+    <Skel w={44} h={44} r={14} style={{ marginRight: 14 }} />
+    <View style={{ flex: 1 }}>
+      <Skel w="55%" h={14} r={4} style={{ marginBottom: 7 }} />
+      <Skel w="75%" h={11} r={3} />
+    </View>
+  </View>
+);
+
+// ── Channel Row ────────────────────────────────────────────────────────────
+const ChannelRow = ({ channel, onPress, idx, delay }) => {
+  const fade = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(10)).current;
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 380, delay, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, speed: 16, bounciness: 3, delay, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 320, delay, useNativeDriver: true }),
+      Animated.timing(slide, { toValue: 0, duration: 320, delay, useNativeDriver: true }),
     ]).start();
   }, []);
-  const grad = CHANNEL_GRADIENTS[idx % CHANNEL_GRADIENTS.length];
+
+  const color = CHANNEL_COLORS[idx % CHANNEL_COLORS.length];
   return (
-    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <TouchableOpacity style={styles.channelItem} onPress={onPress} activeOpacity={0.78}>
-        <LinearGradient colors={grad} style={styles.channelIcon}>
-          <Hash color="#fff" size={18} strokeWidth={2.5} />
-        </LinearGradient>
-        <View style={styles.channelInfo}>
-          <Text style={styles.channelName}>#{channel.name}</Text>
-          <Text style={styles.channelDesc} numberOfLines={1}>
-            {channel.description || 'Public channel · Tap to open'}
+    <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
+      <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.78}>
+        <View style={[styles.rowIconBox, { backgroundColor: color + '15' }]}>
+          <Hash color={color} size={18} strokeWidth={2.5} />
+        </View>
+        <View style={styles.rowInfo}>
+          <Text style={styles.rowTitle}>#{channel.name}</Text>
+          <Text style={styles.rowSub} numberOfLines={1}>
+            {channel.description || 'Public channel'}
           </Text>
         </View>
-        <LinearGradient colors={['#F8FAFC','#F1F5F9']} style={styles.chevronWrap}>
-          <Text style={styles.chevronText}>›</Text>
-        </LinearGradient>
+        <ChevronIcon />
       </TouchableOpacity>
     </Animated.View>
   );
 };
 
-// ── DM Item ───────────────────────────────────────────────────────────────
-const DMItem = ({ member, onPress, idx, delay }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
+// ── DM Row ─────────────────────────────────────────────────────────────────
+const DMRow = ({ member, onPress, idx, delay }) => {
+  const fade = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 380, delay, useNativeDriver: true }).start();
-    // Pulse the online dot
+    Animated.timing(fade, { toValue: 1, duration: 320, delay, useNativeDriver: true }).start();
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.4, duration: 1000, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1.5, duration: 1200, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
       ])
     ).start();
   }, []);
 
-  const grad = CHANNEL_GRADIENTS[idx % CHANNEL_GRADIENTS.length];
-  const initial = getInitials(member.name || member.email?.split('@')[0]);
+  const color = CHANNEL_COLORS[idx % CHANNEL_COLORS.length];
+  const initials = getInitials(member.name || member.email?.split('@')[0]);
   return (
-    <Animated.View style={{ opacity: fadeAnim }}>
-      <TouchableOpacity style={styles.dmItem} onPress={onPress} activeOpacity={0.78}>
+    <Animated.View style={{ opacity: fade }}>
+      <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.78}>
+        {/* Avatar */}
         <View style={styles.dmAvatarWrap}>
-          <LinearGradient colors={grad} style={styles.dmAvatar}>
-            <Text style={styles.dmAvatarText}>{initial}</Text>
-          </LinearGradient>
-          {/* Animated online pulse */}
-          <Animated.View style={[styles.onlinePulse, { transform: [{ scale: pulseAnim }] }]} />
+          <View style={[styles.dmAvatar, { backgroundColor: color + '18' }]}>
+            <Text style={[styles.dmAvatarText, { color }]}>{initials}</Text>
+          </View>
+          {/* Pulsing online indicator */}
+          <Animated.View style={[styles.onlineRing, { transform: [{ scale: pulse }] }]} />
           <View style={styles.onlineDot} />
         </View>
 
-        <View style={styles.dmInfo}>
-          <Text style={styles.dmName}>{member.name || member.email?.split('@')[0]}</Text>
-          <Text style={styles.dmDesig} numberOfLines={1}>
-            {member.designation || (member.role?.replace('_', ' ') || 'Member')}
+        <View style={styles.rowInfo}>
+          <Text style={styles.rowTitle}>{member.name || member.email?.split('@')[0]}</Text>
+          <Text style={styles.rowSub} numberOfLines={1}>
+            {member.designation || (member.role?.replace(/_/g, ' ') || 'Team member')}
           </Text>
         </View>
 
-        <LinearGradient colors={grad} style={styles.dmChatBtn}>
-          <MessageCircle color="#fff" size={16} strokeWidth={2} />
-        </LinearGradient>
+        <View style={[styles.dmMsgBtn, { backgroundColor: color + '12' }]}>
+          <MessageCircle color={color} size={16} strokeWidth={2} />
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
 };
+
+// Tiny chevron
+const ChevronIcon = () => (
+  <View style={styles.chevron}>
+    <Text style={styles.chevronText}>›</Text>
+  </View>
+);
 
 export default function ChatScreen({ navigation }) {
   const { user } = useContext(AuthContext);
   const [workspace, setWorkspace] = useState(null);
   const [channels, setChannels] = useState([]);
-  const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const headerFade = useRef(new Animated.Value(0)).current;
+  const fade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(headerFade, { toValue: 1, duration: 500, useNativeDriver: true }).start();
-    fetchData();
+    Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+    load();
   }, []);
 
-  const fetchData = async () => {
+  const load = async () => {
     try {
-      const wsData = await cachedGet('/workspaces');
-      if (wsData.length > 0) {
-        const ws = wsData[0];
-        setWorkspace(ws);
-        const [detailData, channelsData] = await Promise.all([
-          cachedGet(`/workspaces/${ws._id}`),
-          cachedGet(`/workspaces/${ws._id}/channels`),
+      const ws = await cachedGet('/workspaces');
+      if (ws.length > 0) {
+        setWorkspace(ws[0]);
+        const [detail, chs] = await Promise.all([
+          cachedGet(`/workspaces/${ws[0]._id}`),
+          cachedGet(`/workspaces/${ws[0]._id}/channels`),
         ]);
-        if (detailData.members) {
-          const members = detailData.members
-            .filter(m => m.user && String(m.user._id) !== String(user._id))
-            .map(m => m.user);
-          setWorkspaceMembers(members);
+        if (detail?.members) {
+          setMembers(
+            detail.members
+              .filter(m => m.user && String(m.user._id) !== String(user._id))
+              .map(m => m.user)
+          );
         }
-        setChannels((Array.isArray(channelsData) ? channelsData : []).filter(c => !c.name.startsWith('dm-')));
+        setChannels((Array.isArray(chs) ? chs : []).filter(c => !c.name.startsWith('dm-')));
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
-  const handleChannelClick = (channel) => {
+  const openChannel = (ch) => {
     navigation.navigate('ChatWindow', {
       workspaceId: workspace._id,
-      channelId: channel._id,
-      channelName: channel.name,
+      channelId: ch._id,
+      channelName: ch.name,
       isDM: false,
     });
   };
 
-  const handleDMClick = async (memberUser) => {
+  const openDM = async (m) => {
     if (!workspace) return;
     try {
-      const res = await cachedGet(`/workspaces/${workspace._id}/dms/${memberUser._id}`);
+      const res = await cachedGet(`/workspaces/${workspace._id}/dms/${m._id}`);
       navigation.navigate('ChatWindow', {
         workspaceId: workspace._id,
         channelId: res._id,
-        channelName: memberUser.name || memberUser.email?.split('@')[0],
+        channelName: m.name || m.email?.split('@')[0],
         isDM: true,
-        otherUser: memberUser,
+        otherUser: m,
       });
-    } catch (err) { console.error(err); }
+    } catch (e) { console.error(e); }
   };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#0F172A','#1E293B']} style={styles.headerGradient}>
-          <View style={styles.headerInner}>
-            <Text style={styles.headerTitle}>Messages</Text>
-          </View>
-        </LinearGradient>
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#6366F1" />
-          <Text style={styles.loadingText}>Loading messages...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* ── Gradient Header ──────────────────────── */}
-      <LinearGradient colors={['#0F172A','#1E293B']} style={styles.headerGradient}>
-        <Animated.View style={[styles.headerInner, { opacity: headerFade }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Messages</Text>
-            <Text style={styles.headerSub}>
-              {channels.length} channel{channels.length !== 1 ? 's' : ''} · {workspaceMembers.length} member{workspaceMembers.length !== 1 ? 's' : ''}
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.searchBtn}>
-            <Search color="rgba(248,250,252,0.7)" size={19} strokeWidth={2} />
-          </TouchableOpacity>
-        </Animated.View>
-      </LinearGradient>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      {/* Header */}
+      <Animated.View style={[styles.header, { opacity: fade }]}>
+        <Text style={styles.headerTitle}>Messages</Text>
+        <TouchableOpacity style={styles.searchBtn}>
+          <Search color="#6B7280" size={18} strokeWidth={2} />
+        </TouchableOpacity>
+      </Animated.View>
 
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ── Channels ──────────────────────────── */}
         <View style={styles.sectionHeader}>
-          <LinearGradient colors={['#6366F1','#818CF8']} style={styles.sectionIconWrap}>
-            <Hash color="#fff" size={13} strokeWidth={2.5} />
-          </LinearGradient>
-          <Text style={styles.sectionTitle}>CHANNELS</Text>
-          <View style={styles.sectionCount}>
-            <Text style={styles.sectionCountText}>{channels.length}</Text>
+          <Text style={styles.sectionTitle}>Channels</Text>
+          <View style={styles.sectionBadge}>
+            <Text style={styles.sectionBadgeText}>{channels.length}</Text>
           </View>
         </View>
 
-        {channels.length === 0 ? (
+        {loading ? (
+          [1, 2].map(i => <SkeletonRow key={i} />)
+        ) : channels.length === 0 ? (
           <View style={styles.emptySection}>
+            <Hash color="#E5E7EB" size={18} />
             <Text style={styles.emptySectionText}>No channels yet</Text>
           </View>
         ) : (
-          channels.map((channel, idx) => (
-            <ChannelItem
-              key={channel._id}
-              channel={channel}
-              idx={idx}
-              delay={idx * 40}
-              onPress={() => handleChannelClick(channel)}
+          channels.map((ch, i) => (
+            <ChannelRow
+              key={ch._id}
+              channel={ch}
+              idx={i}
+              delay={i * 40}
+              onPress={() => openChannel(ch)}
             />
           ))
         )}
 
         {/* ── Direct Messages ────────────────────── */}
-        <View style={[styles.sectionHeader, { marginTop: 12 }]}>
-          <LinearGradient colors={['#EC4899','#F472B6']} style={styles.sectionIconWrap}>
-            <Users color="#fff" size={13} strokeWidth={2.5} />
-          </LinearGradient>
-          <Text style={styles.sectionTitle}>DIRECT MESSAGES</Text>
-          <View style={styles.sectionCount}>
-            <Text style={styles.sectionCountText}>{workspaceMembers.length}</Text>
+        <View style={[styles.sectionHeader, { marginTop: 8 }]}>
+          <Text style={styles.sectionTitle}>Direct Messages</Text>
+          <View style={styles.sectionBadge}>
+            <Text style={styles.sectionBadgeText}>{members.length}</Text>
           </View>
         </View>
 
-        {workspaceMembers.length === 0 ? (
+        {loading ? (
+          [1, 2, 3].map(i => <SkeletonRow key={i} />)
+        ) : members.length === 0 ? (
           <View style={styles.emptySection}>
-            <Text style={styles.emptySectionText}>No team members found</Text>
+            <Users color="#E5E7EB" size={18} />
+            <Text style={styles.emptySectionText}>No team members</Text>
           </View>
         ) : (
-          workspaceMembers.map((member, idx) => (
-            <DMItem
-              key={member._id}
-              member={member}
-              idx={idx}
-              delay={idx * 40}
-              onPress={() => handleDMClick(member)}
+          members.map((m, i) => (
+            <DMRow
+              key={m._id}
+              member={m}
+              idx={i}
+              delay={i * 40}
+              onPress={() => openDM(m)}
             />
           ))
         )}
@@ -253,70 +253,72 @@ export default function ChatScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 13, color: '#94A3B8', fontWeight: '500' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
 
-  // Header
-  headerGradient: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  headerInner: { flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { fontSize: 26, fontWeight: '800', color: '#F8FAFC' },
-  headerSub: { fontSize: 13, color: 'rgba(248,250,252,0.55)', marginTop: 2 },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 16,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+  },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
   searchBtn: {
-    width: 42, height: 42, borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    width: 38, height: 38, borderRadius: 12,
+    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB',
     justifyContent: 'center', alignItems: 'center',
   },
 
-  scrollContent: { paddingHorizontal: 16, paddingTop: 16 },
+  scroll: { paddingHorizontal: 16, paddingTop: 8 },
 
-  // Section header
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  sectionIconWrap: { width: 26, height: 26, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-  sectionTitle: { flex: 1, fontSize: 11, fontWeight: '800', color: '#94A3B8', letterSpacing: 1.2 },
-  sectionCount: { backgroundColor: '#F1F5F9', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
-  sectionCountText: { fontSize: 11, color: '#64748B', fontWeight: '700' },
-
-  emptySection: { paddingVertical: 20, paddingHorizontal: 4, marginBottom: 8 },
-  emptySectionText: { fontSize: 13, color: '#CBD5E1', fontWeight: '500' },
-
-  // Channel Item
-  channelItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 18, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.06, shadowRadius: 10, elevation: 2,
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12 },
+  sectionTitle: { flex: 1, fontSize: 12, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.8 },
+  sectionBadge: {
+    backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2,
   },
-  channelIcon: { width: 46, height: 46, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  channelInfo: { flex: 1 },
-  channelName: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 3 },
-  channelDesc: { fontSize: 12, color: '#94A3B8' },
-  chevronWrap: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  chevronText: { fontSize: 22, color: '#94A3B8', lineHeight: 28 },
+  sectionBadgeText: { fontSize: 11, fontWeight: '700', color: '#6B7280' },
 
-  // DM Item
-  dmItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 18, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#EC4899', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
+  emptySection: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 4 },
+  emptySectionText: { fontSize: 13, color: '#D1D5DB', fontWeight: '500' },
+
+  // Skeleton
+  skeletonRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 16, padding: 14, marginBottom: 8,
+    borderWidth: 1, borderColor: '#F3F4F6',
   },
+
+  // Row (channel + DM)
+  row: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    borderRadius: 16, padding: 14, marginBottom: 8,
+    borderWidth: 1, borderColor: '#F3F4F6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.03, shadowRadius: 4, elevation: 1,
+  },
+  rowIconBox: {
+    width: 44, height: 44, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center', marginRight: 14,
+  },
+  rowInfo: { flex: 1 },
+  rowTitle: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 3 },
+  rowSub: { fontSize: 12, color: '#9CA3AF' },
+  chevron: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' },
+  chevronText: { fontSize: 20, color: '#D1D5DB', lineHeight: 26 },
+
+  // DM specific
   dmAvatarWrap: { position: 'relative', marginRight: 14 },
-  dmAvatar: { width: 46, height: 46, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  dmAvatarText: { fontSize: 16, fontWeight: '800', color: '#fff' },
-  onlinePulse: {
-    position: 'absolute', bottom: -2, right: -2,
-    width: 16, height: 16, borderRadius: 8,
-    backgroundColor: 'rgba(16,185,129,0.3)',
+  dmAvatar: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  dmAvatarText: { fontSize: 16, fontWeight: '800' },
+  onlineRing: {
+    position: 'absolute', bottom: -1, right: -1,
+    width: 14, height: 14, borderRadius: 7,
+    backgroundColor: 'rgba(16,185,129,0.25)',
   },
   onlineDot: {
-    position: 'absolute', bottom: 0, right: 0,
-    width: 12, height: 12, borderRadius: 6,
+    position: 'absolute', bottom: 1, right: 1,
+    width: 10, height: 10, borderRadius: 5,
     backgroundColor: '#10B981', borderWidth: 2, borderColor: '#fff',
   },
-  dmInfo: { flex: 1 },
-  dmName: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 3 },
-  dmDesig: { fontSize: 12, color: '#94A3B8', textTransform: 'capitalize' },
-  dmChatBtn: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  dmMsgBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center',
+  },
 });

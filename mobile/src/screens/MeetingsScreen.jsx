@@ -8,6 +8,8 @@ import { ArrowLeft, Calendar, Video, Users, Clock, MapPin } from 'lucide-react-n
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
+const PRIMARY = '#5B5BD6';
+
 function groupMeetings(meetings) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -35,9 +37,9 @@ function groupMeetings(meetings) {
 }
 
 const SECTION_COLOR = {
-  Today:    { dot: '#10B981', border: '#10B981', bg: '#F0FDF4' },
-  Upcoming: { dot: '#3B82F6', border: '#3B82F6', bg: '#EFF6FF' },
-  Past:     { dot: '#94A3B8', border: '#CBD5E1', bg: '#F8FAFC' },
+  Today:    { dot: '#059669', bg: '#F0FDF4' },
+  Upcoming: { dot: PRIMARY,   bg: '#EEF2FF' },
+  Past:     { dot: '#9CA3AF', bg: '#F9FAFB' },
 };
 
 const MeetingCard = ({ item }) => {
@@ -162,8 +164,10 @@ export default function MeetingsScreen({ navigation }) {
         </View>
       ) : sections.length === 0 ? (
         <View style={styles.center}>
-          <Calendar color="#CBD5E1" size={52} />
-          <Text style={styles.emptyTitle}>No meetings scheduled</Text>
+          <View style={styles.emptyIconBox}>
+            <Calendar color="#D1D5DB" size={32} />
+          </View>
+          <Text style={styles.emptyTitle}>No meetings yet</Text>
           <Text style={styles.emptySub}>Your upcoming meetings will appear here.</Text>
         </View>
       ) : (
@@ -195,18 +199,19 @@ export default function MeetingsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
   header: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 14,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    paddingHorizontal: 20, paddingVertical: 16,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
   backBtn: {
-    width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
-    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    width: 36, height: 36, borderRadius: 11, backgroundColor: '#F9FAFB',
+    borderWidth: 1, borderColor: '#E5E7EB',
+    justifyContent: 'center', alignItems: 'center', marginRight: 14,
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
-  headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
+  headerSub: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   listContent: { padding: 16, paddingBottom: 120 },
 
@@ -214,42 +219,49 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 8,
   },
-  sectionDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  sectionTitle: { flex: 1, fontSize: 11, fontWeight: '700', letterSpacing: 1.2 },
-  sectionCountWrap: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  sectionDot: { width: 7, height: 7, borderRadius: 4, marginRight: 8 },
+  sectionTitle: { flex: 1, fontSize: 11, fontWeight: '700', letterSpacing: 0.8 },
+  sectionCountWrap: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
   sectionCount: { fontSize: 11, fontWeight: '700' },
 
   // Cards
   card: {
-    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 18, padding: 16,
-    marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9',
-    borderLeftWidth: 4, borderLeftColor: '#3B82F6',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 16,
+    marginBottom: 8, borderWidth: 1, borderColor: '#F3F4F6',
+    borderLeftWidth: 3, borderLeftColor: PRIMARY,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04, shadowRadius: 6, elevation: 2,
   },
-  cardToday: { borderLeftColor: '#10B981', backgroundColor: '#FAFFFE' },
-  cardPast: { borderLeftColor: '#E2E8F0', opacity: 0.65 },
+  cardToday: { borderLeftColor: '#059669' },
+  cardPast: { borderLeftColor: '#E5E7EB', opacity: 0.6 },
 
   dateCol: {
-    width: 56, alignItems: 'center', justifyContent: 'center',
-    borderRightWidth: 1, borderRightColor: '#F1F5F9',
+    width: 52, alignItems: 'center', justifyContent: 'center',
+    borderRightWidth: 1, borderRightColor: '#F3F4F6',
     paddingRight: 14, marginRight: 14,
   },
-  dateMonth: { fontSize: 11, fontWeight: '700', color: '#3B82F6', marginBottom: 4, letterSpacing: 0.5 },
-  dateDay: { fontSize: 26, fontWeight: '700', color: '#0F172A' },
+  dateMonth: { fontSize: 10, fontWeight: '700', color: PRIMARY, marginBottom: 4, letterSpacing: 0.5 },
+  dateDay: { fontSize: 24, fontWeight: '800', color: '#111827' },
 
   details: { flex: 1 },
-  title: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 6 },
+  title: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 6 },
   metaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  metaText: { fontSize: 12, color: '#64748B' },
+  metaText: { fontSize: 12, color: '#6B7280' },
 
   joinBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#3B82F6', paddingHorizontal: 14, paddingVertical: 8,
+    backgroundColor: PRIMARY, paddingHorizontal: 12, paddingVertical: 7,
     borderRadius: 10, alignSelf: 'flex-start', marginTop: 10,
   },
   joinText: { color: '#fff', fontSize: 13, fontWeight: '700' },
 
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#334155', marginTop: 16, marginBottom: 6 },
-  emptySub: { fontSize: 13, color: '#94A3B8', textAlign: 'center' },
+  // Empty
+  emptyIconBox: {
+    width: 72, height: 72, borderRadius: 20, backgroundColor: '#F9FAFB',
+    borderWidth: 1, borderColor: '#F3F4F6',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+  },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#374151', marginBottom: 6 },
+  emptySub: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
 });
+

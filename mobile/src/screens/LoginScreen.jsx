@@ -5,8 +5,9 @@ import {
 } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+
+const PRIMARY = '#5B5BD6';
 
 export default function LoginScreen() {
   const { login } = useContext(AuthContext);
@@ -14,27 +15,20 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
-  const logoAnim = useRef(new Animated.Value(0)).current;
-  const formAnim = useRef(new Animated.Value(0)).current;
-  const logoScale = useRef(new Animated.Value(0.7)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.parallel([
-        Animated.spring(logoScale, { toValue: 1, speed: 6, bounciness: 10, useNativeDriver: true }),
-        Animated.timing(logoAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      ]),
-      Animated.timing(formAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, speed: 8, bounciness: 4, useNativeDriver: true }),
     ]).start();
   }, []);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
+    if (!email || !password) { setError('Please fill in all fields'); return; }
     setLoading(true);
     setError('');
     const res = await login(email, password);
@@ -43,148 +37,142 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={['#0F172A','#1E293B','#0F172A']} style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <View style={styles.content}>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <View style={styles.content}>
 
-            {/* ── Logo Section ────────────────────── */}
-            <Animated.View style={[styles.logoSection, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
-              <LinearGradient
-                colors={['#6366F1','#818CF8']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.logoContainer}
-              >
-                <Text style={styles.logoText}>M</Text>
-              </LinearGradient>
-              <Text style={styles.title}>MadhuraWS</Text>
-              <Text style={styles.subtitle}>Your premium workspace platform</Text>
-            </Animated.View>
+          {/* Logo */}
+          <Animated.View style={[styles.logoSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            <View style={styles.logoMark}>
+              <Text style={styles.logoLetter}>M</Text>
+            </View>
+            <Text style={styles.appName}>Madhura Workspace</Text>
+            <Text style={styles.tagline}>Sign in to your account</Text>
+          </Animated.View>
 
-            {/* ── Form Card ────────────────────────── */}
-            <Animated.View style={[styles.formCard, { opacity: formAnim }]}>
-              <Text style={styles.formTitle}>Welcome back 👋</Text>
-              <Text style={styles.formSubtitle}>Sign in to continue</Text>
-
-              {error ? (
-                <View style={styles.errorBox}>
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              ) : null}
-
-              {/* Email */}
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputWrap}>
-                <Mail color="#94A3B8" size={18} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor="#94A3B8"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
+          {/* Form */}
+          <Animated.View style={[styles.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            {error ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{error}</Text>
               </View>
+            ) : null}
 
-              {/* Password */}
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrap}>
-                <Lock color="#94A3B8" size={18} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { flex: 1 }]}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingHorizontal: 4 }}>
-                  {showPassword
-                    ? <EyeOff color="#94A3B8" size={18} />
-                    : <Eye color="#94A3B8" size={18} />
-                  }
-                </TouchableOpacity>
-              </View>
+            <Text style={styles.label}>Email</Text>
+            <View style={styles.inputRow}>
+              <Mail color="#9CA3AF" size={16} style={{ marginRight: 10 }} />
+              <TextInput
+                style={styles.input}
+                placeholder="you@company.com"
+                placeholderTextColor="#C4C4C4"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
 
-              {/* Login Button */}
-              <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.88} style={{ marginTop: 8 }}>
-                <LinearGradient
-                  colors={['#6366F1','#818CF8']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.loginButton}
-                >
-                  {loading
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={styles.loginButtonText}>Sign In</Text>
-                  }
-                </LinearGradient>
+            <Text style={styles.label}>Password</Text>
+            <View style={styles.inputRow}>
+              <Lock color="#9CA3AF" size={16} style={{ marginRight: 10 }} />
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="••••••••"
+                placeholderTextColor="#C4C4C4"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPass}
+              />
+              <TouchableOpacity onPress={() => setShowPass(!showPass)}>
+                {showPass
+                  ? <EyeOff color="#9CA3AF" size={16} />
+                  : <Eye color="#9CA3AF" size={16} />
+                }
               </TouchableOpacity>
-            </Animated.View>
+            </View>
 
-            {/* Footer */}
-            <Animated.View style={{ opacity: formAnim, alignItems: 'center', marginTop: 24 }}>
-              <Text style={styles.footerText}>Madhura Workspace · Enterprise Edition</Text>
-            </Animated.View>
+            <TouchableOpacity
+              style={styles.loginBtn}
+              onPress={handleLogin}
+              disabled={loading}
+              activeOpacity={0.88}
+            >
+              {loading
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.loginBtnText}>Sign In</Text>
+              }
+            </TouchableOpacity>
+          </Animated.View>
 
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </LinearGradient>
+          <Animated.Text style={[styles.footer, { opacity: fadeAnim }]}>
+            Madhura Workspace · Enterprise
+          </Animated.Text>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flex: 1, padding: 24, justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
+  content: { flex: 1, paddingHorizontal: 24, justifyContent: 'center', paddingBottom: 32 },
 
-  // Logo
-  logoSection: { alignItems: 'center', marginBottom: 36 },
-  logoContainer: {
-    width: 76, height: 76, borderRadius: 24,
+  logoSection: { alignItems: 'center', marginBottom: 40 },
+  logoMark: {
+    width: 68, height: 68, borderRadius: 22,
+    backgroundColor: PRIMARY,
     justifyContent: 'center', alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5, shadowRadius: 20, elevation: 14,
+    marginBottom: 18,
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  logoText: { color: '#fff', fontSize: 36, fontWeight: '800' },
-  title: { fontSize: 30, fontWeight: '800', color: '#F8FAFC', marginBottom: 6 },
-  subtitle: { fontSize: 14, color: 'rgba(248,250,252,0.5)', textAlign: 'center' },
+  logoLetter: { color: '#fff', fontSize: 32, fontWeight: '800' },
+  appName: { fontSize: 26, fontWeight: '800', color: '#111827', marginBottom: 6 },
+  tagline: { fontSize: 15, color: '#6B7280', fontWeight: '400' },
 
-  // Form Card
   formCard: {
     backgroundColor: '#fff',
-    borderRadius: 28, padding: 26,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15, shadowRadius: 32, elevation: 10,
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 20,
+    elevation: 4,
   },
-  formTitle: { fontSize: 22, fontWeight: '800', color: '#0F172A', marginBottom: 4 },
-  formSubtitle: { fontSize: 14, color: '#94A3B8', marginBottom: 22 },
 
   errorBox: {
     backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12,
     borderWidth: 1, borderColor: '#FECACA', marginBottom: 16,
   },
-  errorText: { color: '#DC2626', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  errorText: { color: '#DC2626', fontSize: 13, fontWeight: '500', textAlign: 'center' },
 
-  label: { fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 8 },
-  inputWrap: {
+  label: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  inputRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0',
-    borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14, marginBottom: 18,
+    backgroundColor: '#F9FAFB', borderRadius: 14,
+    borderWidth: 1, borderColor: '#E5E7EB',
+    paddingHorizontal: 14, paddingVertical: 14,
+    marginBottom: 18,
   },
-  inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, color: '#0F172A' },
+  input: { flex: 1, fontSize: 15, color: '#111827' },
 
-  loginButton: {
-    borderRadius: 16, paddingVertical: 16,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#6366F1', shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 6,
+  loginBtn: {
+    backgroundColor: PRIMARY, borderRadius: 14,
+    paddingVertical: 16, alignItems: 'center',
+    marginTop: 4,
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  loginButtonText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+  loginBtnText: { color: '#fff', fontSize: 15, fontWeight: '700', letterSpacing: 0.2 },
 
-  footerText: { fontSize: 12, color: 'rgba(248,250,252,0.3)', fontWeight: '500' },
+  footer: { textAlign: 'center', color: '#D1D5DB', fontSize: 12, marginTop: 32 },
 });
