@@ -17,7 +17,9 @@ const getProjects = async (req, res) => {
     }
 
     const projects = await Project.find(query)
-      .populate('members', 'name email avatar');
+      .select('title description status members workspace totalTasks doneTasks')
+      .populate('members', 'name email avatar')
+      .lean();
 
     res.status(200).json(projects);
   } catch (error) {
@@ -30,7 +32,9 @@ const getProjects = async (req, res) => {
 // @access  Private
 const getProject = async (req, res) => {
   try {
-    const project = await Project.findById(req.params.projectId).populate('members', 'name email avatar');
+    const project = await Project.findById(req.params.projectId)
+      .populate('members', 'name email avatar')
+      .lean();
     if (!project) return res.status(404).json({ message: 'Project not found' });
     res.status(200).json(project);
   } catch (error) {

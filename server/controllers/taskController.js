@@ -16,7 +16,8 @@ const getTasks = async (req, res) => {
     }
 
     const tasks = await Task.find(query)
-      .populate('assignees', 'name email avatar');
+      .populate('assignees', 'name email avatar')
+      .lean();
 
     res.status(200).json(tasks);
   } catch (error) {
@@ -33,9 +34,11 @@ const getMyTasks = async (req, res) => {
       workspace: req.params.workspaceId,
       assignees: req.user._id
     })
+    .select('title description status priority dueDate project assignees workspace')
     .populate('project', 'title')
     .populate('assignees', 'name email avatar')
-    .sort({ dueDate: 1 });
+    .sort({ dueDate: 1 })
+    .lean();
 
     res.status(200).json(tasks);
   } catch (error) {

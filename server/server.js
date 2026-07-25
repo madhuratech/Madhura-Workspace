@@ -5,6 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 const path = require('path');
+const compression = require('compression');
 
 // Load env vars
 dotenv.config();
@@ -68,16 +69,37 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors(corsOptions));
-app.use(express.json());
+// ── Middleware ──────────────────────────────────────────────────────────────
+// Gzip compression: reduces response size by ~70%
+app.use(compression({
+  threshold: 512,           // compress responses > 512 bytes
+  level: 6,                 // balanced speed/compression
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10mb' }));
+
+// Cache static uploads (1 day)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1d',
+  etag: true,
+}));
+
+// ── Health / Keep-Alive Endpoint ─────────────────────────────────────────────
+// Mobile app pings this every 14 min to prevent Render cold starts
+app.get('/api/ping', (req, res) => {
+  res.status(200).json({ status: 'ok', ts: Date.now() });
+});
 
 app.get('/', (req, res) => {
   res.send('Madhura Workspace API is running...');
 });
 
-// Routes
+// ── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/auth/google', require('./routes/googleAuthRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));

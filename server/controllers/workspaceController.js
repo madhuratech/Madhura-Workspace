@@ -9,7 +9,11 @@ const getWorkspaces = async (req, res) => {
   try {
     const workspaces = await Workspace.find({
       $or: [{ owner: req.user._id }, { 'members.user': req.user._id }],
-    }).populate('owner', 'name email').populate('members.user', 'name email avatar designation presenceStatus');
+    })
+      .select('name description owner members createdAt')
+      .populate('owner', 'name email')
+      .populate('members.user', 'name email avatar designation presenceStatus')
+      .lean();
 
     res.status(200).json(workspaces);
   } catch (error) {
@@ -68,8 +72,10 @@ const createWorkspace = async (req, res) => {
 const getWorkspace = async (req, res) => {
   try {
     const workspace = await Workspace.findById(req.params.id)
+      .select('name description owner members createdAt')
       .populate('owner', 'name email')
-      .populate('members.user', 'name email avatar designation presenceStatus');
+      .populate('members.user', 'name email avatar designation presenceStatus')
+      .lean();
 
     if (!workspace) {
       return res.status(404).json({ message: 'Workspace not found' });
