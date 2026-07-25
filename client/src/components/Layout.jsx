@@ -110,10 +110,12 @@ const Layout = () => {
             <LayoutDashboard size={18} className={`${location.pathname === '/' ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
             <span className="text-sm">Dashboard</span>
           </Link>
-          <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname === '/analytics' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <BarChart3 size={18} className={`${location.pathname === '/analytics' ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Analytics & Reports</span>
-          </Link>
+          { (user?.role === 'super_admin' || user?.role === 'hr') && (
+            <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname === '/analytics' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
+              <BarChart3 size={18} className={`${location.pathname === '/analytics' ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
+              <span className="text-sm">Analytics & Reports</span>
+            </Link>
+          )}
           {user?.role === 'super_admin' && (
             <Link to="/team" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/team') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
               <Users size={18} className={`${location.pathname.startsWith('/team') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />

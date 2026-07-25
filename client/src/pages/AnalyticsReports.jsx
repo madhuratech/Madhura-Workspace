@@ -100,9 +100,11 @@ const AnalyticsReports = () => {
 
   const { summary, taskProgress, attendanceTrends, employeePerformance, projectsPerformance } = analyticsData;
   const filteredEmployees = (employeePerformance || []).filter(emp =>
-    emp.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    emp.designation?.toLowerCase().includes(searchQuery.toLowerCase())
+    emp.role !== 'super_admin' && (
+      emp.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.designation?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
   );
 
   return (

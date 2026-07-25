@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   FileText, Users, Settings, ChevronRight,
-  CalendarDays, Mail, Clock, LogOut, User,
+  CalendarDays, Mail, Clock, LogOut, User, BarChart3
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
@@ -18,35 +18,6 @@ const ROLE_CFG = {
   team_leader: { label: 'Team Leader', color: '#D97706', bg: '#FFF7ED' },
   employee:    { label: 'Employee',    color: '#059669', bg: '#F0FDF4' },
 };
-
-const MENU = [
-  {
-    section: 'Workspace',
-    items: [
-      { icon: FileText,     label: 'Documents',         sub: 'Files and attachments',          route: 'Documents',       iconBg: '#EEF2FF', iconColor: PRIMARY      },
-      { icon: Users,        label: 'Team Directory',    sub: 'Colleagues and roles',            route: 'Team',            iconBg: '#F5F3FF', iconColor: '#7C3AED'   },
-    ],
-  },
-  {
-    section: 'Communication',
-    items: [
-      { icon: Mail,         label: 'Email',             sub: 'Internal messages',               route: 'Email',           iconBg: '#F0FDF4', iconColor: '#059669'   },
-      { icon: CalendarDays, label: 'Meetings',          sub: 'Schedule and upcoming',           route: 'Meetings',        iconBg: '#FFF7ED', iconColor: '#D97706'   },
-    ],
-  },
-  {
-    section: 'Tools',
-    items: [
-      { icon: Clock,        label: 'Attendance & Leave', sub: 'Check in and time off',         route: 'AttendanceLeave', iconBg: '#FEF2F2', iconColor: '#DC2626'   },
-    ],
-  },
-  {
-    section: 'Account',
-    items: [
-      { icon: Settings,     label: 'Settings',          sub: 'App preferences',                 route: 'Settings',        iconBg: '#F9FAFB', iconColor: '#6B7280'   },
-    ],
-  },
-];
 
 // ── Menu Item ──────────────────────────────────────────────────────────────
 const MenuItem = ({ item, onPress, delay }) => {
@@ -80,6 +51,38 @@ export default function MoreScreen({ navigation }) {
   const role = user?.role || 'employee';
   const rc = ROLE_CFG[role] || ROLE_CFG.employee;
   const initial = user?.name?.[0]?.toUpperCase() || 'U';
+
+  const MENU = [
+    {
+      section: 'Workspace',
+      items: [
+        { icon: FileText,     label: 'Documents',         sub: 'Files and attachments',          route: 'Documents',       iconBg: '#EEF2FF', iconColor: PRIMARY      },
+        { icon: Users,        label: 'Team Directory',    sub: 'Colleagues and roles',            route: 'Team',            iconBg: '#F5F3FF', iconColor: '#7C3AED'   },
+      ],
+    },
+    {
+      section: 'Communication',
+      items: [
+        { icon: Mail,         label: 'Email',             sub: 'Internal messages',               route: 'Email',           iconBg: '#F0FDF4', iconColor: '#059669'   },
+        { icon: CalendarDays, label: 'Meetings',          sub: 'Schedule and upcoming',           route: 'Meetings',        iconBg: '#FFF7ED', iconColor: '#D97706'   },
+      ],
+    },
+    {
+      section: 'Tools',
+      items: [
+        { icon: Clock,        label: 'Attendance & Leave', sub: 'Check in and time off',         route: 'AttendanceLeave', iconBg: '#FEF2F2', iconColor: '#DC2626'   },
+        ...(role === 'super_admin' || role === 'hr' ? [
+          { icon: BarChart3,  label: 'Analytics',         sub: 'Reports & Productivity',         route: 'Analytics',       iconBg: '#F5F3FF', iconColor: '#8B5CF6'   }
+        ] : [])
+      ],
+    },
+    {
+      section: 'Account',
+      items: [
+        { icon: Settings,     label: 'Settings',          sub: 'App preferences',                 route: 'Settings',        iconBg: '#F9FAFB', iconColor: '#6B7280'   },
+      ],
+    },
+  ];
 
   const fade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
