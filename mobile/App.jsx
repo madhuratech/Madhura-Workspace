@@ -75,6 +75,11 @@ const TAB_CONFIG = [
 ];
 
 function CustomTabBar({ state, descriptors, navigation }) {
+  const focusedOptions = descriptors[state.routes[state.index].key].options;
+  if (focusedOptions.tabBarStyle?.display === 'none') {
+    return null;
+  }
+
   return (
     <View style={tabStyles.wrapper}>
       <View style={tabStyles.container}>
@@ -189,7 +194,14 @@ function TabNavigator() {
           return n === 'ChatWindow' ? HIDE_TAB : {};
         }}
       />
-      <Tab.Screen name="Menu" component={MoreNavigator} />
+      <Tab.Screen
+        name="Menu"
+        component={MoreNavigator}
+        options={({ route }) => {
+          const n = require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'MoreMenu';
+          return n !== 'MoreMenu' ? HIDE_TAB : {};
+        }}
+      />
     </Tab.Navigator>
   );
 }

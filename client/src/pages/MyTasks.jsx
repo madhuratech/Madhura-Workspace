@@ -271,10 +271,10 @@ const MyTasks = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={`p-5 mb-4 rounded-2xl border transition-all ${
+                                className={`p-5 mb-4 rounded-2xl border ${
                                   snapshot.isDragging
-                                    ? 'bg-bg-secondary border-accent-blue shadow-2xl rotate-2 z-50'
-                                    : 'bg-bg-secondary border-border shadow-sm hover:shadow-hover hover:border-accent-blue/30'
+                                    ? 'bg-bg-secondary border-accent-blue shadow-2xl z-50 opacity-90'
+                                    : 'bg-bg-secondary border-border shadow-sm hover:shadow-hover hover:border-accent-blue/30 transition-colors'
                                 }`}
                               >
                                 <div className="flex justify-between items-start mb-2">
