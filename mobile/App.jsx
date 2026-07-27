@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
 import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet } from 'react-native';
 import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react-native';
@@ -24,7 +24,7 @@ import DocumentsScreen from './src/screens/DocumentsScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 const PRIMARY = '#5B5BD6';
 
@@ -173,6 +173,7 @@ const HIDE_TAB = { tabBarStyle: { display: 'none' } };
 function TabNavigator() {
   return (
     <Tab.Navigator
+      tabBarPosition="bottom"
       tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >

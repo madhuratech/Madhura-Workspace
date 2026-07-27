@@ -87,7 +87,8 @@ export default function ChatWindowScreen({ route, navigation }) {
     socketRef.current = socket;
 
     socket.on('new_message', (msg) => {
-      if (msg.channel && String(msg.channel) === String(channelId)) {
+      const msgChannelId = msg.channel ? String(msg.channel) : String(msg.dm);
+      if (msgChannelId === String(channelId)) {
         setMessages((prev) => {
           if (prev.find((m) => String(m._id) === String(msg._id))) return prev;
           return [...prev, msg];
@@ -115,12 +116,13 @@ export default function ChatWindowScreen({ route, navigation }) {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(
-        `/workspaces/${workspaceId}/channels/${channelId}/messages`
-      );
+      const endpoint = isDM
+        ? `/workspaces/${workspaceId}/dms/${channelId}/messages`
+        : `/workspaces/${workspaceId}/channels/${channelId}/messages`;
+      const res = await axios.get(endpoint);
       setMessages(res.data);
       axios
-        .post(`/workspaces/${workspaceId}/channels/${channelId}/messages/mark-read`)
+        .post(`${endpoint}/mark-read`)
         .catch(() => {});
     } catch (err) {
       console.error(err);
