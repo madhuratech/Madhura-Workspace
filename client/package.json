@@ -15,6 +15,7 @@
     "@fullcalendar/interaction": "^6.1.21",
     "@fullcalendar/react": "^6.1.21",
     "@hello-pangea/dnd": "^18.0.1",
+    "@jitsi/react-sdk": "^1.4.4",
     "@tailwindcss/postcss": "^4.3.3",
     "autoprefixer": "^10.5.4",
     "axios": "^1.18.1",

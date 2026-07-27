@@ -2,9 +2,11 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import { Plus, X, Video, Users as UsersIcon, Link as LinkIcon, Info, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, X, Video, Users as UsersIcon, Link as LinkIcon, Info, ChevronLeft, ChevronRight, Calendar as CalendarIcon, FileText } from 'lucide-react';
 
 const Meetings = () => {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   const [workspace, setWorkspace] = useState(null);
@@ -15,6 +17,8 @@ const Meetings = () => {
   const [activeTab, setActiveTab] = useState('calendar'); // 'calendar' or 'logs'
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState('');
   const [formData, setFormData] = useState({ 
     title: '', 
     date: '', 
@@ -288,8 +292,8 @@ const Meetings = () => {
                   <tr>
                     <th className="text-left">Date</th>
                     <th className="text-left">Meeting Title</th>
-                    <th className="text-left">Type</th>
-                    <th className="text-left">Participants</th>
+                    <th className="text-left">Type & Status</th>
+                    <th className="text-left">Participants & Resources</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -304,22 +308,65 @@ const Meetings = () => {
                         <td className="font-bold text-text-primary">{m.title} <span className="text-xs font-normal text-text-secondary ml-2">{m.time}</span></td>
                         <td>
                           {m.type === 'google_meet' ? (
-                            <div className="flex items-center text-accent-blue">
-                              <Video size={14} className="mr-1.5" /> Online meeting
-                              {m.link && (
-                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-3 text-xs bg-accent-blue text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors">
-                                  Attend Meeting
-                                </a>
-                              )}
+                            <div className="flex flex-col">
+                              <div className="flex items-center text-accent-blue">
+                                <Video size={14} className="mr-1.5" /> Online meeting
+                              </div>
+                              <div className="mt-2">
+                                {m.status === 'scheduled' || m.status === 'in_progress' ? (
+                                  m.link ? (
+                                    <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-xs bg-accent-blue text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors inline-block">
+                                      Join External Meet
+                                    </a>
+                                  ) : m.videoCallId ? (
+                                    <button onClick={() => navigate(`/workspace/${workspace._id}/meeting/${m._id}/call`)} className="text-xs bg-success text-white px-3 py-1 rounded hover:bg-green-600 transition-colors inline-block">
+                                      Join Native Call
+                                    </button>
+                                  ) : null
+                                ) : (
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary bg-bg-primary px-2 py-1 rounded border border-border">Completed</span>
+                                )}
+                              </div>
                             </div>
                           ) : (
-                            <div className="flex items-center text-text-secondary">
-                              <UsersIcon size={14} className="mr-1.5" /> Direct Meet
+                            <div className="flex flex-col items-start">
+                              <div className="flex items-center text-text-secondary">
+                                <UsersIcon size={14} className="mr-1.5" /> Direct Meet
+                              </div>
+                              <div className="mt-2">
+                                {m.status === 'completed' && <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary bg-bg-primary px-2 py-1 rounded border border-border">Completed</span>}
+                              </div>
                             </div>
                           )}
                         </td>
-                        <td className="text-text-secondary text-xs">
-                          {m.participants?.length || 0} Members invited
+                        <td className="text-text-secondary text-sm">
+                          <div className="flex flex-col space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-medium text-text-primary opacity-70">Invited:</span>
+                              <span className="font-bold bg-bg-primary px-1.5 rounded">{m.participants?.length || 0}</span>
+                            </div>
+                            {m.attendedBy && m.attendedBy.length > 0 && (
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="font-medium text-text-primary opacity-70">Attended:</span>
+                                <span className="font-bold text-accent-blue bg-accent-blue/10 px-1.5 rounded">{m.attendedBy.length}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {(m.recordingUrl || m.aiNotes) && (
+                            <div className="mt-3 pt-3 border-t border-border flex flex-col space-y-2">
+                              {m.recordingUrl && (
+                                <a href={m.recordingUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-accent-blue hover:underline bg-accent-blue/5 p-1.5 rounded">
+                                  <Video size={14} className="mr-2 opacity-70" /> View Recording
+                                </a>
+                              )}
+                              {m.aiNotes && (
+                                <button onClick={() => { setSelectedNotes(m.aiNotes); setIsNotesModalOpen(true); }} className="flex items-center text-xs text-purple-500 hover:underline bg-purple-500/5 p-1.5 rounded w-full text-left">
+                                  <FileText size={14} className="mr-2 opacity-70" /> View AI Notes
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -484,6 +531,25 @@ const Meetings = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Notes Modal */}
+      {isNotesModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-text-primary flex items-center">
+                <FileText className="mr-2 text-purple-500" />
+                AI Generated Notes
+              </h3>
+              <button type="button" onClick={() => setIsNotesModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors"><X size={20} /></button>
+            </div>
+            <div className="overflow-y-auto custom-scrollbar flex-1 pr-2">
+              <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap break-words leading-relaxed text-text-primary">
+                {selectedNotes}
+              </div>
+            </div>
           </div>
         </div>
       )}
