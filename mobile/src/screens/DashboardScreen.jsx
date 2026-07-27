@@ -7,7 +7,7 @@ import { AuthContext } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Users, FolderKanban, CheckSquare, CalendarDays,
-  TrendingUp, ChevronRight, Bell, Zap,
+  TrendingUp, ChevronRight, Bell, Zap, Play
 } from 'lucide-react-native';
 import { cachedGet, saveWorkspaceCache, loadWorkspaceCache } from '../utils/api';
 
@@ -34,6 +34,26 @@ function getGreeting() {
   if (h < 17) return 'Good afternoon';
   return 'Good evening';
 }
+
+const TouchableScale = ({ onPress, style, children, activeOpacity = 0.9 }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  const onPressIn = () => Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }).start();
+  const onPressOut = () => Animated.spring(scale, { toValue: 1, friction: 4, tension: 40, useNativeDriver: true }).start();
+
+  return (
+    <TouchableOpacity
+      activeOpacity={activeOpacity}
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      style={style}
+    >
+      <Animated.View style={{ transform: [{ scale }] }}>
+        {children}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 // ── Skeleton ─────────────────────────────────────────────────────────────
 const Skeleton = ({ w, h, r = 8, style }) => {
@@ -86,10 +106,10 @@ const QAChip = ({ label, Icon, onPress, delay }) => {
   }, []);
   return (
     <Animated.View style={{ opacity: anim }}>
-      <TouchableOpacity style={styles.qaChip} onPress={onPress} activeOpacity={0.75}>
-        <Icon color={PRIMARY} size={16} strokeWidth={2} />
+      <TouchableScale style={styles.qaChip} onPress={onPress} activeOpacity={0.8}>
+        <Icon color={PRIMARY} size={18} strokeWidth={2.5} />
         <Text style={styles.qaChipText}>{label}</Text>
-      </TouchableOpacity>
+      </TouchableScale>
     </Animated.View>
   );
 };
@@ -212,16 +232,21 @@ export default function DashboardScreen({ navigation }) {
           <>
             <Text style={styles.sectionTitle}>Workspace</Text>
             {workspaces.map(ws => (
-              <TouchableOpacity key={ws._id} style={styles.wsRow} activeOpacity={0.8}>
+              <TouchableScale 
+                key={ws._id} 
+                style={styles.wsRow} 
+                onPress={() => navigation.navigate('Projects')}
+                activeOpacity={0.9}
+              >
                 <View style={styles.wsIconBox}>
-                  <FolderKanban color={PRIMARY} size={18} strokeWidth={2} />
+                  <FolderKanban color={PRIMARY} size={20} strokeWidth={2.5} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.wsName}>{ws.name}</Text>
                   <Text style={styles.wsMeta}>{ws.members?.length || 1} members</Text>
                 </View>
-                <ChevronRight color="#D1D5DB" size={18} />
-              </TouchableOpacity>
+                <ChevronRight color="#9CA3AF" size={20} />
+              </TouchableScale>
             ))}
           </>
         )}

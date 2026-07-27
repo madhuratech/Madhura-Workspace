@@ -108,11 +108,11 @@ function CustomTabBar({ state, descriptors, navigation }) {
               activeOpacity={0.7}
               style={tabStyles.tab}
             >
-              <View style={[tabStyles.pill, isFocused && tabStyles.pillActive]}>
+              <View style={tabStyles.pill}>
                 <Icon
-                  color={isFocused ? '#fff' : '#9CA3AF'}
-                  size={20}
-                  strokeWidth={isFocused ? 2.5 : 1.8}
+                  color={isFocused ? PRIMARY : '#9CA3AF'}
+                  size={24}
+                  strokeWidth={isFocused ? 2.5 : 2}
                 />
               </View>
               <Text style={[tabStyles.label, isFocused && tabStyles.labelActive]}>
@@ -162,7 +162,7 @@ const tabStyles = StyleSheet.create({
     marginBottom: 2,
   },
   pillActive: {
-    backgroundColor: PRIMARY,
+    // Removed background color to avoid square appearance
   },
   label: {
     fontSize: 10,
