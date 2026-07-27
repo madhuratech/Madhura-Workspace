@@ -5,6 +5,8 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
 import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet } from 'react-native';
 import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react-native';
+import { SocketProvider } from './src/context/SocketContext';
+import Toast from 'react-native-toast-message';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -22,6 +24,8 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import AttendanceLeaveScreen from './src/screens/AttendanceLeaveScreen';
 import DocumentsScreen from './src/screens/DocumentsScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
+import RegisterMemberScreen from './src/screens/RegisterMemberScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
@@ -59,6 +63,7 @@ function MoreNavigator() {
       <MoreStack.Screen name="Email" component={EmailScreen} />
       <MoreStack.Screen name="Meetings" component={MeetingsScreen} />
       <MoreStack.Screen name="Settings" component={SettingsScreen} />
+      <MoreStack.Screen name="RegisterMember" component={RegisterMemberScreen} />
       <MoreStack.Screen name="AttendanceLeave" component={AttendanceLeaveScreen} />
       <MoreStack.Screen name="Analytics" component={AnalyticsScreen} />
     </MoreStack.Navigator>
@@ -74,14 +79,17 @@ const TAB_CONFIG = [
   { name: 'Menu',      label: 'More',     Icon: MoreHorizontal },
 ];
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 function CustomTabBar({ state, descriptors, navigation }) {
+  const insets = useSafeAreaInsets();
   const focusedOptions = descriptors[state.routes[state.index].key].options;
   if (focusedOptions.tabBarStyle?.display === 'none') {
     return null;
   }
 
   return (
-    <View style={tabStyles.wrapper}>
+    <View style={[tabStyles.wrapper, { bottom: Math.max(insets.bottom + 10, 20) }]}>
       <View style={tabStyles.container}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -128,9 +136,9 @@ const tabStyles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
-    borderRadius: 24,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    borderRadius: 32,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     shadowColor: '#1a1a2e',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
@@ -230,7 +238,10 @@ function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        <Stack.Screen name="MainTabs" component={TabNavigator} />
+        <>
+          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
       )}
@@ -241,9 +252,12 @@ function RootNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
+      <SocketProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+        <Toast />
+      </SocketProvider>
     </AuthProvider>
   );
 }

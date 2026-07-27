@@ -25,62 +25,75 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg-primary font-sans relative overflow-hidden transition-colors duration-300">
-      {/* Background decoration */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-blue rounded-full blur-[120px] opacity-20 pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-blue rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
-
-      <div className="bg-bg-secondary p-10 rounded-2xl w-full max-w-md z-10 shadow-2xl border border-border">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-text-primary tracking-wide mb-2">
-            MADHURA<span className="text-accent-blue">WS</span>
+    <div className="min-h-screen flex font-sans bg-bg-primary">
+      {/* Left side - Branding (Hidden on mobile) */}
+      <div className="hidden lg:flex flex-col justify-center items-center w-1/2 bg-bg-secondary border-r border-border p-12">
+        <div className="max-w-md">
+          <h1 className="text-5xl font-extrabold text-text-primary tracking-tight mb-4">
+            Madhura<span className="text-accent-blue">Workspace</span>
           </h1>
-          <p className="text-text-secondary">Sign in to your workspace</p>
+          <p className="text-text-secondary text-lg leading-relaxed">
+            The minimalist, all-in-one platform for modern teams. Streamline your workflow, collaborate seamlessly, and achieve more.
+          </p>
         </div>
+      </div>
 
-        {error && (
-          <div className="bg-danger/10 border border-danger/50 text-danger px-4 py-3 rounded-lg mb-6 text-sm text-center">
-            {error}
+      {/* Right side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12">
+        <div className="w-full max-w-sm">
+          <div className="mb-10 lg:hidden">
+            <h1 className="text-3xl font-extrabold text-text-primary tracking-tight">
+              Madhura<span className="text-accent-blue">WS</span>
+            </h1>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Email Address</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
-              placeholder="you@company.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">Password</label>
-            <input 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-          <button 
-            type="submit" 
-            className="w-full bg-accent-blue hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Sign In
-          </button>
-        </form>
+          <h2 className="text-3xl font-bold text-text-primary tracking-tight mb-2">Welcome back</h2>
+          <p className="text-text-secondary mb-8">Please enter your details to sign in.</p>
 
-        <p className="mt-8 text-center text-sm text-text-secondary">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-accent-blue hover:underline font-medium underline-offset-4">
-            Create one
-          </Link>
-        </p>
+          {error && (
+            <div className="bg-danger/10 text-danger px-4 py-3 rounded-lg mb-6 text-sm font-medium">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-text-primary mb-2">Email</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-text-primary mb-2">Password</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="w-full bg-text-primary text-bg-primary hover:bg-text-secondary font-bold py-3 px-4 rounded-lg transition-colors mt-2"
+            >
+              Sign In
+            </button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-text-secondary">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-text-primary hover:text-accent-blue font-semibold transition-colors">
+              Sign up
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

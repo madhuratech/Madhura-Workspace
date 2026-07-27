@@ -11,6 +11,8 @@ const Dashboard = () => {
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingWorkspace, setEditingWorkspace] = useState(null);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [stats, setStats] = useState({ projects: 0, tasks: 0, members: 0, meetings: 0 });
   const [allUsers, setAllUsers] = useState([]);
@@ -62,6 +64,22 @@ const Dashboard = () => {
     } catch (error) {
       console.error(error);
       showToast('Failed to create workspace.', 'error');
+    }
+  };
+
+  const updateWorkspace = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`/workspaces/${editingWorkspace._id}`, { name: newWorkspaceName, members: selectedMembers });
+      setNewWorkspaceName('');
+      setSelectedMembers([]);
+      setShowEditModal(false);
+      setEditingWorkspace(null);
+      showToast('Workspace updated successfully!', 'success');
+      fetchWorkspaces();
+    } catch (error) {
+      console.error(error);
+      showToast('Failed to update workspace.', 'error');
     }
   };
 
@@ -145,12 +163,31 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <button 
-                onClick={() => window.location.href = `/workspace/${ws._id}`}
-                className="w-full py-2.5 bg-bg-primary text-text-primary font-medium rounded-lg hover:bg-accent-blue hover:text-white transition-colors border border-border hover:border-accent-blue"
-              >
-                Open Workspace
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => window.location.href = `/workspace/${ws._id}`}
+                  className="flex-1 py-2.5 bg-bg-primary text-text-primary font-medium rounded-lg hover:bg-accent-blue hover:text-white transition-colors border border-border hover:border-accent-blue"
+                >
+                  Open
+                </button>
+                {user?.role === 'super_admin' && (
+                  <button 
+                    onClick={() => {
+                      setEditingWorkspace(ws);
+                      setNewWorkspaceName(ws.name);
+                      setSelectedMembers(
+                        (ws.members || [])
+                          .filter(m => m.user && m.user._id !== user._id)
+                          .map(m => m.user._id || m.user)
+                      );
+                      setShowEditModal(true);
+                    }}
+                    className="flex-1 py-2.5 bg-bg-primary text-text-primary font-medium rounded-lg hover:bg-bg-secondary transition-colors border border-border"
+                  >
+                    Manage
+                  </button>
+                )}
+              </div>
             </div>
           ))}
           
@@ -262,6 +299,69 @@ const Dashboard = () => {
                   className="px-6 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
                 >
                   Create
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for editing workspace */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-bg-secondary border border-border p-6 rounded-xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-text-primary mb-4">Manage Workspace</h3>
+            <form onSubmit={updateWorkspace}>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-text-secondary mb-2">Workspace Name</label>
+                <input 
+                  type="text" 
+                  value={newWorkspaceName}
+                  onChange={(e) => setNewWorkspaceName(e.target.value)}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                  placeholder="e.g. Acme Corp"
+                  required
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-text-secondary mb-2">Manage Members</label>
+                <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 bg-bg-primary space-y-2">
+                  {allUsers.filter(u => u._id !== user._id).map(u => (
+                    <label key={u._id} className="flex items-center space-x-3 p-2 hover:bg-bg-secondary rounded-lg cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="accent-accent-blue"
+                        checked={selectedMembers.includes(u._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedMembers([...selectedMembers, u._id]);
+                          } else {
+                            setSelectedMembers(selectedMembers.filter(id => id !== u._id));
+                          }
+                        }}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-text-primary">{u.name}</span>
+                        <span className="text-xs text-text-secondary">{u.email} - {u.role?.replace('_', ' ')}</span>
+                      </div>
+                    </label>
+                  ))}
+                  {allUsers.length <= 1 && <p className="text-xs text-text-secondary text-center p-2">No other users found.</p>}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button 
+                  type="button" 
+                  onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
+                  className="px-4 py-2 text-text-secondary hover:text-text-primary font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-6 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600 font-medium transition-colors"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>

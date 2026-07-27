@@ -110,9 +110,32 @@ const updateWorkspace = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
+    let updateData = { ...req.body };
+    
+    // If members array is provided as simple IDs, convert it to the required format
+    if (req.body.members && Array.isArray(req.body.members)) {
+      const newMembers = [{ user: workspace.owner, role: 'super_admin' }];
+      for (const memberId of req.body.members) {
+        if (memberId.toString() !== workspace.owner.toString()) {
+           // Preserve existing role if already a member
+           const existingMember = workspace.members.find(m => m.user && m.user.toString() === memberId.toString());
+           if (existingMember) {
+             newMembers.push({ user: memberId, role: existingMember.role });
+           } else {
+             // Otherwise assign their global role
+             const userDetails = await User.findById(memberId);
+             if (userDetails) {
+               newMembers.push({ user: memberId, role: userDetails.role || 'employee' });
+             }
+           }
+        }
+      }
+      updateData.members = newMembers;
+    }
+
     const updatedWorkspace = await Workspace.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true }
     );
 

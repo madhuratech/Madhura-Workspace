@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Settings, LogOut, User, Bell, Shield, HelpCircle,
-  ChevronRight, ArrowLeft, Info,
+  ChevronRight, ArrowLeft, Info, UserPlus
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
@@ -17,23 +17,7 @@ const ROLE_CONFIG = {
   employee:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', label: 'Employee'    },
 };
 
-const SETTING_GROUPS = [
-  {
-    title: 'Account',
-    items: [
-      { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6' },
-      { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6' },
-      { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316' },
-    ],
-  },
-  {
-    title: 'Support',
-    items: [
-      { icon: HelpCircle,  label: 'Help & Support',       sub: 'FAQs and contact us',           iconBg: '#F0FDF4', iconColor: '#10B981' },
-      { icon: Info,        label: 'About',                sub: 'App version and licenses',       iconBg: '#F8FAFC', iconColor: '#64748B' },
-    ],
-  },
-];
+// Remove global SETTING_GROUPS
 
 const SettingItem = ({ item, delay }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -48,7 +32,7 @@ const SettingItem = ({ item, delay }) => {
 
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <TouchableOpacity style={styles.settingItem} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={item.onPress}>
         <View style={[styles.settingIcon, { backgroundColor: item.iconBg }]}>
           <item.icon color={item.iconColor} size={20} strokeWidth={2} />
         </View>
@@ -73,6 +57,40 @@ export default function SettingsScreen({ navigation }) {
   const role = user?.role || 'employee';
   const roleCfg = ROLE_CONFIG[role] || ROLE_CONFIG.employee;
   const initial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
+
+  const groups = [
+    {
+      title: 'Account',
+      items: [
+        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6' },
+        { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6' },
+        { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316' },
+      ],
+    },
+    {
+      title: 'Support',
+      items: [
+        { icon: HelpCircle,  label: 'Help & Support',       sub: 'FAQs and contact us',           iconBg: '#F0FDF4', iconColor: '#10B981' },
+        { icon: Info,        label: 'About',                sub: 'App version and licenses',       iconBg: '#F8FAFC', iconColor: '#64748B' },
+      ],
+    },
+  ];
+
+  if (role === 'super_admin' || role === 'hr') {
+    groups.splice(1, 0, {
+      title: 'Management',
+      items: [
+        { 
+          icon: UserPlus, 
+          label: 'Register New Employee', 
+          sub: 'Create credentials for new joins', 
+          iconBg: '#F3E8FF', 
+          iconColor: '#9333EA', 
+          onPress: () => navigation.navigate('RegisterMember') 
+        },
+      ],
+    });
+  }
 
   const handleLogout = () => {
     Alert.alert(
@@ -115,7 +133,7 @@ export default function SettingsScreen({ navigation }) {
         </Animated.View>
 
         {/* ── Settings Groups ───────────────────── */}
-        {SETTING_GROUPS.map(group => (
+        {groups.map(group => (
           <View key={group.title}>
             <Text style={styles.sectionTitle}>{group.title.toUpperCase()}</Text>
             {group.items.map(item => {

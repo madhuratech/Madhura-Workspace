@@ -121,16 +121,18 @@ export default function DashboardScreen({ navigation }) {
       const ws = await cachedGet('/workspaces');
       setWorkspaces(ws);
       if (ws.length > 0) {
-        const [proj, tasks, meetings] = await Promise.all([
+        const [proj, tasks, meetings, notifs] = await Promise.all([
           cachedGet(`/workspaces/${ws[0]._id}/projects`).catch(() => []),
           cachedGet('/tasks').catch(() => []),
           cachedGet(`/workspaces/${ws[0]._id}/meetings`).catch(() => []),
+          cachedGet('/notifications').catch(() => []),
         ]);
         const s = {
           projects: Array.isArray(proj) ? proj.length : 0,
           tasks:    Array.isArray(tasks) ? tasks.length : 0,
           members:  ws[0].members?.length || 1,
           meetings: Array.isArray(meetings) ? meetings.length : 0,
+          unreadNotifs: Array.isArray(notifs) ? notifs.filter(n => !n.read).length : 0,
         };
         setStats(s);
         await saveWorkspaceCache({ workspaces: ws, stats: s });
@@ -153,8 +155,17 @@ export default function DashboardScreen({ navigation }) {
               {user?.name?.split(' ')[0] || 'User'} 👋
             </Text>
           </View>
-          <View style={[styles.avatarBadge, { backgroundColor: rc.bg, borderColor: rc.color + '30' }]}>
-            <Text style={[styles.avatarLetter, { color: rc.color }]}>{initial}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <TouchableOpacity 
+              style={styles.bellBtn} 
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <Bell color="#4B5563" size={22} strokeWidth={2} />
+              {(stats?.unreadNotifs > 0) && <View style={styles.unreadDot} />}
+            </TouchableOpacity>
+            <View style={[styles.avatarBadge, { backgroundColor: rc.bg, borderColor: rc.color + '30' }]}>
+              <Text style={[styles.avatarLetter, { color: rc.color }]}>{initial}</Text>
+            </View>
           </View>
         </Animated.View>
 
@@ -236,6 +247,15 @@ const styles = StyleSheet.create({
   topBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 8 },
   greeting: { fontSize: 14, color: '#9CA3AF', fontWeight: '500' },
   userName: { fontSize: 24, fontWeight: '800', color: '#111827', marginTop: 2 },
+  bellBtn: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: '#F3F4F6',
+    justifyContent: 'center', alignItems: 'center', position: 'relative'
+  },
+  unreadDot: {
+    width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444',
+    position: 'absolute', top: 10, right: 10,
+    borderWidth: 2, borderColor: '#F3F4F6'
+  },
   avatarBadge: {
     width: 48, height: 48, borderRadius: 16,
     justifyContent: 'center', alignItems: 'center',

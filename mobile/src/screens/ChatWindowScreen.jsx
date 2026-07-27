@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
   ActivityIndicator, KeyboardAvoidingView, Platform, Image,
-  Keyboard, Linking, ScrollView,
+  Keyboard, Linking, ScrollView, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -64,6 +64,7 @@ export default function ChatWindowScreen({ route, navigation }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState(null);
 
   const socketRef = useRef(null);
   const flatListRef = useRef(null);
@@ -87,7 +88,8 @@ export default function ChatWindowScreen({ route, navigation }) {
     socketRef.current = socket;
 
     socket.on('new_message', (msg) => {
-      const msgChannelId = msg.channel ? String(msg.channel) : String(msg.dm);
+      const getObjId = (obj) => obj ? String(obj._id || obj) : null;
+      const msgChannelId = getObjId(msg.channel) || getObjId(msg.dm);
       if (msgChannelId === String(channelId)) {
         setMessages((prev) => {
           if (prev.find((m) => String(m._id) === String(msg._id))) return prev;
@@ -136,13 +138,41 @@ export default function ChatWindowScreen({ route, navigation }) {
     const text = newMessage;
     setNewMessage('');
     try {
-      const endpoint = isDM
-        ? `/workspaces/${workspaceId}/dms/${channelId}/messages`
-        : `/workspaces/${workspaceId}/channels/${channelId}/messages`;
-      await axios.post(endpoint, { text, attachment });
+      if (editingMessageId) {
+        const endpoint = isDM
+          ? `/workspaces/${workspaceId}/dms/${channelId}/messages/${editingMessageId}`
+          : `/workspaces/${workspaceId}/channels/${channelId}/messages/${editingMessageId}`;
+        await axios.put(endpoint, { text });
+        setEditingMessageId(null);
+      } else {
+        const endpoint = isDM
+          ? `/workspaces/${workspaceId}/dms/${channelId}/messages`
+          : `/workspaces/${workspaceId}/channels/${channelId}/messages`;
+        await axios.post(endpoint, { text, attachment });
+      }
     } catch (err) {
       console.error('Send error:', err);
     }
+  };
+
+  const handleDelete = (msgId) => {
+    Alert.alert('Delete Message', 'Are you sure you want to delete this message?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const endpoint = isDM
+              ? `/workspaces/${workspaceId}/dms/${channelId}/messages/${msgId}`
+              : `/workspaces/${workspaceId}/channels/${channelId}/messages/${msgId}`;
+            await axios.delete(endpoint);
+          } catch (err) {
+            console.error('Delete error:', err);
+          }
+        }
+      }
+    ]);
   };
 
   const handleFileUpload = async (type) => {
@@ -222,7 +252,20 @@ export default function ChatWindowScreen({ route, navigation }) {
           <View style={styles.avatarSpacer} />
         )}
 
-        <View
+        <TouchableOpacity
+          activeOpacity={isMine ? 0.8 : 1}
+          onLongPress={() => {
+            if (isMine) {
+              Alert.alert('Message Actions', 'Choose an action', [
+                { text: 'Edit', onPress: () => {
+                    setEditingMessageId(item._id);
+                    setNewMessage(item.text || '');
+                } },
+                { text: 'Delete', onPress: () => handleDelete(item._id), style: 'destructive' },
+                { text: 'Cancel', style: 'cancel' },
+              ]);
+            }
+          }}
           style={[
             styles.msgBubble,
             isMine ? styles.msgBubbleMine : styles.msgBubbleOther,
@@ -294,7 +337,7 @@ export default function ChatWindowScreen({ route, navigation }) {
                 <Check size={14} color="#DBEAFE" style={{ marginLeft: 4 }} />
               ))}
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -371,6 +414,16 @@ export default function ChatWindowScreen({ route, navigation }) {
           <View style={styles.uploadingContainer}>
             <ActivityIndicator size="small" color="#3B82F6" />
             <Text style={styles.uploadingText}>Uploading file…</Text>
+          </View>
+        )}
+
+        {/* Editing indicator */}
+        {editingMessageId && (
+          <View style={styles.editingBar}>
+            <Text style={styles.editingText}>Editing message...</Text>
+            <TouchableOpacity onPress={() => { setEditingMessageId(null); setNewMessage(''); }}>
+              <Text style={styles.cancelEditText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -553,4 +606,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', backgroundColor: '#EFF6FF', padding: 10,
   },
   uploadingText: { marginLeft: 8, fontSize: 13, color: '#3B82F6', fontWeight: '500' },
+
+  // Editing bar
+  editingBar: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: '#DBEAFE',
+  },
+  editingText: { fontSize: 13, color: '#3B82F6', fontWeight: '500' },
+  cancelEditText: { fontSize: 13, color: '#EF4444', fontWeight: '600' },
 });
