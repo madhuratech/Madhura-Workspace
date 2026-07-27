@@ -20,7 +20,6 @@ import TeamLeaderDashboard from './pages/TeamLeaderDashboard';
 import AttendanceLeave from './pages/AttendanceLeave';
 import MyTasks from './pages/MyTasks';
 import AnalyticsReports from './pages/AnalyticsReports';
-import VideoCall from './pages/VideoCall';
 import Layout from './components/Layout';
 
 const ProtectedRoute = ({ children }) => {
@@ -58,7 +57,6 @@ function App() {
           <Route path="workspace/:id" element={<WorkspaceOverview />} />
           <Route path="project/:id" element={<ProjectDetails />} />
           <Route path="tl-dashboard" element={<TeamLeaderDashboard />} />
-          <Route path="workspace/:id/meeting/:meetingId/call" element={<VideoCall />} />
           {/* We can add tasks and documents nested inside project or separate */}
         </Route>
       </Routes>

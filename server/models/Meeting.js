@@ -42,28 +42,7 @@ const MeetingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
-  },
-  videoCallId: {
-    type: String,
-    default: ''
-  },
-  recordingUrl: {
-    type: String,
-    default: ''
-  },
-  aiNotes: {
-    type: String,
-    default: ''
-  },
-  status: {
-    type: String,
-    enum: ['scheduled', 'in_progress', 'completed'],
-    default: 'scheduled'
-  },
-  attendedBy: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }]
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Meeting', MeetingSchema);

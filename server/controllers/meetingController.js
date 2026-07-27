@@ -27,18 +27,12 @@ const createMeeting = async (req, res) => {
       return res.status(400).json({ message: 'Please add title and date' });
     }
 
-    let videoCallId = '';
-    if (type === 'google_meet' && !link) {
-      videoCallId = `meet-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-    }
-
     const meeting = await Meeting.create({
       title,
       date,
       time: time || '',
       type: type || 'direct_meet',
       link: link || '',
-      videoCallId,
       description: description || '',
       workspace: req.params.workspaceId,
       participants: participants || [req.user._id],
@@ -112,59 +106,9 @@ const deleteMeeting = async (req, res) => {
   }
 };
 
-// @desc    Join meeting (mark as attended)
-// @route   POST /api/meetings/:id/join
-// @access  Private
-const joinMeeting = async (req, res) => {
-  try {
-    const meeting = await Meeting.findById(req.params.id);
-    if (!meeting) return res.status(404).json({ message: 'Meeting not found' });
-
-    if (!meeting.attendedBy.includes(req.user._id)) {
-      meeting.attendedBy.push(req.user._id);
-    }
-    if (meeting.status === 'scheduled') {
-      meeting.status = 'in_progress';
-    }
-    await meeting.save();
-    
-    res.status(200).json(meeting);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc    End meeting and generate AI notes
-// @route   POST /api/meetings/:id/end
-// @access  Private
-const endMeeting = async (req, res) => {
-  try {
-    const meeting = await Meeting.findById(req.params.id);
-    if (!meeting) return res.status(404).json({ message: 'Meeting not found' });
-
-    meeting.status = 'completed';
-    // Mock AI notes generation based on title and description
-    meeting.aiNotes = `**AI Generated Notes for ${meeting.title}**\n\n- Discussed project status and upcoming deadlines.\n- Reviewed Action items from previous week.\n- Addressed roadblocks mentioned by team members.\n- Decision: Proceed with current architecture.\n\n_Generated from transcript..._`;
-    // Mock recording URL
-    meeting.recordingUrl = `https://storage.googleapis.com/mock-bucket/recordings/${meeting._id}.mp4`;
-    
-    await meeting.save();
-    
-    if (req.io) {
-      req.io.emit('meetingUpdated', meeting);
-    }
-    
-    res.status(200).json(meeting);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 module.exports = {
   getMeetings,
   createMeeting,
   updateMeeting,
-  deleteMeeting,
-  joinMeeting,
-  endMeeting
+  deleteMeeting
 };
