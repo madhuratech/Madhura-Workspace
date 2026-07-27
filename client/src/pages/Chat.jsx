@@ -43,8 +43,8 @@ const Chat = () => {
             if (prev.find(m => String(m._id) === String(msg._id))) return prev;
             return [...prev, msg];
           });
-        } else if (activeDM && msg.channel && String(msg.channel) === String(activeDM.dmId)) {
-          // If it's a DM, msg.channel is the dmId
+        } else if (activeDM && msg.dm && String(msg.dm) === String(activeDM.dmId)) {
+          // If it's a DM, msg.dm is the dmId
           setMessages((prev) => {
             if (prev.find(m => String(m._id) === String(msg._id))) return prev;
             return [...prev, msg];
@@ -52,13 +52,15 @@ const Chat = () => {
         } else {
           // Message is not for the active view, increment unread badge if not sent by me
           if (String(msg.sender._id || msg.sender) !== String(user._id)) {
-            const isDM = msg.channel && msg.channel.name && msg.channel.name.startsWith('dm-');
-            const channelKey = isDM ? msg.channel.name : (msg.channel._id || msg.channel);
+            const isDM = !!msg.dm;
+            const channelKey = isDM ? msg.dm : (msg.channel?._id || msg.channel);
             
-            setUnreadCounts(prev => ({
-              ...prev,
-              [channelKey]: (prev[channelKey] || 0) + 1
-            }));
+            if (channelKey) {
+              setUnreadCounts(prev => ({
+                ...prev,
+                [channelKey]: (prev[channelKey] || 0) + 1
+              }));
+            }
           }
         }
       };
@@ -206,7 +208,7 @@ const Chat = () => {
         res = await axios.get(`/workspaces/${workspace._id}/channels/${id}/messages`);
         setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
       } else {
-        res = await axios.get(`/workspaces/${workspace._id}/channels/${id}/messages`);
+        res = await axios.get(`/workspaces/${workspace._id}/dms/${id}/messages`);
         setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
       }
       setMessages(res.data);
