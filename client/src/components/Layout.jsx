@@ -422,6 +422,14 @@ const Layout = () => {
               <span>Documents</span>
             </Link>
             <div className="h-px bg-border my-3 mx-2"></div>
+            
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm text-danger/80 hover:bg-danger/10 hover:text-danger mt-auto"
+            >
+              <LogOut size={16} />
+              <span>Log out</span>
+            </button>
           </nav>
         </aside>
 
