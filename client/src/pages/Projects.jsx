@@ -156,125 +156,120 @@ const Projects = () => {
 
   return (
     <div className="h-full flex flex-col font-sans">
-      <div className="relative mb-8 p-6 rounded-3xl overflow-hidden bg-gradient-to-r from-bg-secondary to-bg-primary border border-border/50 shadow-[0_0_40px_rgba(0,0,0,0.03)] z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-blue/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
-        <div className="flex justify-between items-center relative z-20">
-          <div>
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight font-outfit">Projects</h1>
-            <p className="text-text-secondary text-sm mt-1.5 font-medium">
-              {user?.role === 'employee' ? 'Your assigned projects' : 'Manage your workspace projects seamlessly'}
-            </p>
-          </div>
-          {user?.role !== 'employee' && (
-            <button
-              onClick={() => handleOpenModal()}
-              className="bg-gradient-to-r from-accent-blue to-blue-600 text-white px-6 py-3 rounded-2xl hover:shadow-[0_10px_20px_rgba(59,130,246,0.3)] transition-all duration-300 transform hover:-translate-y-1 text-sm font-bold flex items-center space-x-2"
-            >
-              <Plus size={20} />
-              <span>New Project</span>
-            </button>
-          )}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary tracking-wide font-outfit">Projects</h1>
+          <p className="text-text-secondary text-sm mt-1">
+            {user?.role === 'employee' ? 'Your assigned projects' : 'Manage your workspace projects seamlessly'}
+          </p>
         </div>
+        {user?.role !== 'employee' && (
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-accent-blue text-white px-5 py-2.5 rounded-xl hover:bg-blue-600 shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
+          >
+            <Plus size={18} />
+            <span>New Project</span>
+          </button>
+        )}
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-6 mb-6">
-        <div className="bg-bg-secondary/60 backdrop-blur-md border border-border/50 rounded-3xl p-5 flex items-center space-x-5 shadow-[0_5px_20px_rgba(0,0,0,0.03)] hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group">
-          <div className="p-3 bg-accent-blue/10 rounded-2xl text-accent-blue group-hover:scale-110 transition-transform"><FolderKanban size={24} /></div>
-          <div><p className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest mb-1">Total Projects</p><p className="text-3xl font-extrabold text-text-primary font-outfit leading-none">{projects.length}</p></div>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-2 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={20} /></div>
+          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Total Projects</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.length}</p></div>
         </div>
-        <div className="bg-bg-secondary/60 backdrop-blur-md border border-border/50 rounded-3xl p-5 flex items-center space-x-5 shadow-[0_5px_20px_rgba(0,0,0,0.03)] hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group">
-          <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500 group-hover:scale-110 transition-transform"><CheckCircle2 size={24} /></div>
-          <div><p className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest mb-1">Completed</p><p className="text-3xl font-extrabold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Completed').length}</p></div>
+        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-2 bg-success/10 rounded-xl text-success"><CheckCircle2 size={20} /></div>
+          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Completed</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Completed').length}</p></div>
         </div>
-        <div className="bg-bg-secondary/60 backdrop-blur-md border border-border/50 rounded-3xl p-5 flex items-center space-x-5 shadow-[0_5px_20px_rgba(0,0,0,0.03)] hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group">
-          <div className="p-3 bg-orange-500/10 rounded-2xl text-orange-500 group-hover:scale-110 transition-transform"><Clock size={24} /></div>
-          <div><p className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest mb-1">Active Now</p><p className="text-3xl font-extrabold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Active').length}</p></div>
+        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-2 bg-orange-500/10 rounded-xl text-orange-500"><Clock size={20} /></div>
+          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Active Now</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Active').length}</p></div>
         </div>
       </div>
 
-      <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl flex-1 flex flex-col overflow-hidden shadow-[0_5px_30px_rgba(0,0,0,0.05)]">
+      <div className="bg-bg-secondary border border-border rounded-2xl flex-1 flex flex-col overflow-hidden shadow-soft">
         {/* Search */}
-        <div className="p-6 border-b border-border/50 flex items-center gap-4 bg-bg-primary/20">
+        <div className="p-5 border-b border-border flex items-center gap-4 bg-bg-primary/50">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
             <input
               type="text"
               placeholder="Search projects..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-bg-primary border border-border/50 rounded-2xl pl-12 pr-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all"
+              className="w-full bg-bg-secondary border border-border rounded-xl pl-10 pr-4 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/20 transition-all shadow-sm"
             />
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto flex-1 p-2">
-          <table className="w-full text-sm text-left">
-            <thead className="text-[11px] text-text-secondary uppercase bg-bg-primary/30 sticky top-0 backdrop-blur-md">
+        <div className="overflow-x-auto flex-1">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-6 py-4 font-bold tracking-widest rounded-tl-xl">PROJECT NAME</th>
-                <th className="px-6 py-4 font-bold tracking-widest w-40">ASSIGNED TO</th>
-                <th className="px-6 py-4 font-bold tracking-widest w-40">CREATED</th>
-                <th className="px-6 py-4 font-bold tracking-widest w-32">STATUS</th>
-                {user?.role !== 'employee' && <th className="px-6 py-4 font-bold tracking-widest text-right w-40 rounded-tr-xl">ACTIONS</th>}
+                <th className="text-left">PROJECT NAME</th>
+                <th className="text-left w-40">ASSIGNED TO</th>
+                <th className="text-left w-40">CREATED</th>
+                <th className="text-left w-32">STATUS</th>
+                {user?.role !== 'employee' && <th className="text-right w-40">ACTIONS</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.map((project) => (
-                <tr key={project._id} className="border-b border-border/30 hover:bg-bg-primary/50 transition-colors group">
-                  <td className="px-6 py-4 font-bold text-text-primary">
-                    <div className="flex items-center space-x-4">
-                      <div className="p-2.5 bg-gradient-to-br from-accent-blue/20 to-purple-500/20 rounded-xl text-accent-blue shadow-sm group-hover:scale-110 transition-transform"><FolderKanban size={20} /></div>
+                <tr key={project._id}>
+                  <td className="font-bold text-text-primary">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={16} /></div>
                       <div>
-                        <p className="font-outfit text-base font-bold">{project.title}</p>
-                        {project.description && <p className="text-xs text-text-secondary font-medium mt-1 line-clamp-1 max-w-sm">{project.description}</p>}
+                        <p className="font-outfit text-sm font-semibold">{project.title}</p>
+                        {project.description && <p className="text-xs text-text-secondary font-normal mt-0.5 line-clamp-1 max-w-sm">{project.description}</p>}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="avatar-stack flex -space-x-2">
+                  <td>
+                    <div className="avatar-stack">
                       {project.members?.slice(0, 4).map(m => (
-                        <div key={m._id} title={m.name} className="h-8 w-8 rounded-full bg-gradient-to-br from-accent-blue to-purple-500 flex items-center justify-center text-white text-[11px] font-bold shadow-md border-2 border-bg-secondary relative z-10 hover:z-20 hover:scale-110 transition-transform cursor-pointer">
+                        <div key={m._id} title={m.name} className="h-7 w-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue text-[10px] font-bold shadow-sm">
                           {m.name?.charAt(0).toUpperCase()}
                         </div>
                       ))}
                       {project.members?.length > 4 && (
-                        <div className="h-8 w-8 rounded-full bg-bg-primary flex items-center justify-center text-text-secondary text-[11px] font-bold border-2 border-bg-secondary shadow-md relative z-10 hover:z-20">
+                        <div className="h-7 w-7 rounded-full bg-bg-primary flex items-center justify-center text-text-secondary text-[10px] font-bold border-2 border-bg-secondary shadow-sm">
                           +{project.members.length - 4}
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-text-secondary text-sm font-semibold">{new Date(project.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold tracking-widest uppercase shadow-sm ${
-                      project.status === 'Completed' ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20' : 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20'
+                  <td className="text-text-secondary text-sm font-medium">{new Date(project.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</td>
+                  <td>
+                    <span className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wide uppercase ${
+                      project.status === 'Completed' ? 'text-success bg-success/10 border border-success/20' : 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20'
                     }`}>
                       {project.status}
                     </span>
                   </td>
                   {user?.role !== 'employee' && (
-                    <td className="px-6 py-4 text-right whitespace-nowrap space-x-4">
-                      <Link to={`/project/${project._id}`} className="text-accent-blue hover:text-blue-600 text-sm font-bold transition-colors">Board</Link>
-                      <button onClick={() => handleOpenModal(project)} className="text-text-secondary hover:text-accent-blue text-sm font-bold transition-colors">Edit</button>
-                      <button onClick={() => handleDelete(project._id)} className="text-text-secondary hover:text-rose-500 text-sm font-bold transition-colors">Delete</button>
+                    <td className="text-right whitespace-nowrap space-x-3">
+                      <Link to={`/project/${project._id}`} className="text-accent-blue hover:underline text-sm font-medium">Board</Link>
+                      <button onClick={() => handleOpenModal(project)} className="text-text-secondary hover:text-text-primary text-sm font-medium">Edit</button>
+                      <button onClick={() => handleDelete(project._id)} className="text-danger hover:underline text-sm font-medium">Delete</button>
                     </td>
                   )}
                   {user?.role === 'employee' && (
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <Link to={`/project/${project._id}`} className="text-accent-blue hover:text-blue-600 text-sm font-bold transition-colors">View Board</Link>
+                    <td className="text-right whitespace-nowrap">
+                      <Link to={`/project/${project._id}`} className="text-accent-blue hover:underline text-sm font-medium">View Board</Link>
                     </td>
                   )}
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center py-20 text-text-secondary">
-                    <div className="inline-flex h-20 w-20 rounded-full bg-bg-primary items-center justify-center mb-4 shadow-inner">
-                      <FolderKanban size={40} className="opacity-40" />
-                    </div>
-                    <p className="font-semibold">{user?.role === 'employee' ? 'No projects assigned to you yet.' : 'No projects yet. Create one!'}</p>
+                  <td colSpan="5" className="text-center py-12 text-text-secondary">
+                    <FolderKanban size={36} className="mx-auto mb-3 opacity-20" />
+                    <p>{user?.role === 'employee' ? 'No projects assigned to you yet.' : 'No projects yet. Create one!'}</p>
                   </td>
                 </tr>
               )}
@@ -285,43 +280,39 @@ const Projects = () => {
 
       {/* Premium CRUD Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary/90 backdrop-blur-xl border border-border/50 p-8 rounded-[2rem] w-full max-w-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] max-h-[90vh] overflow-y-auto custom-scrollbar animate-bounce-in relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-accent-blue to-purple-500"></div>
-            
-            <div className="flex justify-between items-center mb-8 mt-2">
-              <h3 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary font-outfit">{editItem ? 'Edit Project' : 'Create New Project'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-text-primary bg-bg-primary hover:bg-border/50 p-2.5 rounded-xl transition-all"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-secondary border border-border p-8 rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-bounce-in">
+            <div className="flex justify-between items-center mb-8 pt-2 pb-4">
+              <h3 className="text-2xl font-bold text-text-primary font-outfit">{editItem ? 'Edit Project' : 'Create New Project'}</h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger bg-bg-primary p-2 rounded-full transition-colors"><X size={20} /></button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-extrabold text-text-secondary mb-2 uppercase tracking-widest">Project Title</label>
+                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Project Title</label>
                 <input
                   type="text" required
                   value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full bg-bg-primary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all"
+                  className="premium-input"
                   placeholder="e.g. Website Redesign"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-extrabold text-text-secondary mb-2 uppercase tracking-widest">Description (optional)</label>
+                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Description (optional)</label>
                 <textarea
                   rows={2}
                   value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full bg-bg-primary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all resize-none"
+                  className="premium-input resize-none"
                   placeholder="Brief project overview..."
                 />
               </div>
 
               {/* Member Assignment */}
-              <div className="bg-bg-primary/50 p-6 rounded-2xl border border-border/50 mt-8 relative overflow-hidden group">
-                <div className="absolute -right-8 -top-8 w-24 h-24 bg-accent-blue/5 rounded-full blur-xl group-hover:bg-accent-blue/10 transition-colors"></div>
-                <label className="block text-sm font-extrabold text-text-primary mb-4 font-outfit relative z-10">Add Participants</label>
-                
-                <div className="flex flex-wrap gap-2 mb-5 relative z-10">
+              <div className="bg-bg-primary/50 p-5 rounded-2xl border border-border mt-6">
+                <label className="block text-sm font-bold text-text-primary mb-4 font-outfit">Add Participants</label>
+                <div className="flex flex-wrap gap-2 mb-5">
                   {['all', 'team', 'role', 'specific'].map(type => (
-                    <label key={type} className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all ${formData.participantType === type ? 'bg-gradient-to-r from-accent-blue to-blue-600 text-white shadow-md transform -translate-y-0.5' : 'bg-bg-secondary text-text-secondary border border-border/50 hover:bg-border/30 hover:text-text-primary'}`}>
+                    <label key={type} className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${formData.participantType === type ? 'bg-accent-blue text-white shadow-soft' : 'bg-bg-secondary text-text-secondary border border-border hover:bg-border/50'}`}>
                       <input type="radio" name="pType" value={type} checked={formData.participantType === type} onChange={() => setFormData({...formData, participantType: type, members: type === 'specific' ? formData.members : []})} className="hidden" />
                       <span className="capitalize">{type.replace('specific', 'select individuals').replace('all', 'workspace')}</span>
                     </label>
@@ -331,7 +322,7 @@ const Projects = () => {
                 {formData.participantType === 'team' && (
                   <select 
                     value={formData.selectedTeam} onChange={e => setFormData({...formData, selectedTeam: e.target.value})}
-                    className="w-full bg-bg-secondary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue mb-2 relative z-10"
+                    className="premium-input mb-2"
                     required
                   >
                     <option value="">-- Choose Team --</option>
@@ -342,7 +333,7 @@ const Projects = () => {
                 {formData.participantType === 'role' && (
                   <select 
                     value={formData.selectedRole} onChange={e => setFormData({...formData, selectedRole: e.target.value})}
-                    className="w-full bg-bg-secondary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue mb-2 relative z-10"
+                    className="premium-input mb-2"
                     required
                   >
                     <option value="super_admin">Super Admins</option>
@@ -353,18 +344,18 @@ const Projects = () => {
                 )}
 
                 {formData.participantType === 'specific' && (
-                  <div className="max-h-56 overflow-y-auto border border-border/50 rounded-xl p-3 bg-bg-secondary/50 space-y-2 custom-scrollbar relative z-10">
+                  <div className="max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-secondary space-y-1.5 custom-scrollbar">
                     {workspaceMembers.filter(m => m.user._id !== user._id).map(m => (
-                      <label key={m.user._id} className={`flex items-center space-x-4 p-3 rounded-xl cursor-pointer transition-all ${formData.members.includes(m.user._id) ? 'bg-accent-blue/10 border border-accent-blue/30 shadow-sm' : 'hover:bg-bg-primary border border-transparent'}`}>
+                      <label key={m.user._id} className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-colors ${formData.members.includes(m.user._id) ? 'bg-accent-blue/10 border border-accent-blue/20' : 'hover:bg-bg-primary border border-transparent'}`}>
                         <div className="relative flex items-center justify-center">
-                          <div className={`h-10 w-10 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm transition-colors ${formData.members.includes(m.user._id) ? 'bg-gradient-to-br from-accent-blue to-blue-600 text-white' : 'bg-bg-primary text-text-secondary border border-border/50'}`}>
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${formData.members.includes(m.user._id) ? 'bg-accent-blue text-white' : 'bg-bg-primary text-text-secondary border border-border'}`}>
                             {m.user.name?.charAt(0).toUpperCase()}
                           </div>
-                          {formData.members.includes(m.user._id) && <div className="absolute -bottom-1 -right-1 bg-emerald-500 h-4 w-4 rounded-full border-2 border-bg-secondary flex items-center justify-center"><CheckCircle2 size={10} className="text-white" /></div>}
+                          {formData.members.includes(m.user._id) && <div className="absolute -bottom-1 -right-1 bg-success h-3.5 w-3.5 rounded-full border-2 border-bg-secondary"></div>}
                         </div>
                         <div className="flex flex-col flex-1">
-                          <span className={`text-sm font-extrabold ${formData.members.includes(m.user._id) ? 'text-accent-blue' : 'text-text-primary'}`}>{m.user?.name || 'Unknown'}</span>
-                          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-0.5">{(m.role || m.user?.role || 'employee').replace('_', ' ')}</span>
+                          <span className={`text-sm font-semibold ${formData.members.includes(m.user._id) ? 'text-accent-blue' : 'text-text-primary'}`}>{m.user?.name || 'Unknown'}</span>
+                          <span className="text-[10px] text-text-secondary uppercase tracking-wider">{(m.role || m.user?.role || 'employee').replace('_', ' ')}</span>
                         </div>
                         <input 
                           type="checkbox" 
@@ -374,14 +365,14 @@ const Projects = () => {
                         />
                       </label>
                     ))}
-                    {workspaceMembers.length <= 1 && <p className="text-xs font-bold text-text-secondary p-4 text-center">No other members available.</p>}
+                    {workspaceMembers.length <= 1 && <p className="text-xs text-text-secondary p-3 text-center">No other members available.</p>}
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-end space-x-4 pt-6 mt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 text-text-secondary hover:text-text-primary font-bold transition-colors">Cancel</button>
-                <button type="submit" className="px-8 py-3 bg-gradient-to-r from-accent-blue to-blue-600 text-white rounded-xl hover:shadow-[0_10px_20px_rgba(59,130,246,0.3)] font-extrabold transition-all transform hover:-translate-y-0.5">
+              <div className="flex justify-end space-x-4 pt-4 border-t border-border mt-6">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-text-secondary hover:text-text-primary font-medium transition-colors">Cancel</button>
+                <button type="submit" className="px-6 py-2.5 bg-accent-blue text-white rounded-xl hover:bg-blue-600 shadow-soft hover:shadow-hover font-semibold transition-all">
                   {editItem ? 'Save Changes' : 'Create Project'}
                 </button>
               </div>

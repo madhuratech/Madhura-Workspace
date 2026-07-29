@@ -146,45 +146,40 @@ const Email = () => {
   if (!workspace) return <div className="p-8">Loading workspace...</div>;
 
   return (
-    <div className="absolute inset-6 flex flex-col font-sans bg-transparent">
-      <div className="relative mb-8 p-6 rounded-3xl overflow-hidden bg-gradient-to-r from-bg-secondary to-bg-primary border border-border/50 shadow-[0_0_40px_rgba(0,0,0,0.03)] z-10 shrink-0">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-blue/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
-        <div className="flex justify-between items-center relative z-20">
-          <div>
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight font-outfit">Email</h1>
-            <p className="text-text-secondary text-sm mt-1.5 font-medium">Manage your workspace communication</p>
-          </div>
-        </div>
+    <div className="absolute inset-6 flex flex-col font-sans bg-bg-primary">
+      <div className="mb-6 flex justify-between items-center shrink-0">
+        <h1 className="text-2xl font-bold text-text-primary">Email</h1>
       </div>
 
       <div className="flex-1 flex gap-6 overflow-hidden">
         {/* Sidebar */}
-        <div className="w-64 flex flex-col shrink-0 bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-4 shadow-[0_5px_30px_rgba(0,0,0,0.05)]">
+        <div className="w-64 flex flex-col shrink-0">
           <button 
             onClick={() => setIsComposing(true)}
-            className="w-full bg-gradient-to-r from-accent-blue to-blue-600 text-white py-3.5 rounded-2xl flex items-center justify-center font-extrabold transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(59,130,246,0.3)] mb-6"
+            className="w-full bg-accent-blue hover:bg-green-600 text-white py-3 rounded-lg flex items-center justify-center font-medium transition-colors mb-6 shadow-sm"
           >
-            <span className="mr-2 text-xl leading-none">+</span> Compose New
+            <span className="mr-2 text-xl font-light">◇</span> Compose New
           </button>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
-            <div>
-              <div className="flex items-center justify-between text-[11px] text-text-secondary font-extrabold mb-3 px-3 uppercase tracking-widest">
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+            <div className="mb-6">
+              <div className="flex items-center justify-between text-text-secondary text-sm font-bold mb-2 px-2">
                 <span>Mail</span>
+                <span className="cursor-pointer hover:text-text-primary transition-colors text-xs">v</span>
               </div>
               <ul className="space-y-1">
                 {folders.map(folder => (
                   <li key={folder.id}>
                     <button 
                       onClick={() => { setActiveFolder(folder.id); setIsComposing(false); setViewingEmail(null); }}
-                      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-all duration-300 group ${activeFolder === folder.id && !isComposing && !viewingEmail ? 'bg-accent-blue/10 text-accent-blue font-bold shadow-sm' : 'text-text-secondary hover:bg-bg-primary/80 hover:text-text-primary hover:shadow-sm'}`}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing && !viewingEmail ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
                     >
                       <div className="flex items-center">
-                        <span className={`mr-3 transition-transform group-hover:scale-110 ${activeFolder === folder.id && !isComposing && !viewingEmail ? 'text-accent-blue' : 'opacity-70'}`}>{folder.icon}</span>
+                        <span className="mr-3 opacity-80">{folder.icon}</span>
                         {folder.name}
                       </div>
                       {folder.id === 'inbox' && folder.count > 0 && (
-                        <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-extrabold px-2 py-0.5 rounded-lg">{folder.count}</span>
+                        <span className="bg-danger text-white text-[10px] font-bold px-2 py-0.5 rounded-full">{folder.count}</span>
                       )}
                     </button>
                   </li>
@@ -193,17 +188,18 @@ const Email = () => {
             </div>
 
             <div>
-              <div className="flex items-center justify-between text-[11px] text-text-secondary font-extrabold mb-3 px-3 uppercase tracking-widest">
+              <div className="flex items-center justify-between text-text-secondary text-sm font-bold mb-2 px-2">
                 <span>Others</span>
+                <span className="cursor-pointer hover:text-text-primary transition-colors text-xs">v</span>
               </div>
               <ul className="space-y-1">
                 {others.map(folder => (
                   <li key={folder.id}>
                     <button 
                       onClick={() => { setActiveFolder(folder.id); setIsComposing(false); }}
-                      className={`w-full flex items-center px-4 py-2.5 rounded-xl text-sm transition-all duration-300 group ${activeFolder === folder.id && !isComposing ? 'bg-accent-blue/10 text-accent-blue font-bold shadow-sm' : 'text-text-secondary hover:bg-bg-primary/80 hover:text-text-primary hover:shadow-sm'}`}
+                      className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
                     >
-                      <span className={`mr-3 transition-transform group-hover:scale-110 ${activeFolder === folder.id && !isComposing ? 'text-accent-blue' : 'opacity-70'}`}>{folder.icon}</span>
+                      <span className="mr-3 opacity-80">{folder.icon}</span>
                       {folder.name}
                     </button>
                   </li>
@@ -215,7 +211,7 @@ const Email = () => {
               <div className="mt-8 px-2">
                 <button 
                   onClick={handleDisconnectGmail}
-                  className="w-full flex items-center justify-center px-4 py-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl text-sm font-bold transition-all duration-300"
+                  className="w-full flex items-center justify-center px-4 py-2 bg-danger/10 text-danger hover:bg-danger hover:text-white rounded-lg text-sm font-medium transition-colors"
                 >
                   Disconnect Gmail
                 </button>
@@ -225,7 +221,7 @@ const Email = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl flex flex-col overflow-hidden shadow-[0_5px_30px_rgba(0,0,0,0.05)] relative">
+        <div className="flex-1 bg-bg-secondary border border-border rounded-xl flex flex-col overflow-hidden shadow-sm">
           {isComposing ? (
             // Compose View
             <div className="flex-1 flex flex-col p-6 overflow-y-auto custom-scrollbar">
@@ -314,12 +310,12 @@ const Email = () => {
             // Email List View
             <div className="flex-1 flex flex-col min-h-0">
               {/* Toolbar */}
-              <div className="p-4 border-b border-border/50 flex items-center justify-between bg-bg-primary/20 backdrop-blur-md sticky top-0 z-10">
+              <div className="p-4 border-b border-border flex items-center justify-between bg-bg-secondary">
                 <div className="flex items-center gap-2 text-text-secondary">
-                  <div className="w-12 flex justify-center">
+                  <div className="w-10 flex justify-center">
                     <input 
                       type="checkbox" 
-                      className="accent-accent-blue w-4 h-4 rounded border-border/50 cursor-pointer"
+                      className="accent-accent-blue"
                       checked={emails.length > 0 && selectedEmails.length === emails.length}
                       onChange={(e) => {
                         if (e.target.checked) setSelectedEmails(emails.map(m => m._id));
@@ -327,25 +323,23 @@ const Email = () => {
                       }}
                     />
                   </div>
-                  <div className="flex gap-1 bg-bg-primary/50 p-1 rounded-xl border border-border/50">
-                    <button className="p-2 hover:bg-bg-secondary hover:text-text-primary rounded-lg transition-all group"><Archive size={16} className="group-hover:scale-110 transition-transform" /></button>
-                    <button onClick={moveToTrash} className="p-2 hover:bg-bg-secondary hover:text-rose-500 rounded-lg transition-all group"><Trash2 size={16} className="group-hover:scale-110 transition-transform" /></button>
-                    <button className="p-2 hover:bg-bg-secondary hover:text-text-primary rounded-lg transition-all group"><MoreVertical size={16} className="group-hover:scale-110 transition-transform" /></button>
-                  </div>
+                  <button className="p-1.5 hover:bg-bg-primary hover:text-text-primary rounded-lg transition-colors border border-transparent hover:border-border"><Archive size={16} /></button>
+                  <button onClick={moveToTrash} className="p-1.5 hover:bg-bg-primary hover:text-text-primary rounded-lg transition-colors border border-transparent hover:border-border"><Trash2 size={16} /></button>
+                  <button className="p-1.5 hover:bg-bg-primary hover:text-text-primary rounded-lg transition-colors border border-transparent hover:border-border"><MoreVertical size={16} /></button>
                 </div>
                 
                 <div className="relative">
-                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
                   <input 
                     type="text" 
-                    placeholder="Search in emails..." 
-                    className="pl-12 pr-4 py-2.5 bg-bg-primary border border-border/50 rounded-2xl text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:shadow-[0_0_15px_rgba(59,130,246,0.15)] w-72 transition-all"
+                    placeholder="Search" 
+                    className="pl-9 pr-4 py-1.5 bg-bg-primary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent-blue w-64"
                   />
                 </div>
               </div>
 
               {/* List */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {authRequired ? (
                   <div className="h-full flex flex-col items-center justify-center p-8 bg-bg-secondary text-center animate-fade-in">
                     <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
@@ -371,7 +365,7 @@ const Email = () => {
                     <p>No emails in {activeFolder}</p>
                   </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="divide-y divide-border">
                     {emails.map((email) => {
                       const isUnread = !email.isRead;
                       const isStarred = false; // Starred feature would need actual Gmail label modifications
@@ -381,39 +375,38 @@ const Email = () => {
                       return (
                         <div 
                           key={email._id} 
-                          onClick={() => setViewingEmail(email)}
-                          className={`flex items-center px-4 py-4 rounded-2xl hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 group ${isSelected ? 'bg-accent-blue/5 border-accent-blue' : isUnread ? 'bg-bg-primary/80 border-accent-blue' : 'bg-transparent border-transparent hover:bg-bg-primary/50'}`}
+                          className={`flex items-center px-4 py-3 hover:shadow-md transition-all cursor-pointer border-l-2 ${isSelected ? 'bg-bg-primary border-accent-blue' : isUnread ? 'bg-bg-primary/50 border-accent-blue/50' : 'bg-transparent border-transparent'}`}
                         >
-                          <div className="flex items-center gap-4 w-56 shrink-0 text-text-secondary">
+                          <div className="flex items-center gap-4 w-48 shrink-0 text-text-secondary">
                             <input 
                               type="checkbox" 
-                              className="accent-accent-blue w-4 h-4 rounded border-border/50 cursor-pointer"
+                              className="accent-accent-blue"
                               checked={isSelected}
-                              onChange={(e) => { e.stopPropagation(); toggleSelectEmail(email._id); }}
+                              onChange={() => toggleSelectEmail(email._id)}
                             />
-                            <button onClick={(e) => { e.stopPropagation(); toggleStar(email._id); }} className="hover:text-warning transition-transform hover:scale-110">
+                            <button onClick={(e) => { e.stopPropagation(); toggleStar(email._id); }} className="hover:text-warning transition-colors">
                               <Star size={18} className={isStarred ? 'fill-warning text-warning' : ''} />
                             </button>
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-blue to-purple-500 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-sm">
+                              <div className="w-6 h-6 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs shrink-0">
                                 {displayUser ? displayUser.charAt(0).toUpperCase() : '?'}
                               </div>
-                              <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-extrabold' : 'text-text-primary font-medium'}`}>
+                              <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-bold' : 'text-text-primary'}`}>
                                 {displayUser ? displayUser.split('<')[0].trim() : 'Unknown'}
                               </span>
                             </div>
                           </div>
                           
-                          <div className="flex-1 flex items-center min-w-0 pr-6 pl-4 border-l border-border/30">
-                            <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-bold' : 'text-text-secondary font-medium'}`}>
+                          <div className="flex-1 flex items-center min-w-0 pr-4" onClick={() => setViewingEmail(email)}>
+                            <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-bold' : 'text-text-secondary'}`}>
                               {email.subject || '(No Subject)'} 
-                              <span className="font-normal opacity-70 ml-3 text-text-secondary/70">
-                                - {email.snippet ? email.snippet.replace(/&quot;/g, '"').substring(0, 80) + '...' : ''}
+                              <span className="font-normal opacity-70 ml-2">
+                                - {email.snippet ? email.snippet.replace(/&quot;/g, '"').substring(0, 50) + '...' : ''}
                               </span>
                             </span>
                           </div>
                           
-                          <div className="text-[11px] font-bold text-text-secondary shrink-0 bg-bg-primary/50 px-3 py-1.5 rounded-lg">
+                          <div className="text-xs text-text-secondary shrink-0">
                             {new Date(email.date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                           </div>
                         </div>

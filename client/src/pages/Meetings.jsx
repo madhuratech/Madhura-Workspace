@@ -143,21 +143,21 @@ const Meetings = () => {
     return (
       <div className="flex flex-col h-full animate-fade-in">
         {/* Calendar Header */}
-        <div className="flex items-center justify-between px-8 py-5 border-b border-border/40 bg-bg-primary/60 backdrop-blur-xl sticky top-0 z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg-secondary sticky top-0 z-10">
           <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight">
+            <h2 className="text-2xl font-black text-text-primary flex items-center tracking-tight">
               {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
             </h2>
           </div>
-          <div className="flex space-x-2 bg-bg-secondary/80 backdrop-blur-md p-1.5 rounded-xl border border-border/50 shadow-sm">
-            <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-2.5 hover:bg-bg-primary hover:shadow-sm rounded-lg transition-all text-text-secondary hover:text-accent-blue"><ChevronLeft size={20} /></button>
-            <button onClick={() => setCurrentDate(new Date())} className="px-5 py-2.5 hover:bg-bg-primary hover:shadow-sm rounded-lg transition-all font-bold text-sm text-text-primary">Today</button>
-            <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-2.5 hover:bg-bg-primary hover:shadow-sm rounded-lg transition-all text-text-secondary hover:text-accent-blue"><ChevronRight size={20} /></button>
+          <div className="flex space-x-2 bg-bg-primary p-1 rounded-xl border border-border shadow-sm">
+            <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors text-text-secondary hover:text-accent-blue"><ChevronLeft size={20} /></button>
+            <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 hover:bg-bg-secondary rounded-lg transition-colors font-bold text-sm text-text-primary">Today</button>
+            <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors text-text-secondary hover:text-accent-blue"><ChevronRight size={20} /></button>
           </div>
         </div>
 
         {/* Calendar Grid */}
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-bg-secondary/20">
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-bg-primary/30">
           <div className="grid grid-cols-7 gap-3 h-full">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
               <div key={d} className={`text-center text-xs font-black uppercase tracking-wider py-2 ${i === 0 || i === 6 ? 'text-text-secondary/60' : 'text-text-secondary'}`}>
@@ -180,17 +180,16 @@ const Meetings = () => {
                 <div 
                   key={day} 
                   onClick={() => { resetForm(dateStr); setIsModalOpen(true); }}
-                  className={`min-h-[100px] p-3 border rounded-[20px] cursor-pointer transition-all duration-300 flex flex-col group relative overflow-hidden
+                  className={`min-h-[80px] p-2.5 border-2 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col group relative overflow-hidden
                     ${isToday 
-                      ? 'border-accent-blue/50 bg-gradient-to-b from-accent-blue/10 to-transparent shadow-[0_5px_25px_rgba(59,130,246,0.15)] hover:shadow-[0_10px_30px_rgba(59,130,246,0.25)] hover:-translate-y-1 z-10' 
-                      : 'border-border/60 bg-bg-primary/50 hover:border-accent-blue/40 hover:shadow-xl hover:-translate-y-1 hover:bg-bg-primary'}
+                      ? 'border-accent-blue bg-accent-blue/5 hover:bg-accent-blue/10 shadow-[0_4px_20px_-4px_rgba(59,130,246,0.2)] hover:-translate-y-1' 
+                      : 'border-border bg-bg-secondary hover:border-accent-blue/40 hover:shadow-lg hover:-translate-y-1'}
                     ${isPast && !isToday ? 'opacity-60 hover:opacity-100 grayscale hover:grayscale-0' : ''}
                   `}
                 >
-                  {isToday && <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-blue to-purple-500"></div>}
-                  <div className="flex justify-between items-start mb-2 relative z-10">
-                    <span className={`flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black transition-colors ${
-                      isToday ? 'bg-gradient-to-br from-accent-blue to-blue-600 text-white shadow-md' : 'text-text-primary group-hover:text-accent-blue'
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-black transition-colors ${
+                      isToday ? 'bg-accent-blue text-white shadow-md' : 'text-text-primary group-hover:text-accent-blue'
                     }`}>
                       {day}
                     </span>
@@ -242,48 +241,47 @@ const Meetings = () => {
 
   return (
     <div className="h-full flex flex-col font-sans">
-      <div className="relative mb-8 p-6 rounded-3xl overflow-hidden bg-gradient-to-r from-bg-secondary to-bg-primary border border-border/50 shadow-[0_0_40px_rgba(0,0,0,0.03)] z-10">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-accent-blue/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
-        <div className="flex justify-between items-center relative z-20">
-          <div>
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight font-outfit">Meetings</h1>
-            <p className="text-text-secondary text-sm mt-1.5 font-medium">Schedule and view team meetings</p>
-          </div>
-          {user?.role !== 'employee' && (
-            <button 
-              onClick={handleOpenModal}
-              className="bg-gradient-to-r from-accent-blue to-blue-600 text-white px-6 py-3 rounded-2xl hover:shadow-[0_10px_20px_rgba(59,130,246,0.3)] transition-all duration-300 transform hover:-translate-y-1 text-sm font-bold flex items-center space-x-2"
-            >
-              <Plus size={20} />
-              <span>Schedule Meeting</span>
-            </button>
-          )}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-text-primary tracking-wide">Meetings</h1>
+          <p className="text-text-secondary mt-1">Schedule and view team meetings</p>
         </div>
+        {user?.role !== 'employee' && (
+          <button 
+            onClick={handleOpenModal}
+            className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2"
+          >
+            <Plus size={16} />
+            <span>Schedule Meeting</span>
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-bg-secondary/60 backdrop-blur-md p-1.5 rounded-2xl border border-border/50 shadow-sm w-max mb-6">
+      <div className="flex border-b border-border mb-6">
         <button 
           onClick={() => setActiveTab('calendar')}
-          className={`px-6 py-2.5 font-bold text-sm transition-all rounded-xl ${activeTab === 'calendar' ? 'bg-bg-primary text-accent-blue shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary/50'}`}
+          className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'calendar' ? 'text-accent-blue' : 'text-text-secondary hover:text-text-primary'}`}
         >
           Calendar View
+          {activeTab === 'calendar' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-blue"></div>}
         </button>
         <button 
           onClick={() => setActiveTab('logs')}
-          className={`px-6 py-2.5 font-bold text-sm transition-all rounded-xl ${activeTab === 'logs' ? 'bg-bg-primary text-accent-blue shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary/50'}`}
+          className={`px-6 py-3 font-medium text-sm transition-colors relative ${activeTab === 'logs' ? 'text-accent-blue' : 'text-text-secondary hover:text-text-primary'}`}
         >
           Meeting Logs
+          {activeTab === 'logs' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-blue"></div>}
         </button>
       </div>
 
-      <div className="bg-transparent flex-1 flex flex-col overflow-hidden relative border-none">
+      <div className="bg-bg-primary flex-1 flex flex-col overflow-hidden relative border-none">
         {activeTab === 'calendar' ? (
-          <div className="w-full mx-auto flex-1 flex flex-col bg-bg-secondary/80 backdrop-blur-xl rounded-3xl shadow-[0_5px_30px_rgba(0,0,0,0.05)] border border-border/50 overflow-hidden">
+          <div className="w-full mx-auto flex-1 flex flex-col bg-bg-secondary rounded-3xl shadow-sm border border-border overflow-hidden">
             {renderCustomCalendar()}
           </div>
         ) : (
-          <div className="bg-bg-secondary/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-[0_5px_30px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col max-h-full">
+          <div className="bg-bg-secondary border border-border rounded-xl shadow-sm overflow-hidden flex flex-col max-h-full">
             <div className="overflow-x-auto">
               <table className="data-table">
                 <thead>
@@ -303,13 +301,13 @@ const Meetings = () => {
                     meetings.sort((a, b) => new Date(b.date) - new Date(a.date)).map(m => (
                       <tr key={m._id}>
                         <td className="font-medium">{new Date(m.date).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 font-bold text-text-primary">{m.title} <span className="text-xs font-bold text-text-secondary bg-bg-primary px-2 py-1 rounded-lg ml-2">{m.time}</span></td>
-                        <td className="px-6 py-4">
+                        <td className="font-bold text-text-primary">{m.title} <span className="text-xs font-normal text-text-secondary ml-2">{m.time}</span></td>
+                        <td>
                           {m.type === 'google_meet' ? (
-                            <div className="flex items-center text-accent-blue font-bold">
-                              <Video size={16} className="mr-2" /> Online meeting
+                            <div className="flex items-center text-accent-blue">
+                              <Video size={14} className="mr-1.5" /> Online meeting
                               {m.link && (
-                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-4 text-xs bg-accent-blue/10 border border-accent-blue/20 text-accent-blue px-3 py-1.5 rounded-lg hover:bg-accent-blue hover:text-white transition-colors">
+                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-3 text-xs bg-accent-blue text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors">
                                   Attend Meeting
                                 </a>
                               )}
@@ -334,21 +332,20 @@ const Meetings = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary/90 backdrop-blur-xl border border-border/50 p-8 rounded-[2rem] w-full max-w-xl shadow-[0_20px_60px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-accent-blue to-purple-500"></div>
-            <div className="flex justify-between items-center mb-8 mt-2 sticky top-0 bg-bg-secondary/90 backdrop-blur z-10 pt-2 pb-4">
-              <h3 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary font-outfit">Schedule Meeting</h3>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-text-primary bg-bg-primary hover:bg-border/50 p-2.5 rounded-xl transition-all"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-bg-secondary z-10 pt-2 pb-4">
+              <h3 className="text-xl font-bold text-text-primary">Schedule Meeting</h3>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors"><X size={20} /></button>
             </div>
             
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-[11px] font-extrabold text-text-secondary mb-2 uppercase tracking-widest">Meeting Title</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Meeting Title</label>
                 <input 
                   type="text" required 
                   value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full bg-bg-primary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all"
+                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
                   placeholder="e.g. Weekly Standup"
                 />
               </div>
