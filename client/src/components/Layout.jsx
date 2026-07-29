@@ -14,6 +14,21 @@ const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toastNotif, setToastNotif] = useState(null);
   const toastTimerRef = React.useRef(null);
+  const notificationRef = useRef(null);
+  const profileRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Close mobile menu on route change
   React.useEffect(() => {
@@ -146,7 +161,7 @@ const Layout = () => {
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           
-          <div className="relative">
+          <div className="relative" ref={notificationRef}>
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white relative"
@@ -221,7 +236,7 @@ const Layout = () => {
             )}
           </div>
 
-          <div className="relative">
+          <div className="relative" ref={profileRef}>
             <button 
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="relative flex items-center justify-center focus:outline-none ml-2"
@@ -304,6 +319,13 @@ const Layout = () => {
           </div>
 
           <div className="w-full px-2 pt-4 border-t border-white/10 flex flex-col space-y-4 mt-auto">
+            <button 
+              onClick={handleLogout}
+              className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 group text-text-sidebar/70 hover:text-danger hover:bg-danger/10"
+            >
+              <LogOut size={22} className="group-hover:text-danger transition-colors" />
+              <span className="text-[10px] font-medium mt-1">Logout</span>
+            </button>
             <Link 
               to="/settings" 
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 group ${
