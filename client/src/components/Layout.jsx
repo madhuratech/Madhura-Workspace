@@ -2,7 +2,7 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
@@ -11,8 +11,14 @@ const Layout = () => {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toastNotif, setToastNotif] = useState(null);
   const toastTimerRef = React.useRef(null);
+
+  // Close mobile menu on route change
+  React.useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   // Base64 simple pop sound to avoid external dependencies
   const playNotificationSound = () => {
@@ -98,10 +104,18 @@ const Layout = () => {
     <div className="flex flex-col h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
       
       {/* Global Top Bar */}
-      <header className="h-14 bg-bg-sidebar border-b border-border flex items-center justify-between px-4 z-40 shrink-0 text-white shadow-md">
+      <header className="h-14 bg-bg-sidebar border-b border-border flex items-center justify-between px-4 z-40 shrink-0 text-white shadow-md relative">
+        {/* Mobile Hamburger */}
+        <button 
+          className="md:hidden mr-3 p-1 rounded-md hover:bg-white/10 transition-colors"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <Menu size={22} />
+        </button>
+
         {/* Logo area */}
-        <div className="flex items-center space-x-3 w-[240px]">
-          <div className="h-8 w-8 bg-gradient-to-br from-accent-blue to-accent-indigo rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
+        <div className="flex items-center space-x-3 md:w-[240px]">
+          <div className="h-8 w-8 bg-gradient-to-br from-accent-blue to-accent-indigo rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm hidden sm:flex">
             M
           </div>
           <h2 className="text-lg font-bold text-white tracking-wide font-outfit">MadhuraWS</h2>
@@ -262,10 +276,10 @@ const Layout = () => {
       </header>
 
       {/* Main Content Area with Sidebars */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         
-        {/* Primary Sidebar (Activity Bar) */}
-        <aside className="w-[68px] bg-bg-sidebar border-r border-border flex flex-col items-center py-4 z-20 shrink-0 shadow-sm transition-all">
+        {/* Primary Sidebar (Activity Bar) - Hidden on Mobile */}
+        <aside className="hidden md:flex w-[68px] bg-bg-sidebar border-r border-border flex-col items-center py-4 z-20 shrink-0 shadow-sm transition-all">
           <div className="flex-1 flex flex-col space-y-4 w-full px-2">
             {primaryNavItems.map((item) => {
               const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
@@ -304,10 +318,24 @@ const Layout = () => {
           </div>
         </aside>
 
-        {/* Secondary Sidebar (Context Menu) */}
-        <aside className="w-[240px] bg-bg-secondary border-r border-border hidden md:flex flex-col z-10 shrink-0">
-          <div className="p-4 border-b border-border/50">
+        {/* Mobile Overlay Backdrop */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+        )}
+
+        {/* Secondary Sidebar (Context Menu / Mobile Drawer) */}
+        <aside className={`fixed inset-y-0 left-0 bg-bg-secondary w-72 md:relative md:w-[240px] transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 z-50 md:z-10 flex flex-col shrink-0 border-r border-border shadow-2xl md:shadow-none`}>
+          <div className="p-4 border-b border-border/50 flex justify-between items-center">
             <h2 className="font-bold text-text-primary text-sm tracking-wide font-outfit uppercase">Navigation</h2>
+            <button 
+              className="md:hidden p-1.5 rounded-lg text-text-secondary hover:bg-bg-primary transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X size={18} />
+            </button>
           </div>
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
             
@@ -384,7 +412,7 @@ const Layout = () => {
         </aside>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-hidden bg-bg-primary relative flex flex-col rounded-tl-xl sm:rounded-tl-2xl shadow-[inset_0_4px_6px_rgba(0,0,0,0.02)] border-l border-t border-border/50 sm:mt-1 sm:ml-1 transition-all">
+        <main className="flex-1 overflow-hidden bg-bg-primary relative flex flex-col sm:rounded-tl-2xl shadow-[inset_0_4px_6px_rgba(0,0,0,0.02)] border-l border-t border-border/50 sm:mt-1 sm:ml-1 transition-all pb-[env(safe-area-inset-bottom)] md:pb-0 mb-14 md:mb-0">
           <div className="flex-1 overflow-auto p-4 md:p-8">
             <Outlet />
           </div>
@@ -406,7 +434,32 @@ const Layout = () => {
             </div>
           )}
         </main>
+      </div>
 
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-bg-sidebar border-t border-border shadow-[0_-4px_10px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex justify-around items-center h-14">
+          {primaryNavItems.map((item) => {
+            const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
+            return (
+              <Link 
+                key={item.label}
+                to={item.path} 
+                className={`flex flex-col items-center justify-center w-full h-full relative transition-colors ${
+                  isActive ? 'text-white' : 'text-text-sidebar/70 hover:text-white'
+                }`}
+              >
+                {isActive && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-accent-blue rounded-b-full"></div>
+                )}
+                <div className={`mb-0.5 ${isActive ? 'text-accent-blue scale-110' : ''} transition-transform`}>
+                  {React.cloneElement(item.icon, { size: 20 })}
+                </div>
+                <span className="text-[9px] font-medium tracking-wide">{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
       </div>
     </div>
   );
