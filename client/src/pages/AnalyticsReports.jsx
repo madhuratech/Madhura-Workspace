@@ -108,159 +108,167 @@ const AnalyticsReports = () => {
   );
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="absolute inset-6 flex flex-col font-sans bg-transparent">
       
       {/* Top Header & Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-accent-blue/15 text-accent-blue uppercase tracking-wider">
-              Live Reports
-            </span>
-            {workspaces.length > 1 && (
-              <div className="relative inline-block">
-                <select
-                  className="bg-bg-secondary text-text-primary text-xs font-semibold px-3 py-1 rounded-lg border border-white/10 outline-none cursor-pointer"
-                  value={selectedWorkspace._id}
-                  onChange={(e) => {
-                    const ws = workspaces.find(w => w._id === e.target.value);
-                    if (ws) setSelectedWorkspace(ws);
-                  }}
-                >
-                  {workspaces.map(w => (
-                    <option key={w._id} value={w._id}>{w.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+      <div className="relative mb-8 p-6 rounded-3xl overflow-hidden bg-gradient-to-r from-bg-secondary to-bg-primary border border-border/50 shadow-[0_0_40px_rgba(0,0,0,0.03)] z-10 shrink-0">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent-blue/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-20">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-accent-blue/20 text-accent-blue border border-accent-blue/30 shadow-sm uppercase tracking-widest">
+                Live Reports
+              </span>
+              {workspaces.length > 1 && (
+                <div className="relative inline-block">
+                  <select
+                    className="bg-bg-primary/50 backdrop-blur-md text-text-primary text-xs font-bold px-4 py-1.5 rounded-xl border border-border/50 outline-none cursor-pointer focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/50 transition-all shadow-sm"
+                    value={selectedWorkspace._id}
+                    onChange={(e) => {
+                      const ws = workspaces.find(w => w._id === e.target.value);
+                      if (ws) setSelectedWorkspace(ws);
+                    }}
+                  >
+                    {workspaces.map(w => (
+                      <option key={w._id} value={w._id}>{w.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-tight flex items-center gap-3 font-outfit mt-2">
+              Analytics & Reports Dashboard
+            </h1>
+            <p className="text-sm text-text-secondary mt-1.5 font-medium">
+              Comprehensive track of employee productivity, project milestones, and attendance trends.
+            </p>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight flex items-center gap-3 font-outfit">
-            <BarChart3 className="text-accent-blue" size={32} />
-            Analytics & Reports Dashboard
-          </h1>
-          <p className="text-sm text-text-secondary mt-1">
-            Comprehensive track of employee productivity, project milestones, and attendance trends.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => fetchAnalytics(selectedWorkspace._id, true)}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-5 py-2.5 bg-bg-primary/50 backdrop-blur-md hover:bg-bg-primary text-text-primary rounded-xl border border-border/50 text-sm font-bold transition-all duration-300 shadow-sm disabled:opacity-50 group hover:shadow-md hover:border-accent-blue/30"
+            >
+              <RefreshCw size={18} className={`${refreshing ? 'animate-spin text-accent-blue' : 'text-text-secondary group-hover:text-accent-blue transition-colors'}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh Data'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Navigation Tabs */}
+        <div className="flex bg-bg-secondary/60 backdrop-blur-md p-1.5 rounded-2xl border border-border/50 shadow-sm w-max mb-6 shrink-0">
           <button
-            onClick={() => fetchAnalytics(selectedWorkspace._id, true)}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2.5 bg-bg-card hover:bg-bg-secondary text-text-primary rounded-xl border border-white/10 text-sm font-semibold transition-all duration-200 shadow-sm disabled:opacity-50"
+            onClick={() => setActiveTab('overview')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+              activeTab === 'overview'
+                ? 'bg-gradient-to-r from-accent-blue to-blue-600 text-white shadow-md transform -translate-y-0.5'
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary/50'
+            }`}
           >
-            <RefreshCw size={16} className={refreshing ? 'animate-spin text-accent-blue' : 'text-text-secondary'} />
-            {refreshing ? 'Refreshing...' : 'Refresh Data'}
+            <PieChart size={18} />
+            Overview & Trends
+          </button>
+          <button
+            onClick={() => setActiveTab('employees')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+              activeTab === 'employees'
+                ? 'bg-gradient-to-r from-accent-blue to-blue-600 text-white shadow-md transform -translate-y-0.5'
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary/50'
+            }`}
+          >
+            <Users size={18} />
+            Employee Performance ({employeePerformance?.length || 0})
+          </button>
+          <button
+            onClick={() => setActiveTab('projects')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${
+              activeTab === 'projects'
+                ? 'bg-gradient-to-r from-accent-blue to-blue-600 text-white shadow-md transform -translate-y-0.5'
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary/50'
+            }`}
+          >
+            <FolderKanban size={18} />
+            Project Milestones ({projectsPerformance?.length || 0})
           </button>
         </div>
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/5 pb-2 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${
-            activeTab === 'overview'
-              ? 'bg-accent-blue text-white shadow-lg shadow-accent-blue/25'
-              : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
-          }`}
-        >
-          <PieChart size={18} />
-          Overview & Trends
-        </button>
-        <button
-          onClick={() => setActiveTab('employees')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${
-            activeTab === 'employees'
-              ? 'bg-accent-blue text-white shadow-lg shadow-accent-blue/25'
-              : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
-          }`}
-        >
-          <Users size={18} />
-          Employee Performance ({employeePerformance?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab('projects')}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${
-            activeTab === 'projects'
-              ? 'bg-accent-blue text-white shadow-lg shadow-accent-blue/25'
-              : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
-          }`}
-        >
-          <FolderKanban size={18} />
-          Project Milestones ({projectsPerformance?.length || 0})
-        </button>
-      </div>
-
-      {/* TAB 1: OVERVIEW & TRENDS */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar pb-6 pr-2">
+          {/* TAB 1: OVERVIEW & TRENDS */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
           
           {/* Top KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-6 shadow-soft flex flex-col justify-between hover:border-white/10 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Task Completion</span>
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
-                  <CheckCircle2 size={20} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[0_5px_30px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-colors pointer-events-none"></div>
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest">Task Completion</span>
+                <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500 group-hover:scale-110 transition-transform shadow-sm">
+                  <CheckCircle2 size={24} />
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-6 relative z-10">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-text-primary font-outfit">{summary.completionRate}%</span>
-                  <span className="text-xs font-semibold text-emerald-500 flex items-center">
-                    <ArrowUpRight size={14} /> Live Rate
+                  <span className="text-4xl font-extrabold text-text-primary font-outfit">{summary.completionRate}%</span>
+                  <span className="text-xs font-bold text-emerald-500 flex items-center bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                    <ArrowUpRight size={14} className="mr-0.5" /> Live Rate
                   </span>
                 </div>
-                <p className="text-xs text-text-secondary mt-1">Of {summary.totalTasks} total workspace tasks</p>
+                <p className="text-sm font-medium text-text-secondary mt-2">Of {summary.totalTasks} total workspace tasks</p>
               </div>
             </div>
 
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-6 shadow-soft flex flex-col justify-between hover:border-white/10 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Attendance Trend</span>
-                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
-                  <Calendar size={20} />
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[0_5px_30px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-colors pointer-events-none"></div>
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest">Attendance Trend</span>
+                <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500 group-hover:scale-110 transition-transform shadow-sm">
+                  <Calendar size={24} />
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-6 relative z-10">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-text-primary font-outfit">{summary.overallAttendanceRate}%</span>
-                  <span className="text-xs font-semibold text-blue-400">Avg Presence</span>
+                  <span className="text-4xl font-extrabold text-text-primary font-outfit">{summary.overallAttendanceRate}%</span>
+                  <span className="text-xs font-bold text-blue-500 flex items-center bg-blue-500/10 px-2 py-0.5 rounded-md">Avg Presence</span>
                 </div>
-                <p className="text-xs text-text-secondary mt-1">Present vs Absent logs</p>
+                <p className="text-sm font-medium text-text-secondary mt-2">Present vs Absent logs</p>
               </div>
             </div>
 
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-6 shadow-soft flex flex-col justify-between hover:border-white/10 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Overdue Alerts</span>
-                <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500">
-                  <AlertCircle size={20} />
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[0_5px_30px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-rose-500/10 rounded-full blur-xl group-hover:bg-rose-500/20 transition-colors pointer-events-none"></div>
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest">Overdue Alerts</span>
+                <div className="p-3 rounded-2xl bg-rose-500/10 text-rose-500 group-hover:scale-110 transition-transform shadow-sm">
+                  <AlertCircle size={24} />
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-6 relative z-10">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-rose-500 font-outfit">{summary.overdueTasks}</span>
-                  <span className="text-xs font-semibold text-text-secondary">Delayed</span>
+                  <span className="text-4xl font-extrabold text-rose-500 font-outfit">{summary.overdueTasks}</span>
+                  <span className="text-xs font-bold text-rose-500 flex items-center bg-rose-500/10 px-2 py-0.5 rounded-md">Delayed</span>
                 </div>
-                <p className="text-xs text-text-secondary mt-1">Tasks past scheduled due date</p>
+                <p className="text-sm font-medium text-text-secondary mt-2">Tasks past scheduled due date</p>
               </div>
             </div>
 
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-6 shadow-soft flex flex-col justify-between hover:border-white/10 transition-all">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Team Strength</span>
-                <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-500">
-                  <Users size={20} />
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-[0_5px_30px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-colors pointer-events-none"></div>
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest">Team Strength</span>
+                <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-500 group-hover:scale-110 transition-transform shadow-sm">
+                  <Users size={24} />
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-6 relative z-10">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-extrabold text-text-primary font-outfit">{summary.totalMembers}</span>
-                  <span className="text-xs font-semibold text-purple-400">Active Members</span>
+                  <span className="text-4xl font-extrabold text-text-primary font-outfit">{summary.totalMembers}</span>
+                  <span className="text-xs font-bold text-purple-500 flex items-center bg-purple-500/10 px-2 py-0.5 rounded-md">Active Members</span>
                 </div>
-                <p className="text-xs text-text-secondary mt-1">Across {summary.totalProjects} active projects</p>
+                <p className="text-sm font-medium text-text-secondary mt-2">Across {summary.totalProjects} active projects</p>
               </div>
             </div>
           </div>
@@ -269,87 +277,88 @@ const AnalyticsReports = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Chart 1: Task Progress & Status Breakdown */}
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-6 shadow-soft space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-[0_5px_30px_rgba(0,0,0,0.05)] space-y-8 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-accent-blue/10 transition-colors"></div>
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <h3 className="text-lg font-bold text-text-primary flex items-center gap-2 font-outfit">
-                    <CheckSquare className="text-accent-blue" size={20} />
+                  <h3 className="text-xl font-extrabold text-text-primary flex items-center gap-3 font-outfit">
+                    <div className="p-2 bg-accent-blue/10 rounded-xl text-accent-blue shadow-sm"><CheckSquare size={20} /></div>
                     Task Progress Distribution
                   </h3>
-                  <p className="text-xs text-text-secondary">Breakdown by current workflow stage</p>
+                  <p className="text-sm font-medium text-text-secondary mt-1">Breakdown by current workflow stage</p>
                 </div>
-                <span className="text-sm font-extrabold text-text-primary px-3 py-1 rounded-lg bg-white/5">
+                <span className="text-sm font-extrabold text-accent-blue px-4 py-2 rounded-xl bg-accent-blue/10 border border-accent-blue/20 shadow-sm">
                   {summary.totalTasks} Tasks
                 </span>
               </div>
 
               {summary.totalTasks === 0 ? (
-                <div className="p-8 text-center text-text-secondary text-sm">No tasks assigned in this workspace yet.</div>
+                <div className="p-12 text-center text-text-secondary font-medium relative z-10 bg-bg-primary/50 rounded-2xl border border-border/50">No tasks assigned in this workspace yet.</div>
               ) : (
-                <div className="space-y-5">
+                <div className="space-y-8 relative z-10">
                   {/* Visual Multi-Segment Bar */}
-                  <div className="space-y-2">
-                    <div className="h-4 w-full bg-bg-secondary rounded-full overflow-hidden flex gap-0.5 p-0.5">
+                  <div className="space-y-4">
+                    <div className="h-6 w-full bg-bg-primary/80 rounded-full overflow-hidden flex gap-1 p-1 shadow-inner border border-border/50">
                       <div
                         style={{ width: `${(taskProgress.byStatus['Done'] / summary.totalTasks) * 100}%` }}
-                        className="bg-emerald-500 h-full rounded-l-full transition-all duration-500"
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                         title="Done"
                       />
                       <div
                         style={{ width: `${(taskProgress.byStatus['In Progress'] / summary.totalTasks) * 100}%` }}
-                        className="bg-blue-500 h-full transition-all duration-500"
+                        className="bg-blue-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                         title="In Progress"
                       />
                       <div
                         style={{ width: `${(taskProgress.byStatus['To Do'] / summary.totalTasks) * 100}%` }}
-                        className="bg-slate-500 h-full rounded-r-full transition-all duration-500"
+                        className="bg-slate-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(100,116,139,0.5)]"
                         title="To Do"
                       />
                     </div>
-                    <div className="flex justify-between text-[11px] font-bold text-text-secondary uppercase">
-                      <span className="text-emerald-500">Done ({Math.round((taskProgress.byStatus['Done'] / summary.totalTasks) * 100 || 0)}%)</span>
-                      <span className="text-blue-500">In Progress ({Math.round((taskProgress.byStatus['In Progress'] / summary.totalTasks) * 100 || 0)}%)</span>
-                      <span className="text-slate-400">To Do ({Math.round((taskProgress.byStatus['To Do'] / summary.totalTasks) * 100 || 0)}%)</span>
+                    <div className="flex justify-between text-[11px] font-extrabold uppercase tracking-widest">
+                      <span className="text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-md">Done ({Math.round((taskProgress.byStatus['Done'] / summary.totalTasks) * 100 || 0)}%)</span>
+                      <span className="text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md">In Progress ({Math.round((taskProgress.byStatus['In Progress'] / summary.totalTasks) * 100 || 0)}%)</span>
+                      <span className="text-slate-400 bg-slate-500/10 px-2 py-0.5 rounded-md">To Do ({Math.round((taskProgress.byStatus['To Do'] / summary.totalTasks) * 100 || 0)}%)</span>
                     </div>
                   </div>
 
                   {/* Individual Status Bars */}
-                  <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/5">
-                    <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-center">
-                      <span className="text-2xl font-black text-emerald-500 font-outfit">{taskProgress.byStatus['Done'] || 0}</span>
-                      <p className="text-xs font-bold text-text-secondary mt-1">Completed</p>
+                  <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border/50">
+                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center shadow-sm transform hover:-translate-y-1 transition-transform">
+                      <span className="text-3xl font-black text-emerald-500 font-outfit">{taskProgress.byStatus['Done'] || 0}</span>
+                      <p className="text-[11px] font-extrabold text-emerald-500/70 mt-1 uppercase tracking-widest">Completed</p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-blue-500/5 border border-blue-500/20 text-center">
-                      <span className="text-2xl font-black text-blue-500 font-outfit">{taskProgress.byStatus['In Progress'] || 0}</span>
-                      <p className="text-xs font-bold text-text-secondary mt-1">In Progress</p>
+                    <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-center shadow-sm transform hover:-translate-y-1 transition-transform">
+                      <span className="text-3xl font-black text-blue-500 font-outfit">{taskProgress.byStatus['In Progress'] || 0}</span>
+                      <p className="text-[11px] font-extrabold text-blue-500/70 mt-1 uppercase tracking-widest">In Progress</p>
                     </div>
-                    <div className="p-3.5 rounded-xl bg-slate-500/5 border border-slate-500/20 text-center">
-                      <span className="text-2xl font-black text-slate-400 font-outfit">{taskProgress.byStatus['To Do'] || 0}</span>
-                      <p className="text-xs font-bold text-text-secondary mt-1">Pending</p>
+                    <div className="p-4 rounded-2xl bg-slate-500/10 border border-slate-500/20 text-center shadow-sm transform hover:-translate-y-1 transition-transform">
+                      <span className="text-3xl font-black text-slate-400 font-outfit">{taskProgress.byStatus['To Do'] || 0}</span>
+                      <p className="text-[11px] font-extrabold text-slate-400/70 mt-1 uppercase tracking-widest">Pending</p>
                     </div>
                   </div>
 
                   {/* Priority Breakdown */}
-                  <div className="pt-2">
-                    <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">By Priority Level</h4>
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-2 font-semibold text-rose-400">
-                          <span className="w-2 h-2 rounded-full bg-rose-500"></span> High Priority
+                  <div className="pt-6 bg-bg-primary/30 p-5 rounded-2xl border border-border/50">
+                    <h4 className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest mb-4">By Priority Level</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-3 font-bold text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg w-max">
+                          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span> High Priority
                         </span>
-                        <span className="font-extrabold">{taskProgress.byPriority['High'] || 0} tasks</span>
+                        <span className="font-extrabold text-text-primary">{taskProgress.byPriority['High'] || 0} tasks</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-2 font-semibold text-amber-400">
-                          <span className="w-2 h-2 rounded-full bg-amber-500"></span> Medium Priority
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-3 font-bold text-amber-500 bg-amber-500/10 px-3 py-1 rounded-lg w-max">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span> Medium Priority
                         </span>
-                        <span className="font-extrabold">{taskProgress.byPriority['Medium'] || 0} tasks</span>
+                        <span className="font-extrabold text-text-primary">{taskProgress.byPriority['Medium'] || 0} tasks</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="flex items-center gap-2 font-semibold text-emerald-400">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Low Priority
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-3 font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1 rounded-lg w-max">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span> Low Priority
                         </span>
-                        <span className="font-extrabold">{taskProgress.byPriority['Low'] || 0} tasks</span>
+                        <span className="font-extrabold text-text-primary">{taskProgress.byPriority['Low'] || 0} tasks</span>
                       </div>
                     </div>
                   </div>
@@ -358,73 +367,74 @@ const AnalyticsReports = () => {
             </div>
 
             {/* Chart 2: Attendance Trends & Rate */}
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-6 shadow-soft space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-8 shadow-[0_5px_30px_rgba(0,0,0,0.05)] space-y-8 relative overflow-hidden group hover:shadow-lg transition-all duration-300">
+              <div className="absolute top-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none group-hover:bg-emerald-500/10 transition-colors"></div>
+              <div className="flex items-center justify-between relative z-10">
                 <div>
-                  <h3 className="text-lg font-bold text-text-primary flex items-center gap-2 font-outfit">
-                    <TrendingUp className="text-blue-500" size={20} />
+                  <h3 className="text-xl font-extrabold text-text-primary flex items-center gap-3 font-outfit">
+                    <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 shadow-sm"><TrendingUp size={20} /></div>
                     Attendance Trends
                   </h3>
-                  <p className="text-xs text-text-secondary">Workforce presence and availability logs</p>
+                  <p className="text-sm font-medium text-text-secondary mt-1">Workforce presence and availability logs</p>
                 </div>
-                <span className="text-sm font-extrabold text-emerald-400 px-3 py-1 rounded-lg bg-emerald-500/10">
+                <span className="text-sm font-extrabold text-emerald-500 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-sm">
                   {summary.overallAttendanceRate}% Rate
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-4 rounded-xl bg-bg-secondary border border-white/5 flex flex-col items-center justify-center">
-                  <span className="text-xs font-bold text-text-secondary mb-1">Present Days</span>
-                  <span className="text-2xl font-extrabold text-emerald-500 font-outfit">{attendanceTrends.summary.Present || 0}</span>
+              <div className="grid grid-cols-3 gap-4 relative z-10">
+                <div className="p-5 rounded-2xl bg-bg-primary/50 border border-border/50 flex flex-col items-center justify-center shadow-sm">
+                  <span className="text-[11px] font-extrabold text-text-secondary mb-2 uppercase tracking-widest">Present</span>
+                  <span className="text-3xl font-black text-emerald-500 font-outfit">{attendanceTrends.summary.Present || 0}</span>
                 </div>
-                <div className="p-4 rounded-xl bg-bg-secondary border border-white/5 flex flex-col items-center justify-center">
-                  <span className="text-xs font-bold text-text-secondary mb-1">Half-Day</span>
-                  <span className="text-2xl font-extrabold text-amber-500 font-outfit">{attendanceTrends.summary['Half-Day'] || 0}</span>
+                <div className="p-5 rounded-2xl bg-bg-primary/50 border border-border/50 flex flex-col items-center justify-center shadow-sm">
+                  <span className="text-[11px] font-extrabold text-text-secondary mb-2 uppercase tracking-widest">Half-Day</span>
+                  <span className="text-3xl font-black text-amber-500 font-outfit">{attendanceTrends.summary['Half-Day'] || 0}</span>
                 </div>
-                <div className="p-4 rounded-xl bg-bg-secondary border border-white/5 flex flex-col items-center justify-center">
-                  <span className="text-xs font-bold text-text-secondary mb-1">Absent</span>
-                  <span className="text-2xl font-extrabold text-rose-500 font-outfit">{attendanceTrends.summary.Absent || 0}</span>
+                <div className="p-5 rounded-2xl bg-bg-primary/50 border border-border/50 flex flex-col items-center justify-center shadow-sm">
+                  <span className="text-[11px] font-extrabold text-text-secondary mb-2 uppercase tracking-widest">Absent</span>
+                  <span className="text-3xl font-black text-rose-500 font-outfit">{attendanceTrends.summary.Absent || 0}</span>
                 </div>
               </div>
 
               {/* Daily Trend Visual Chart */}
-              <div className="pt-2">
-                <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-4">Recent Daily Presence Activity</h4>
+              <div className="pt-4 relative z-10">
+                <h4 className="text-[11px] font-extrabold text-text-secondary uppercase tracking-widest mb-6">Recent Daily Presence Activity</h4>
                 
                 {(!attendanceTrends.dailyTrend || attendanceTrends.dailyTrend.length === 0) ? (
-                  <div className="p-6 bg-bg-secondary/50 rounded-xl text-center text-xs text-text-secondary">
+                  <div className="p-10 bg-bg-primary/50 rounded-2xl border border-border/50 text-center text-sm font-medium text-text-secondary">
                     No historical attendance logs recorded for recent dates yet.
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="h-36 flex items-end justify-between gap-2 pt-6 pb-2 px-2 border-b border-white/10">
+                  <div className="space-y-6">
+                    <div className="h-40 flex items-end justify-between gap-3 pt-6 pb-3 px-3 border-b border-border/50 bg-bg-primary/20 rounded-2xl">
                       {attendanceTrends.dailyTrend.map((day, idx) => {
                         const totalDay = (day.present + day.absent + day.halfDay) || 1;
                         const presentHeight = Math.max(15, Math.min(100, Math.round((day.present / totalDay) * 100)));
                         
                         return (
-                          <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative">
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
                             {/* Tooltip */}
-                            <div className="absolute -top-8 bg-slate-900 text-white text-[10px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none shadow-lg">
+                            <div className="absolute -top-10 bg-bg-secondary border border-border/50 text-text-primary text-[11px] font-extrabold py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none shadow-xl transform group-hover:-translate-y-1">
                               {day.date}: {day.present} Present / {day.absent} Absent
                             </div>
-                            <div className="w-full max-w-[28px] bg-bg-secondary rounded-t-lg h-full flex flex-col justify-end overflow-hidden">
+                            <div className="w-full max-w-[32px] bg-bg-primary rounded-t-xl h-full flex flex-col justify-end overflow-hidden border border-border/30 shadow-inner">
                               <div
                                 style={{ height: `${presentHeight}%` }}
-                                className="bg-gradient-to-t from-blue-600 to-accent-blue w-full rounded-t-md transition-all duration-500 group-hover:brightness-110"
+                                className="bg-gradient-to-t from-blue-600 to-accent-blue w-full rounded-t-lg transition-all duration-700 group-hover:brightness-125 shadow-[0_-5px_15px_rgba(59,130,246,0.5)]"
                               />
                             </div>
-                            <span className="text-[10px] text-text-secondary font-semibold truncate max-w-[36px]">
+                            <span className="text-[10px] text-text-secondary font-bold truncate max-w-[40px] uppercase">
                               {day.date.slice(5)}
                             </span>
                           </div>
                         );
                       })}
                     </div>
-                    <div className="flex items-center justify-between text-xs text-text-secondary px-2">
-                      <span>Timeline: Last {attendanceTrends.dailyTrend.length} recorded days</span>
-                      <span className="flex items-center gap-1.5 text-accent-blue font-bold">
-                        <span className="w-2 h-2 rounded-full bg-accent-blue"></span> Present Proportion
+                    <div className="flex items-center justify-between text-xs font-bold text-text-secondary px-3">
+                      <span className="bg-bg-primary/50 px-3 py-1.5 rounded-lg border border-border/30">Timeline: Last {attendanceTrends.dailyTrend.length} recorded days</span>
+                      <span className="flex items-center gap-2 text-accent-blue bg-accent-blue/10 px-3 py-1.5 rounded-lg border border-accent-blue/20">
+                        <span className="w-2.5 h-2.5 rounded-full bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.6)]"></span> Present Proportion
                       </span>
                     </div>
                   </div>
@@ -438,70 +448,71 @@ const AnalyticsReports = () => {
       {/* TAB 2: EMPLOYEE PERFORMANCE & PRODUCTIVITY */}
       {activeTab === 'employees' && (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-bg-card border border-white/5 p-4 rounded-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-bg-secondary/60 backdrop-blur-md border border-border/50 p-6 rounded-3xl shadow-sm">
             <div>
-              <h3 className="text-base font-bold text-text-primary">Workforce Productivity Scoreboard</h3>
-              <p className="text-xs text-text-secondary">Real-time performance ranking based on tasks completion, deadline adherence, and attendance.</p>
+              <h3 className="text-lg font-extrabold text-text-primary font-outfit">Workforce Productivity Scoreboard</h3>
+              <p className="text-sm font-medium text-text-secondary mt-1">Real-time performance ranking based on tasks completion, deadline adherence, and attendance.</p>
             </div>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input
                 type="text"
                 placeholder="Search employee or role..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-bg-secondary text-text-primary text-xs font-medium pl-10 pr-4 py-2.5 rounded-xl border border-white/10 outline-none focus:border-accent-blue transition-colors"
+                className="w-full bg-bg-primary border border-border/50 text-text-primary text-sm font-bold pl-12 pr-4 py-3 rounded-2xl outline-none focus:border-accent-blue focus:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all"
               />
             </div>
           </div>
 
           {filteredEmployees.length === 0 ? (
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-12 text-center text-sm text-text-secondary">
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-16 text-center text-sm font-medium text-text-secondary">
+              <Users size={48} className="mx-auto mb-4 opacity-20" />
               No employees found matching your filter criteria.
             </div>
           ) : (
-            <div className="bg-bg-card border border-white/5 rounded-2xl overflow-hidden shadow-soft">
-              <div className="overflow-x-auto">
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl overflow-hidden shadow-[0_5px_30px_rgba(0,0,0,0.05)]">
+              <div className="overflow-x-auto p-2">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-white/10 bg-white/[0.02] text-[11px] font-extrabold text-text-secondary uppercase tracking-wider">
-                      <th className="py-4 px-6">Employee</th>
+                    <tr className="bg-bg-primary/30 backdrop-blur-md text-[11px] font-extrabold text-text-secondary uppercase tracking-widest">
+                      <th className="py-4 px-6 rounded-tl-xl">Employee</th>
                       <th className="py-4 px-4 text-center">Role / Status</th>
                       <th className="py-4 px-4 text-center">Tasks Done</th>
                       <th className="py-4 px-4 text-center">Overdue</th>
                       <th className="py-4 px-4 text-center">Attendance</th>
-                      <th className="py-4 px-6 text-right">Productivity Score</th>
+                      <th className="py-4 px-6 text-right rounded-tr-xl">Productivity Score</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5 text-sm font-medium">
+                  <tbody className="text-sm font-medium">
                     {filteredEmployees.map((emp, idx) => {
                       const badge = getProductivityBadge(emp.productivityScore);
                       const Icon = badge.icon;
 
                       return (
-                        <tr key={emp._id || idx} className="hover:bg-white/[0.02] transition-colors">
+                        <tr key={emp._id || idx} className="hover:bg-bg-primary/50 transition-colors border-b border-border/30 group">
                           
                           {/* Employee Info */}
                           <td className="py-4 px-6">
-                            <div className="flex items-center space-x-3.5">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-accent-indigo to-accent-blue flex items-center justify-center font-bold text-white shadow-md text-sm shrink-0">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent-blue to-purple-500 flex items-center justify-center font-bold text-white shadow-md text-sm shrink-0 group-hover:scale-110 transition-transform">
                                 {formatInitials(emp.name)}
                               </div>
                               <div>
-                                <p className="font-bold text-text-primary">{emp.name}</p>
-                                <p className="text-xs text-text-secondary">{emp.designation || emp.email}</p>
+                                <p className="font-extrabold text-text-primary text-base font-outfit">{emp.name}</p>
+                                <p className="text-xs font-semibold text-text-secondary mt-0.5">{emp.designation || emp.email}</p>
                               </div>
                             </div>
                           </td>
 
                           {/* Role & Presence */}
                           <td className="py-4 px-4 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold capitalize bg-white/5 text-text-primary border border-white/10">
+                            <div className="flex flex-col items-center gap-1.5">
+                              <span className="px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-widest bg-bg-primary border border-border/50 text-text-primary shadow-sm">
                                 {emp.role?.replace('_', ' ') || 'Employee'}
                               </span>
-                              <span className="text-[11px] text-text-secondary flex items-center gap-1">
-                                <span className={`w-1.5 h-1.5 rounded-full ${emp.presenceStatus === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                              <span className="text-[11px] font-bold text-text-secondary flex items-center gap-1.5 bg-bg-primary/50 px-2 py-0.5 rounded-md">
+                                <span className={`w-2 h-2 rounded-full ${emp.presenceStatus === 'Active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]'}`}></span>
                                 {emp.presenceStatus || 'Active'}
                               </span>
                             </div>
@@ -509,11 +520,11 @@ const AnalyticsReports = () => {
 
                           {/* Tasks Completed */}
                           <td className="py-4 px-4 text-center">
-                            <div className="flex flex-col items-center">
-                              <span className="font-extrabold text-text-primary">
+                            <div className="flex flex-col items-center bg-bg-primary/30 p-2 rounded-xl border border-border/30">
+                              <span className="font-black text-text-primary text-base font-outfit">
                                 {emp.tasks.completed} / {emp.tasks.assigned}
                               </span>
-                              <span className="text-[11px] text-emerald-400 font-semibold">
+                              <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-500 mt-1">
                                 {emp.tasks.completionRate}% Rate
                               </span>
                             </div>
@@ -522,19 +533,19 @@ const AnalyticsReports = () => {
                           {/* Overdue Tasks */}
                           <td className="py-4 px-4 text-center">
                             {emp.tasks.overdue > 0 ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase tracking-widest bg-rose-500/10 text-rose-500 border border-rose-500/20 shadow-sm">
                                 {emp.tasks.overdue} Delayed
                               </span>
                             ) : (
-                              <span className="text-xs text-text-secondary/60 font-semibold">On Time</span>
+                              <span className="text-[11px] font-extrabold uppercase tracking-widest text-text-secondary/60 bg-bg-primary px-3 py-1.5 rounded-lg border border-border/30 shadow-sm">On Time</span>
                             )}
                           </td>
 
                           {/* Attendance */}
                           <td className="py-4 px-4 text-center">
-                            <div className="flex flex-col items-center">
-                              <span className="font-bold text-text-primary">{emp.attendance.rate}%</span>
-                              <span className="text-[11px] text-text-secondary">
+                            <div className="flex flex-col items-center bg-bg-primary/30 p-2 rounded-xl border border-border/30">
+                              <span className="font-black text-text-primary text-base font-outfit">{emp.attendance.rate}%</span>
+                              <span className="text-[10px] font-extrabold text-text-secondary uppercase tracking-widest mt-1">
                                 {emp.attendance.present}P / {emp.attendance.absent}A
                               </span>
                             </div>
@@ -542,20 +553,20 @@ const AnalyticsReports = () => {
 
                           {/* Productivity Score */}
                           <td className="py-4 px-6 text-right">
-                            <div className="flex flex-col items-end gap-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold border ${badge.color}`}>
-                                  <Icon size={12} />
+                            <div className="flex flex-col items-end gap-2">
+                              <div className="flex items-center gap-3">
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border shadow-sm ${badge.color}`}>
+                                  <Icon size={14} />
                                   {badge.label}
                                 </span>
-                                <span className="text-lg font-black text-text-primary font-outfit w-10 text-right">
+                                <span className="text-2xl font-black text-text-primary font-outfit w-12 text-right">
                                   {emp.productivityScore}
                                 </span>
                               </div>
-                              <div className="w-28 h-1.5 bg-bg-secondary rounded-full overflow-hidden">
+                              <div className="w-32 h-2 bg-bg-primary rounded-full overflow-hidden shadow-inner border border-border/30">
                                 <div
                                   style={{ width: `${emp.productivityScore}%` }}
-                                  className={`h-full rounded-full ${emp.productivityScore >= 75 ? 'bg-accent-blue' : emp.productivityScore >= 60 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                  className={`h-full rounded-full transition-all duration-1000 shadow-sm ${emp.productivityScore >= 75 ? 'bg-gradient-to-r from-blue-500 to-accent-blue' : emp.productivityScore >= 60 ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-rose-600 to-rose-500'}`}
                                 />
                               </div>
                             </div>
@@ -574,71 +585,73 @@ const AnalyticsReports = () => {
       {/* TAB 3: PROJECTS MILESTONES & PERFORMANCE */}
       {activeTab === 'projects' && (
         <div className="space-y-6">
-          <div className="bg-bg-card border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+          <div className="bg-bg-secondary/60 backdrop-blur-md border border-border/50 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-text-primary">Project Performance & Delivery Status</h3>
-              <p className="text-xs text-text-secondary">Monitor delivery speed, completion rate, and delayed milestones across active projects.</p>
+              <h3 className="text-lg font-extrabold text-text-primary font-outfit">Project Performance & Delivery Status</h3>
+              <p className="text-sm font-medium text-text-secondary mt-1">Monitor delivery speed, completion rate, and delayed milestones across active projects.</p>
             </div>
-            <span className="text-xs font-extrabold text-accent-blue bg-accent-blue/10 px-3 py-1.5 rounded-xl">
+            <span className="text-[11px] font-extrabold text-accent-blue bg-accent-blue/10 border border-accent-blue/20 px-4 py-2 rounded-xl uppercase tracking-widest shadow-sm">
               {projectsPerformance?.length || 0} Total Projects
             </span>
           </div>
 
           {(!projectsPerformance || projectsPerformance.length === 0) ? (
-            <div className="bg-bg-card border border-white/5 rounded-2xl p-12 text-center text-sm text-text-secondary">
+            <div className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 rounded-3xl p-16 text-center text-sm font-medium text-text-secondary">
+              <FolderKanban size={48} className="mx-auto mb-4 opacity-20" />
               No projects initiated in this workspace yet.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projectsPerformance.map((proj) => (
-                <div key={proj._id} className="bg-bg-card border border-white/5 hover:border-white/15 transition-all duration-300 rounded-2xl p-6 shadow-soft flex flex-col justify-between group">
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-accent-blue/10 text-accent-blue flex items-center justify-center font-bold">
-                        <FolderKanban size={20} />
+                <div key={proj._id} className="bg-bg-secondary/60 backdrop-blur-xl border border-border/50 hover:border-accent-blue/30 transition-all duration-300 rounded-3xl p-6 shadow-[0_5px_30px_rgba(0,0,0,0.05)] hover:shadow-lg flex flex-col justify-between group transform hover:-translate-y-1 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-accent-blue/5 rounded-full blur-[40px] pointer-events-none group-hover:bg-accent-blue/10 transition-colors"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-blue/20 to-purple-500/20 text-accent-blue flex items-center justify-center font-bold shadow-sm group-hover:scale-110 transition-transform">
+                        <FolderKanban size={24} />
                       </div>
-                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${
-                        proj.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      <span className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest border shadow-sm ${
+                        proj.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-accent-blue/10 text-accent-blue border-accent-blue/20'
                       }`}>
                         {proj.status}
                       </span>
                     </div>
 
-                    <h4 className="text-lg font-bold text-text-primary mb-1 line-clamp-1 group-hover:text-accent-blue transition-colors font-outfit">
+                    <h4 className="text-xl font-extrabold text-text-primary mb-2 line-clamp-1 group-hover:text-accent-blue transition-colors font-outfit">
                       {proj.title}
                     </h4>
-                    <p className="text-xs text-text-secondary line-clamp-2 mb-6 h-8">
+                    <p className="text-sm font-medium text-text-secondary line-clamp-2 mb-8 h-10">
                       {proj.description || 'No detailed project specifications provided.'}
                     </p>
 
                     {/* Progress Bar */}
-                    <div className="space-y-2 mb-6">
-                      <div className="flex justify-between text-xs font-bold">
+                    <div className="space-y-3 mb-8 bg-bg-primary/50 p-4 rounded-2xl border border-border/50">
+                      <div className="flex justify-between text-[11px] font-extrabold uppercase tracking-widest">
                         <span className="text-text-secondary">Milestone Completion</span>
-                        <span className="text-text-primary">{proj.progress}%</span>
+                        <span className={proj.progress === 100 ? 'text-emerald-500' : 'text-text-primary'}>{proj.progress}%</span>
                       </div>
-                      <div className="h-2.5 w-full bg-bg-secondary rounded-full overflow-hidden p-0.5">
+                      <div className="h-3 w-full bg-bg-primary rounded-full overflow-hidden shadow-inner border border-border/30">
                         <div
                           style={{ width: `${proj.progress}%` }}
-                          className={`h-full rounded-full transition-all duration-500 ${proj.progress === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-accent-indigo to-accent-blue'}`}
+                          className={`h-full rounded-full transition-all duration-1000 shadow-sm ${proj.progress === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-accent-blue to-purple-500'}`}
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Footer Stats */}
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs font-semibold">
-                    <div className="flex items-center gap-1.5 text-text-secondary">
+                  <div className="pt-5 border-t border-border/50 flex items-center justify-between text-[11px] font-extrabold uppercase tracking-widest relative z-10">
+                    <div className="flex items-center gap-2 text-text-secondary bg-bg-primary px-3 py-1.5 rounded-lg border border-border/30 shadow-sm">
                       <CheckSquare size={14} className="text-emerald-500" />
                       <span>{proj.tasksDone} / {proj.tasksCount} Tasks Done</span>
                     </div>
 
                     {proj.overdue > 0 ? (
-                      <span className="text-rose-400 flex items-center gap-1 font-bold">
+                      <span className="text-rose-500 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
                         <AlertCircle size={14} /> {proj.overdue} Overdue
                       </span>
                     ) : (
-                      <span className="text-emerald-400 font-bold">On Schedule</span>
+                      <span className="text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg shadow-sm">On Schedule</span>
                     )}
                   </div>
                 </div>
@@ -647,7 +660,8 @@ const AnalyticsReports = () => {
           )}
         </div>
       )}
-
+        </div>
+      </div>
     </div>
   );
 };

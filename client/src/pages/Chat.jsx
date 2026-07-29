@@ -358,11 +358,16 @@ const Chat = () => {
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (
-    <div className="h-full flex font-sans border border-border rounded-2xl overflow-hidden shadow-sm bg-bg-secondary">
+    <div className="h-full flex font-sans border-none rounded-3xl overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.05)] bg-bg-primary relative">
+      {/* Abstract Background for entire chat app */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-accent-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+
       {/* Sidebar */}
-      <div className="w-64 bg-bg-primary border-r border-border flex flex-col">
-        <div className="h-16 flex items-center px-4 border-b border-border shadow-sm">
-          <h2 className="font-bold text-text-primary text-lg truncate">{workspace.name} Chat</h2>
+      <div className="w-72 bg-bg-secondary/40 backdrop-blur-3xl border-r border-border/40 flex flex-col z-10 relative">
+        <div className="h-[76px] flex items-center px-6 border-b border-border/40 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent-blue to-purple-500"></div>
+          <h2 className="font-extrabold text-text-primary text-xl truncate tracking-tight">{workspace.name}</h2>
         </div>
         
         <div className="flex-1 overflow-y-auto py-4">
@@ -380,15 +385,18 @@ const Chat = () => {
               <button 
                 key={channel._id}
                 onClick={() => { setActiveChannel(channel); setActiveDM(null); }}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all group relative overflow-hidden ${
                   activeChannel?._id === channel._id 
-                    ? 'bg-accent-blue/10 text-accent-blue font-medium' 
-                    : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                    ? 'bg-accent-blue text-white shadow-md' 
+                    : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
                 }`}
               >
-                <div className="flex items-center truncate">
-                  <Hash size={16} className="mr-2 opacity-70" />
-                  <span className="truncate">{channel.name}</span>
+                {activeChannel?._id === channel._id && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent pointer-events-none"></div>
+                )}
+                <div className="flex items-center truncate relative z-10">
+                  <Hash size={16} className={`mr-2.5 ${activeChannel?._id === channel._id ? 'text-white' : 'opacity-70 group-hover:text-accent-blue transition-colors'}`} />
+                  <span className="truncate font-semibold">{channel.name}</span>
                 </div>
                 {unreadCounts[channel._id] > 0 && activeChannel?._id !== channel._id && (
                   <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-zoom-in shadow-sm">
@@ -417,15 +425,23 @@ const Chat = () => {
                 <button 
                   key={member.user._id} 
                   onClick={() => handleDMClick(member.user)}
-                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors group ${
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all group relative overflow-hidden ${
                     isActiveDM
-                      ? 'bg-accent-blue/10 text-accent-blue font-medium' 
-                      : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                      ? 'bg-accent-blue text-white shadow-md' 
+                      : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
                   }`}
                 >
-                  <div className="flex items-center truncate">
-                    <div className={`h-2 w-2 rounded-full mr-2 ${isOnline ? 'bg-success shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'border border-border bg-border'}`}></div>
-                    <span className="truncate group-hover:font-medium mr-2">{member.user.name || member.user.email.split('@')[0]}</span>
+                  {isActiveDM && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent pointer-events-none"></div>
+                  )}
+                  <div className="flex items-center truncate relative z-10">
+                    <div className="relative mr-3">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${isActiveDM ? 'bg-white/20 text-white' : 'bg-bg-secondary border border-border text-text-primary group-hover:border-accent-blue/50'}`}>
+                        {member.user.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 ${isActiveDM ? 'border-accent-blue' : 'border-bg-primary'} ${isOnline ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'bg-border'}`}></div>
+                    </div>
+                    <span className="truncate font-semibold text-[13px]">{member.user.name || member.user.email.split('@')[0]}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     {unreadCount > 0 && !isActiveDM && (
@@ -450,25 +466,30 @@ const Chat = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-bg-secondary relative">
+      <div className="flex-1 flex flex-col bg-transparent relative z-10">
         {/* Chat Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-border shadow-sm z-10 bg-bg-secondary/90 backdrop-blur">
+        <div className="h-[76px] flex items-center justify-between px-8 border-b border-border/40 shadow-sm z-20 bg-bg-primary/60 backdrop-blur-xl">
           <div className="flex items-center">
-            <h3 className="font-bold text-text-primary flex items-center text-lg">
-              {activeChannel ? (
-                <Hash size={20} className="text-text-secondary mr-2" />
-              ) : (
-                <div className="h-6 w-6 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center mr-3 text-xs font-bold">
+            {activeChannel ? (
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-accent-blue to-purple-600 flex items-center justify-center text-white mr-4 shadow-md">
+                <Hash size={20} />
+              </div>
+            ) : (
+              <div className="relative mr-4">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 text-white flex items-center justify-center font-bold text-lg shadow-md">
                   {activeDM?.user?.name?.charAt(0) || '?'}
                 </div>
-              )}
+                <div className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-[2.5px] border-bg-primary ${onlineUsers.has(activeDM?.user?._id) ? 'bg-emerald-500' : 'bg-border'}`}></div>
+              </div>
+            )}
+            <h3 className="font-extrabold text-text-primary text-xl tracking-tight">
               {getChannelDisplayName(activeChannel, activeDM)}
             </h3>
           </div>
         </div>
         
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 custom-scrollbar bg-bg-secondary/20">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-text-secondary">
               <MessageSquare size={48} className="mb-4 opacity-20" />
@@ -534,10 +555,10 @@ const Chat = () => {
                         )}
 
                         {/* Message Bubble */}
-                        <div className={`relative min-w-[80px] max-w-[85%] shadow-sm flex flex-col ${
+                        <div className={`relative min-w-[80px] max-w-[85%] shadow-sm flex flex-col transition-all group-hover/msg:shadow-md ${
                           isMine 
-                            ? 'bg-[#d9fdd3] text-[#111b21] rounded-2xl rounded-tr-sm' 
-                            : 'bg-bg-primary text-text-primary rounded-2xl rounded-tl-sm border border-border/50'
+                            ? 'bg-gradient-to-br from-accent-blue/90 to-blue-600 text-white rounded-[20px] rounded-tr-[4px]' 
+                            : 'bg-bg-primary text-text-primary rounded-[20px] rounded-tl-[4px] border border-border/50'
                         }`}>
                           
                           {/* Attachment rendering */}
@@ -599,14 +620,14 @@ const Chat = () => {
                               </div>
 
                               {/* Timestamp and Read Receipt at bottom */}
-                              <div className="flex items-center justify-end space-x-1 text-[10.5px] text-black/50 -mt-3.5 ml-auto z-10 mr-1">
-                                {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
+                              <div className={`flex items-center justify-end space-x-1 text-[10px] -mt-3.5 ml-auto z-10 mr-1 ${isMine ? 'text-white/70' : 'text-text-secondary'}`}>
+                                {msg.isEdited && <span className="italic mr-1">edited</span>}
                                 <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 {isMine && (
                                   msg.readBy?.length > 0 || msg.isRead ? (
-                                    <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />
+                                    <CheckCheck size={14} strokeWidth={3} className="text-white ml-0.5" />
                                   ) : (
-                                    <Check size={16} strokeWidth={2.5} className="text-black/40 ml-0.5" />
+                                    <Check size={14} strokeWidth={3} className="text-white/50 ml-0.5" />
                                   )
                                 )}
                               </div>
@@ -623,16 +644,16 @@ const Chat = () => {
           <div ref={messagesEndRef} />
         </div>
         
-        {/* Message Input */}
-        <div className="p-4 bg-bg-secondary border-t border-border">
-          <form onSubmit={handleSendMessage} className="relative flex items-end">
+        {/* Message Input - Floating Pill Design */}
+        <div className="p-6 bg-transparent">
+          <form onSubmit={handleSendMessage} className="relative flex items-end bg-bg-primary border border-border/50 shadow-[0_5px_20px_rgba(0,0,0,0.05)] rounded-3xl overflow-hidden focus-within:shadow-[0_5px_25px_rgba(59,130,246,0.15)] focus-within:border-accent-blue/30 transition-all">
             
-            <div className="absolute left-2 bottom-2 flex items-center space-x-1 z-10">
+            <div className="absolute left-3 bottom-2 flex items-center space-x-1 z-10">
               <div className="relative">
                 <button 
                   type="button" 
                   onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
-                  className="p-1.5 text-text-secondary hover:text-accent-blue hover:bg-bg-primary rounded-lg transition-colors"
+                  className="p-2 text-text-secondary hover:text-white hover:bg-accent-blue rounded-full transition-all duration-300 transform hover:scale-110"
                 >
                   <Plus size={20} />
                 </button>
@@ -701,15 +722,15 @@ const Chat = () => {
                   handleSendMessage(e);
                 }
               }}
-              className="w-full bg-bg-primary border border-border rounded-xl pl-[5.5rem] pr-12 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors resize-none overflow-hidden"
-              style={{ minHeight: '46px', maxHeight: '120px' }}
+              className="w-full bg-transparent border-none pl-24 pr-16 py-4 text-[15px] text-text-primary focus:outline-none transition-colors resize-none overflow-y-auto custom-scrollbar leading-relaxed"
+              style={{ minHeight: '56px', maxHeight: '120px' }}
             />
             <button 
               type="submit" 
               disabled={!newMessage.trim()}
-              className="absolute right-3 bottom-3 text-white bg-accent-blue p-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:bg-text-secondary transition-colors"
+              className="absolute right-3 bottom-2.5 text-white bg-gradient-to-r from-accent-blue to-blue-600 p-2.5 rounded-full hover:shadow-lg disabled:opacity-50 disabled:bg-none disabled:bg-border transition-all duration-300 transform hover:scale-105 active:scale-95"
             >
-              <Send size={16} />
+              <Send size={18} className={!newMessage.trim() ? "translate-x-[-2px] translate-y-[2px]" : "translate-x-[1px] -translate-y-[1px]"} />
             </button>
           </form>
 
