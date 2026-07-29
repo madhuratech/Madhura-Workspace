@@ -2,7 +2,7 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
@@ -15,12 +15,8 @@ const Layout = () => {
   const toastTimerRef = React.useRef(null);
 
   // Base64 simple pop sound to avoid external dependencies
-  const popSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU' + 'A'.repeat(50)); // We will use a lightweight pop sound
-  // Note: For a real pop sound, it's better to use a tiny silent mp3/wav if base64 is too long, but we'll use a reliable HTML5 beep approach.
-
   const playNotificationSound = () => {
     try {
-      // Create a short beep using Web Audio API for a reliable, dependency-free notification sound
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
@@ -47,10 +43,8 @@ const Layout = () => {
     toastTimerRef.current = setTimeout(() => setToastNotif(null), 4000);
   };
 
-  // Show a toast when a new notification comes in
   React.useEffect(() => {
     if (notifications.length > 0 && !notifications[0].read) {
-      // Check if it was created in the last 5 seconds (roughly real-time)
       const diff = new Date() - new Date(notifications[0].createdAt);
       if (diff < 5000) {
         showToast(notifications[0].title, notifications[0].message);
@@ -58,7 +52,6 @@ const Layout = () => {
     }
   }, [notifications]);
 
-  // Show a toast when a new chat message comes in (redundant manual handlers removed, now driven purely by notifications array)
   React.useEffect(() => {
     if (socket && user) {
       const handleActivity = (msg) => {
@@ -93,255 +86,308 @@ const Layout = () => {
     setShowProfileMenu(false);
   };
 
+  const primaryNavItems = [
+    { icon: <LayoutDashboard size={22} />, label: 'Home', path: '/' },
+    { icon: <MessageSquare size={22} />, label: 'Chat', path: '/chat' },
+    { icon: <FolderKanban size={22} />, label: 'Projects', path: '/projects' },
+    { icon: <CheckSquare size={22} />, label: 'Tasks', path: '/my-tasks' },
+    { icon: <CalendarDays size={22} />, label: 'Calendar', path: '/meetings' },
+  ];
+
   return (
-    <div className="flex h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
-      {/* Sidebar */}
-      <aside className="w-[260px] bg-bg-sidebar text-text-sidebar hidden md:flex flex-col z-20 shadow-2xl transition-all duration-300">
-        <div className="p-6 flex items-center space-x-3 border-b border-white/5">
-          <div className="h-10 w-10 bg-gradient-to-br from-accent-blue to-accent-indigo rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+    <div className="flex flex-col h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
+      
+      {/* Global Top Bar */}
+      <header className="h-14 bg-bg-sidebar border-b border-border flex items-center justify-between px-4 z-40 shrink-0 text-white shadow-md">
+        {/* Logo area */}
+        <div className="flex items-center space-x-3 w-[240px]">
+          <div className="h-8 w-8 bg-gradient-to-br from-accent-blue to-accent-indigo rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
             M
           </div>
-          <h2 className="text-xl font-bold text-white tracking-wide font-outfit">MadhuraWS</h2>
+          <h2 className="text-lg font-bold text-white tracking-wide font-outfit">MadhuraWS</h2>
         </div>
-        
-        <nav className="flex-1 px-4 space-y-1.5 mt-6 overflow-y-auto custom-scrollbar">
-          <p className="text-[0.65rem] font-bold text-text-sidebar/50 uppercase tracking-wider mb-3 mt-4 px-3 font-outfit">Main</p>
-          <Link to="/" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname === '/' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <LayoutDashboard size={18} className={`${location.pathname === '/' ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Dashboard</span>
-          </Link>
-          { (user?.role === 'super_admin' || user?.role === 'hr') && (
-            <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname === '/analytics' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-              <BarChart3 size={18} className={`${location.pathname === '/analytics' ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-              <span className="text-sm">Analytics & Reports</span>
-            </Link>
-          )}
-          {user?.role === 'super_admin' && (
-            <Link to="/team" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/team') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-              <Users size={18} className={`${location.pathname.startsWith('/team') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-              <span className="text-sm">Team Management</span>
-            </Link>
-          )}
-          {user?.role === 'team_leader' && (
-            <Link to="/tl-dashboard" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/tl-dashboard') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-              <BarChart3 size={18} className={`${location.pathname.startsWith('/tl-dashboard') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-              <span className="text-sm">TL Overview</span>
-            </Link>
-          )}
-          <Link to="/projects" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/project') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <FolderKanban size={18} className={`${location.pathname.startsWith('/project') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Projects</span>
-          </Link>
-          <Link to="/my-tasks" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/my-tasks') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <CheckSquare size={18} className={`${location.pathname.startsWith('/my-tasks') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">My Tasks</span>
-          </Link>
-          <Link to="/chat" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/chat') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <Mail size={18} className={`${location.pathname.startsWith('/chat') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Chat & Comms</span>
-          </Link>
-          <Link to="/attendance" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/attendance') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <Clock size={18} className={`${location.pathname.startsWith('/attendance') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Attendance</span>
-          </Link>
-          <Link to="/meetings" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/meeting') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <CalendarDays size={18} className={`${location.pathname.startsWith('/meeting') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Meetings</span>
-          </Link>
-          <Link to="/email" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/email') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <Mail size={18} className={`${location.pathname.startsWith('/email') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Email</span>
-          </Link>
-          <Link to="/documents" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/document') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-            <FileText size={18} className={`${location.pathname.startsWith('/document') ? 'text-accent-blue' : 'group-hover:text-accent-blue transition-colors'}`} />
-            <span className="text-sm">Documents</span>
-          </Link>
-        </nav>
 
-        {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
-          <div className="p-4 border-t border-white/5">
-            <Link to="/settings" className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-300 group ${location.pathname.startsWith('/settings') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-sidebar/80 hover:bg-bg-sidebar-hover hover:text-white font-medium'}`}>
-              <Settings size={18} className={`group-hover:rotate-90 transition-transform duration-300 ${location.pathname.startsWith('/settings') ? 'text-accent-blue' : 'group-hover:text-accent-blue'}`} />
-              <span className="text-sm">Settings</span>
-            </Link>
+        {/* Global Search */}
+        <div className="flex-1 max-w-xl mx-4 relative hidden sm:block">
+          <div className="w-full bg-white/10 hover:bg-white/20 transition-colors border border-white/10 rounded-md h-8 flex items-center px-3 cursor-pointer shadow-inner">
+            <Search size={14} className="text-white/70 mr-2" />
+            <span className="text-xs text-white/70">Search across workspace...</span>
           </div>
-        )}
-        <div className="p-4">
-          <button 
-            onClick={handleLogout}
-            className="flex items-center space-x-3 px-3 py-2.5 w-full text-left text-danger hover:bg-danger/10 rounded-lg transition-colors font-medium"
-          >
-            <LogOut size={18} />
-            <span className="text-sm">Logout</span>
+        </div>
+
+        {/* Profile & Notifications */}
+        <div className="flex items-center space-x-4 ml-auto">
+          <button onClick={toggleTheme} className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white">
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-bg-primary relative">
-        {/* Floating Top Navbar */}
-        <header className="mx-6 mt-6 h-16 glass rounded-2xl flex items-center justify-between px-6 z-40 relative shrink-0 shadow-soft">
-          <div className="flex-1">
-            <p className="text-xs text-text-secondary font-medium uppercase tracking-wider">Welcome back,</p>
-            <p className="text-sm font-bold text-text-primary font-outfit">{user?.name || 'User'}</p>
-          </div>
           
-          <div className="flex items-center space-x-4 text-text-secondary">
-            <button onClick={toggleTheme} className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          <div className="relative">
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white relative"
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 h-2 w-2 bg-danger rounded-full border-2 border-bg-sidebar"></span>
+              )}
             </button>
-            <div className="relative">
-              <button 
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors relative"
-              >
-                <Bell size={18} />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-danger rounded-full border-2 border-bg-secondary">
-                  </span>
-                )}
-              </button>
 
-              {/* Notification Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-3 w-80 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 flex flex-col max-h-[400px]">
-                  <div className="p-3 border-b border-border flex justify-between items-center bg-bg-secondary rounded-t-xl shrink-0">
-                    <h3 className="font-bold text-text-primary text-sm">Notifications</h3>
-                    <div className="flex space-x-3">
-                      {unreadCount > 0 && (
-                        <button 
-                          onClick={markAllAsRead}
-                          className="text-[10px] text-accent-blue font-semibold hover:underline"
-                        >
-                          Mark all as read
-                        </button>
-                      )}
-                      {notifications.length > 0 && (
-                        <button 
-                          onClick={deleteAllNotifications}
-                          className="text-[10px] text-danger font-semibold hover:underline"
-                        >
-                          Clear all
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar bg-bg-secondary rounded-b-xl">
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-text-secondary text-sm">
-                        No notifications yet.
-                      </div>
-                    ) : (
-                      notifications.map(notif => (
-                        <div 
-                          key={notif._id} 
-                          className={`p-3 rounded-lg text-left transition-colors flex items-start space-x-3 relative group ${
-                            notif.read ? 'bg-transparent hover:bg-bg-primary' : 'bg-accent-blue/5 border border-accent-blue/10 hover:bg-accent-blue/10'
-                          }`}
-                        >
-                          <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${notif.read ? 'bg-transparent' : 'bg-accent-blue'}`}></div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm ${notif.read ? 'text-text-primary' : 'text-text-primary font-bold'}`}>{notif.title}</p>
-                            <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{notif.message}</p>
-                            <p className="text-[10px] text-text-secondary mt-1 opacity-70">
-                              {new Date(notif.createdAt).toLocaleDateString()} {new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            </p>
-                          </div>
-                          {!notif.read && (
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                markAsRead(notif._id);
-                              }}
-                              className="text-xs text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity hover:text-accent-blue absolute right-2 top-2 bg-bg-secondary px-2 rounded-md shadow-sm"
-                            >
-                              Read
-                            </button>
-                          )}
-                        </div>
-                      ))
+            {/* Notification Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 mt-3 w-80 bg-bg-secondary border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[400px]">
+                <div className="p-3 border-b border-border flex justify-between items-center bg-bg-secondary rounded-t-xl shrink-0">
+                  <h3 className="font-bold text-text-primary text-sm">Notifications</h3>
+                  <div className="flex space-x-3">
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={markAllAsRead}
+                        className="text-[10px] text-accent-blue font-semibold hover:underline"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button 
+                        onClick={deleteAllNotifications}
+                        className="text-[10px] text-danger font-semibold hover:underline"
+                      >
+                        Clear all
+                      </button>
                     )}
                   </div>
                 </div>
-              )}
-            </div>
-            <button className="hover:text-text-primary transition-colors"><Mail size={18} /></button>
-            <div className="relative ml-2">
-              <button 
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="relative flex items-center justify-center focus:outline-none"
-              >
-                <div className="h-9 w-9 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-sm shadow-sm border border-accent-blue/20 hover:bg-accent-blue/20 transition-colors">
-                  {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
-                </div>
-                <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-bg-secondary ${getStatusColor(user?.presenceStatus)}`}></div>
-              </button>
-
-              {/* Profile Dropdown */}
-              {showProfileMenu && (
-                <div className="absolute right-0 mt-3 w-64 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 overflow-hidden">
-                  <div className="p-4 border-b border-border bg-bg-primary/30 flex flex-col items-center">
-                    <div className="relative mb-2">
-                      <div className="h-16 w-16 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-2xl shadow-sm border-2 border-accent-blue/20">
-                        {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
-                      </div>
-                      <div className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-bg-primary ${getStatusColor(user?.presenceStatus)}`}></div>
+                <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar bg-bg-secondary rounded-b-xl">
+                  {notifications.length === 0 ? (
+                    <div className="p-4 text-center text-text-secondary text-sm">
+                      No notifications yet.
                     </div>
-                    <h3 className="font-bold text-text-primary text-base font-outfit">{user?.name}</h3>
-                    <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mt-0.5">{user?.role?.replace('_', ' ')}</p>
-                  </div>
-                  
-                  <div className="p-2">
-                    <p className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Set Status</p>
-                    {['Active', 'Busy', 'Break', 'Away'].map(status => (
-                      <button 
-                        key={status}
-                        onClick={() => handleStatusChange(status)}
-                        className="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-bg-primary rounded-lg flex items-center space-x-3 transition-colors"
+                  ) : (
+                    notifications.map(notif => (
+                      <div 
+                        key={notif._id} 
+                        className={`p-3 rounded-lg text-left transition-colors flex items-start space-x-3 relative group ${
+                          notif.read ? 'bg-transparent hover:bg-bg-primary' : 'bg-accent-blue/5 border border-accent-blue/10 hover:bg-accent-blue/10'
+                        }`}
                       >
-                        <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)}`}></div>
-                        <span className={user?.presenceStatus === status ? 'font-bold' : 'font-medium'}>{status}</span>
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <div className="p-2 border-t border-border">
-                    <button 
-                      onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg flex items-center space-x-3 transition-colors font-medium"
-                    >
-                      <LogOut size={16} />
-                      <span>Logout</span>
-                    </button>
-                  </div>
+                        <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${notif.read ? 'bg-transparent' : 'bg-accent-blue'}`}></div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm ${notif.read ? 'text-text-primary' : 'text-text-primary font-bold'}`}>{notif.title}</p>
+                          <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{notif.message}</p>
+                          <p className="text-[10px] text-text-secondary mt-1 opacity-70">
+                            {new Date(notif.createdAt).toLocaleDateString()} {new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </p>
+                        </div>
+                        {!notif.read && (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notif._id);
+                            }}
+                            className="text-xs text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity hover:text-accent-blue absolute right-2 top-2 bg-bg-secondary px-2 rounded-md shadow-sm"
+                          >
+                            Read
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        </header>
+
+          <div className="relative">
+            <button 
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="relative flex items-center justify-center focus:outline-none ml-2"
+            >
+              <div className="h-8 w-8 rounded-full bg-accent-blue/80 flex items-center justify-center text-white font-bold text-xs shadow-sm border border-white/20 hover:bg-accent-blue transition-colors">
+                {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
+              </div>
+              <div className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-bg-sidebar ${getStatusColor(user?.presenceStatus)}`}></div>
+            </button>
+
+            {/* Profile Dropdown */}
+            {showProfileMenu && (
+              <div className="absolute right-0 mt-3 w-64 bg-bg-secondary border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div className="p-4 border-b border-border bg-bg-primary/30 flex flex-col items-center text-text-primary">
+                  <div className="relative mb-2">
+                    <div className="h-16 w-16 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-2xl shadow-sm border-2 border-accent-blue/20">
+                      {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
+                    </div>
+                    <div className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-bg-primary ${getStatusColor(user?.presenceStatus)}`}></div>
+                  </div>
+                  <h3 className="font-bold text-base font-outfit">{user?.name}</h3>
+                  <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mt-0.5">{user?.role?.replace('_', ' ')}</p>
+                </div>
+                
+                <div className="p-2 text-text-primary">
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Set Status</p>
+                  {['Active', 'Busy', 'Break', 'Away'].map(status => (
+                    <button 
+                      key={status}
+                      onClick={() => handleStatusChange(status)}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-bg-primary rounded-lg flex items-center space-x-3 transition-colors"
+                    >
+                      <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)}`}></div>
+                      <span className={user?.presenceStatus === status ? 'font-bold' : 'font-medium'}>{status}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="p-2 border-t border-border">
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg flex items-center space-x-3 transition-colors font-medium"
+                  >
+                    <LogOut size={16} />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Area with Sidebars */}
+      <div className="flex flex-1 overflow-hidden">
+        
+        {/* Primary Sidebar (Activity Bar) */}
+        <aside className="w-[68px] bg-bg-sidebar border-r border-border flex flex-col items-center py-4 z-20 shrink-0 shadow-sm transition-all">
+          <div className="flex-1 flex flex-col space-y-4 w-full px-2">
+            {primaryNavItems.map((item) => {
+              const isActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path);
+              return (
+                <Link 
+                  key={item.label}
+                  to={item.path} 
+                  className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 group relative ${
+                    isActive 
+                      ? 'text-white' 
+                      : 'text-text-sidebar/70 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-blue rounded-r-full"></div>
+                  )}
+                  <div className={`mb-1 ${isActive ? 'text-accent-blue' : ''}`}>{item.icon}</div>
+                  <span className="text-[10px] font-medium">{item.label}</span>
+                </Link>
+              )
+            })}
+          </div>
+
+          <div className="w-full px-2 pt-4 border-t border-white/10 flex flex-col space-y-4 mt-auto">
+            <Link 
+              to="/settings" 
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 group ${
+                location.pathname.startsWith('/settings') 
+                  ? 'text-white' 
+                  : 'text-text-sidebar/70 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Settings size={22} className={`${location.pathname.startsWith('/settings') ? 'text-accent-blue' : ''}`} />
+              <span className="text-[10px] font-medium mt-1">Settings</span>
+            </Link>
+          </div>
+        </aside>
+
+        {/* Secondary Sidebar (Context Menu) */}
+        <aside className="w-[240px] bg-bg-secondary border-r border-border hidden md:flex flex-col z-10 shrink-0">
+          <div className="p-4 border-b border-border/50">
+            <h2 className="font-bold text-text-primary text-sm tracking-wide font-outfit uppercase">Navigation</h2>
+          </div>
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
+            
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-3">Overview</p>
+            <Link to="/" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <LayoutDashboard size={16} />
+              <span>Dashboard</span>
+            </Link>
+            
+            { (user?.role === 'super_admin' || user?.role === 'hr') && (
+              <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/analytics' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                <BarChart3 size={16} />
+                <span>Analytics & Reports</span>
+              </Link>
+            )}
+
+            <div className="h-px bg-border my-3 mx-2"></div>
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-3">Workspace</p>
+            
+            {user?.role === 'super_admin' && (
+              <Link to="/team" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/team') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                <Users size={16} />
+                <span>Team Management</span>
+              </Link>
+            )}
+            {user?.role === 'team_leader' && (
+              <Link to="/tl-dashboard" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/tl-dashboard') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                <BarChart3 size={16} />
+                <span>TL Overview</span>
+              </Link>
+            )}
+            <Link to="/projects" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/project') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <FolderKanban size={16} />
+              <span>Projects</span>
+            </Link>
+            <Link to="/my-tasks" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/my-tasks') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <CheckSquare size={16} />
+              <span>My Tasks</span>
+            </Link>
+
+            <div className="h-px bg-border my-3 mx-2"></div>
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-3">Apps & Comms</p>
+            
+            <Link to="/chat" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/chat') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <MessageSquare size={16} />
+              <span>Chat</span>
+            </Link>
+            <Link to="/attendance" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/attendance') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <Clock size={16} />
+              <span>Attendance</span>
+            </Link>
+            <Link to="/meetings" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/meeting') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <CalendarDays size={16} />
+              <span>Meetings</span>
+            </Link>
+            <Link to="/email" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/email') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <Mail size={16} />
+              <span>Email</span>
+            </Link>
+            <Link to="/documents" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/document') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <FileText size={16} />
+              <span>Documents</span>
+            </Link>
+          </nav>
+        </aside>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-6 relative">
-          <Outlet />
-        </div>
-
-        {/* Real-time Toast Popup */}
-        {toastNotif && (
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-bg-secondary border border-border shadow-2xl rounded-xl p-4 pr-10 min-w-[300px] animate-bounce-in z-50">
-            <div className="flex items-center space-x-3 mb-1">
-              <div className="h-2 w-2 rounded-full bg-accent-blue"></div>
-              <h4 className="font-bold text-text-primary text-sm">{toastNotif.title}</h4>
-            </div>
-            <p className="text-xs text-text-secondary line-clamp-2 ml-5">{toastNotif.message}</p>
-            <button 
-              onClick={() => setToastNotif(null)}
-              className="absolute top-2 right-2 text-text-secondary hover:text-text-primary"
-            >
-              &times;
-            </button>
+        <main className="flex-1 overflow-hidden bg-bg-primary relative flex flex-col rounded-tl-xl sm:rounded-tl-2xl shadow-[inset_0_4px_6px_rgba(0,0,0,0.02)] border-l border-t border-border/50 sm:mt-1 sm:ml-1 transition-all">
+          <div className="flex-1 overflow-auto p-4 md:p-8">
+            <Outlet />
           </div>
-        )}
-      </main>
+
+          {/* Real-time Toast Popup */}
+          {toastNotif && (
+            <div className="absolute bottom-6 right-6 bg-bg-secondary border border-border shadow-2xl rounded-xl p-4 pr-10 min-w-[300px] animate-bounce-in z-50">
+              <div className="flex items-center space-x-3 mb-1">
+                <div className="h-2 w-2 rounded-full bg-accent-blue"></div>
+                <h4 className="font-bold text-text-primary text-sm">{toastNotif.title}</h4>
+              </div>
+              <p className="text-xs text-text-secondary line-clamp-2 ml-5">{toastNotif.message}</p>
+              <button 
+                onClick={() => setToastNotif(null)}
+                className="absolute top-2 right-2 text-text-secondary hover:text-text-primary"
+              >
+                &times;
+              </button>
+            </div>
+          )}
+        </main>
+
+      </div>
     </div>
   );
 };
