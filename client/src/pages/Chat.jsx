@@ -90,7 +90,7 @@ const Chat = () => {
       socket.on('messages_read', ({ channelId, userId }) => {
         if (activeChannel && String(channelId) === String(activeChannel._id)) {
           setMessages((prev) => prev.map(m => {
-            if (String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+            if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
               return { ...m, readBy: [...(m.readBy || []), userId] };
             }
             return m;
@@ -101,7 +101,7 @@ const Chat = () => {
       socket.on('dm_messages_read', ({ dmId, userId }) => {
         if (activeDM && String(dmId) === String(activeDM.dmId)) {
           setMessages((prev) => prev.map(m => {
-            if (String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+            if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
               return { ...m, readBy: [...(m.readBy || []), userId] };
             }
             return m;
@@ -145,7 +145,7 @@ const Chat = () => {
     
     // Mark messages as read when viewing them
     if (messages.length > 0 && workspace) {
-      const hasUnread = messages.some(m => String(m.sender._id || m.sender) !== String(user._id) && (!m.readBy || !m.readBy.includes(user._id)));
+      const hasUnread = messages.some(m => m.sender && String(m.sender._id || m.sender) !== String(user?._id) && (!m.readBy || !m.readBy.includes(user?._id)));
       if (hasUnread) {
         if (activeChannel) {
           axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/mark-read`).catch(console.error);
@@ -156,7 +156,7 @@ const Chat = () => {
         }
       }
     }
-  }, [messages, workspace, activeChannel, activeDM, user._id]);
+  }, [messages, workspace, activeChannel, activeDM, user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -476,8 +476,8 @@ const Chat = () => {
             </div>
           ) : (
             messages.map((msg, idx) => {
-              const isMine = user?._id === msg.sender._id;
-              const showHeader = idx === 0 || messages[idx - 1].sender._id !== msg.sender._id;
+              const isMine = user?._id === msg.sender?._id;
+              const showHeader = idx === 0 || messages[idx - 1].sender?._id !== msg.sender?._id;
               
               return (
                 <div key={msg._id} className={`flex w-full mb-2 ${isMine ? 'justify-end' : 'justify-start'}`}>
