@@ -90,8 +90,39 @@ const updateDocument = async (req, res) => {
   }
 };
 
+// @desc    Delete document
+// @route   DELETE /api/documents/:id
+// @access  Private
+const deleteDocument = async (req, res) => {
+  try {
+    const document = await Document.findById(req.params.id);
+    
+    if (!document) {
+       return res.status(404).json({ message: 'Document not found' });
+    }
+    
+    // Authorization check
+    if (req.user.role !== 'super_admin' && req.user.role !== 'hr') {
+       if (document.author.toString() !== req.user._id.toString()) {
+           return res.status(403).json({ message: 'Not authorized to delete this document' });
+       }
+    }
+    
+    await document.deleteOne();
+    
+    if(req.io) {
+      req.io.emit('documentDeleted', req.params.id);
+    }
+    
+    res.status(200).json({ id: req.params.id });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getDocuments,
   createDocument,
-  updateDocument
+  updateDocument,
+  deleteDocument
 };
