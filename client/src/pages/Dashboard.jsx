@@ -15,6 +15,9 @@ const Dashboard = () => {
   const [editingWorkspace, setEditingWorkspace] = useState(null);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [stats, setStats] = useState({ projects: 0, tasks: 0, members: 0, meetings: 0 });
+  const [myTasks, setMyTasks] = useState([]);
+  const [upNext, setUpNext] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
 
@@ -38,11 +41,42 @@ const Dashboard = () => {
           axios.get('/tasks').catch(() => ({ data: [] })),
           axios.get('/meetings').catch(() => ({ data: [] }))
         ]);
+        
+        const tasks = tasksRes.data || [];
+        const meetings = meetingsRes.data || [];
+        
+        setMyTasks(tasks);
+        setUpNext(meetings);
+        
+        // Generate activity feed from tasks and meetings
+        const recentActivities = [
+          ...tasks.slice(0, 3).map(t => ({
+            id: `task-${t._id}`,
+            type: 'task',
+            title: `Task update: ${t.title}`,
+            time: new Date(t.createdAt || Date.now()),
+            icon: <CheckCircle2 size={14} />,
+            color: 'text-success',
+            bg: 'bg-success/10'
+          })),
+          ...meetings.slice(0, 3).map(m => ({
+            id: `meeting-${m._id}`,
+            type: 'meeting',
+            title: `Meeting scheduled: ${m.title}`,
+            time: new Date(m.createdAt || m.date || Date.now()),
+            icon: <CalendarDays size={14} />,
+            color: 'text-orange-500',
+            bg: 'bg-orange-500/10'
+          }))
+        ].sort((a, b) => b.time - a.time).slice(0, 5);
+        
+        setActivities(recentActivities);
+
         setStats({
           projects: projectsRes.data.length || 0,
-          tasks: tasksRes.data.length || 0,
+          tasks: tasks.length || 0,
           members: ws.members?.length || 1,
-          meetings: meetingsRes.data.length || 0
+          meetings: meetings.length || 0
         });
       }
     } catch (error) {
@@ -238,44 +272,26 @@ const Dashboard = () => {
               </div>
               
               <div className="space-y-6">
-                {/* Placeholder Activity Items */}
-                <div className="flex space-x-4 relative">
-                  <div className="h-8 w-8 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center shrink-0 z-10">
-                    <MessageSquare size={14} />
-                  </div>
-                  <div className="absolute left-4 top-8 bottom-[-24px] w-px bg-border z-0"></div>
-                  <div>
-                    <p className="text-sm text-text-primary">
-                      <span className="font-bold">System</span> posted a new announcement in <span className="font-bold text-accent-blue cursor-pointer">General</span>
-                    </p>
-                    <p className="text-xs text-text-secondary mt-1">2 hours ago</p>
-                  </div>
-                </div>
-                
-                <div className="flex space-x-4 relative">
-                  <div className="h-8 w-8 rounded-full bg-success/10 text-success flex items-center justify-center shrink-0 z-10">
-                    <CheckCircle2 size={14} />
-                  </div>
-                  <div className="absolute left-4 top-8 bottom-[-24px] w-px bg-border z-0"></div>
-                  <div>
-                    <p className="text-sm text-text-primary">
-                      You completed the task <span className="font-bold text-text-primary">Update Dashboard UI</span>
-                    </p>
-                    <p className="text-xs text-text-secondary mt-1">Yesterday at 4:30 PM</p>
-                  </div>
-                </div>
-
-                <div className="flex space-x-4 relative">
-                  <div className="h-8 w-8 rounded-full bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0 z-10">
-                    <CalendarDays size={14} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-text-primary">
-                      Meeting <span className="font-bold text-text-primary">Weekly Sync</span> scheduled
-                    </p>
-                    <p className="text-xs text-text-secondary mt-1">Oct 12, 10:00 AM</p>
-                  </div>
-                </div>
+                {activities.length === 0 ? (
+                  <p className="text-sm text-text-secondary text-center py-4">No recent activity.</p>
+                ) : (
+                  activities.map((act, i) => (
+                    <div key={act.id} className="flex space-x-4 relative">
+                      <div className={`h-8 w-8 rounded-full ${act.bg} ${act.color} flex items-center justify-center shrink-0 z-10`}>
+                        {act.icon}
+                      </div>
+                      {i !== activities.length - 1 && (
+                        <div className="absolute left-4 top-8 bottom-[-24px] w-px bg-border z-0"></div>
+                      )}
+                      <div>
+                        <p className="text-sm text-text-primary">
+                          {act.title}
+                        </p>
+                        <p className="text-xs text-text-secondary mt-1">{act.time.toLocaleDateString()} at {act.time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -292,30 +308,26 @@ const Dashboard = () => {
               </h2>
               
               <div className="space-y-3">
-                <div className="p-3 border border-border/50 rounded-xl bg-bg-primary hover:border-accent-blue/30 transition-colors cursor-pointer">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="text-sm font-bold text-text-primary">Design Review</h4>
-                    <span className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded">10:30 AM</span>
-                  </div>
-                  <p className="text-xs text-text-secondary flex items-center">
-                    <Users size={12} className="mr-1"/> 4 attendees
-                  </p>
-                </div>
-                
-                <div className="p-3 border border-border/50 rounded-xl bg-bg-primary hover:border-accent-blue/30 transition-colors cursor-pointer">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="text-sm font-bold text-text-primary">Client Sync</h4>
-                    <span className="text-[10px] font-bold text-text-secondary bg-bg-secondary px-2 py-0.5 rounded">2:00 PM</span>
-                  </div>
-                  <p className="text-xs text-text-secondary flex items-center">
-                    <Users size={12} className="mr-1"/> 2 attendees
-                  </p>
-                </div>
+                {upNext.length === 0 ? (
+                  <p className="text-xs text-text-secondary text-center py-2">No upcoming meetings.</p>
+                ) : (
+                  upNext.slice(0, 3).map((meeting, i) => (
+                    <div key={meeting._id || i} className="p-3 border border-border/50 rounded-xl bg-bg-primary hover:border-accent-blue/30 transition-colors cursor-pointer" onClick={() => window.location.href = '/meetings'}>
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="text-sm font-bold text-text-primary truncate pr-2">{meeting.title}</h4>
+                        <span className="text-[10px] font-bold text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded whitespace-nowrap">{meeting.startTime || '10:00 AM'}</span>
+                      </div>
+                      <p className="text-xs text-text-secondary flex items-center">
+                        <Users size={12} className="mr-1"/> {meeting.participants?.length || 2} attendees
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
               
-              <button className="w-full mt-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary border border-border/50 rounded-lg hover:bg-bg-primary transition-colors">
+              <Link to="/meetings" className="block text-center w-full mt-4 py-2 text-xs font-medium text-text-secondary hover:text-text-primary border border-border/50 rounded-lg hover:bg-bg-primary transition-colors">
                 View Calendar
-              </button>
+              </Link>
             </div>
 
             {/* My Tasks Snapshot */}
@@ -326,21 +338,29 @@ const Dashboard = () => {
               </h2>
               
               <div className="space-y-2">
-                {[
-                  { title: 'Update dependencies', priority: 'High', color: 'text-danger', bg: 'bg-danger/10' },
-                  { title: 'Write documentation', priority: 'Medium', color: 'text-warning', bg: 'bg-warning/10' },
-                  { title: 'Review PR #42', priority: 'Low', color: 'text-success', bg: 'bg-success/10' }
-                ].map((task, i) => (
-                  <div key={i} className="flex items-center space-x-3 p-2 hover:bg-bg-primary rounded-lg cursor-pointer transition-colors group">
-                    <div className="h-4 w-4 rounded border border-border group-hover:border-accent-blue flex-shrink-0"></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-text-primary truncate">{task.title}</p>
-                    </div>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${task.bg} ${task.color}`}>
-                      {task.priority}
-                    </span>
-                  </div>
-                ))}
+                {myTasks.length === 0 ? (
+                  <p className="text-xs text-text-secondary text-center py-2">No tasks assigned.</p>
+                ) : (
+                  myTasks.slice(0, 4).map((task, i) => {
+                    const isHigh = task.priority === 'high' || task.priority === 'High';
+                    const isMed = task.priority === 'medium' || task.priority === 'Medium';
+                    const bg = isHigh ? 'bg-danger/10' : isMed ? 'bg-warning/10' : 'bg-success/10';
+                    const color = isHigh ? 'text-danger' : isMed ? 'text-warning' : 'text-success';
+                    return (
+                      <div key={task._id || i} className="flex items-center space-x-3 p-2 hover:bg-bg-primary rounded-lg cursor-pointer transition-colors group" onClick={() => window.location.href = '/tasks'}>
+                        <div className="h-4 w-4 rounded border border-border group-hover:border-accent-blue flex-shrink-0 flex items-center justify-center">
+                          {task.status === 'completed' && <CheckSquare size={12} className="text-accent-blue" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm text-text-primary truncate ${task.status === 'completed' ? 'line-through opacity-60' : ''}`}>{task.title}</p>
+                        </div>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${bg} ${color}`}>
+                          {task.priority || 'Low'}
+                        </span>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </div>
 

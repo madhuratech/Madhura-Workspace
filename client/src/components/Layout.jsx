@@ -109,10 +109,21 @@ const Layout = () => {
 
         {/* Global Search */}
         <div className="flex-1 max-w-xl mx-4 relative hidden sm:block">
-          <div className="w-full bg-white/10 hover:bg-white/20 transition-colors border border-white/10 rounded-md h-8 flex items-center px-3 cursor-pointer shadow-inner">
-            <Search size={14} className="text-white/70 mr-2" />
-            <span className="text-xs text-white/70">Search across workspace...</span>
-          </div>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              showToast('Global search is coming in the next update!', 'info');
+              e.target.reset();
+            }}
+            className="w-full bg-white/10 focus-within:bg-white/20 transition-colors border border-white/10 focus-within:border-white/30 rounded-md h-8 flex items-center px-3 cursor-text shadow-inner"
+          >
+            <Search size={14} className="text-white/70 mr-2 shrink-0" />
+            <input 
+              type="text"
+              placeholder="Search across workspace..."
+              className="w-full bg-transparent border-none outline-none text-xs text-white placeholder-white/50"
+            />
+          </form>
         </div>
 
         {/* Profile & Notifications */}
@@ -360,6 +371,15 @@ const Layout = () => {
               <FileText size={16} />
               <span>Documents</span>
             </Link>
+            <div className="h-px bg-border my-3 mx-2"></div>
+            
+            <button 
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm text-danger/80 hover:bg-danger/10 hover:text-danger mt-auto"
+            >
+              <LogOut size={16} />
+              <span>Log out</span>
+            </button>
           </nav>
         </aside>
 
