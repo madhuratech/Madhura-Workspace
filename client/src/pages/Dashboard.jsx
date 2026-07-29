@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
-import { Plus, Briefcase, CheckCircle2, Users, CalendarDays, Activity, MoreHorizontal, ArrowRight, MessageSquare, Clock } from 'lucide-react';
+import { Plus, Briefcase, CheckCircle2, Users, CalendarDays, Activity, MoreHorizontal, ArrowRight, MessageSquare, Clock, CheckSquare } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
