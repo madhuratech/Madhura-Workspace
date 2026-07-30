@@ -176,17 +176,17 @@ const Projects = () => {
 
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
-          <div className="p-2 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={20} /></div>
-          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Total Projects</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.length}</p></div>
+        <div className="bg-bg-secondary border border-border rounded-xl p-3 flex items-center space-x-3 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-1.5 bg-accent-blue/10 rounded-lg text-accent-blue"><FolderKanban size={16} /></div>
+          <div><p className="text-[9px] font-bold text-text-secondary uppercase tracking-wider mb-0">Total Projects</p><p className="text-xl font-bold text-text-primary font-outfit leading-none mt-0.5">{projects.length}</p></div>
         </div>
-        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
-          <div className="p-2 bg-success/10 rounded-xl text-success"><CheckCircle2 size={20} /></div>
-          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Completed</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Completed').length}</p></div>
+        <div className="bg-bg-secondary border border-border rounded-xl p-3 flex items-center space-x-3 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-1.5 bg-success/10 rounded-lg text-success"><CheckCircle2 size={16} /></div>
+          <div><p className="text-[9px] font-bold text-text-secondary uppercase tracking-wider mb-0">Completed</p><p className="text-xl font-bold text-text-primary font-outfit leading-none mt-0.5">{projects.filter(p => p.status === 'Completed').length}</p></div>
         </div>
-        <div className="bg-bg-secondary border border-border rounded-2xl p-4 flex items-center space-x-4 shadow-soft hover:shadow-hover transition-all">
-          <div className="p-2 bg-orange-500/10 rounded-xl text-orange-500"><Clock size={20} /></div>
-          <div><p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Active Now</p><p className="text-2xl font-bold text-text-primary font-outfit leading-none">{projects.filter(p => p.status === 'Active').length}</p></div>
+        <div className="bg-bg-secondary border border-border rounded-xl p-3 flex items-center space-x-3 shadow-soft hover:shadow-hover transition-all">
+          <div className="p-1.5 bg-orange-500/10 rounded-lg text-orange-500"><Clock size={16} /></div>
+          <div><p className="text-[9px] font-bold text-text-secondary uppercase tracking-wider mb-0">Active Now</p><p className="text-xl font-bold text-text-primary font-outfit leading-none mt-0.5">{projects.filter(p => p.status === 'Active').length}</p></div>
         </div>
       </div>
 
@@ -211,7 +211,7 @@ const Projects = () => {
             {filtered.map((project) => (
               <div 
                 key={project._id} 
-                className="group bg-bg-secondary border border-border hover:border-accent-blue/50 rounded-2xl p-5 flex flex-col shadow-sm transition-all relative overflow-hidden"
+                className="group bg-bg-secondary border border-border hover:border-accent-blue/50 rounded-xl p-4 flex flex-col shadow-sm transition-all relative overflow-hidden"
               >
                 {/* Status Indicator Bar at top */}
                 <div className={`absolute top-0 left-0 w-full h-1 ${
@@ -219,31 +219,30 @@ const Projects = () => {
                 }`}></div>
 
                 {/* Header & Actions */}
-                <div className="flex justify-between items-start mb-4 mt-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-accent-blue/10 rounded-xl text-accent-blue shadow-sm border border-accent-blue/10">
-                      <FolderKanban size={20} />
+                <div className="flex justify-between items-start mb-3 mt-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="p-1.5 bg-accent-blue/10 rounded-lg text-accent-blue shadow-sm border border-accent-blue/10">
+                      <FolderKanban size={16} />
                     </div>
                   </div>
                   
                   {/* Actions Dropdown / Icons */}
-                  <div className="flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {user?.role !== 'employee' && (
                       <>
                         <button 
                           onClick={() => handleOpenModal(project)} 
-                          className="p-1.5 bg-bg-primary hover:bg-accent-blue hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          className="p-1 bg-bg-primary hover:bg-accent-blue hover:text-white border border-border rounded-md text-text-secondary shadow-sm transition-colors"
                           title="Edit Project"
                         >
-                          <Search size={14} className="hidden" /> {/* just a placeholder to keep imports happy if unused, actually I should use Edit icon but it's not imported. I'll just use text or another icon */}
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-1">Edit</span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1">Edit</span>
                         </button>
                         <button 
                           onClick={() => handleDelete(project._id)} 
-                          className="p-1.5 bg-bg-primary hover:bg-danger hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          className="p-1 bg-bg-primary hover:bg-danger hover:text-white border border-border rounded-md text-text-secondary shadow-sm transition-colors"
                           title="Delete Project"
                         >
-                          <X size={14} />
+                          <X size={12} />
                         </button>
                       </>
                     )}
@@ -251,21 +250,21 @@ const Projects = () => {
                 </div>
 
                 {/* Title & Description */}
-                <div className="mb-4 flex-1">
-                  <h3 className="font-outfit text-lg font-bold text-text-primary leading-tight mb-1">{project.title}</h3>
-                  <p className="text-xs text-text-secondary line-clamp-2">{project.description || 'No description provided.'}</p>
+                <div className="mb-3 flex-1">
+                  <h3 className="font-outfit text-base font-bold text-text-primary leading-tight mb-0.5">{project.title}</h3>
+                  <p className="text-[11px] text-text-secondary line-clamp-2">{project.description || 'No description provided.'}</p>
                 </div>
 
                 {/* Status & Date */}
-                <div className="flex items-center justify-between mb-5 bg-bg-primary rounded-xl p-2.5 border border-border/50">
+                <div className="flex items-center justify-between mb-3 bg-bg-primary rounded-lg p-2 border border-border/50">
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Created</span>
-                    <span className="text-xs font-semibold text-text-primary flex items-center">
+                    <span className="text-[8px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Created</span>
+                    <span className="text-[11px] font-semibold text-text-primary flex items-center">
                       <Calendar size={10} className="mr-1 text-text-secondary" />
                       {new Date(project.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
                     </span>
                   </div>
-                  <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase shadow-sm ${
+                  <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase shadow-sm ${
                     project.status === 'Completed' ? 'text-success bg-success/10 border border-success/20' : 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20'
                   }`}>
                     {project.status}
@@ -277,12 +276,12 @@ const Projects = () => {
                   <div>
                     <div className="avatar-stack">
                       {project.members?.slice(0, 4).map(m => (
-                        <div key={m._id} title={m.name} className="h-7 w-7 rounded-full bg-accent-indigo/10 flex items-center justify-center text-accent-indigo text-[10px] font-bold shadow-sm">
+                        <div key={m._id} title={m.name} className="h-6 w-6 rounded-full bg-accent-indigo/10 flex items-center justify-center text-accent-indigo text-[9px] font-bold shadow-sm">
                           {m.name?.charAt(0).toUpperCase()}
                         </div>
                       ))}
                       {project.members?.length > 4 && (
-                        <div className="h-7 w-7 rounded-full bg-bg-primary flex items-center justify-center text-text-secondary text-[10px] font-bold border-2 border-bg-secondary shadow-sm">
+                        <div className="h-6 w-6 rounded-full bg-bg-primary flex items-center justify-center text-text-secondary text-[9px] font-bold border-2 border-bg-secondary shadow-sm">
                           +{project.members.length - 4}
                         </div>
                       )}
@@ -291,7 +290,7 @@ const Projects = () => {
                   
                   <Link 
                     to={`/project/${project._id}`} 
-                    className="text-xs font-bold text-accent-blue hover:text-white hover:bg-accent-blue px-3 py-1.5 rounded-lg transition-colors border border-accent-blue/20 bg-accent-blue/5"
+                    className="text-[11px] font-bold text-accent-blue hover:text-white hover:bg-accent-blue px-2.5 py-1 rounded-md transition-colors border border-accent-blue/20 bg-accent-blue/5"
                   >
                     Open Board
                   </Link>
