@@ -13,11 +13,11 @@ const DigitalClock = ({ className = "" }) => {
   }, []);
 
   return (
-    <div className={`flex flex-col items-center justify-center bg-bg-secondary rounded-xl px-5 py-3 border border-border shadow-inner shrink-0 ${className}`}>
-      <div className="font-mono text-2xl font-bold text-accent-blue tracking-wider">
+    <div className={`flex flex-col items-center justify-center bg-bg-secondary rounded-xl px-4 py-2 border border-border shadow-inner shrink-0 ${className}`}>
+      <div className="font-mono text-xl font-bold text-accent-blue tracking-wider">
         {time.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </div>
-      <div className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold mt-0.5">
+      <div className="text-[9px] text-text-secondary uppercase tracking-widest font-semibold mt-0.5">
         Current Time
       </div>
     </div>
@@ -189,15 +189,15 @@ const AttendanceLeave = () => {
         {activeTab === 'attendance' ? (
           <div className="flex flex-col h-full">
             {/* Modern Check In / Check Out Area */}
-            <div className="p-4 border-b border-border shrink-0">
-              <div className="bg-bg-primary rounded-2xl border border-border p-6 flex flex-col md:flex-row items-center justify-between shadow-sm relative overflow-hidden">
+            <div className="p-3 border-b border-border shrink-0">
+              <div className="bg-bg-primary rounded-2xl border border-border p-4 flex flex-col md:flex-row items-center justify-between shadow-sm relative overflow-hidden">
                 {/* Decorative background element */}
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-blue/5 rounded-full blur-3xl pointer-events-none"></div>
                 
-                <div className="flex items-center space-x-6 z-10">
+                <div className="flex items-center space-x-5 z-10">
                   <DigitalClock />
                   <div>
-                    <h3 className="font-outfit text-2xl font-bold text-text-primary mb-1">Timecard</h3>
+                    <h3 className="font-outfit text-xl font-bold text-text-primary mb-0.5">Timecard</h3>
                     <p className="text-sm text-text-secondary flex items-center">
                       <Calendar size={14} className="mr-1.5" />
                       {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
@@ -222,13 +222,13 @@ const AttendanceLeave = () => {
                   {isCheckedIn ? (
                     <div className="flex flex-col items-end">
                       {!isCheckedOut ? (
-                        <button onClick={handleCheckOut} className="bg-orange-500 text-white px-8 py-3.5 rounded-2xl hover:bg-orange-600 transition-all font-semibold flex items-center shadow-lg hover:shadow-orange-500/25 active:scale-95 group">
-                          <LogOut size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+                        <button onClick={handleCheckOut} className="bg-orange-500 text-white px-6 py-2.5 rounded-xl hover:bg-orange-600 transition-all font-semibold flex items-center shadow-md hover:shadow-orange-500/25 active:scale-95 group text-sm">
+                          <LogOut size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
                           Punch Out
                         </button>
                       ) : (
-                        <div className="bg-success/10 border border-success/20 px-8 py-3.5 rounded-2xl text-success font-bold flex items-center shadow-inner">
-                          <CheckCircle size={20} className="mr-2" />
+                        <div className="bg-success/10 border border-success/20 px-6 py-2.5 rounded-xl text-success font-bold flex items-center shadow-inner text-sm">
+                          <CheckCircle size={18} className="mr-2" />
                           Shift Completed
                         </div>
                       )}
@@ -236,11 +236,11 @@ const AttendanceLeave = () => {
                     </div>
                   ) : (
                     <div className="flex flex-col items-end">
-                      <button onClick={handleCheckIn} className="bg-accent-blue text-white px-8 py-3.5 rounded-2xl hover:bg-blue-600 transition-all font-bold flex items-center shadow-lg hover:shadow-blue-500/25 active:scale-95 group">
-                        <LogIn size={20} className="mr-2 group-hover:translate-x-1 transition-transform" />
+                      <button onClick={handleCheckIn} className="bg-accent-blue text-white px-6 py-2.5 rounded-xl hover:bg-blue-600 transition-all font-bold flex items-center shadow-md hover:shadow-blue-500/25 active:scale-95 group text-sm">
+                        <LogIn size={18} className="mr-2 group-hover:translate-x-1 transition-transform" />
                         Punch In
                       </button>
-                      <p className="text-[11px] text-text-secondary mt-2 font-medium">Ready to start your day?</p>
+                      <p className="text-[10px] text-text-secondary mt-1.5 font-medium">Ready to start your day?</p>
                     </div>
                   )}
                 </div>
