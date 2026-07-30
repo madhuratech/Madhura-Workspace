@@ -222,7 +222,7 @@ const ProjectDetails = () => {
                       className={`flex-1 rounded-3xl p-4 transition-all min-h-[500px] border ${
                         snapshot.isDraggingOver
                           ? 'bg-accent-blue/5 border-accent-blue/30 shadow-inner'
-                          : 'bg-bg-primary/50 border-border/60 backdrop-blur-md'
+                          : 'bg-bg-primary/80 border-border/60'
                       }`}
                     >
                       {column.items.map((item, index) => (
