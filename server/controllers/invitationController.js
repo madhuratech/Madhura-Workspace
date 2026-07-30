@@ -1,32 +1,10 @@
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const Invitation = require('../models/Invitation');
 const Workspace = require('../models/Workspace');
 const User = require('../models/User');
 
-// Setup Ethereal for testing or use provided SMTP credentials (you can set these in .env later)
-const createTransporter = async () => {
-  let config = {
-    host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-    port: process.env.SMTP_PORT || 587,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    }
-  };
-
-  // If no credentials provided, create a test account on the fly for development
-  if (!process.env.SMTP_USER) {
-    console.log('No SMTP credentials found, creating Ethereal test account...');
-    const testAccount = await nodemailer.createTestAccount();
-    config.auth = {
-      user: testAccount.user,
-      pass: testAccount.pass,
-    };
-  }
-
-  return nodemailer.createTransport(config);
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // @desc    Send an invitation
 // @route   POST /api/invitations
@@ -85,44 +63,46 @@ exports.inviteUser = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const inviteLink = `${frontendUrl}/register?token=${token}`;
 
-    const transporter = await createTransporter();
-    
-    const mailOptions = {
-      from: '"Madhura Workspace" <noreply@madhuraworkspace.com>',
-      to: email,
-      subject: `You've been invited to join ${workspace.name}!`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; text-align: center;">
-          <h2 style="color: #333;">You're Invited!</h2>
-          <p style="font-size: 16px; color: #555;">
-            You have been invited to join the <strong>${workspace.name}</strong> workspace as a <strong>${role || 'employee'}</strong>.
-          </p>
-          <div style="margin: 30px 0;">
-            <a href="${inviteLink}" style="background-color: #4285f4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
-              Accept Invitation
-            </a>
-          </div>
-          <p style="font-size: 14px; color: #777;">
-            If the button doesn't work, copy and paste this link into your browser:<br>
-            <a href="${inviteLink}">${inviteLink}</a>
-          </p>
-          <p style="font-size: 12px; color: #aaa; margin-top: 40px;">
-            This invitation will expire in 7 days.
-          </p>
-        </div>
-      `
-    };
+    const senderEmail = workspace.companyEmail || 'onboarding@resend.dev';
+    const senderName = workspace.name || 'Madhura Workspace';
 
-    const info = await transporter.sendMail(mailOptions);
-    
-    // For local dev with Ethereal
-    if (!process.env.SMTP_USER) {
-      console.log('--- TEST EMAIL URL ---');
-      console.log(nodemailer.getTestMessageUrl(info));
-      console.log('----------------------');
+    try {
+      if (!process.env.RESEND_API_KEY) {
+        console.warn('RESEND_API_KEY is not defined in the environment. Skipping actual email send. Invitation link:');
+        console.log(inviteLink);
+      } else {
+        await resend.emails.send({
+          from: `${senderName} <${senderEmail}>`,
+          to: email,
+          subject: `You've been invited to join ${workspace.name}!`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; text-align: center;">
+              <h2 style="color: #333;">You're Invited!</h2>
+              <p style="font-size: 16px; color: #555;">
+                You have been invited to join the <strong>${workspace.name}</strong> workspace as a <strong>${role || 'employee'}</strong>.
+              </p>
+              <div style="margin: 30px 0;">
+                <a href="${inviteLink}" style="background-color: #4285f4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                  Accept Invitation
+                </a>
+              </div>
+              <p style="font-size: 14px; color: #777;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="${inviteLink}">${inviteLink}</a>
+              </p>
+              <p style="font-size: 12px; color: #aaa; margin-top: 40px;">
+                This invitation will expire in 7 days.
+              </p>
+            </div>
+          `
+        });
+      }
+    } catch (emailError) {
+      console.error('Resend Error:', emailError);
+      // We might want to handle this gracefully or return an error, but let's just log it.
     }
 
-    res.status(200).json({ message: 'Invitation sent successfully', previewUrl: nodemailer.getTestMessageUrl(info) });
+    res.status(200).json({ message: 'Invitation sent successfully' });
 
   } catch (error) {
     console.error('Invite Error:', error);

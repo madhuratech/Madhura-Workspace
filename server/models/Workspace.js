@@ -26,6 +26,12 @@ const WorkspaceSchema = new mongoose.Schema({
   ],
   description: {
     type: String
+  },
+  companyEmail: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    default: ''
   }
 }, { timestamps: true });
 

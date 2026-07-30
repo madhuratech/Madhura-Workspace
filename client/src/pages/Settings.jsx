@@ -53,6 +53,7 @@ const Settings = () => {
           setFormData({
             name: ws.name || '',
             description: ws.description || '',
+            companyEmail: ws.companyEmail || '',
           });
         }
       } catch (error) {
@@ -103,7 +104,8 @@ const Settings = () => {
         // Save Workspace Data
         await axios.put(`/workspaces/${workspaceId}`, { 
           name: formData.name,
-          description: formData.description
+          description: formData.description,
+          companyEmail: formData.companyEmail
         });
       } else if (activeTab === 'security') {
         if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -216,6 +218,17 @@ const Settings = () => {
                     rows={4}
                     className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
                   ></textarea>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Company Email (for Invitations)</label>
+                  <input 
+                    type="email" 
+                    value={formData.companyEmail || ''} onChange={e => setFormData({...formData, companyEmail: e.target.value})}
+                    placeholder="e.g. hr@company.com"
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                  />
+                  <p className="text-xs text-text-secondary mt-2">Emails will be sent from this address (Note: Domain must be verified with Resend).</p>
                 </div>
                 
                 <div className="pt-6 mt-6 border-t border-border">
