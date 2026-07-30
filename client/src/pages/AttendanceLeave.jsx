@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Calendar, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut, Timer } from 'lucide-react';
 
-const AnalogClock = ({ className = "w-16 h-16" }) => {
+const DigitalClock = ({ className = "" }) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -12,43 +12,14 @@ const AnalogClock = ({ className = "w-16 h-16" }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const seconds = time.getSeconds();
-  const minutes = time.getMinutes();
-  const hours = time.getHours();
-
   return (
-    <div className={`relative rounded-full bg-white dark:bg-[#1a1c23] shadow-[inset_0_2px_6px_rgba(0,0,0,0.03),0_4px_15px_rgba(0,0,0,0.04)] border border-gray-100 dark:border-gray-800 flex items-center justify-center shrink-0 ${className}`}>
-      {/* Clock Center */}
-      <div className="absolute w-1.5 h-1.5 rounded-full bg-text-primary z-20 shadow-sm"></div>
-      
-      {/* Hour Hand */}
-      <div 
-        className="absolute w-1 bg-text-primary rounded-full origin-bottom z-10 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-        style={{ height: '24%', bottom: '50%', transform: `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)` }}
-      ></div>
-      
-      {/* Minute Hand */}
-      <div 
-        className="absolute w-[3px] bg-text-secondary rounded-full origin-bottom z-10 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-        style={{ height: '34%', bottom: '50%', transform: `translateX(-50%) rotate(${minutes * 6}deg)` }}
-      ></div>
-      
-      {/* Second Hand */}
-      <div 
-        className="absolute w-[2px] bg-accent-blue rounded-full origin-bottom z-10 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
-        style={{ height: '40%', bottom: '50%', transform: `translateX(-50%) rotate(${seconds * 6}deg)` }}
-      ></div>
-      
-      {/* Minimal Markers (Just 4 small dots) */}
-      {[0, 90, 180, 270].map((deg) => (
-        <div 
-          key={deg}
-          className="absolute inset-0 flex justify-center"
-          style={{ transform: `rotate(${deg}deg)` }}
-        >
-          <div className="w-[2px] h-[3px] bg-border rounded-full mt-[3px]"></div>
-        </div>
-      ))}
+    <div className={`flex flex-col items-center justify-center bg-bg-secondary rounded-xl px-5 py-3 border border-border shadow-inner shrink-0 ${className}`}>
+      <div className="font-mono text-2xl font-bold text-accent-blue tracking-wider">
+        {time.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      </div>
+      <div className="text-[10px] text-text-secondary uppercase tracking-widest font-semibold mt-0.5">
+        Current Time
+      </div>
     </div>
   );
 };
@@ -56,6 +27,7 @@ const AnalogClock = ({ className = "w-16 h-16" }) => {
 const AttendanceLeave = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
+  const [logView, setLogView] = useState('mine');
   const [workspace, setWorkspace] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState('employee');
@@ -190,7 +162,6 @@ const AttendanceLeave = () => {
           <p className="text-text-secondary mt-1">Manage your attendance and leave requests.</p>
         </div>
         <div className="flex space-x-6 items-center">
-          <AnalogClock />
           {activeTab === 'leave' && (
             <button onClick={() => setIsLeaveModalOpen(true)} className="bg-[#4285f4] text-white px-5 py-2.5 rounded-xl hover:bg-blue-600 transition-colors text-sm font-semibold flex items-center shadow-md">
               <span>Apply Leave</span>
@@ -224,6 +195,7 @@ const AttendanceLeave = () => {
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-blue/5 rounded-full blur-3xl pointer-events-none"></div>
                 
                 <div className="flex items-center space-x-6 z-10">
+                  <DigitalClock />
                   <div>
                     <h3 className="font-outfit text-2xl font-bold text-text-primary mb-1">Timecard</h3>
                     <p className="text-sm text-text-secondary flex items-center">
@@ -275,6 +247,23 @@ const AttendanceLeave = () => {
               </div>
             </div>
 
+            {['super_admin', 'hr', 'tl'].includes(currentUserRole) && (
+              <div className="px-4 py-3 flex space-x-6 border-b border-border bg-bg-primary">
+                <button 
+                  onClick={() => setLogView('mine')} 
+                  className={`text-sm font-bold pb-2 transition-colors border-b-2 ${logView === 'mine' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+                >
+                  My Logs
+                </button>
+                <button 
+                  onClick={() => setLogView('team')} 
+                  className={`text-sm font-bold pb-2 transition-colors border-b-2 ${logView === 'team' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+                >
+                  Team Logs
+                </button>
+              </div>
+            )}
+
             <div className="overflow-x-auto flex-1 p-4">
               <table className="data-table">
                 <thead>
@@ -287,7 +276,7 @@ const AttendanceLeave = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {attendanceRecords.map(record => (
+                  {(logView === 'mine' ? attendanceRecords.filter(r => r.user?._id === user._id) : attendanceRecords.filter(r => r.user?._id !== user._id)).map(record => (
                     <tr key={record._id}>
                       <td className="font-medium text-text-primary">{new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
                       <td className="text-text-secondary">{record.user?.name}</td>
@@ -300,9 +289,9 @@ const AttendanceLeave = () => {
                       <td className="text-text-secondary">{record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                     </tr>
                   ))}
-                  {attendanceRecords.length === 0 && (
+                  {(logView === 'mine' ? attendanceRecords.filter(r => r.user?._id === user._id) : attendanceRecords.filter(r => r.user?._id !== user._id)).length === 0 && (
                     <tr>
-                      <td colSpan="5" className="text-center py-8 text-text-secondary">No attendance records found.</td>
+                      <td colSpan="5" className="text-center py-8 text-text-secondary">No attendance records found for this view.</td>
                     </tr>
                   )}
                 </tbody>
