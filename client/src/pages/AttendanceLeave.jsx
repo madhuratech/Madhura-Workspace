@@ -2,7 +2,58 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import { Calendar, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut, Timer } from 'lucide-react';
+
+const AnalogClock = () => {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const seconds = time.getSeconds();
+  const minutes = time.getMinutes();
+  const hours = time.getHours();
+
+  return (
+    <div className="relative w-24 h-24 rounded-full border-4 border-accent-blue/20 bg-bg-secondary shadow-inner flex items-center justify-center">
+      {/* Clock Center */}
+      <div className="absolute w-2 h-2 rounded-full bg-accent-blue z-20"></div>
+      
+      {/* Hour Hand */}
+      <div 
+        className="absolute w-1 bg-text-primary rounded-full origin-bottom z-10 transition-transform duration-200"
+        style={{ height: '25%', bottom: '50%', transform: `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)` }}
+      ></div>
+      
+      {/* Minute Hand */}
+      <div 
+        className="absolute w-0.5 bg-text-secondary rounded-full origin-bottom z-10 transition-transform duration-200"
+        style={{ height: '35%', bottom: '50%', transform: `translateX(-50%) rotate(${minutes * 6}deg)` }}
+      ></div>
+      
+      {/* Second Hand */}
+      <div 
+        className="absolute w-px bg-danger rounded-full origin-bottom z-10 transition-transform duration-200"
+        style={{ height: '40%', bottom: '50%', transform: `translateX(-50%) rotate(${seconds * 6}deg)` }}
+      ></div>
+      
+      {/* Markers */}
+      {[...Array(12)].map((_, i) => (
+        <div 
+          key={i}
+          className="absolute w-0.5 h-1.5 bg-border rounded-full"
+          style={{
+            top: 4,
+            transformOrigin: '50% 44px',
+            transform: `rotate(${i * 30}deg)`
+          }}
+        ></div>
+      ))}
+    </div>
+  );
+};
 
 const AttendanceLeave = () => {
   const { user } = useContext(AuthContext);
@@ -169,35 +220,58 @@ const AttendanceLeave = () => {
           {activeTab === 'attendance' ? (
             <div className="flex flex-col h-full">
               {/* Modern Check In / Check Out Area */}
-              <div className="bg-bg-primary rounded-2xl border border-border p-6 mb-6 flex flex-col md:flex-row items-center justify-between shadow-sm">
-                <div>
-                  <h3 className="text-lg font-bold text-text-primary">Today's Attendance</h3>
-                  <p className="text-sm text-text-secondary">Log your daily working hours.</p>
-                </div>
-                <div className="mt-4 md:mt-0 flex items-center space-x-4">
-                  {isCheckedIn ? (
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right hidden sm:block">
-                        <p className="text-xs text-text-secondary uppercase font-bold tracking-wider">Status</p>
-                        <p className="text-sm text-success font-medium flex items-center justify-end"><CheckCircle size={14} className="mr-1"/> Checked In</p>
-                      </div>
-                      {!isCheckedOut ? (
-                        <button onClick={handleCheckOut} className="bg-orange-500 text-white px-6 py-3 rounded-xl hover:bg-orange-600 transition-all font-semibold flex items-center shadow-lg hover:shadow-orange-500/25 active:scale-95">
-                          <LogOut size={18} className="mr-2" />
-                          Check Out
-                        </button>
+              <div className="bg-bg-secondary rounded-3xl border border-border p-6 mb-6 flex flex-col md:flex-row items-center justify-between shadow-soft relative overflow-hidden">
+                {/* Decorative background element */}
+                <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-blue/5 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div className="flex items-center space-x-6 z-10">
+                  <AnalogClock />
+                  <div>
+                    <h3 className="font-outfit text-2xl font-bold text-text-primary mb-1">Timecard</h3>
+                    <p className="text-sm text-text-secondary flex items-center">
+                      <Calendar size={14} className="mr-1.5" />
+                      {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </p>
+                    <div className="mt-3">
+                      {isCheckedIn ? (
+                        <div className="flex items-center space-x-2 text-sm font-medium">
+                          <span className="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                          <span className="text-success">Currently On the Clock</span>
+                        </div>
                       ) : (
-                        <div className="bg-bg-secondary border border-border px-6 py-3 rounded-xl text-text-secondary font-medium flex items-center">
-                          <CheckCircle size={18} className="mr-2" />
-                          Checked Out
+                        <div className="flex items-center space-x-2 text-sm font-medium">
+                          <span className="w-2 h-2 rounded-full bg-text-secondary"></span>
+                          <span className="text-text-secondary">Currently Off the Clock</span>
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 md:mt-0 flex flex-col items-center md:items-end space-y-3 z-10">
+                  {isCheckedIn ? (
+                    <div className="flex flex-col items-end">
+                      {!isCheckedOut ? (
+                        <button onClick={handleCheckOut} className="bg-orange-500 text-white px-8 py-3.5 rounded-2xl hover:bg-orange-600 transition-all font-semibold flex items-center shadow-lg hover:shadow-orange-500/25 active:scale-95 group">
+                          <LogOut size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+                          Punch Out
+                        </button>
+                      ) : (
+                        <div className="bg-success/10 border border-success/20 px-8 py-3.5 rounded-2xl text-success font-bold flex items-center shadow-inner">
+                          <CheckCircle size={20} className="mr-2" />
+                          Shift Completed
+                        </div>
+                      )}
+                      <p className="text-[11px] text-text-secondary mt-2 font-medium">Don't forget to punch out before leaving.</p>
+                    </div>
                   ) : (
-                    <button onClick={handleCheckIn} className="bg-[#4285f4] text-white px-8 py-3 rounded-xl hover:bg-blue-600 transition-all font-semibold flex items-center shadow-lg hover:shadow-blue-500/25 active:scale-95">
-                      <LogIn size={18} className="mr-2" />
-                      Check In Now
-                    </button>
+                    <div className="flex flex-col items-end">
+                      <button onClick={handleCheckIn} className="bg-accent-blue text-white px-8 py-3.5 rounded-2xl hover:bg-blue-600 transition-all font-bold flex items-center shadow-lg hover:shadow-blue-500/25 active:scale-95 group">
+                        <LogIn size={20} className="mr-2 group-hover:translate-x-1 transition-transform" />
+                        Punch In
+                      </button>
+                      <p className="text-[11px] text-text-secondary mt-2 font-medium">Ready to start your day?</p>
+                    </div>
                   )}
                 </div>
               </div>
