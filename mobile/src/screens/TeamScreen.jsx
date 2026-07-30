@@ -4,7 +4,8 @@ import {
   TouchableOpacity, ActivityIndicator, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, ArrowLeft, Users } from 'lucide-react-native';
+import { Mail, ArrowLeft, Users, UserPlus } from 'lucide-react-native';
+import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
 const AVATAR_COLORS = [
@@ -68,8 +69,10 @@ const MemberCard = ({ member, delay, colorIdx }) => {
 };
 
 export default function TeamScreen({ navigation }) {
+  const { user } = React.useContext(AuthContext);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserRole, setCurrentUserRole] = useState('employee');
   const headerFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -83,7 +86,11 @@ export default function TeamScreen({ navigation }) {
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
         const detailRes = await axios.get(`/workspaces/${ws._id}`);
-        setMembers(detailRes.data.members || []);
+        const memberList = detailRes.data.members || [];
+        setMembers(memberList);
+        
+        const me = memberList.find(m => String(m.user?._id || m.user) === String(user._id));
+        if (me) setCurrentUserRole(me.role);
       }
     } catch (err) {
       console.error(err);
@@ -98,10 +105,15 @@ export default function TeamScreen({ navigation }) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <ArrowLeft color="#0F172A" size={22} />
         </TouchableOpacity>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Team Directory</Text>
           <Text style={styles.headerSub}>{members.length} member{members.length !== 1 ? 's' : ''}</Text>
         </View>
+        {['super_admin', 'hr'].includes(currentUserRole) && (
+          <TouchableOpacity style={styles.inviteBtn} onPress={() => navigation.navigate('RegisterMember')}>
+            <UserPlus color="#ffffff" size={18} />
+          </TouchableOpacity>
+        )}
       </Animated.View>
 
       {loading ? (
@@ -139,6 +151,11 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
+  },
+  inviteBtn: {
+    width: 38, height: 38, borderRadius: 12, backgroundColor: '#3B82F6',
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4
   },
   headerTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
   headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },

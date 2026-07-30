@@ -10,6 +10,8 @@ export default function AttendanceLeaveScreen({ navigation }) {
   const [workspace, setWorkspace] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('attendance');
+  const [logView, setLogView] = useState('mine');
+  const [currentUserRole, setCurrentUserRole] = useState('employee');
   
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
@@ -43,6 +45,12 @@ export default function AttendanceLeaveScreen({ navigation }) {
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
         setWorkspace(ws);
+        
+        const detailRes = await axios.get(`/workspaces/${ws._id}`);
+        const validMembers = (detailRes.data.members || []).filter(m => m.user);
+        const me = validMembers.find(m => String(m.user._id || m.user) === String(user._id));
+        if (me) setCurrentUserRole(me.role);
+
         fetchAttendance(ws._id);
         fetchLeaves(ws._id);
       }
@@ -149,10 +157,14 @@ export default function AttendanceLeaveScreen({ navigation }) {
             
             {activeTab === 'attendance' ? (
               <View>
+                <DigitalClock />
                 <View style={styles.actionCard}>
                   <View style={styles.actionTextWrapper}>
-                    <Text style={styles.actionTitle}>Today's Status</Text>
-                    <Text style={styles.actionSub}>Log your daily hours</Text>
+                    <Text style={styles.actionTitle}>Timecard</Text>
+                    <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 4}}>
+                      <Calendar color="#6B7280" size={14} style={{marginRight: 6}} />
+                      <Text style={styles.actionSub}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+                    </View>
                   </View>
                   
                   {isCheckedIn ? (
@@ -162,8 +174,9 @@ export default function AttendanceLeaveScreen({ navigation }) {
                         <Text style={styles.statusBadgeText}>IN</Text>
                       </View>
                       {!isCheckedOut ? (
-                        <TouchableOpacity style={styles.checkOutBtn} onPress={handleCheckOut}>
-                          <Text style={styles.checkOutText}>Check Out</Text>
+                        <TouchableOpacity style={[styles.checkOutBtn, styles.shadowSm]} onPress={handleCheckOut}>
+                          <LogOut color="#ffffff" size={14} style={{marginRight: 6}} />
+                          <Text style={styles.checkOutText}>Punch Out</Text>
                         </TouchableOpacity>
                       ) : (
                         <View style={[styles.statusBadge, { backgroundColor: '#F3F4F6', marginLeft: 8, borderColor: '#E5E7EB' }]}>
@@ -173,19 +186,38 @@ export default function AttendanceLeaveScreen({ navigation }) {
                       )}
                     </View>
                   ) : (
-                    <TouchableOpacity style={styles.checkInBtn} onPress={handleCheckIn}>
-                      <Text style={styles.checkInText}>Check In</Text>
+                    <TouchableOpacity style={[styles.checkInBtn, styles.shadowSm]} onPress={handleCheckIn}>
+                      <LogIn color="#ffffff" size={14} style={{marginRight: 6}} />
+                      <Text style={styles.checkInText}>Punch In</Text>
                     </TouchableOpacity>
                   )}
                 </View>
 
-                <Text style={styles.sectionTitle}>Recent Logs</Text>
-                {attendanceRecords.length === 0 ? (
+                {['super_admin', 'hr', 'team_leader'].includes(currentUserRole) && (
+                  <View style={styles.logToggleContainer}>
+                    <TouchableOpacity 
+                      style={[styles.logToggleBtn, logView === 'mine' && styles.logToggleBtnActive]} 
+                      onPress={() => setLogView('mine')}
+                    >
+                      <Text style={[styles.logToggleText, logView === 'mine' && styles.logToggleTextActive]}>My Logs</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.logToggleBtn, logView === 'team' && styles.logToggleBtnActive]} 
+                      onPress={() => setLogView('team')}
+                    >
+                      <Text style={[styles.logToggleText, logView === 'team' && styles.logToggleTextActive]}>Team Logs</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <Text style={styles.sectionTitle}>{logView === 'mine' ? 'My Recent Logs' : 'Team Recent Logs'}</Text>
+                {attendanceRecords.filter(r => logView === 'mine' ? String(r.user?._id || r.user) === String(user._id) : true).length === 0 ? (
                   <Text style={styles.emptyText}>No attendance records found.</Text>
                 ) : (
-                  attendanceRecords.map((record, index) => (
+                  attendanceRecords.filter(r => logView === 'mine' ? String(r.user?._id || r.user) === String(user._id) : true).map((record, index) => (
                     <View key={record._id || index} style={styles.recordCard}>
-                      <View>
+                      <View style={{ flex: 1 }}>
+                        {logView === 'team' && <Text style={styles.recordName}>{record.user?.name}</Text>}
                         <Text style={styles.recordDate}>{new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
                         <Text style={styles.recordStatus}>{record.status}</Text>
                       </View>
@@ -298,8 +330,24 @@ export default function AttendanceLeaveScreen({ navigation }) {
   );
 }
 
+const DigitalClock = () => {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <View style={styles.clockContainer}>
+      <Text style={styles.clockTime}>
+        {time.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+      </Text>
+      <Text style={styles.clockLabel}>CURRENT TIME</Text>
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   header: { 
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 16,
@@ -321,31 +369,46 @@ const styles = StyleSheet.create({
   
   actionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 32,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#F1F5F9',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.02, shadowRadius: 8, elevation: 1
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2
   },
   actionTextWrapper: { flex: 1 },
-  actionTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  actionSub: { fontSize: 13, color: '#6B7280' },
+  actionTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A', marginBottom: 2, fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif' },
+  actionSub: { fontSize: 13, color: '#64748B', fontWeight: '500' },
   checkInBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#3B82F6',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  checkInText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
+  checkInText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
   checkedInRow: { flexDirection: 'row', alignItems: 'center' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginRight: 12, borderWidth: 1, borderColor: '#DCFCE7' },
-  statusBadgeText: { color: '#166534', fontWeight: '600', fontSize: 12, marginLeft: 4 },
-  checkOutBtn: { backgroundColor: '#111827', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
-  checkOutText: { color: '#ffffff', fontWeight: '600', fontSize: 12 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FDF4', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginRight: 12, borderWidth: 1, borderColor: '#BBF7D0' },
+  statusBadgeText: { color: '#16A34A', fontWeight: '700', fontSize: 12, marginLeft: 4 },
+  checkOutBtn: { backgroundColor: '#F97316', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center' },
+  checkOutText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
+  
+  logToggleContainer: { flexDirection: 'row', backgroundColor: '#F1F5F9', padding: 4, borderRadius: 12, marginBottom: 24 },
+  logToggleBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
+  logToggleBtnActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+  logToggleText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  logToggleTextActive: { color: '#0F172A' },
+  shadowSm: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+
+  clockContainer: { backgroundColor: '#F8FAFC', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', marginBottom: 24, alignSelf: 'center', width: '100%' },
+  clockTime: { fontSize: 28, fontWeight: '800', color: '#3B82F6', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing: 1 },
+  clockLabel: { fontSize: 10, color: '#64748B', fontWeight: '700', letterSpacing: 1.5, marginTop: 4 },
+  
+  recordName: { fontSize: 12, fontWeight: '700', color: '#3B82F6', marginBottom: 2 },
   
   sectionTitle: { fontSize: 12, fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
   emptyText: { color: '#9CA3AF', fontSize: 14, fontStyle: 'italic' },

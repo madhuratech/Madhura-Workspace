@@ -118,9 +118,16 @@ export default function ProjectDetailsScreen({ route, navigation }) {
                 </Text>
               </View>
             )}
-            {item.assignedTo?.name && (
-              <View style={styles.assigneeChip}>
-                <Text style={styles.assigneeText}>{item.assignedTo.name.split(' ')[0]}</Text>
+            {item.assignees && item.assignees.length > 0 && (
+              <View style={{ flexDirection: 'row', marginLeft: 'auto' }}>
+                {item.assignees.map((a, i) => {
+                  const initial = a.name ? a.name.charAt(0).toUpperCase() : '?';
+                  return (
+                    <View key={a._id || i} style={[styles.assigneeAvatar, { marginLeft: i > 0 ? -8 : 0 }]}>
+                      <Text style={styles.assigneeAvatarText}>{initial}</Text>
+                    </View>
+                  );
+                })}
               </View>
             )}
           </View>
@@ -284,11 +291,11 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontWeight: '600' },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateText: { fontSize: 12, color: '#94A3B8' },
-  assigneeChip: {
-    backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: 6, borderWidth: 1, borderColor: '#BFDBFE',
+  assigneeAvatar: {
+    width: 24, height: 24, borderRadius: 12, backgroundColor: '#3B82F6',
+    justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff'
   },
-  assigneeText: { fontSize: 11, color: '#2563EB', fontWeight: '600' },
+  assigneeAvatarText: { fontSize: 10, color: '#fff', fontWeight: '700' },
 
   // Empty
   emptyBox: { alignItems: 'center', paddingVertical: 48 },

@@ -528,20 +528,20 @@ const styles = StyleSheet.create({
   avatarSpacer: { width: 30, marginRight: 8 },
 
   msgBubble: {
-    maxWidth: '80%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18,
+    maxWidth: '82%', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20,
   },
-  msgBubbleMine: { backgroundColor: '#3B82F6', borderBottomRightRadius: 4 },
+  msgBubbleMine: { backgroundColor: '#3B82F6', borderBottomRightRadius: 6 },
   msgBubbleOther: {
-    backgroundColor: '#fff', borderBottomLeftRadius: 4,
-    borderWidth: 1, borderColor: '#E2E8F0',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+    backgroundColor: '#fff', borderBottomLeftRadius: 6,
+    borderWidth: 1, borderColor: '#F1F5F9',
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03, shadowRadius: 6, elevation: 1,
   },
 
-  senderName: { fontSize: 11, fontWeight: '700', color: '#3B82F6', marginBottom: 4 },
-  msgText: { fontSize: 15, lineHeight: 21 },
+  senderName: { fontSize: 12, fontWeight: '700', color: '#1E293B', marginBottom: 6 },
+  msgText: { fontSize: 15, lineHeight: 22 },
   msgTextMine: { color: '#fff' },
-  msgTextOther: { color: '#1E293B' },
+  msgTextOther: { color: '#334155' },
 
   metaContainer: {
     flexDirection: 'row', alignItems: 'center',
@@ -566,24 +566,26 @@ const styles = StyleSheet.create({
 
   // Input bar
   inputContainer: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'flex-end',
+    paddingHorizontal: 16, paddingVertical: 12,
     backgroundColor: '#fff',
     borderTopWidth: 1, borderTopColor: '#F1F5F9',
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
   },
-  iconBtn: { padding: 8 },
+  iconBtn: { padding: 10, paddingBottom: 12 },
   input: {
     flex: 1, backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: '#E2E8F0',
-    borderRadius: 22, paddingHorizontal: 16,
-    paddingTop: 10, paddingBottom: 10,
-    maxHeight: 100, minHeight: 42,
-    marginLeft: 6, fontSize: 15, color: '#0F172A',
+    borderRadius: 24, paddingHorizontal: 18,
+    paddingTop: 12, paddingBottom: 12,
+    maxHeight: 120, minHeight: 46,
+    marginLeft: 4, fontSize: 15, color: '#0F172A',
   },
   sendBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: '#3B82F6', justifyContent: 'center',
     alignItems: 'center', marginLeft: 10,
+    shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 3
   },
   sendBtnDisabled: { backgroundColor: '#CBD5E1' },
 
