@@ -99,7 +99,9 @@ exports.inviteUser = async (req, res) => {
       }
     } catch (emailError) {
       console.error('Resend Error:', emailError);
-      // We might want to handle this gracefully or return an error, but let's just log it.
+      return res.status(500).json({ 
+        message: 'Failed to send email. If you used a custom Company Email, make sure its domain is verified in Resend.' 
+      });
     }
 
     res.status(200).json({ message: 'Invitation sent successfully' });
