@@ -217,11 +217,11 @@ const AttendanceLeave = () => {
       </div>
 
       <div className="bg-bg-secondary border border-border rounded-xl flex-1 flex flex-col overflow-hidden shadow-sm">
-        <div className="overflow-x-auto flex-1 p-4">
-          {activeTab === 'attendance' ? (
-            <div className="flex flex-col h-full">
-              {/* Modern Check In / Check Out Area */}
-              <div className="bg-bg-secondary rounded-3xl border border-border p-6 mb-6 flex flex-col md:flex-row items-center justify-between shadow-soft relative overflow-hidden">
+        {activeTab === 'attendance' ? (
+          <div className="flex flex-col h-full">
+            {/* Modern Check In / Check Out Area */}
+            <div className="p-4 border-b border-border shrink-0">
+              <div className="bg-bg-primary rounded-2xl border border-border p-6 flex flex-col md:flex-row items-center justify-between shadow-sm relative overflow-hidden">
                 {/* Decorative background element */}
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-blue/5 rounded-full blur-3xl pointer-events-none"></div>
                 
@@ -275,7 +275,9 @@ const AttendanceLeave = () => {
                   )}
                 </div>
               </div>
+            </div>
 
+            <div className="overflow-x-auto flex-1 p-4">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -308,7 +310,9 @@ const AttendanceLeave = () => {
                 </tbody>
               </table>
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className="overflow-x-auto flex-1 p-4">
             <div className="space-y-8 p-2">
               <div>
                 <h3 className="text-lg font-bold text-text-primary mb-4 px-2">My Leaves</h3>
@@ -403,8 +407,8 @@ const AttendanceLeave = () => {
                 </div>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {isLeaveModalOpen && (
