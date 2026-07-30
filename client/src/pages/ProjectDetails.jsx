@@ -20,6 +20,12 @@ const ProjectDetails = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', priority: 'Medium', dueDate: '', assignees: [] });
   const [socket, setSocket] = useState(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const animation = requestAnimationFrame(() => setIsReady(true));
+    return () => cancelAnimationFrame(animation);
+  }, []);
 
   useEffect(() => {
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -192,10 +198,11 @@ const ProjectDetails = () => {
       </div>
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto pb-4">
-        <div className="flex gap-5 h-full min-w-max">
-          <DragDropContext onDragEnd={onDragEnd}>
-            {Object.entries(columns).map(([columnId, column]) => (
+      <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
+        {isReady && (
+          <div className="flex gap-5 h-full min-w-max">
+            <DragDropContext onDragEnd={onDragEnd}>
+              {Object.entries(columns).map(([columnId, column]) => (
               <div className="flex flex-col w-72 shrink-0" key={columnId}>
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center space-x-2">
@@ -219,7 +226,7 @@ const ProjectDetails = () => {
                       }`}
                     >
                       {column.items.map((item, index) => (
-                        <Draggable key={item._id} draggableId={item._id} index={index} isDragDisabled={user?.role === 'employee' && (!item.assignees || !item.assignees.some(a => a._id === user._id))}>
+                        <Draggable key={item._id} draggableId={String(item._id)} index={index} isDragDisabled={user?.role === 'employee' && (!item.assignees || !item.assignees.some(a => a._id === user._id))}>
                           {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
@@ -277,6 +284,7 @@ const ProjectDetails = () => {
             ))}
           </DragDropContext>
         </div>
+        )}
       </div>
 
       {/* Premium Add Task Modal */}
