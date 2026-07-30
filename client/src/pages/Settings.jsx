@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Save, Building, Users, Bell, Shield, CreditCard, Key } from 'lucide-react';
+import { Save, Building, Users, Bell, Shield, Key, Lock } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -9,13 +9,22 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   
+  // Workspace ID tracking for General Tab
+  const [workspaceId, setWorkspaceId] = useState(null);
+
   // General Tab
   const [formData, setFormData] = useState({
-    workspaceName: 'Acme Corp',
-    domain: 'acme.madhuraws.com',
-    email: 'admin@acme.com',
-    currency: 'USD ($)',
+    name: '',
+    description: '',
   });
+
+  // Security Tab (Change Password)
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordError, setPasswordError] = useState('');
 
   // Members & Roles Tab
   const [usersList, setUsersList] = useState([]);
@@ -32,6 +41,26 @@ const Settings = () => {
       setNotificationSettings(user.notificationSettings);
     }
   }, [user]);
+
+  // Load Initial Workspace Data for General Tab
+  useEffect(() => {
+    const loadWorkspace = async () => {
+      try {
+        const res = await axios.get('/workspaces');
+        if (res.data && res.data.length > 0) {
+          const ws = res.data[0]; // Assuming user configures their primary workspace
+          setWorkspaceId(ws._id);
+          setFormData({
+            name: ws.name || '',
+            description: ws.description || '',
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching workspace:', error);
+      }
+    };
+    loadWorkspace();
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'members') {
@@ -65,18 +94,44 @@ const Settings = () => {
   const saveSettings = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setPasswordError('');
     try {
       if (activeTab === 'notifications') {
         const res = await axios.put('/users/notification-settings', { notificationSettings });
         setUser(res.data);
-      } else if (activeTab === 'general') {
-        // Implement general save logic if workspace update endpoint is integrated
+      } else if (activeTab === 'general' && workspaceId) {
+        // Save Workspace Data
+        await axios.put(`/workspaces/${workspaceId}`, { 
+          name: formData.name,
+          description: formData.description
+        });
+      } else if (activeTab === 'security') {
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+          setPasswordError('New passwords do not match');
+          setLoading(false);
+          return;
+        }
+        if (passwordData.newPassword.length < 6) {
+          setPasswordError('Password must be at least 6 characters');
+          setLoading(false);
+          return;
+        }
+        await axios.put('/users/change-password', {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        });
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       }
+      
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error('Error saving settings', error);
-      alert('Error saving settings');
+      if (activeTab === 'security') {
+        setPasswordError(error.response?.data?.message || 'Failed to change password');
+      } else {
+        alert('Error saving settings');
+      }
     }
     setLoading(false);
   };
@@ -134,15 +189,6 @@ const Settings = () => {
             <Shield size={18} />
             <span>Security</span>
           </button>
-          <button 
-            onClick={() => setActiveTab('billing')}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
-              activeTab === 'billing' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
-            }`}
-          >
-            <CreditCard size={18} />
-            <span>Billing</span>
-          </button>
         </div>
 
         {/* Settings Content */}
@@ -156,46 +202,20 @@ const Settings = () => {
                   <label className="block text-sm font-medium text-text-secondary mb-2">Workspace Name</label>
                   <input 
                     type="text" required 
-                    value={formData.workspaceName} onChange={e => setFormData({...formData, workspaceName: e.target.value})}
+                    value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                    placeholder="Enter workspace name"
                     className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Custom Domain</label>
-                  <div className="flex">
-                    <input 
-                      type="text" 
-                      value={formData.domain.split('.')[0]} 
-                      onChange={e => setFormData({...formData, domain: `${e.target.value}.madhuraws.com`})}
-                      className="w-full bg-bg-primary border border-r-0 border-border rounded-l-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
-                    />
-                    <span className="inline-flex items-center px-4 rounded-r-lg border border-l-0 border-border bg-bg-primary text-text-secondary text-sm">
-                      .madhuraws.com
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Admin Email</label>
-                  <input 
-                    type="email" required 
-                    value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Description</label>
+                  <textarea 
+                    value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
+                    placeholder="Briefly describe this workspace"
+                    rows={4}
                     className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-2">Default Currency</label>
-                  <select 
-                    value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
-                  >
-                    <option value="USD ($)">USD ($)</option>
-                    <option value="EUR (€)">EUR (€)</option>
-                    <option value="GBP (£)">GBP (£)</option>
-                    <option value="INR (₹)">INR (₹)</option>
-                  </select>
+                  ></textarea>
                 </div>
                 
                 <div className="pt-6 mt-6 border-t border-border">
@@ -354,12 +374,59 @@ const Settings = () => {
               </div>
             </div>
           )}
-          
-          {(activeTab === 'security' || activeTab === 'billing') && (
-            <div className="flex flex-col items-center justify-center h-full text-text-secondary animate-in fade-in duration-300">
-              <Shield size={48} className="mb-4 opacity-20" />
-              <h3 className="text-lg font-medium text-text-primary mb-2">Module locked in Demo</h3>
-              <p className="text-sm text-center max-w-sm">This section is part of the premium workspace plan. Upgrade to unlock security and billing features.</p>
+
+          {activeTab === 'security' && (
+            <div className="max-w-2xl animate-in fade-in duration-300">
+              <h2 className="text-xl font-bold text-text-primary mb-2">Security Settings</h2>
+              <p className="text-sm text-text-secondary mb-6">Manage your password and secure your account.</p>
+
+              <form onSubmit={saveSettings} className="space-y-6">
+                {passwordError && (
+                  <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-lg text-sm">
+                    {passwordError}
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Current Password</label>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3 top-3 text-text-secondary" />
+                    <input 
+                      type="password" required 
+                      value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                      placeholder="Enter current password"
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">New Password</label>
+                  <div className="relative">
+                    <Key size={16} className="absolute left-3 top-3 text-text-secondary" />
+                    <input 
+                      type="password" required 
+                      value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})}
+                      placeholder="Enter new password (min 6 characters)"
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-2">Confirm New Password</label>
+                  <div className="relative">
+                    <Key size={16} className="absolute left-3 top-3 text-text-secondary" />
+                    <input 
+                      type="password" required 
+                      value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                      placeholder="Re-enter new password"
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                    />
+                  </div>
+                </div>
+                <button type="submit" className="hidden"></button>
+              </form>
             </div>
           )}
         </div>

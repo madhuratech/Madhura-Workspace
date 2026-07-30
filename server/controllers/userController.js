@@ -89,9 +89,32 @@ const updateUserRole = async (req, res) => {
   }
 };
 
+// @desc    Change user password
+// @route   PUT /api/users/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    const user = await User.findById(req.user._id).select('+password');
+    
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({ message: 'Incorrect current password' });
+    }
+    
+    user.password = newPassword;
+    await user.save();
+    
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getUsers,
   updatePresence,
   updateNotificationSettings,
-  updateUserRole
+  updateUserRole,
+  changePassword
 };
