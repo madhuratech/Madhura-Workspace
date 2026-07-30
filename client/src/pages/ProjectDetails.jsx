@@ -232,6 +232,7 @@ const ProjectDetails = () => {
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
+                              style={provided.draggableProps.style}
                               className={`p-5 mb-4 rounded-2xl border ${
                                 snapshot.isDragging
                                   ? 'bg-bg-secondary border-accent-blue shadow-2xl z-50 opacity-90'
