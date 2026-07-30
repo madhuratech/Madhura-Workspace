@@ -17,38 +17,36 @@ const AnalogClock = ({ className = "w-16 h-16" }) => {
   const hours = time.getHours();
 
   return (
-    <div className={`relative rounded-full border-4 border-accent-blue/20 bg-bg-secondary shadow-inner flex items-center justify-center shrink-0 ${className}`}>
+    <div className={`relative rounded-full bg-white dark:bg-[#1a1c23] shadow-[inset_0_2px_6px_rgba(0,0,0,0.03),0_4px_15px_rgba(0,0,0,0.04)] border border-gray-100 dark:border-gray-800 flex items-center justify-center shrink-0 ${className}`}>
       {/* Clock Center */}
-      <div className="absolute w-2 h-2 rounded-full bg-accent-blue z-20"></div>
+      <div className="absolute w-1.5 h-1.5 rounded-full bg-text-primary z-20 shadow-sm"></div>
       
       {/* Hour Hand */}
       <div 
-        className="absolute w-1 bg-text-primary rounded-full origin-bottom z-10 transition-transform duration-200"
-        style={{ height: '25%', bottom: '50%', transform: `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)` }}
+        className="absolute w-1 bg-text-primary rounded-full origin-bottom z-10 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{ height: '24%', bottom: '50%', transform: `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)` }}
       ></div>
       
       {/* Minute Hand */}
       <div 
-        className="absolute w-0.5 bg-text-secondary rounded-full origin-bottom z-10 transition-transform duration-200"
-        style={{ height: '35%', bottom: '50%', transform: `translateX(-50%) rotate(${minutes * 6}deg)` }}
+        className="absolute w-[3px] bg-text-secondary rounded-full origin-bottom z-10 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{ height: '34%', bottom: '50%', transform: `translateX(-50%) rotate(${minutes * 6}deg)` }}
       ></div>
       
       {/* Second Hand */}
       <div 
-        className="absolute w-px bg-danger rounded-full origin-bottom z-10 transition-transform duration-200"
+        className="absolute w-[2px] bg-accent-blue rounded-full origin-bottom z-10 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{ height: '40%', bottom: '50%', transform: `translateX(-50%) rotate(${seconds * 6}deg)` }}
       ></div>
       
-      {/* Markers */}
-      {[...Array(12)].map((_, i) => (
+      {/* Minimal Markers (Just 4 small dots) */}
+      {[0, 90, 180, 270].map((deg) => (
         <div 
-          key={i}
+          key={deg}
           className="absolute inset-0 flex justify-center"
-          style={{
-            transform: `rotate(${i * 30}deg)`
-          }}
+          style={{ transform: `rotate(${deg}deg)` }}
         >
-          <div className="w-0.5 h-1.5 bg-border rounded-full mt-1"></div>
+          <div className="w-[2px] h-[3px] bg-border rounded-full mt-[3px]"></div>
         </div>
       ))}
     </div>
