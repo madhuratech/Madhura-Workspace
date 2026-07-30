@@ -138,6 +138,13 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const loginWithToken = (token, userData) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    setUser(userData);
+  };
+
   const updateUserStatus = async (status) => {
     try {
       const res = await axios.put('/users/status', { status });
@@ -152,7 +159,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ 
-      user, loading, login, register, logout, updateUserStatus,
+      user, loading, login, register, logout, loginWithToken, updateUserStatus,
       socket, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications 
     }}>
       {!loading && children}

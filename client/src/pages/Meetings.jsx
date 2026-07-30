@@ -143,9 +143,9 @@ const Meetings = () => {
     return (
       <div className="flex flex-col h-full animate-fade-in">
         {/* Calendar Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg-secondary sticky top-0 z-10">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-secondary sticky top-0 z-10">
           <div className="flex items-center space-x-4">
-            <h2 className="text-2xl font-extrabold text-text-primary flex items-center tracking-tight">
+            <h2 className="text-xl font-extrabold text-text-primary flex items-center tracking-tight">
               {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
             </h2>
           </div>
@@ -157,16 +157,16 @@ const Meetings = () => {
         </div>
 
         {/* Calendar Grid */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-bg-primary custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-2 md:p-4 bg-bg-primary custom-scrollbar">
           <div className="grid grid-cols-7 border-t border-l border-border rounded-2xl overflow-hidden bg-bg-secondary shadow-sm">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
-              <div key={d} className="text-right p-3 text-xs font-bold uppercase tracking-wider text-text-secondary border-b border-r border-border bg-bg-primary/60">
+              <div key={d} className="text-right p-2 text-[10px] font-bold uppercase tracking-wider text-text-secondary border-b border-r border-border bg-bg-primary/60">
                 {d}
               </div>
             ))}
             
             {days.map((day, idx) => {
-              if (!day) return <div key={`empty-${idx}`} className="min-h-[120px] bg-bg-primary/30 border-b border-r border-border"></div>;
+              if (!day) return <div key={`empty-${idx}`} className="min-h-[80px] bg-bg-primary/30 border-b border-r border-border"></div>;
               
               const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
               const dayEvents = meetings.filter(m => new Date(m.date).toISOString().split('T')[0] === dateStr);
@@ -180,7 +180,7 @@ const Meetings = () => {
                 <div 
                   key={day} 
                   onClick={() => { resetForm(dateStr); setIsModalOpen(true); }}
-                  className={`min-h-[120px] p-2 border-b border-r border-border transition-colors cursor-pointer group flex flex-col
+                  className={`min-h-[80px] p-1.5 border-b border-r border-border transition-colors cursor-pointer group flex flex-col
                     ${isToday ? 'bg-accent-blue/5 hover:bg-accent-blue/10' : 'bg-bg-secondary hover:bg-bg-primary'}
                     ${isPast && !isToday ? 'opacity-70' : ''}
                   `}

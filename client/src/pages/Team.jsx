@@ -86,25 +86,16 @@ const Team = () => {
       if (editItem) {
         // Update role and designation
         await axios.put(`/workspaces/${workspace._id}/members/${editItem.user._id}`, { role: formData.role, designation: formData.designation });
+        showToast('Member updated successfully!', 'success');
       } else {
-        // Create employee account and add to workspace
-        const res = await axios.post(`/workspaces/${workspace._id}/members`, {
-          name: formData.name,
+        // Send email invitation
+        await axios.post(`/invitations`, {
           email: formData.email,
-          password: formData.password,
           role: formData.role,
-          designation: formData.designation
+          designation: formData.designation,
+          workspaceId: workspace._id
         });
-        
-        // If creating a team leader, optionally create their team right away
-        if (formData.role === 'team_leader' && res.data.userId) {
-          await axios.post(`/workspaces/${workspace._id}/teams`, {
-            name: newTeamName || `${formData.name}'s Team`,
-            leader: res.data.userId,
-            members: selectedTeamMembers
-          });
-        }
-        showToast('Member added successfully!', 'success');
+        showToast('Invitation sent successfully!', 'success');
       }
       fetchWorkspaceData();
       handleCloseModal();
@@ -338,9 +329,9 @@ const Team = () => {
               <div>
                 <h3 className="text-xl font-bold text-text-primary flex items-center mb-1">
                   <Shield className="text-accent-blue mr-2" size={20}/>
-                  {editItem ? 'Edit Member Role' : 'Create Employee Account'}
+                  {editItem ? 'Edit Member Role' : 'Send Invitation'}
                 </h3>
-                <p className="text-xs text-text-secondary">Set up account access and details.</p>
+                <p className="text-xs text-text-secondary">Invite a new member to join the workspace.</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
                 <X size={18} />
@@ -350,20 +341,6 @@ const Team = () => {
             <div className="p-6 overflow-y-auto custom-scrollbar">
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!editItem && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-text-secondary mb-1">Full Name</label>
-                    <input 
-                      type="text" 
-                      value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                      className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
-                      placeholder="e.g. John Doe"
-                      required
-                    />
-                  </div>
-                </>
-              )}
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Email Address</label>
                 <div className="relative">
@@ -378,20 +355,6 @@ const Team = () => {
                   />
                 </div>
               </div>
-
-              {!editItem && (
-                <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Temporary Password</label>
-                  <input 
-                    type="password" 
-                    value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
-                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
-                    placeholder="••••••••"
-                    required
-                    minLength="6"
-                  />
-                </div>
-              )}
               
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Job Title / Designation</label>
@@ -418,46 +381,7 @@ const Team = () => {
                 </div>
               </div>
 
-              {!editItem && formData.role === 'team_leader' && (
-                <div className="bg-bg-primary p-4 rounded-lg border border-border space-y-4">
-                  <h4 className="font-medium text-text-primary text-sm">Initial Team Setup (Optional)</h4>
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-1">Team Name</label>
-                    <input 
-                      type="text" 
-                      value={newTeamName} onChange={e => setNewTeamName(e.target.value)}
-                      className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-1.5 text-text-primary focus:outline-none focus:border-accent-blue text-sm"
-                      placeholder={`e.g. ${formData.name || 'User'}'s Team`}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-text-secondary mb-2">Assign Members</label>
-                    <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 bg-bg-secondary space-y-1 custom-scrollbar">
-                      {members.filter(m => m.user._id !== user._id).map(m => (
-                        <label key={m.user._id} className="flex items-center space-x-3 p-1.5 hover:bg-bg-primary rounded-lg cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="accent-accent-blue"
-                            checked={selectedTeamMembers.includes(m.user._id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedTeamMembers([...selectedTeamMembers, m.user._id]);
-                              } else {
-                                setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== m.user._id));
-                              }
-                            }}
-                          />
-                          <div className="flex flex-col">
-                            <span className="text-xs font-medium text-text-primary">{m.user.name}</span>
-                            <span className="text-[10px] text-text-secondary">{m.role.replace('_', ' ')}</span>
-                          </div>
-                        </label>
-                      ))}
-                      {members.length <= 1 && <p className="text-xs text-text-secondary p-1">No other members available.</p>}
-                    </div>
-                  </div>
-                </div>
-              )}
+
               
               <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
                 <button 
@@ -471,7 +395,7 @@ const Team = () => {
                   type="submit" 
                   className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
                 >
-                  {editItem ? 'Save Changes' : 'Create Account'}
+                  {editItem ? 'Save Changes' : 'Send Invite'}
                 </button>
               </div>
             </form>

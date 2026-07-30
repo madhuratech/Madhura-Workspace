@@ -109,6 +109,7 @@ app.use('/api/documents', require('./routes/documentRoutes'));
 app.use('/api/meetings', require('./routes/meetingRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/invitations', require('./routes/invitationRoutes'));
 
 const PORT = process.env.PORT || 5000;
 
