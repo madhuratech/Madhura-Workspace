@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Calendar, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut, Timer } from 'lucide-react';
 
-const AnalogClock = () => {
+const AnalogClock = ({ className = "w-16 h-16" }) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -17,7 +17,7 @@ const AnalogClock = () => {
   const hours = time.getHours();
 
   return (
-    <div className="relative w-24 h-24 rounded-full border-4 border-accent-blue/20 bg-bg-secondary shadow-inner flex items-center justify-center">
+    <div className={`relative rounded-full border-4 border-accent-blue/20 bg-bg-secondary shadow-inner flex items-center justify-center shrink-0 ${className}`}>
       {/* Clock Center */}
       <div className="absolute w-2 h-2 rounded-full bg-accent-blue z-20"></div>
       
@@ -191,7 +191,8 @@ const AttendanceLeave = () => {
           <h1 className="text-2xl font-bold text-text-primary tracking-wide">Attendance & Leave</h1>
           <p className="text-text-secondary mt-1">Manage your attendance and leave requests.</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex space-x-6 items-center">
+          <AnalogClock />
           {activeTab === 'leave' && (
             <button onClick={() => setIsLeaveModalOpen(true)} className="bg-[#4285f4] text-white px-5 py-2.5 rounded-xl hover:bg-blue-600 transition-colors text-sm font-semibold flex items-center shadow-md">
               <span>Apply Leave</span>
@@ -225,7 +226,6 @@ const AttendanceLeave = () => {
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-blue/5 rounded-full blur-3xl pointer-events-none"></div>
                 
                 <div className="flex items-center space-x-6 z-10">
-                  <AnalogClock />
                   <div>
                     <h3 className="font-outfit text-2xl font-bold text-text-primary mb-1">Timecard</h3>
                     <p className="text-sm text-text-secondary flex items-center">
