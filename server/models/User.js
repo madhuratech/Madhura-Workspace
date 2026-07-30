@@ -47,6 +47,11 @@ const UserSchema = new mongoose.Schema({
   },
   googleTokenExpiry: {
     type: Number
+  },
+  notificationSettings: {
+    emailNotifications: { type: Boolean, default: true },
+    pushNotifications: { type: Boolean, default: true },
+    taskReminders: { type: Boolean, default: true }
   }
 }, { timestamps: true });
 
