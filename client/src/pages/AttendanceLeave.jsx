@@ -43,13 +43,13 @@ const AnalogClock = ({ className = "w-16 h-16" }) => {
       {[...Array(12)].map((_, i) => (
         <div 
           key={i}
-          className="absolute w-0.5 h-1.5 bg-border rounded-full"
+          className="absolute inset-0 flex justify-center"
           style={{
-            top: 4,
-            transformOrigin: '50% 44px',
             transform: `rotate(${i * 30}deg)`
           }}
-        ></div>
+        >
+          <div className="w-0.5 h-1.5 bg-border rounded-full mt-1"></div>
+        </div>
       ))}
     </div>
   );
