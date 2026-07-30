@@ -184,140 +184,190 @@ const Team = () => {
 
         <div className="overflow-x-auto flex-1">
           {activeTab === 'members' ? (
-            <table className="data-table">
-              <thead>
-              <tr>
-                <th className="text-left w-16">USER</th>
-                <th className="text-left">NAME</th>
-                <th className="text-left">STATUS</th>
-                <th className="text-left">DESIGNATION</th>
-                <th className="text-left">EMAIL</th>
-                <th className="text-left w-32">ROLE</th>
-                <th className="text-right w-40">ACTION</th>
-              </tr>
-            </thead>
-            <tbody>
+            <div className="p-4 space-y-3">
+              {/* Header Row */}
+              <div className="flex items-center px-4 py-2 text-[10px] font-bold text-text-secondary uppercase tracking-wider hidden md:flex">
+                <div className="w-64">Member</div>
+                <div className="w-32">Status</div>
+                <div className="w-48">Designation</div>
+                <div className="flex-1">Role</div>
+                <div className="w-12 text-center"></div>
+              </div>
+
               {members.map((member) => (
-                <tr 
+                <div 
                   key={member.user._id} 
                   onClick={() => setViewMember(member)}
-                  className="cursor-pointer hover:bg-bg-primary/50"
+                  className="group flex flex-col md:flex-row md:items-center bg-bg-primary border border-border hover:border-accent-blue/50 p-4 rounded-xl shadow-sm transition-all cursor-pointer relative"
                 >
-                  <td>
-                    <div className="h-8 w-8 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs">
-                      {member.user.name ? member.user.name.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                  </td>
-                  <td className="font-bold text-text-primary">{member.user.name || 'Pending User'}</td>
-                  <td>
-                    <span className={`flex items-center space-x-1.5 text-xs font-semibold ${
-                      member.user.presenceStatus === 'Active' || !member.user.presenceStatus ? 'text-success' :
-                      member.user.presenceStatus === 'Busy' ? 'text-danger' :
-                      member.user.presenceStatus === 'Break' ? 'text-warning' :
-                      'text-orange-400'
-                    }`}>
-                      <div className={`h-2 w-2 rounded-full ${
+                  {/* Avatar & Name */}
+                  <div className="flex items-center w-64 mb-3 md:mb-0">
+                    <div className="relative">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-accent-blue/20 to-accent-indigo/20 flex items-center justify-center text-accent-blue font-bold text-sm border border-accent-blue/10">
+                        {member.user.name ? member.user.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-bg-primary ${
                         member.user.presenceStatus === 'Active' || !member.user.presenceStatus ? 'bg-success' :
                         member.user.presenceStatus === 'Busy' ? 'bg-danger' :
                         member.user.presenceStatus === 'Break' ? 'bg-warning' :
                         'bg-orange-400'
                       }`}></div>
-                      <span>{member.user.presenceStatus || 'Active'}</span>
+                    </div>
+                    <div className="ml-3 truncate">
+                      <p className="font-bold text-sm text-text-primary truncate">{member.user.name || 'Pending User'}</p>
+                      <p className="text-[11px] text-text-secondary truncate">{member.user.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="w-32 mb-3 md:mb-0">
+                    <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      member.user.presenceStatus === 'Active' || !member.user.presenceStatus ? 'text-success bg-success/10' :
+                      member.user.presenceStatus === 'Busy' ? 'text-danger bg-danger/10' :
+                      member.user.presenceStatus === 'Break' ? 'text-warning bg-warning/10' :
+                      'text-orange-400 bg-orange-400/10'
+                    }`}>
+                      {member.user.presenceStatus || 'Active'}
                     </span>
-                  </td>
-                  <td className="text-text-secondary">{member.user.designation || '-'}</td>
-                  <td className="text-text-secondary">{member.user.email}</td>
-                  <td className="whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${
-                      member.role === 'super_admin' ? 'text-purple-500 bg-purple-500/10' : 
-                      member.role === 'hr' ? 'text-accent-blue bg-accent-blue/10' :
-                      member.role === 'team_leader' ? 'text-orange-400 bg-orange-400/10' :
-                      'text-success bg-success/10'
+                  </div>
+
+                  {/* Designation */}
+                  <div className="w-48 mb-3 md:mb-0">
+                    <p className="text-xs text-text-secondary">{member.user.designation || '-'}</p>
+                  </div>
+
+                  {/* Role */}
+                  <div className="flex-1 mb-3 md:mb-0">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm ${
+                      member.role === 'super_admin' ? 'text-purple-500 bg-purple-500/10 border border-purple-500/20' : 
+                      member.role === 'hr' ? 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20' :
+                      member.role === 'team_leader' ? 'text-orange-400 bg-orange-400/10 border border-orange-400/20' :
+                      'text-success bg-success/10 border border-success/20'
                     }`}>
                       {member.role.replace(/_/g, ' ')}
                     </span>
-                  </td>
-                  <td className="text-right whitespace-nowrap space-x-3">
-                    {(currentUserRole === 'super_admin' || currentUserRole === 'hr') ? (
-                      <>
-                        <button onClick={(e) => { e.stopPropagation(); handleOpenModal(member); }} className="text-accent-blue hover:underline text-sm font-medium">Edit Role</button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(member.user._id); }} className="text-danger hover:underline text-sm font-medium">Remove</button>
-                      </>
-                    ) : (
-                      <span className="text-text-secondary text-sm">No access</span>
+                  </div>
+
+                  {/* Actions (Three dots style) */}
+                  <div className="md:w-12 flex justify-end md:justify-center absolute top-4 right-4 md:static">
+                    {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-2">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleOpenModal(member); }}
+                          className="p-1.5 bg-bg-secondary hover:bg-accent-blue hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          title="Edit Role"
+                        >
+                          <Shield size={14} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(member.user._id); }}
+                          className="p-1.5 bg-bg-secondary hover:bg-danger hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          title="Remove Member"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
               {members.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="text-center py-8 text-text-secondary">No members found.</td>
-                </tr>
+                <div className="text-center py-12 text-text-secondary bg-bg-primary rounded-xl border border-dashed border-border">
+                  <UserPlus size={32} className="mx-auto mb-3 opacity-30" />
+                  <p>No members found. Invite someone!</p>
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
           ) : (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th className="text-left w-16">ICON</th>
-                  <th className="text-left">TEAM NAME</th>
-                  <th className="text-left">TEAM LEADER</th>
-                  <th className="text-left w-32">MEMBERS</th>
-                  <th className="text-right w-40">ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {teams.map((team) => (
-                  <tr key={team._id}>
-                    <td>
-                      <div className="h-8 w-8 rounded-full bg-orange-400/20 flex items-center justify-center text-orange-400 font-bold text-xs">
-                        {team.name ? team.name.charAt(0).toUpperCase() : 'T'}
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {teams.map((team) => (
+                <div key={team._id} className="bg-bg-primary border border-border hover:border-orange-400/50 rounded-2xl p-5 flex flex-col shadow-sm transition-all group relative">
+                  
+                  {/* Actions Dropdown */}
+                  {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
+                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                      <button 
+                        onClick={() => { setEditTeamItem(team); setIsTeamModalOpen(true); }}
+                        className="p-1.5 bg-bg-secondary hover:bg-accent-blue hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                        title="Edit Team"
+                      >
+                        <Shield size={14} />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if(window.confirm('Delete team?')) {
+                            axios.delete(`/workspaces/${workspace._id}/teams/${team._id}`)
+                             .then(() => {
+                               showToast('Team deleted successfully!', 'success');
+                               fetchWorkspaceData();
+                             })
+                             .catch(() => showToast('Failed to delete team', 'error'));
+                          }
+                        }}
+                        className="p-1.5 bg-bg-secondary hover:bg-danger hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                        title="Delete Team"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Team Header */}
+                  <div className="flex items-center mb-4">
+                    <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-400/20 to-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-xl border border-orange-400/10 shadow-sm mr-4">
+                      {team.name ? team.name.charAt(0).toUpperCase() : 'T'}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-text-primary text-lg">{team.name}</h3>
+                      <p className="text-xs text-text-secondary flex items-center mt-0.5">
+                        <Users size={12} className="mr-1" />
+                        {team.members?.length || 0} Members
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Team Leader */}
+                  <div className="bg-bg-secondary/50 rounded-xl p-3 mb-4 border border-border/50">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Team Leader</p>
+                    <div className="flex items-center">
+                      <div className="h-6 w-6 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center text-[10px] font-bold mr-2">
+                        {team.leader?.name?.charAt(0).toUpperCase() || 'L'}
                       </div>
-                    </td>
-                    <td className="font-bold text-text-primary">{team.name}</td>
-                    <td className="text-text-secondary">{team.leader?.name || 'No Leader'}</td>
-                    <td className="text-text-secondary">
-                      <div className="flex flex-wrap gap-1">
-                        {team.members && team.members.length > 0 ? (
-                          team.members.map(m => (
-                            <span key={m._id} className="bg-bg-primary border border-border px-2 py-1 rounded-md text-[10px] font-medium text-text-primary">
-                              {m.name}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-text-secondary italic">No members</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="text-right whitespace-nowrap space-x-3">
-                      {(currentUserRole === 'super_admin' || currentUserRole === 'hr') ? (
-                        <>
-                          <button onClick={() => { setEditTeamItem(team); setIsTeamModalOpen(true); }} className="text-accent-blue hover:underline text-sm font-medium">Edit</button>
-                          <button onClick={() => {
-                             if(window.confirm('Delete team?')) {
-                               axios.delete(`/workspaces/${workspace._id}/teams/${team._id}`)
-                                .then(() => {
-                                  showToast('Team deleted successfully!', 'success');
-                                  fetchWorkspaceData();
-                                })
-                                .catch(() => showToast('Failed to delete team', 'error'));
-                             }
-                          }} className="text-danger hover:underline text-sm font-medium">Delete</button>
-                        </>
+                      <span className="text-sm font-medium text-text-primary">{team.leader?.name || 'Unassigned'}</span>
+                    </div>
+                  </div>
+
+                  {/* Members Stack */}
+                  <div className="mt-auto">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2">Team Members</p>
+                    <div className="flex items-center flex-wrap gap-2">
+                      {team.members && team.members.length > 0 ? (
+                        team.members.map((m, idx) => (
+                          <div 
+                            key={m._id} 
+                            className="flex items-center bg-bg-secondary border border-border px-2.5 py-1 rounded-full text-xs font-medium text-text-primary shadow-sm"
+                          >
+                            <div className="h-4 w-4 rounded-full bg-accent-indigo/20 text-accent-indigo flex items-center justify-center text-[8px] font-bold mr-1.5 -ml-1">
+                              {m.name.charAt(0).toUpperCase()}
+                            </div>
+                            {m.name}
+                          </div>
+                        ))
                       ) : (
-                        <span className="text-text-secondary text-sm">No access</span>
+                        <span className="text-xs text-text-secondary italic">No members assigned</span>
                       )}
-                    </td>
-                  </tr>
-                ))}
-                {teams.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="text-center py-8 text-text-secondary">No teams found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {teams.length === 0 && (
+                <div className="col-span-full text-center py-12 text-text-secondary bg-bg-primary rounded-xl border border-dashed border-border">
+                  <Users size={32} className="mx-auto mb-3 opacity-30" />
+                  <p>No teams found. Create one to organize your workspace!</p>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

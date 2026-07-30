@@ -1,4 +1,5 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
+import axios from 'axios';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
@@ -12,6 +13,13 @@ const Layout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState({ projects: [], tasks: [], members: [] });
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef(null);
   const [toastNotif, setToastNotif] = useState(null);
   const toastTimerRef = React.useRef(null);
   const notificationRef = useRef(null);
@@ -25,6 +33,9 @@ const Layout = () => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfileMenu(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -34,6 +45,35 @@ const Layout = () => {
   React.useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const fetchSearch = async () => {
+      if (!searchQuery.trim()) {
+        setSearchResults({ projects: [], tasks: [], members: [] });
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const wsRes = await axios.get('/workspaces');
+        if (wsRes.data.length > 0) {
+          const workspaceId = wsRes.data[0]._id;
+          const res = await axios.get(`/workspaces/${workspaceId}/search?q=${searchQuery}`);
+          setSearchResults(res.data);
+          setIsSearchOpen(true);
+        }
+      } catch (err) {
+        console.error('Search error', err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+    
+    const timeoutId = setTimeout(() => {
+      fetchSearch();
+    }, 400); // debounce 400ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   // Base64 simple pop sound to avoid external dependencies
   const playNotificationSound = () => {
@@ -137,22 +177,93 @@ const Layout = () => {
         </div>
 
         {/* Global Search */}
-        <div className="flex-1 max-w-xl mx-4 relative hidden sm:block">
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              showToast('Global search is coming in the next update!', 'info');
-              e.target.reset();
-            }}
-            className="w-full bg-white/10 focus-within:bg-white/20 transition-colors border border-white/10 focus-within:border-white/30 rounded-md h-8 flex items-center px-3 cursor-text shadow-inner"
-          >
+        <div className="flex-1 max-w-xl mx-4 relative hidden sm:block" ref={searchRef}>
+          <div className="relative w-full bg-white/10 focus-within:bg-white/20 transition-colors border border-white/10 focus-within:border-white/30 rounded-md h-8 flex items-center px-3 cursor-text shadow-inner">
             <Search size={14} className="text-white/70 mr-2 shrink-0" />
             <input 
               type="text"
-              placeholder="Search across workspace..."
+              placeholder="Search Projects, Tasks, or Members..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => { if (searchQuery.trim()) setIsSearchOpen(true); }}
               className="w-full bg-transparent border-none outline-none text-xs text-white placeholder-white/50"
             />
-          </form>
+            {isSearching && (
+              <div className="absolute right-3 top-2 h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            )}
+          </div>
+          
+          {/* Search Results Dropdown */}
+          {isSearchOpen && (
+            <div className="absolute top-10 left-0 w-full bg-bg-secondary border border-border shadow-2xl rounded-xl z-50 max-h-96 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2">
+              {!isSearching && searchResults.projects?.length === 0 && searchResults.tasks?.length === 0 && searchResults.members?.length === 0 ? (
+                <div className="p-6 text-center text-text-secondary text-sm">
+                  No results found for "{searchQuery}"
+                </div>
+              ) : (
+                <div className="p-2 space-y-3">
+                  {searchResults.members?.length > 0 && (
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase px-2 mb-1">Members</h4>
+                      {searchResults.members.map(member => (
+                        <div 
+                          key={member._id}
+                          onClick={() => { setIsSearchOpen(false); navigate('/team'); }}
+                          className="flex items-center px-2 py-2 hover:bg-bg-primary rounded-lg cursor-pointer transition-colors"
+                        >
+                          <div className="h-6 w-6 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center font-bold text-xs mr-3">
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-text-primary leading-tight">{member.name}</p>
+                            <p className="text-[10px] text-text-secondary">{member.role.replace('_', ' ')}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchResults.projects?.length > 0 && (
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase px-2 mb-1">Projects</h4>
+                      {searchResults.projects.map(project => (
+                        <div 
+                          key={project._id}
+                          onClick={() => { setIsSearchOpen(false); navigate(`/projects`); }}
+                          className="flex items-center px-2 py-2 hover:bg-bg-primary rounded-lg cursor-pointer transition-colors"
+                        >
+                          <FolderKanban size={14} className="text-accent-indigo mr-3 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-text-primary leading-tight">{project.name}</p>
+                            <p className="text-[10px] text-text-secondary truncate max-w-[250px]">{project.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {searchResults.tasks?.length > 0 && (
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase px-2 mb-1">Tasks</h4>
+                      {searchResults.tasks.map(task => (
+                        <div 
+                          key={task._id}
+                          onClick={() => { setIsSearchOpen(false); navigate(`/my-tasks`); }}
+                          className="flex items-center px-2 py-2 hover:bg-bg-primary rounded-lg cursor-pointer transition-colors"
+                        >
+                          <CheckSquare size={14} className="text-success mr-3 shrink-0" />
+                          <div>
+                            <p className="text-xs font-bold text-text-primary leading-tight">{task.title}</p>
+                            <p className="text-[10px] text-text-secondary">Priority: <span className="capitalize">{task.priority}</span></p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Profile & Notifications */}
