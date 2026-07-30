@@ -280,12 +280,19 @@ const Projects = () => {
 
       {/* Premium CRUD Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary border border-border p-8 rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar animate-bounce-in">
-            <div className="flex justify-between items-center mb-8 pt-2 pb-4">
-              <h3 className="text-2xl font-bold text-text-primary font-outfit">{editItem ? 'Edit Project' : 'Create New Project'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger bg-bg-primary p-2 rounded-full transition-colors"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-lg shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-text-primary mb-1">{editItem ? 'Edit Project' : 'Create New Project'}</h3>
+                <p className="text-xs text-text-secondary">Organize work into focused projects.</p>
+              </div>
+              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
+                <X size={18} />
+              </button>
             </div>
+
+            <div className="p-6 overflow-y-auto custom-scrollbar">
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -370,13 +377,23 @@ const Projects = () => {
                 )}
               </div>
 
-              <div className="flex justify-end space-x-4 pt-4 border-t border-border mt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-text-secondary hover:text-text-primary font-medium transition-colors">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-accent-blue text-white rounded-xl hover:bg-blue-600 shadow-soft hover:shadow-hover font-semibold transition-all">
+              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
+                <button 
+                  type="button" 
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
+                >
                   {editItem ? 'Save Changes' : 'Create Project'}
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

@@ -334,20 +334,26 @@ const AttendanceLeave = () => {
       </div>
 
       {isLeaveModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-[#E5E7EB] p-6 rounded-3xl w-full max-w-[420px] shadow-2xl relative">
-            <button onClick={() => setIsLeaveModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors">
-              <X size={20} />
-            </button>
-            <h3 className="text-xl font-bold text-[#111827] mb-6">Apply for Leave</h3>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-[420px] shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-text-primary mb-1">Apply for Leave</h3>
+                <p className="text-xs text-text-secondary">Request time off from work.</p>
+              </div>
+              <button onClick={() => setIsLeaveModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar">
             
             <form onSubmit={handleApplyLeave} className="space-y-4">
               <div>
-                <label className="block text-[#6B7280] text-sm font-medium mb-1.5">Leave Type</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">Leave Type</label>
                 <select 
                   value={leaveData.type} onChange={e => setLeaveData({...leaveData, type: e.target.value})}
-                  className="w-full bg-white border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-[#111827] text-sm focus:outline-none focus:border-[#4285f4] focus:ring-1 focus:ring-[#4285f4] transition-all appearance-none bg-no-repeat"
-                  style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23111827%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundPosition: 'right 1rem center', backgroundSize: '0.65em auto' }}
+                  className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
                 >
                   <option value="Casual">Casual Leave</option>
                   <option value="Sick">Sick Leave</option>
@@ -357,36 +363,48 @@ const AttendanceLeave = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[#6B7280] text-sm font-medium mb-1.5">Start Date</label>
+                  <label className="block text-sm font-medium text-text-secondary mb-1.5">Start Date</label>
                   <input 
                     type="date" required 
                     value={leaveData.startDate} onChange={e => setLeaveData({...leaveData, startDate: e.target.value})}
-                    className="w-full bg-white border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-[#111827] text-sm focus:outline-none focus:border-[#4285f4] focus:ring-1 focus:ring-[#4285f4] transition-all"
+                    className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[#6B7280] text-sm font-medium mb-1.5">End Date</label>
+                  <label className="block text-sm font-medium text-text-secondary mb-1.5">End Date</label>
                   <input 
                     type="date" required 
                     value={leaveData.endDate} onChange={e => setLeaveData({...leaveData, endDate: e.target.value})}
-                    className="w-full bg-white border border-[#E5E7EB] rounded-xl px-4 py-2.5 text-[#111827] text-sm focus:outline-none focus:border-[#4285f4] focus:ring-1 focus:ring-[#4285f4] transition-all"
+                    className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[#6B7280] text-sm font-medium mb-1.5">Reason</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">Reason</label>
                 <textarea 
                   required rows="3"
                   value={leaveData.reason} onChange={e => setLeaveData({...leaveData, reason: e.target.value})}
-                  className="w-full bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 text-[#111827] text-sm focus:outline-none focus:border-[#4285f4] focus:ring-1 focus:ring-[#4285f4] transition-all resize-none placeholder-gray-400"
+                  className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary text-sm focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all resize-none placeholder-text-secondary"
                   placeholder="Reason for taking leave..."
                 ></textarea>
               </div>
-              <div className="flex justify-end items-center space-x-6 pt-4">
-                <button type="button" onClick={() => setIsLeaveModalOpen(false)} className="text-[#6B7280] hover:text-[#111827] font-semibold text-sm transition-colors">Cancel</button>
-                <button type="submit" className="px-6 py-2.5 bg-[#4285f4] text-white rounded-xl hover:bg-blue-600 font-semibold text-sm shadow-sm transition-colors">Submit Request</button>
+              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
+                <button 
+                  type="button" 
+                  onClick={() => setIsLeaveModalOpen(false)}
+                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
+                >
+                  Submit Request
+                </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

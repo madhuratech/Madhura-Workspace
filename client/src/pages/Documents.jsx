@@ -213,15 +213,22 @@ const Documents = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-bg-secondary border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-text-primary flex items-center">
-                <UploadCloud className="mr-2 text-accent-blue" />
-                {editItem ? 'Edit Document' : 'Upload New Document'}
-              </h3>
-              <button onClick={handleCloseModal} className="text-text-secondary hover:text-text-primary"><X size={20} /></button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-2xl shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-text-primary mb-1 flex items-center">
+                  <UploadCloud className="mr-2 text-accent-blue" size={20} />
+                  {editItem ? 'Edit Document' : 'Upload New Document'}
+                </h3>
+                <p className="text-xs text-text-secondary">Share files securely with your team.</p>
+              </div>
+              <button onClick={handleCloseModal} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
+                <X size={18} />
+              </button>
             </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar">
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -268,13 +275,23 @@ const Documents = () => {
                 ></textarea>
               </div>
               
-              <div className="pt-4 flex justify-end space-x-3">
-                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-text-secondary hover:text-text-primary font-medium transition-colors">Cancel</button>
-                <button type="submit" className="px-6 py-2 bg-accent-blue text-white rounded-lg hover:bg-blue-600 font-medium transition-colors flex items-center space-x-2 shadow-lg shadow-blue-500/30">
+              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
+                <button 
+                  type="button" 
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20 flex items-center space-x-2"
+                >
                   <Save size={16} /> <span>{editItem ? 'Save Changes' : 'Upload Document'}</span>
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

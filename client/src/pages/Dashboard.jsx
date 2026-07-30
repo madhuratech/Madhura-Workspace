@@ -437,127 +437,135 @@ const Dashboard = () => {
 
       {/* Modal for creating workspace */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-xl font-bold text-text-primary mb-1">Create Workspace</h3>
-            <p className="text-xs text-text-secondary mb-6">Set up a new space for your team to collaborate.</p>
-            <form onSubmit={createWorkspace}>
-              <div className="mb-5">
-                <label className="block text-sm font-bold text-text-primary mb-2">Workspace Name</label>
-                <input 
-                  type="text" 
-                  value={newWorkspaceName}
-                  onChange={(e) => setNewWorkspaceName(e.target.value)}
-                  className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
-                  placeholder="e.g. Design Team, Q3 Planning..."
-                  required
-                />
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-text-primary mb-2">Invite Members</label>
-                <div className="max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-primary space-y-1 custom-scrollbar">
-                  {allUsers.filter(u => u._id !== user._id).map(u => (
-                    <label key={u._id} className="flex items-center space-x-3 p-2.5 hover:bg-bg-secondary rounded-lg cursor-pointer transition-colors border border-transparent hover:border-border/50">
-                      <input 
-                        type="checkbox" 
-                        className="accent-accent-blue w-4 h-4 rounded"
-                        checked={selectedMembers.includes(u._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedMembers([...selectedMembers, u._id]);
-                          } else {
-                            setSelectedMembers(selectedMembers.filter(id => id !== u._id));
-                          }
-                        }}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-text-primary">{u.name}</span>
-                        <span className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">{u.role?.replace('_', ' ')}</span>
-                      </div>
-                    </label>
-                  ))}
-                  {allUsers.length <= 1 && <p className="text-xs text-text-secondary text-center p-4">No other users found.</p>}
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-md shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden">
+            <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10">
+              <h3 className="text-xl font-bold text-text-primary mb-1">Create Workspace</h3>
+              <p className="text-xs text-text-secondary">Set up a new space for your team to collaborate.</p>
+            </div>
+            <div className="p-6">
+              <form onSubmit={createWorkspace}>
+                <div className="mb-5">
+                  <label className="block text-sm font-bold text-text-primary mb-2">Workspace Name</label>
+                  <input 
+                    type="text" 
+                    value={newWorkspaceName}
+                    onChange={(e) => setNewWorkspaceName(e.target.value)}
+                    className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
+                    placeholder="e.g. Design Team, Q3 Planning..."
+                    required
+                  />
                 </div>
-              </div>
-              <div className="flex justify-end space-x-3 pt-2 border-t border-border/50 mt-4">
-                <button 
-                  type="button" 
-                  onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 text-text-secondary hover:text-text-primary font-medium rounded-xl hover:bg-bg-primary transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="px-6 py-2.5 bg-accent-blue text-white rounded-xl hover:bg-blue-600 font-medium transition-all shadow-md"
-                >
-                  Create Space
-                </button>
-              </div>
-            </form>
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-text-primary mb-2">Invite Members</label>
+                  <div className="max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-primary space-y-1 custom-scrollbar">
+                    {allUsers.filter(u => u._id !== user._id).map(u => (
+                      <label key={u._id} className="flex items-center space-x-3 p-2.5 hover:bg-bg-secondary rounded-lg cursor-pointer transition-colors border border-transparent hover:border-border/50">
+                        <input 
+                          type="checkbox" 
+                          className="accent-accent-blue w-4 h-4 rounded"
+                          checked={selectedMembers.includes(u._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedMembers([...selectedMembers, u._id]);
+                            } else {
+                              setSelectedMembers(selectedMembers.filter(id => id !== u._id));
+                            }
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-text-primary">{u.name}</span>
+                          <span className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">{u.role?.replace('_', ' ')}</span>
+                        </div>
+                      </label>
+                    ))}
+                    {allUsers.length <= 1 && <p className="text-xs text-text-secondary text-center p-4">No other users found.</p>}
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-border/50">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
+                  >
+                    Create Space
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal for editing workspace */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary border border-border p-6 rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-xl font-bold text-text-primary mb-1">Manage Workspace</h3>
-            <p className="text-xs text-text-secondary mb-6">Update details and manage members.</p>
-            <form onSubmit={updateWorkspace}>
-              <div className="mb-5">
-                <label className="block text-sm font-bold text-text-primary mb-2">Workspace Name</label>
-                <input 
-                  type="text" 
-                  value={newWorkspaceName}
-                  onChange={(e) => setNewWorkspaceName(e.target.value)}
-                  className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
-                  required
-                />
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-bold text-text-primary mb-2">Manage Members</label>
-                <div className="max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-primary space-y-1 custom-scrollbar">
-                  {allUsers.filter(u => u._id !== user._id).map(u => (
-                    <label key={u._id} className="flex items-center space-x-3 p-2.5 hover:bg-bg-secondary rounded-lg cursor-pointer transition-colors border border-transparent hover:border-border/50">
-                      <input 
-                        type="checkbox" 
-                        className="accent-accent-blue w-4 h-4 rounded"
-                        checked={selectedMembers.includes(u._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedMembers([...selectedMembers, u._id]);
-                          } else {
-                            setSelectedMembers(selectedMembers.filter(id => id !== u._id));
-                          }
-                        }}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-text-primary">{u.name}</span>
-                        <span className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">{u.role?.replace('_', ' ')}</span>
-                      </div>
-                    </label>
-                  ))}
-                  {allUsers.length <= 1 && <p className="text-xs text-text-secondary text-center p-4">No other users found.</p>}
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-md shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden">
+            <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10">
+              <h3 className="text-xl font-bold text-text-primary mb-1">Manage Workspace</h3>
+              <p className="text-xs text-text-secondary">Update details and manage members.</p>
+            </div>
+            <div className="p-6">
+              <form onSubmit={updateWorkspace}>
+                <div className="mb-5">
+                  <label className="block text-sm font-bold text-text-primary mb-2">Workspace Name</label>
+                  <input 
+                    type="text" 
+                    value={newWorkspaceName}
+                    onChange={(e) => setNewWorkspaceName(e.target.value)}
+                    className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
+                    required
+                  />
                 </div>
-              </div>
-              <div className="flex justify-end space-x-3 pt-2 border-t border-border/50 mt-4">
-                <button 
-                  type="button" 
-                  onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
-                  className="px-5 py-2.5 text-text-secondary hover:text-text-primary font-medium rounded-xl hover:bg-bg-primary transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="px-6 py-2.5 bg-accent-blue text-white rounded-xl hover:bg-blue-600 font-medium transition-all shadow-md"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-text-primary mb-2">Manage Members</label>
+                  <div className="max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-primary space-y-1 custom-scrollbar">
+                    {allUsers.filter(u => u._id !== user._id).map(u => (
+                      <label key={u._id} className="flex items-center space-x-3 p-2.5 hover:bg-bg-secondary rounded-lg cursor-pointer transition-colors border border-transparent hover:border-border/50">
+                        <input 
+                          type="checkbox" 
+                          className="accent-accent-blue w-4 h-4 rounded"
+                          checked={selectedMembers.includes(u._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedMembers([...selectedMembers, u._id]);
+                            } else {
+                              setSelectedMembers(selectedMembers.filter(id => id !== u._id));
+                            }
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-text-primary">{u.name}</span>
+                          <span className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">{u.role?.replace('_', ' ')}</span>
+                        </div>
+                      </label>
+                    ))}
+                    {allUsers.length <= 1 && <p className="text-xs text-text-secondary text-center p-4">No other users found.</p>}
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-border/50">
+                  <button 
+                    type="button" 
+                    onClick={() => { setShowEditModal(false); setEditingWorkspace(null); }}
+                    className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
