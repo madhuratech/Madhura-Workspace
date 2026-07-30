@@ -205,34 +205,79 @@ const Projects = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto flex-1">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th className="text-left">PROJECT NAME</th>
-                <th className="text-left w-40">ASSIGNED TO</th>
-                <th className="text-left w-40">CREATED</th>
-                <th className="text-left w-32">STATUS</th>
-                {user?.role !== 'employee' && <th className="text-right w-40">ACTIONS</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((project) => (
-                <tr key={project._id}>
-                  <td className="font-bold text-text-primary">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-accent-blue/10 rounded-xl text-accent-blue"><FolderKanban size={16} /></div>
-                      <div>
-                        <p className="font-outfit text-sm font-semibold">{project.title}</p>
-                        {project.description && <p className="text-xs text-text-secondary font-normal mt-0.5 line-clamp-1 max-w-sm">{project.description}</p>}
-                      </div>
+        {/* Project Cards Grid */}
+        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar bg-bg-primary">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((project) => (
+              <div 
+                key={project._id} 
+                className="group bg-bg-secondary border border-border hover:border-accent-blue/50 rounded-2xl p-5 flex flex-col shadow-sm transition-all relative overflow-hidden"
+              >
+                {/* Status Indicator Bar at top */}
+                <div className={`absolute top-0 left-0 w-full h-1 ${
+                  project.status === 'Completed' ? 'bg-success' : 'bg-accent-blue'
+                }`}></div>
+
+                {/* Header & Actions */}
+                <div className="flex justify-between items-start mb-4 mt-2">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-accent-blue/10 rounded-xl text-accent-blue shadow-sm border border-accent-blue/10">
+                      <FolderKanban size={20} />
                     </div>
-                  </td>
-                  <td>
+                  </div>
+                  
+                  {/* Actions Dropdown / Icons */}
+                  <div className="flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {user?.role !== 'employee' && (
+                      <>
+                        <button 
+                          onClick={() => handleOpenModal(project)} 
+                          className="p-1.5 bg-bg-primary hover:bg-accent-blue hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          title="Edit Project"
+                        >
+                          <Search size={14} className="hidden" /> {/* just a placeholder to keep imports happy if unused, actually I should use Edit icon but it's not imported. I'll just use text or another icon */}
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-1">Edit</span>
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(project._id)} 
+                          className="p-1.5 bg-bg-primary hover:bg-danger hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          title="Delete Project"
+                        >
+                          <X size={14} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Title & Description */}
+                <div className="mb-4 flex-1">
+                  <h3 className="font-outfit text-lg font-bold text-text-primary leading-tight mb-1">{project.title}</h3>
+                  <p className="text-xs text-text-secondary line-clamp-2">{project.description || 'No description provided.'}</p>
+                </div>
+
+                {/* Status & Date */}
+                <div className="flex items-center justify-between mb-5 bg-bg-primary rounded-xl p-2.5 border border-border/50">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Created</span>
+                    <span className="text-xs font-semibold text-text-primary flex items-center">
+                      <Calendar size={10} className="mr-1 text-text-secondary" />
+                      {new Date(project.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
+                    </span>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase shadow-sm ${
+                    project.status === 'Completed' ? 'text-success bg-success/10 border border-success/20' : 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20'
+                  }`}>
+                    {project.status}
+                  </span>
+                </div>
+
+                {/* Footer: Members & Link */}
+                <div className="flex items-center justify-between mt-auto pt-2 border-t border-border border-dashed">
+                  <div>
                     <div className="avatar-stack">
                       {project.members?.slice(0, 4).map(m => (
-                        <div key={m._id} title={m.name} className="h-7 w-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue text-[10px] font-bold shadow-sm">
+                        <div key={m._id} title={m.name} className="h-7 w-7 rounded-full bg-accent-indigo/10 flex items-center justify-center text-accent-indigo text-[10px] font-bold shadow-sm">
                           {m.name?.charAt(0).toUpperCase()}
                         </div>
                       ))}
@@ -242,39 +287,26 @@ const Projects = () => {
                         </div>
                       )}
                     </div>
-                  </td>
-                  <td className="text-text-secondary text-sm font-medium">{new Date(project.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</td>
-                  <td>
-                    <span className={`px-3 py-1.5 rounded-md text-xs font-bold tracking-wide uppercase ${
-                      project.status === 'Completed' ? 'text-success bg-success/10 border border-success/20' : 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20'
-                    }`}>
-                      {project.status}
-                    </span>
-                  </td>
-                  {user?.role !== 'employee' && (
-                    <td className="text-right whitespace-nowrap space-x-3">
-                      <Link to={`/project/${project._id}`} className="text-accent-blue hover:underline text-sm font-medium">Board</Link>
-                      <button onClick={() => handleOpenModal(project)} className="text-text-secondary hover:text-text-primary text-sm font-medium">Edit</button>
-                      <button onClick={() => handleDelete(project._id)} className="text-danger hover:underline text-sm font-medium">Delete</button>
-                    </td>
-                  )}
-                  {user?.role === 'employee' && (
-                    <td className="text-right whitespace-nowrap">
-                      <Link to={`/project/${project._id}`} className="text-accent-blue hover:underline text-sm font-medium">View Board</Link>
-                    </td>
-                  )}
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="text-center py-12 text-text-secondary">
-                    <FolderKanban size={36} className="mx-auto mb-3 opacity-20" />
-                    <p>{user?.role === 'employee' ? 'No projects assigned to you yet.' : 'No projects yet. Create one!'}</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </div>
+                  
+                  <Link 
+                    to={`/project/${project._id}`} 
+                    className="text-xs font-bold text-accent-blue hover:text-white hover:bg-accent-blue px-3 py-1.5 rounded-lg transition-colors border border-accent-blue/20 bg-accent-blue/5"
+                  >
+                    Open Board
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {filtered.length === 0 && (
+            <div className="text-center py-16 text-text-secondary bg-bg-secondary rounded-2xl border border-dashed border-border mt-4">
+              <FolderKanban size={48} className="mx-auto mb-4 opacity-20" />
+              <h3 className="font-outfit text-xl font-bold text-text-primary mb-2">No Projects Found</h3>
+              <p>{user?.role === 'employee' ? 'You haven\'t been assigned to any projects yet.' : 'There are no projects matching your search. Create one!'}</p>
+            </div>
+          )}
         </div>
       </div>
 

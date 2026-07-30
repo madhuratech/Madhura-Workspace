@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import { Search, Plus, UserPlus, Shield, X, Mail } from 'lucide-react';
+import { Search, Plus, UserPlus, Shield, X, Mail, Users } from 'lucide-react';
 
 const Team = () => {
   const { user } = useContext(AuthContext);
