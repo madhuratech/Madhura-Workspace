@@ -1,6 +1,7 @@
 const Task = require('../models/Task');
 const Workspace = require('../models/Workspace');
 const { sendNotification } = require('./notificationController');
+const { logActivity } = require('./auditController');
 
 // @desc    Get tasks for a project
 // @route   GET /api/projects/:projectId/tasks
@@ -78,6 +79,16 @@ const createTask = async (req, res) => {
       req.io.emit('taskCreated', populated);
     }
 
+    // Log Activity
+    await logActivity({
+      workspace,
+      user: req.user._id,
+      action: 'CREATE_TASK',
+      entityType: 'Task',
+      entityId: task._id,
+      details: `Created task "${title}"`
+    });
+
     // Send notifications to assignees
     populated.assignees.forEach(assignee => {
       sendNotification(
@@ -111,6 +122,18 @@ const updateTask = async (req, res) => {
     if (req.io) {
       req.io.emit('taskUpdated', task);
     }
+
+    let updateDetails = `Updated task "${task.title}"`;
+    if (req.body.status) updateDetails = `Moved task "${task.title}" to ${req.body.status}`;
+
+    await logActivity({
+      workspace: task.workspace,
+      user: req.user._id,
+      action: 'UPDATE_TASK',
+      entityType: 'Task',
+      entityId: task._id,
+      details: updateDetails
+    });
 
     // If status changed, notify assignees (excluding the person who made the change)
     if (req.body.status) {

@@ -19,6 +19,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "autoprefixer": "^10.5.4",
     "axios": "^1.18.1",
+    "date-fns": "^4.4.0",
     "emoji-picker-react": "^4.19.1",
     "lucide-react": "^1.25.0",
     "postcss": "^8.5.20",

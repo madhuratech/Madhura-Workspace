@@ -24,6 +24,15 @@ const MessageSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  parentMessage: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Message',
+    default: null
+  },
+  mentions: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   readBy: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

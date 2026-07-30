@@ -18,6 +18,7 @@ const attendanceRouter = require('./attendance');
 const leaveRouter = require('./leave');
 const emailRouter = require('./emailRoutes');
 const dmRouter = require('./dmRoutes');
+const auditRouter = require('./auditRoutes');
 
 const { getMyTasks } = require('../controllers/taskController');
 const { getWorkspaceAnalytics } = require('../controllers/analyticsController');
@@ -30,6 +31,7 @@ router.use('/:workspaceId/channels', messageRouter);
 router.use('/:workspaceId/teams', teamRouter);
 router.use('/:workspaceId/attendance', attendanceRouter);
 router.use('/:workspaceId/leaves', leaveRouter);
+router.use('/:workspaceId/audit-logs', auditRouter);
 
 router.get('/:workspaceId/my-tasks', protect, getMyTasks);
 router.get('/:workspaceId/analytics', protect, getWorkspaceAnalytics);

@@ -2,6 +2,7 @@ const Project = require('../models/Project');
 const Workspace = require('../models/Workspace');
 const User = require('../models/User');
 const { sendNotification } = require('./notificationController');
+const { logActivity } = require('./auditController');
 
 // @desc    Get projects for a workspace
 // @route   GET /api/workspaces/:workspaceId/projects
@@ -71,6 +72,15 @@ const createProject = async (req, res) => {
       req.io.emit('projectCreated', populated);
     }
 
+    await logActivity({
+      workspace: req.params.workspaceId,
+      user: req.user._id,
+      action: 'CREATE_PROJECT',
+      entityType: 'Project',
+      entityId: project._id,
+      details: `Created project "${title}"`
+    });
+
     // Send notifications to project members
     populated.members.forEach(member => {
       if (member._id.toString() !== req.user._id.toString()) {
@@ -114,6 +124,15 @@ const updateProject = async (req, res) => {
       req.io.emit('projectUpdated', project);
     }
 
+    await logActivity({
+      workspace: req.params.workspaceId,
+      user: req.user._id,
+      action: 'UPDATE_PROJECT',
+      entityType: 'Project',
+      entityId: project._id,
+      details: `Updated project "${title || project.title}"`
+    });
+
     res.status(200).json(project);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -136,6 +155,15 @@ const deleteProject = async (req, res) => {
     if (req.io) {
       req.io.emit('projectDeleted', req.params.projectId);
     }
+
+    await logActivity({
+      workspace: req.params.workspaceId,
+      user: req.user._id,
+      action: 'DELETE_PROJECT',
+      entityType: 'Project',
+      entityId: project._id,
+      details: `Deleted project "${project.title}"`
+    });
 
     res.status(200).json({ message: 'Project removed' });
   } catch (error) {

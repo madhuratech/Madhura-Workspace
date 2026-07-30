@@ -14,6 +14,10 @@ const ChannelSchema = new mongoose.Schema({
   description: {
     type: String
   },
+  isPrivate: {
+    type: Boolean,
+    default: false
+  },
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,

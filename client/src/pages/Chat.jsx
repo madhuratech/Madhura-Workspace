@@ -19,6 +19,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [newChannelData, setNewChannelData] = useState({ name: '', description: '', isPrivate: false, members: [] });
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -316,19 +317,20 @@ const Chat = () => {
       const res = await axios.post(`/workspaces/${workspace._id}/channels`, { 
         name: formattedName, 
         description: newChannelData.description,
+        isPrivate: newChannelData.isPrivate,
         members: finalMembers
       });
       setChannels([...channels, res.data]);
       setActiveChannel(res.data);
       setIsChannelModalOpen(false);
-      setNewChannelData({ name: '', description: '', members: [] });
+      setNewChannelData({ name: '', description: '', isPrivate: false, members: [] });
     } catch (error) {
       alert('Failed to create channel');
     }
   };
 
   const handleOpenChannelModal = () => {
-    setNewChannelData({ name: '', description: '', members: [] });
+    setNewChannelData({ name: '', description: '', isPrivate: false, members: [] });
     setIsChannelModalOpen(true);
   };
 
@@ -754,31 +756,48 @@ const Chat = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Private Channel Members</label>
-                <p className="text-[10px] text-text-secondary mb-2">Leave all unchecked to make this a public channel for everyone in the workspace.</p>
-                <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 bg-bg-secondary space-y-1 custom-scrollbar">
-                  {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user._id).map(m => (
-                    <label key={m.user._id} className="flex items-center space-x-3 p-1.5 hover:bg-bg-primary rounded-lg cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="accent-accent-blue"
-                        checked={newChannelData.members.includes(m.user._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setNewChannelData({...newChannelData, members: [...newChannelData.members, m.user._id]});
-                          } else {
-                            setNewChannelData({...newChannelData, members: newChannelData.members.filter(id => id !== m.user._id)});
-                          }
-                        }}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-text-primary">{m.user.name}</span>
-                        <span className="text-[10px] text-text-secondary">{m.role.replace('_', ' ')}</span>
-                      </div>
-                    </label>
-                  ))}
+                <label className="block text-sm font-medium text-text-secondary mb-1">Private Channel</label>
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="checkbox" 
+                    id="isPrivate"
+                    className="accent-accent-blue"
+                    checked={newChannelData.isPrivate}
+                    onChange={e => setNewChannelData({...newChannelData, isPrivate: e.target.checked})}
+                  />
+                  <label htmlFor="isPrivate" className="text-sm text-text-primary">Make this channel private</label>
                 </div>
+                <p className="text-[10px] text-text-secondary mt-1">If unchecked, everyone in the workspace can view and join this channel.</p>
               </div>
+
+              {newChannelData.isPrivate && (
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Private Channel Members</label>
+                  <p className="text-[10px] text-text-secondary mb-2">Select members who can access this private channel.</p>
+                  <div className="max-h-40 overflow-y-auto border border-border rounded-lg p-2 bg-bg-secondary space-y-1 custom-scrollbar">
+                    {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user._id).map(m => (
+                      <label key={m.user._id} className="flex items-center space-x-3 p-1.5 hover:bg-bg-primary rounded-lg cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="accent-accent-blue"
+                          checked={newChannelData.members.includes(m.user._id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewChannelData({...newChannelData, members: [...newChannelData.members, m.user._id]});
+                            } else {
+                              setNewChannelData({...newChannelData, members: newChannelData.members.filter(id => id !== m.user._id)});
+                            }
+                          }}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium text-text-primary">{m.user.name}</span>
+                          <span className="text-[10px] text-text-secondary">{m.role.replace('_', ' ')}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
                 <button 

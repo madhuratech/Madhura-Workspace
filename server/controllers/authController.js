@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { logActivity } = require('./auditController');
 
 // Generate JWT
 const generateToken = (id) => {
@@ -62,6 +63,16 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email }).select('+password');
 
     if (user && (await user.matchPassword(password))) {
+      // Log login activity (workspace is null since it's a global action)
+      await logActivity({
+        workspace: null,
+        user: user._id,
+        action: 'LOGIN',
+        entityType: 'User',
+        entityId: user._id,
+        details: 'User logged in successfully'
+      });
+
       res.json({
         _id: user._id,
         name: user.name,

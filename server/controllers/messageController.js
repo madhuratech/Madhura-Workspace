@@ -7,8 +7,7 @@ exports.getChannels = async (req, res) => {
     const channels = await Channel.find({ 
       workspace: req.params.workspaceId,
       $or: [
-        { members: { $exists: false } },
-        { members: { $size: 0 } },
+        { isPrivate: false },
         { members: req.user._id }
       ]
     });
@@ -24,6 +23,7 @@ exports.createChannel = async (req, res) => {
       name: req.body.name,
       description: req.body.description,
       workspace: req.params.workspaceId,
+      isPrivate: req.body.isPrivate || false,
       members: req.body.members || []
     });
     res.status(201).json(channel);
@@ -61,6 +61,7 @@ exports.getMessages = async (req, res) => {
   try {
     const messages = await Message.find({ channel: req.params.channelId })
       .populate('sender', 'name email avatar')
+      .populate('mentions', 'name')
       .sort({ createdAt: 1 });
     res.status(200).json(messages);
   } catch (error) {
@@ -70,7 +71,7 @@ exports.getMessages = async (req, res) => {
 
 exports.createMessage = async (req, res) => {
   try {
-    const { text, attachment } = req.body;
+    const { text, attachment, parentMessage, mentions } = req.body;
 
     if (!text && !attachment) {
       return res.status(400).json({ message: 'Please add message text or an attachment' });
@@ -79,10 +80,12 @@ exports.createMessage = async (req, res) => {
     const message = await Message.create({
       text: text || '',
       attachment,
+      parentMessage: parentMessage || null,
+      mentions: mentions || [],
       channel: req.params.channelId,
       sender: req.user._id
     });
-    const populatedMessage = await message.populate('sender', 'name email avatar');
+    const populatedMessage = await message.populate([{ path: 'sender', select: 'name email avatar' }, { path: 'mentions', select: 'name' }]);
     
     // Emit via Socket.io
     if (req.io) {

@@ -20,6 +20,7 @@ import TeamLeaderDashboard from './pages/TeamLeaderDashboard';
 import AttendanceLeave from './pages/AttendanceLeave';
 import MyTasks from './pages/MyTasks';
 import AnalyticsReports from './pages/AnalyticsReports';
+import ActivityLogs from './pages/ActivityLogs';
 import Layout from './components/Layout';
 
 const ProtectedRoute = ({ children }) => {
@@ -45,6 +46,7 @@ function App() {
         }>
           <Route index element={<Dashboard />} />
           <Route path="analytics" element={<AnalyticsReports />} />
+          <Route path="activity-logs" element={<ActivityLogs />} />
           <Route path="projects" element={<Projects />} />
           <Route path="my-tasks" element={<MyTasks />} />
           <Route path="team" element={<Team />} />

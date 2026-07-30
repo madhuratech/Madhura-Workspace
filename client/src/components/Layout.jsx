@@ -2,7 +2,7 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
@@ -368,10 +368,16 @@ const Layout = () => {
             </Link>
             
             { (user?.role === 'super_admin' || user?.role === 'hr') && (
-              <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/analytics' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
-                <BarChart3 size={16} />
-                <span>Analytics & Reports</span>
-              </Link>
+              <>
+                <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/analytics' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                  <BarChart3 size={16} />
+                  <span>Analytics & Reports</span>
+                </Link>
+                <Link to="/activity-logs" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/activity-logs' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                  <Activity size={16} />
+                  <span>Activity Logs</span>
+                </Link>
+              </>
             )}
 
             <div className="h-px bg-border my-3 mx-2"></div>
