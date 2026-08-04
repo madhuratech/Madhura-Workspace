@@ -594,7 +594,7 @@ const Chat = () => {
                           {/* Text Content & Timestamp Container */}
                           {msg.text && (
                             <div className="relative px-2 py-1 flex flex-col">
-                              <div className="whitespace-pre-wrap break-words leading-relaxed text-[15px] inline-block relative max-w-full">
+                              <div className="whitespace-pre-wrap break-words leading-relaxed text-[14.5px] inline-block relative max-w-full">
                                 {msg.text}
                                 {/* WhatsApp Spacer to prevent overlap and push time to corner */}
                                 <span className="inline-block w-[75px] h-1" aria-hidden="true"></span>
