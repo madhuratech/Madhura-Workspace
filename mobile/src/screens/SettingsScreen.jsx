@@ -47,7 +47,7 @@ const SettingItem = ({ item, delay }) => {
 };
 
 export default function SettingsScreen({ navigation }) {
-  const { logout, user } = useContext(AuthContext);
+  const { logout, user, updateUserStatus } = useContext(AuthContext);
 
   const profileFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -132,6 +132,35 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </Animated.View>
 
+        {/* ── Status Picker ─────────────────────── */}
+        <Animated.View style={[{ opacity: profileFade, marginBottom: 24 }]}>
+          <Text style={styles.sectionTitle}>PRESENCE STATUS</Text>
+          <View style={styles.statusContainer}>
+            {['Active', 'Busy', 'Break', 'Away'].map(status => {
+              const isActive = user?.presenceStatus === status;
+              let statusColor = '#10B981'; // Active
+              if (status === 'Busy') statusColor = '#EF4444';
+              else if (status === 'Break') statusColor = '#F59E0B';
+              else if (status === 'Away') statusColor = '#F97316';
+
+              return (
+                <TouchableOpacity 
+                  key={status}
+                  activeOpacity={0.8}
+                  onPress={() => updateUserStatus(status)}
+                  style={[
+                    styles.statusBtn,
+                    isActive ? { backgroundColor: statusColor + '15', borderColor: statusColor + '40' } : { backgroundColor: '#fff', borderColor: '#F1F5F9' }
+                  ]}
+                >
+                  <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                  <Text style={[styles.statusText, isActive ? { color: statusColor, fontWeight: '700' } : { color: '#64748B' }]}>{status}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Animated.View>
+
         {/* ── Settings Groups ───────────────────── */}
         {groups.map(group => (
           <View key={group.title}>
@@ -201,6 +230,19 @@ const styles = StyleSheet.create({
     fontSize: 11, fontWeight: '700', color: '#94A3B8', letterSpacing: 1.2,
     marginBottom: 10, marginTop: 8,
   },
+
+  // Status
+  statusContainer: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 10,
+  },
+  statusBtn: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 10, paddingHorizontal: 14,
+    borderRadius: 12, borderWidth: 1,
+    width: '48%', justifyContent: 'center'
+  },
+  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  statusText: { fontSize: 13, fontWeight: '600' },
 
   // Setting items
   settingItem: {
