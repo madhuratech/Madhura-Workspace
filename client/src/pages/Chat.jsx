@@ -538,7 +538,7 @@ const Chat = () => {
                         {/* Message Bubble */}
                         <div className={`relative min-w-[80px] max-w-full shadow-sm flex flex-col ${
                           isMine 
-                            ? 'bg-[#d9fdd3] text-[#111b21] rounded-2xl rounded-tr-sm' 
+                            ? 'bg-accent-blue text-white rounded-2xl rounded-tr-sm' 
                             : 'bg-bg-primary text-text-primary rounded-2xl rounded-tl-sm border border-border/50'
                         }`}>
                           
@@ -601,14 +601,14 @@ const Chat = () => {
                               </div>
 
                               {/* Timestamp and Read Receipt at bottom */}
-                              <div className="flex items-center justify-end space-x-1 text-[10.5px] text-black/50 -mt-3.5 ml-auto z-10 mr-1">
+                              <div className={`flex items-center justify-end space-x-1 text-[10.5px] -mt-3.5 ml-auto z-10 mr-1 ${isMine ? 'text-white/80' : 'text-black/50'}`}>
                                 {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
                                 <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 {isMine && (
                                   msg.readBy?.length > 0 || msg.isRead ? (
-                                    <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />
+                                    <CheckCheck size={16} strokeWidth={2.5} className="text-white ml-0.5" />
                                   ) : (
-                                    <Check size={16} strokeWidth={2.5} className="text-black/40 ml-0.5" />
+                                    <Check size={16} strokeWidth={2.5} className="text-white/60 ml-0.5" />
                                   )
                                 )}
                               </div>
@@ -703,13 +703,13 @@ const Chat = () => {
                   handleSendMessage(e);
                 }
               }}
-              className="w-full bg-bg-primary border border-border rounded-xl pl-[5.5rem] pr-12 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors resize-none overflow-hidden"
-              style={{ minHeight: '46px', maxHeight: '120px' }}
+              className="w-full bg-bg-primary border border-border rounded-xl pl-[5.5rem] pr-12 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors resize-none overflow-hidden leading-relaxed"
+              style={{ minHeight: '40px', maxHeight: '120px' }}
             />
             <button 
               type="submit" 
               disabled={!newMessage.trim()}
-              className="absolute right-3 bottom-3 text-white bg-accent-blue p-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:bg-text-secondary transition-colors"
+              className="absolute right-3 bottom-2 text-white bg-accent-blue p-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:bg-text-secondary transition-colors"
             >
               <Send size={16} />
             </button>

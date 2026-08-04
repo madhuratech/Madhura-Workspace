@@ -49,6 +49,8 @@ const ChannelRow = ({ channel, onPress, idx, delay }) => {
     ]).start();
   }, []);
 
+  const IconCmp = channel.isPrivate ? Lock : Hash;
+
   return (
     <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
       <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
