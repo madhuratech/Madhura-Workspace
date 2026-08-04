@@ -1,4 +1,6 @@
 const Ticket = require('../models/Ticket');
+const User = require('../models/User');
+const { sendNotification } = require('./notificationController');
 
 // @desc    Get all tickets
 // @route   GET /api/tickets
@@ -77,6 +79,28 @@ const createTicket = async (req, res) => {
     if (req.io) {
       req.io.emit('ticketCreated', populatedTicket);
     }
+    
+    // Notify all Super Admins, HR, and the assigned team members if any
+    const notifyUsers = async () => {
+      try {
+        const admins = await User.find({ role: { $in: ['super_admin', 'hr', 'team_leader'] } }).select('_id');
+        for (const admin of admins) {
+          if (admin._id.toString() !== req.user._id.toString()) {
+            await sendNotification(
+              { user: req.user, io: req.io, onlineUsers: req.onlineUsers },
+              admin._id,
+              'ticket_created',
+              'New Support Ticket',
+              `A new ticket "${title}" was submitted.`,
+              '/tickets'
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Failed to notify admins for ticket:', err);
+      }
+    };
+    notifyUsers();
 
     res.status(201).json(populatedTicket);
   } catch (error) {

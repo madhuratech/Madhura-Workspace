@@ -104,25 +104,23 @@ const Layout = () => {
     toastTimerRef.current = setTimeout(() => setToastNotif(null), 4000);
   };
 
-  React.useEffect(() => {
-    if (notifications.length > 0 && !notifications[0].read) {
-      const diff = new Date() - new Date(notifications[0].createdAt);
-      if (diff < 5000) {
-        showToast(notifications[0].title, notifications[0].message);
-      }
-    }
-  }, [notifications]);
+
 
   React.useEffect(() => {
     if (socket && user) {
       const handleActivity = (msg) => {
         showToast(msg.title, msg.message);
       };
+      const handleNotification = (msg) => {
+        showToast(msg.title, msg.message);
+      };
       
       socket.on('activity', handleActivity);
+      socket.on('new_notification', handleNotification);
       
       return () => {
         socket.off('activity', handleActivity);
+        socket.off('new_notification', handleNotification);
       };
     }
   }, [socket, user]);

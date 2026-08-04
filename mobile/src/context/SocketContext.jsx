@@ -16,7 +16,7 @@ export const SocketProvider = ({ children }) => {
       socketRef.current = socket;
 
       socket.on('connect', () => {
-        socket.emit('setup', user._id);
+        socket.emit('user_connected', user._id);
       });
 
       socket.on('new_notification', (notification) => {

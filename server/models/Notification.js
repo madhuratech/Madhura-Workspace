@@ -12,7 +12,6 @@ const NotificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['task_assigned', 'task_updated', 'project_added', 'role_changed', 'general'],
     default: 'general'
   },
   title: {
