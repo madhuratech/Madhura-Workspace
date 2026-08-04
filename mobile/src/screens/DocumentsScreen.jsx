@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, FileText, Download, FileImage, File } from 'lucide-react-native';
+import { ArrowLeft, FileText, Download, FileImage, File, Folder, FolderOpen } from 'lucide-react-native';
 import axios from 'axios';
 import { AuthContext, API_URL } from '../context/AuthContext';
 
@@ -13,6 +13,12 @@ const FILE_TYPE_CONFIG = {
   doc:   { bg: '#EFF6FF', iconColor: '#2563EB', Icon: FileText,  label: 'Document' },
   image: { bg: '#F0FDF4', iconColor: '#16A34A', Icon: FileImage, label: 'Image'    },
   other: { bg: '#F8FAFC', iconColor: '#64748B', Icon: File,      label: 'File'     },
+};
+
+const FOLDER_COLORS = {
+  'Employee Docs': { bg: '#FCE7F3', icon: '#DB2777', border: '#FBCFE8' },
+  'Project Files': { bg: '#E0E7FF', icon: '#4F46E5', border: '#C7D2FE' },
+  'General': { bg: '#DBEAFE', icon: '#2563EB', border: '#BFDBFE' }
 };
 
 function getFileType(mimeType) {
@@ -56,12 +62,6 @@ const DocCard = ({ item, onDownload }) => {
           <Text style={styles.metaText}>
             {new Date(item.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
           </Text>
-          {item.author?.name && (
-            <>
-              <Text style={styles.metaDot}>·</Text>
-              <Text style={styles.metaText} numberOfLines={1}>{item.author.name.split(' ')[0]}</Text>
-            </>
-          )}
         </View>
       </View>
       {item.fileUrl && (
@@ -74,9 +74,11 @@ const DocCard = ({ item, onDownload }) => {
 };
 
 export default function DocumentsScreen({ navigation }) {
+  const { user } = useContext(AuthContext);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeFolder, setActiveFolder] = useState(null);
 
   useEffect(() => { fetchDocuments(); }, []);
 
@@ -99,6 +101,15 @@ export default function DocumentsScreen({ navigation }) {
     }
   };
 
+  const availableFolders = Array.from(new Set(documents.map(d => d.folderType || 'General')));
+  if (availableFolders.length === 0) {
+    if (user?.role === 'hr' || user?.role === 'super_admin') availableFolders.push('Employee Docs');
+    if (user?.role === 'team_leader' || user?.role === 'super_admin') availableFolders.push('Project Files');
+    availableFolders.push('General');
+  }
+
+  const filteredDocs = activeFolder ? documents.filter(d => (d.folderType || 'General') === activeFolder) : documents;
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -111,13 +122,43 @@ export default function DocumentsScreen({ navigation }) {
         </View>
       </View>
 
+      {/* Folders List Horizontal */}
+      <View style={styles.foldersWrapper}>
+         <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={availableFolders}
+            keyExtractor={item => item}
+            contentContainerStyle={styles.foldersContainer}
+            renderItem={({ item }) => {
+              const isActive = activeFolder === item;
+              const colorCfg = FOLDER_COLORS[item] || FOLDER_COLORS['General'];
+              return (
+                <TouchableOpacity 
+                  style={[styles.folderCard, isActive && { borderColor: colorCfg.icon, backgroundColor: colorCfg.bg }]}
+                  onPress={() => setActiveFolder(isActive ? null : item)}
+                >
+                   <View style={[styles.folderIconBox, { backgroundColor: isActive ? '#fff' : colorCfg.bg }]}>
+                      {isActive ? <FolderOpen color={colorCfg.icon} size={20} /> : <Folder color={colorCfg.icon} size={20} />}
+                   </View>
+                   <Text style={[styles.folderText, isActive && { color: colorCfg.icon }]}>{item}</Text>
+                </TouchableOpacity>
+              )
+            }}
+         />
+      </View>
+
+      <View style={styles.listHeader}>
+         <Text style={styles.listHeaderTitle}>{activeFolder ? `${activeFolder} Files` : 'All Files'}</Text>
+      </View>
+
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#3B82F6" />
         </View>
       ) : (
         <FlatList
-          data={documents}
+          data={filteredDocs}
           keyExtractor={item => item._id}
           renderItem={({ item }) => <DocCard item={item} onDownload={handleDownload} />}
           contentContainerStyle={styles.listContent}
@@ -126,8 +167,8 @@ export default function DocumentsScreen({ navigation }) {
           ListEmptyComponent={
             <View style={styles.emptyBox}>
               <File color="#CBD5E1" size={52} />
-              <Text style={styles.emptyTitle}>No documents found</Text>
-              <Text style={styles.emptySub}>Uploaded documents will appear here.</Text>
+              <Text style={styles.emptyTitle}>This folder is empty</Text>
+              <Text style={styles.emptySub}>No documents found in {activeFolder || 'here'}.</Text>
             </View>
           }
           showsVerticalScrollIndicator={false}
@@ -151,7 +192,50 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
   headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  listContent: { padding: 16, paddingBottom: 100 },
+  
+  foldersWrapper: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    paddingVertical: 12
+  },
+  foldersContainer: {
+    paddingHorizontal: 16,
+    gap: 12
+  },
+  folderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 10,
+    paddingRight: 16
+  },
+  folderIconBox: {
+    padding: 8,
+    borderRadius: 10,
+    marginRight: 10
+  },
+  folderText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569'
+  },
+
+  listHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  listHeaderTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A'
+  },
+
+  listContent: { padding: 16, paddingTop: 4, paddingBottom: 100 },
 
   card: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
@@ -180,7 +264,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 
-  emptyBox: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
+  emptyBox: { alignItems: 'center', marginTop: 60, paddingHorizontal: 40 },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: '#334155', marginTop: 16, marginBottom: 6 },
   emptySub: { fontSize: 13, color: '#94A3B8', textAlign: 'center' },
 });

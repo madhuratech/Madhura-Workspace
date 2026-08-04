@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   FileText, Users, Settings, ChevronRight,
-  CalendarDays, Mail, Clock, LogOut, User, BarChart3
+  CalendarDays, Mail, Clock, LogOut, User, BarChart3, LifeBuoy
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
@@ -71,6 +71,7 @@ export default function MoreScreen({ navigation }) {
       section: 'Tools',
       items: [
         { icon: Clock,        label: 'Attendance & Leave', sub: 'Check in and time off',         route: 'AttendanceLeave', iconBg: '#FEF2F2', iconColor: '#DC2626'   },
+        { icon: LifeBuoy,     label: 'Support Tickets',   sub: 'IT & HR Support requests',       route: 'Tickets',         iconBg: '#EFF6FF', iconColor: '#3B82F6'   },
         ...(role === 'super_admin' || role === 'hr' ? [
           { icon: BarChart3,  label: 'Analytics',         sub: 'Reports & Productivity',         route: 'Analytics',       iconBg: '#F5F3FF', iconColor: '#8B5CF6'   }
         ] : [])

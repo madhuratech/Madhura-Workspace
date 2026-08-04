@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket } from 'lucide-react';
 
 const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
@@ -540,6 +540,10 @@ const Layout = () => {
             <Link to="/documents" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/document') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <FileText size={16} />
               <span>Documents</span>
+            </Link>
+            <Link to="/tickets" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/ticket') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <Ticket size={16} />
+              <span>Support Tickets</span>
             </Link>
           </nav>
         </aside>

@@ -30,6 +30,11 @@ const DocumentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Workspace'
   },
+  folderType: {
+    type: String,
+    enum: ['Employee Docs', 'Project Files', 'General'],
+    default: 'General'
+  },
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -38,7 +43,19 @@ const DocumentSchema = new mongoose.Schema({
   lastUpdatedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }
+  },
+  versionHistory: [{
+    fileUrl: String,
+    originalName: String,
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Document', DocumentSchema);

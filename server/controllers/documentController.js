@@ -7,20 +7,32 @@ const getDocuments = async (req, res) => {
   try {
     let query = {};
     
-    // Role-based access control
-    // If super_admin or hr, they can see all documents
-    // If employee or team_leader, they can only see their own uploaded documents
-    if (req.user.role === 'employee' || req.user.role === 'team_leader') {
-      query.author = req.user._id;
-    }
+    // Role-based access control for folders
+    const userRole = req.user.role;
     
-    // Optional filtering by project or workspace
+    if (userRole === 'hr') {
+      // HR can see Employee Docs and General
+      query.folderType = { $in: ['Employee Docs', 'General'] };
+    } else if (userRole === 'team_leader') {
+      // TL can see Project Files and General
+      query.folderType = { $in: ['Project Files', 'General'] };
+    } else if (userRole === 'employee') {
+      // Employee sees General, and only their own files if they uploaded them
+      // Alternatively, Employee can just see 'General' files. Let's make it General and any file they created.
+      query.$or = [
+        { folderType: 'General' },
+        { author: req.user._id }
+      ];
+    }
+    // super_admin sees everything (no folderType filter)
+    
     if (req.query.projectId) query.project = req.query.projectId;
     if (req.query.workspaceId) query.workspace = req.query.workspaceId;
 
     const documents = await Document.find(query)
       .populate('author', 'name email avatar')
       .populate('lastUpdatedBy', 'name email avatar')
+      .populate('versionHistory.updatedBy', 'name email avatar')
       .sort({ createdAt: -1 });
 
     res.status(200).json(documents);
@@ -34,7 +46,7 @@ const getDocuments = async (req, res) => {
 // @access  Private
 const createDocument = async (req, res) => {
   try {
-    const { title, content, fileUrl, originalName, mimeType, size, project, workspace } = req.body;
+    const { title, content, fileUrl, originalName, mimeType, size, project, workspace, folderType } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Please add a title' });
@@ -47,17 +59,25 @@ const createDocument = async (req, res) => {
       originalName,
       mimeType,
       size,
+      folderType: folderType || 'General',
       project: project || undefined,
       workspace: workspace || undefined,
       author: req.user._id,
-      lastUpdatedBy: req.user._id
+      lastUpdatedBy: req.user._id,
+      versionHistory: [{ fileUrl, originalName, updatedBy: req.user._id }]
     });
     
+    // Populate before emit
+    const populatedDoc = await Document.findById(document._id)
+      .populate('author', 'name email avatar')
+      .populate('lastUpdatedBy', 'name email avatar')
+      .populate('versionHistory.updatedBy', 'name email avatar');
+
     if(req.io) {
-      req.io.emit('documentCreated', document);
+      req.io.emit('documentCreated', populatedDoc);
     }
 
-    res.status(201).json(document);
+    res.status(201).json(populatedDoc);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -78,13 +98,30 @@ const updateDocument = async (req, res) => {
     document.content = req.body.content || document.content;
     document.lastUpdatedBy = req.user._id;
     
+    if (req.body.fileUrl && req.body.fileUrl !== document.fileUrl) {
+      document.fileUrl = req.body.fileUrl;
+      document.originalName = req.body.originalName || document.originalName;
+      document.mimeType = req.body.mimeType || document.mimeType;
+      document.size = req.body.size || document.size;
+      document.versionHistory.push({
+        fileUrl: req.body.fileUrl,
+        originalName: req.body.originalName,
+        updatedBy: req.user._id
+      });
+    }
+    
     await document.save();
 
+    const updatedDoc = await Document.findById(document._id)
+      .populate('author', 'name email avatar')
+      .populate('lastUpdatedBy', 'name email avatar')
+      .populate('versionHistory.updatedBy', 'name email avatar');
+
     if(req.io) {
-      req.io.emit('documentUpdated', document);
+      req.io.emit('documentUpdated', updatedDoc);
     }
 
-    res.status(200).json(document);
+    res.status(200).json(updatedDoc);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
