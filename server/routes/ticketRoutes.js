@@ -7,7 +7,7 @@ const {
   updateTicket, 
   addTicketComment 
 } = require('../controllers/ticketController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
 
 router.route('/')
   .get(protect, getTickets)
