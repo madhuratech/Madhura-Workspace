@@ -31,11 +31,13 @@ const SettingItem = ({ item, delay }) => {
     ]).start();
   }, []);
 
+  const IconComponent = item.icon;
+
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
       <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={item.onPress}>
         <View style={[styles.settingIcon, { backgroundColor: item.iconBg }]}>
-          <item.icon color={item.iconColor} size={20} strokeWidth={2} />
+          <IconComponent color={item.iconColor} size={20} strokeWidth={2} />
         </View>
         <View style={styles.settingText}>
           <Text style={styles.settingLabel}>{item.label}</Text>
