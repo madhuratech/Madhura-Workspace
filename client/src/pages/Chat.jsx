@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
 import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, Phone } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
-import VideoCall from './VideoCall';
+import VideoCall from '../components/VideoCall';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
