@@ -26,6 +26,7 @@ const AnalyticsReports = lazy(() => import('./pages/AnalyticsReports'));
 const ActivityLogs = lazy(() => import('./pages/ActivityLogs'));
 const Tickets = lazy(() => import('./pages/Tickets'));
 const Announcements = lazy(() => import('./pages/Announcements'));
+const Notes = lazy(() => import('./pages/Notes'));
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
@@ -51,29 +52,27 @@ function App() {
           <Route path="/register" element={<Register />} />
           
           {/* Protected Routes wrapped in Layout (Sidebar + Navbar) */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<Dashboard />} />
-            <Route path="analytics" element={<AnalyticsReports />} />
-            <Route path="activity-logs" element={<ActivityLogs />} />
-            <Route path="projects" element={<Projects />} />
-            <Route path="my-tasks" element={<MyTasks />} />
-            <Route path="team" element={<Team />} />
-            <Route path="meetings" element={<Meetings />} />
-            <Route path="documents" element={<Documents />} />
-            <Route path="tickets" element={<Tickets />} />
-            <Route path="announcements" element={<Announcements />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="chat" element={<Chat />} />
-            <Route path="attendance" element={<AttendanceLeave />} />
-            <Route path="email" element={<Email />} />
-            <Route path="workspace/:id" element={<WorkspaceOverview />} />
-            <Route path="project/:id" element={<ProjectDetails />} />
-            <Route path="tl-dashboard" element={<TeamLeaderDashboard />} />
-          </Route>
+            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/tl-dashboard" element={<TeamLeaderDashboard />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetails />} />
+              <Route path="/tasks" element={<MyTasks />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/meetings" element={<Meetings />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/email" element={<Email />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/workspace/:id" element={<WorkspaceOverview />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/attendance" element={<AttendanceLeave />} />
+              <Route path="/analytics" element={<AnalyticsReports />} />
+              <Route path="/activity-logs" element={<ActivityLogs />} />
+              <Route path="/tickets" element={<Tickets />} />
+              <Route path="/announcements" element={<Announcements />} />
+              <Route path="/notes" element={<Notes />} />
+            </Route>
         </Routes>
       </Suspense>
     </ToastProvider>

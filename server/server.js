@@ -118,6 +118,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/auth/google', require('./routes/googleAuthRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/workspaces', require('./routes/workspaceRoutes'));
+app.use('/api/workspaces/:workspaceId/notes', require('./routes/notes'));
 app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/documents', require('./routes/documentRoutes'));
 app.use('/api/meetings', require('./routes/meetingRoutes'));
