@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true });
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
 const noteController = require('../controllers/noteController');
 
 // All note routes are protected
