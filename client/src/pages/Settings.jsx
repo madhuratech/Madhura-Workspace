@@ -92,6 +92,22 @@ const Settings = () => {
     setNotificationSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const handleResetPassword = async (userId) => {
+    const newPass = prompt("Enter new password for this user (min 6 characters):");
+    if (newPass === null) return; // User cancelled
+    if (newPass.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
+    try {
+      await axios.put(`/users/${userId}/reset-password`, { newPassword: newPass });
+      alert("Password reset successfully. Please share it securely with the user.");
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      alert(error.response?.data?.message || 'Failed to reset password.');
+    }
+  };
+
   const saveSettings = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -294,7 +310,7 @@ const Settings = () => {
                                   {u.role.replace('_', ' ').toUpperCase()}
                                </span>
                               </td>
-                              <td className="px-4 py-3 text-sm">
+                              <td className="px-4 py-3 text-sm flex items-center space-x-2">
                                 <select 
                                   value={u.role}
                                   onChange={(e) => handleRoleChange(u._id, e.target.value)}
@@ -306,6 +322,13 @@ const Settings = () => {
                                   <option value="hr">HR</option>
                                   <option value="super_admin">Super Admin</option>
                                 </select>
+                                <button
+                                  onClick={() => handleResetPassword(u._id)}
+                                  title="Reset Password"
+                                  className="p-1.5 text-text-secondary hover:text-accent-blue hover:bg-accent-blue/10 rounded transition-colors"
+                                >
+                                  <Key size={14} />
+                                </button>
                               </td>
                             </tr>
                           ))

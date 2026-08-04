@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  TouchableOpacity, ActivityIndicator, Animated,
+  TouchableOpacity, ActivityIndicator, Animated, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, ArrowLeft, Users, UserPlus } from 'lucide-react-native';
+import { Mail, ArrowLeft, Users, UserPlus, Key } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
@@ -20,7 +20,7 @@ const ROLE_CONFIG = {
   employee:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', label: 'Employee'    },
 };
 
-const MemberCard = ({ member, delay, colorIdx }) => {
+const MemberCard = ({ member, delay, colorIdx, currentUserRole, onResetPassword }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
 
@@ -58,12 +58,19 @@ const MemberCard = ({ member, delay, colorIdx }) => {
         </View>
       </View>
 
-      {/* Email */}
-      {email ? (
-        <View style={styles.emailBtn}>
-          <Mail color="#94A3B8" size={18} strokeWidth={1.6} />
-        </View>
-      ) : null}
+      {/* Actions */}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {currentUserRole === 'super_admin' && (
+          <TouchableOpacity style={styles.actionBtn} onPress={() => onResetPassword(memberUser?._id)}>
+            <Key color="#94A3B8" size={18} strokeWidth={1.6} />
+          </TouchableOpacity>
+        )}
+        {email ? (
+          <TouchableOpacity style={styles.actionBtn}>
+            <Mail color="#94A3B8" size={18} strokeWidth={1.6} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
     </Animated.View>
   );
 };
@@ -99,6 +106,32 @@ export default function TeamScreen({ navigation }) {
     }
   };
 
+  const handleResetPassword = (userId) => {
+    Alert.prompt(
+      'Reset Password',
+      'Enter new password (min 6 chars):',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Reset', 
+          onPress: async (newPass) => {
+            if (!newPass || newPass.length < 6) {
+              Alert.alert('Error', 'Password must be at least 6 characters');
+              return;
+            }
+            try {
+              await axios.put(`/users/${userId}/reset-password`, { newPassword: newPass });
+              Alert.alert('Success', 'Password reset successfully');
+            } catch (error) {
+              Alert.alert('Error', error.response?.data?.message || 'Failed to reset password');
+            }
+          }
+        },
+      ],
+      'secure-text'
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Animated.View style={[styles.header, { opacity: headerFade }]}>
@@ -125,7 +158,13 @@ export default function TeamScreen({ navigation }) {
           data={members}
           keyExtractor={(item, index) => item.user?._id || String(index)}
           renderItem={({ item, index }) => (
-            <MemberCard member={item} delay={index * 50} colorIdx={index} />
+            <MemberCard 
+              member={item} 
+              delay={index * 50} 
+              colorIdx={index} 
+              currentUserRole={currentUserRole}
+              onResetPassword={handleResetPassword}
+            />
           )}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
@@ -184,7 +223,7 @@ const styles = StyleSheet.create({
   },
   roleText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
 
-  emailBtn: {
+  actionBtn: {
     width: 36, height: 36, borderRadius: 10, backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center',
   },

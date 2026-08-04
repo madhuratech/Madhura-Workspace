@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, Animated, Alert,
+  ScrollView, Animated, Alert, Modal, TextInput, ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Settings, LogOut, User, Bell, Shield, HelpCircle,
-  ChevronRight, ArrowLeft, Info, UserPlus
+  ChevronRight, ArrowLeft, Info, UserPlus, Lock, Key
 } from 'lucide-react-native';
+import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
 const ROLE_CONFIG = {
@@ -49,6 +50,10 @@ const SettingItem = ({ item, delay }) => {
 export default function SettingsScreen({ navigation }) {
   const { logout, user, updateUserStatus } = useContext(AuthContext);
 
+  const [isPasswordModalVisible, setPasswordModalVisible] = React.useState(false);
+  const [passwordData, setPasswordData] = React.useState({ currentPassword: '', newPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+
   const profileFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(profileFade, { toValue: 1, duration: 600, useNativeDriver: true }).start();
@@ -64,7 +69,7 @@ export default function SettingsScreen({ navigation }) {
       items: [
         { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6' },
         { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6' },
-        { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316' },
+        { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316', onPress: () => setPasswordModalVisible(true) },
       ],
     },
     {
@@ -101,6 +106,28 @@ export default function SettingsScreen({ navigation }) {
         { text: 'Log Out', onPress: logout, style: 'destructive' },
       ]
     );
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordData.currentPassword || !passwordData.newPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      Alert.alert('Error', 'New password must be at least 6 characters');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      await axios.put('/users/change-password', passwordData);
+      Alert.alert('Success', 'Password updated successfully');
+      setPasswordModalVisible(false);
+      setPasswordData({ currentPassword: '', newPassword: '' });
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.message || 'Failed to update password');
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   let delay = 0;
@@ -186,6 +213,56 @@ export default function SettingsScreen({ navigation }) {
         <Text style={styles.version}>Madhura Workspace v1.0.0</Text>
         <View style={{ height: 80 }} />
       </ScrollView>
+
+      {/* Change Password Modal */}
+      <Modal visible={isPasswordModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Change Password</Text>
+              <TouchableOpacity onPress={() => setPasswordModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Lock size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Current Password"
+                secureTextEntry
+                value={passwordData.currentPassword}
+                onChangeText={(text) => setPasswordData(prev => ({ ...prev, currentPassword: text }))}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Key size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="New Password (min 6 chars)"
+                secureTextEntry
+                value={passwordData.newPassword}
+                onChangeText={(text) => setPasswordData(prev => ({ ...prev, newPassword: text }))}
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.saveBtn, isChangingPassword && { opacity: 0.7 }]} 
+              activeOpacity={0.8}
+              onPress={handleChangePassword}
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveBtnText}>Update Password</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -275,4 +352,37 @@ const styles = StyleSheet.create({
     textAlign: 'center', color: '#CBD5E1', fontSize: 12,
     fontWeight: '500', marginTop: 28,
   },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#fff', borderRadius: 20, width: '100%',
+    padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1, shadowRadius: 20, elevation: 10
+  },
+  modalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 20
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
+  modalCloseBtn: {
+    width: 30, height: 30, borderRadius: 15, backgroundColor: '#F1F5F9',
+    justifyContent: 'center', alignItems: 'center'
+  },
+  modalCloseText: { fontSize: 16, color: '#64748B', fontWeight: 'bold' },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+    borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    marginBottom: 16, paddingHorizontal: 14, height: 50
+  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 15, color: '#0F172A' },
+  saveBtn: {
+    backgroundColor: '#3B82F6', borderRadius: 12, height: 50,
+    justifyContent: 'center', alignItems: 'center', marginTop: 8
+  },
+  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
