@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { FileText, Save, Search, RefreshCw, Plus, Edit2, Trash2, X, UploadCloud, File, FileCode, FileImage, Download, Folder, FolderOpen, History, Clock } from 'lucide-react';
+import { FileText, Save, Search, RefreshCw, Plus, Edit2, Trash2, X, UploadCloud, File, FileImage, Download, Folder, FolderOpen, History, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -7,12 +7,6 @@ const FOLDER_COLORS = {
   'Employee Docs': 'bg-pink-100 text-pink-600 border-pink-200',
   'Project Files': 'bg-indigo-100 text-indigo-600 border-indigo-200',
   'General': 'bg-blue-100 text-blue-600 border-blue-200'
-};
-
-const FOLDER_ICONS = {
-  'Employee Docs': 'pink',
-  'Project Files': 'indigo',
-  'General': 'blue'
 };
 
 const Documents = () => {
@@ -27,6 +21,11 @@ const Documents = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeFolder, setActiveFolder] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -47,14 +46,29 @@ const Documents = () => {
   };
 
   const availableFolders = Array.from(new Set(documents.map(d => d.folderType || 'General')));
-  // If empty, define default folders based on role so UI isn't empty
   if (availableFolders.length === 0) {
     if (user?.role === 'hr' || user?.role === 'super_admin') availableFolders.push('Employee Docs');
     if (user?.role === 'team_leader' || user?.role === 'super_admin') availableFolders.push('Project Files');
     availableFolders.push('General');
   }
 
-  const filteredDocs = activeFolder ? documents.filter(d => (d.folderType || 'General') === activeFolder) : documents;
+  // Filter and Paginate
+  let filteredDocs = activeFolder ? documents.filter(d => (d.folderType || 'General') === activeFolder) : documents;
+  
+  if (searchTerm) {
+    filteredDocs = filteredDocs.filter(d => 
+      d.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (d.originalName && d.originalName.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }
+
+  const totalPages = Math.ceil(filteredDocs.length / itemsPerPage);
+  // Ensure current page is valid after filtering
+  if (currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(totalPages);
+  }
+
+  const currentDocs = filteredDocs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleOpenModal = (item = null) => {
     if (item) {
@@ -143,17 +157,17 @@ const Documents = () => {
   };
 
   const getFileIcon = (mimeType) => {
-    if (!mimeType) return <FileText className="text-gray-400" size={20} />;
-    if (mimeType.includes('pdf')) return <FileText className="text-red-500" size={20} />;
-    if (mimeType.includes('word') || mimeType.includes('document')) return <FileText className="text-blue-500" size={20} />;
-    if (mimeType.includes('image')) return <FileImage className="text-green-500" size={20} />;
-    return <File className="text-gray-500" size={20} />;
+    if (!mimeType) return <FileText className="text-gray-400" size={18} />;
+    if (mimeType.includes('pdf')) return <FileText className="text-red-500" size={18} />;
+    if (mimeType.includes('word') || mimeType.includes('document')) return <FileText className="text-blue-500" size={18} />;
+    if (mimeType.includes('image')) return <FileImage className="text-green-500" size={18} />;
+    return <File className="text-gray-500" size={18} />;
   };
 
   const formatFileSize = (bytes) => {
-    if (!bytes) return '0 Bytes';
+    if (!bytes) return '0 B';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
@@ -161,14 +175,14 @@ const Documents = () => {
   const isSuperAdminOrHR = user?.role === 'super_admin' || user?.role === 'hr';
 
   return (
-    <div className="h-full flex flex-col font-sans max-w-7xl mx-auto w-full">
+    <div className="h-full flex flex-col font-sans w-full">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-wide">
             {isSuperAdminOrHR ? 'Document Management' : 'My Documents'}
           </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Replace Google Drive: Folders, Role-based access, and Version history.
+            Secure files with role-based folders and version history.
           </p>
         </div>
         <div className="flex space-x-3">
@@ -178,7 +192,7 @@ const Documents = () => {
           </button>
           <button 
             onClick={() => handleOpenModal()}
-            className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2 shadow-lg shadow-blue-500/30"
+            className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2 shadow-sm"
           >
             <Plus size={16} />
             <span>Upload File</span>
@@ -186,44 +200,44 @@ const Documents = () => {
         </div>
       </div>
 
-      {/* Folders Section */}
-      <div className="mb-8">
-        <h2 className="text-sm font-bold text-text-secondary uppercase tracking-wider mb-4 flex items-center justify-between">
-          <span>Folders</span>
-          {activeFolder && (
-            <button onClick={() => setActiveFolder(null)} className="text-accent-blue normal-case font-medium hover:underline text-xs">View All Files</button>
-          )}
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {availableFolders.map((folder) => {
-            const docCount = documents.filter(d => (d.folderType || 'General') === folder).length;
-            const colorClass = FOLDER_COLORS[folder] || FOLDER_COLORS['General'];
-            const isActive = activeFolder === folder;
-            
-            return (
-              <div 
-                key={folder}
-                onClick={() => setActiveFolder(isActive ? null : folder)}
-                className={`p-4 rounded-2xl border cursor-pointer transition-all duration-200 group ${isActive ? 'bg-blue-50/50 border-accent-blue shadow-md shadow-blue-500/10' : 'bg-white border-border hover:border-gray-300 shadow-sm'}`}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className={`p-3 rounded-xl border ${colorClass}`}>
-                    {isActive ? <FolderOpen size={24} /> : <Folder size={24} />}
-                  </div>
-                </div>
-                <h3 className={`font-semibold text-base mb-1 ${isActive ? 'text-accent-blue' : 'text-text-primary group-hover:text-accent-blue transition-colors'}`}>{folder}</h3>
-                <p className="text-sm text-text-secondary font-medium">{docCount} files</p>
+      {/* Folders Section - Horizontal Pills */}
+      <div className="mb-6 flex flex-wrap gap-3">
+        {availableFolders.map((folder) => {
+          const docCount = documents.filter(d => (d.folderType || 'General') === folder).length;
+          const colorClass = FOLDER_COLORS[folder] || FOLDER_COLORS['General'];
+          const isActive = activeFolder === folder;
+          
+          return (
+            <div 
+              key={folder}
+              onClick={() => { setActiveFolder(isActive ? null : folder); setCurrentPage(1); }}
+              className={`flex items-center gap-3 p-2 pr-4 rounded-xl border cursor-pointer transition-all duration-200 select-none ${isActive ? 'bg-blue-50/80 border-accent-blue shadow-sm' : 'bg-white border-border hover:bg-gray-50'}`}
+            >
+              <div className={`p-2 rounded-lg ${colorClass} ${isActive ? 'bg-white border-accent-blue/30 shadow-sm' : 'border'}`}>
+                {isActive ? <FolderOpen size={18} /> : <Folder size={18} />}
               </div>
-            );
-          })}
-        </div>
+              <div>
+                <h3 className={`font-semibold text-sm leading-tight ${isActive ? 'text-accent-blue' : 'text-gray-700'}`}>{folder}</h3>
+                <p className="text-xs text-gray-500 font-medium">{docCount} files</p>
+              </div>
+            </div>
+          );
+        })}
+        {activeFolder && (
+          <button 
+            onClick={() => { setActiveFolder(null); setCurrentPage(1); }} 
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors ml-auto"
+          >
+            Clear Filter
+          </button>
+        )}
       </div>
 
-      {/* Files Section */}
-      <div className="bg-white border border-border rounded-xl flex-1 flex flex-col overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-border flex justify-between items-center bg-gray-50/50">
-          <h2 className="font-bold text-text-primary flex items-center gap-2">
-            {activeFolder ? <FolderOpen size={18} className="text-accent-blue"/> : <FileText size={18} className="text-accent-blue"/>}
+      {/* Files Section - Table */}
+      <div className="bg-white border border-border rounded-xl flex-1 flex flex-col shadow-sm overflow-hidden">
+        <div className="px-5 py-4 flex justify-between items-center border-b border-border">
+          <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+            {activeFolder ? <FolderOpen size={20} className="text-accent-blue"/> : <FileText size={20} className="text-accent-blue"/>}
             {activeFolder ? `${activeFolder} Files` : 'All Files'}
           </h2>
           
@@ -232,96 +246,148 @@ const Documents = () => {
             <input 
               type="text" 
               placeholder="Search files..." 
-              className="pl-9 pr-4 py-1.5 text-sm bg-white border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-blue/20 w-64"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              className="pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue w-72 transition-colors"
             />
           </div>
         </div>
         
-        <div className="overflow-y-auto flex-1 p-2">
+        <div className="flex-1 overflow-auto">
           {loading ? (
-             <div className="flex justify-center p-12"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>
+             <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>
           ) : filteredDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-text-secondary py-20">
-               <UploadCloud size={64} className="mb-4 text-gray-300" />
-               <p className="text-lg font-medium text-gray-800">This folder is empty</p>
-               <p className="text-sm mt-1 text-gray-500">Upload a document to {activeFolder || 'get started'}.</p>
+               <UploadCloud size={56} className="mb-4 text-gray-300" />
+               <p className="text-lg font-medium text-gray-800">No documents found</p>
+               <p className="text-sm mt-1 text-gray-500">{searchTerm ? 'Try adjusting your search' : `Upload a document to ${activeFolder || 'get started'}.`}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredDocs.map((doc) => (
-                <div key={doc._id} className="bg-white border border-border hover:border-gray-300 rounded-xl p-4 transition-all group shadow-sm flex flex-col">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-100">
-                      {getFileIcon(doc.mimeType)}
-                    </div>
-                    
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {doc.versionHistory?.length > 1 && (
-                         <button onClick={(e) => { e.stopPropagation(); handleOpenHistory(doc); }} className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md" title="Version History">
-                           <History size={16} />
-                         </button>
-                      )}
-                      <button onClick={(e) => { e.stopPropagation(); handleOpenModal(doc); }} className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md">
-                        <Edit2 size={16} />
-                      </button>
-                      {(isSuperAdminOrHR || doc.author?._id === user?._id || doc.author === user?._id) && (
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(doc._id); }} className="p-1.5 text-gray-400 hover:text-danger hover:bg-red-50 rounded-md">
-                          <Trash2 size={16} />
+            <table className="w-full text-left border-collapse min-w-max">
+              <thead className="bg-gray-50/80 sticky top-0 z-10 border-b border-gray-200">
+                <tr>
+                  <th className="py-3 px-5 font-medium text-xs text-gray-500 uppercase tracking-wider">File Name</th>
+                  <th className="py-3 px-5 font-medium text-xs text-gray-500 uppercase tracking-wider">Size</th>
+                  <th className="py-3 px-5 font-medium text-xs text-gray-500 uppercase tracking-wider">Uploaded By</th>
+                  <th className="py-3 px-5 font-medium text-xs text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="py-3 px-5 font-medium text-xs text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {currentDocs.map((doc) => (
+                  <tr key={doc._id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-lg border border-gray-100 shadow-sm flex-shrink-0">
+                          {getFileIcon(doc.mimeType)}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{doc.title}</p>
+                          {doc.originalName && <p className="text-xs text-gray-500 truncate max-w-[200px]">{doc.originalName}</p>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-5 text-sm text-gray-600 font-medium">
+                      {formatFileSize(doc.size)}
+                    </td>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
+                          {doc.author?.name ? doc.author.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <span className="text-sm text-gray-700">{doc.author?.name || 'Unknown'}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-5 text-sm text-gray-500">
+                      {new Date(doc.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </td>
+                    <td className="py-4 px-5 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {doc.fileUrl && (
+                          <a href={`${API_URL}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md" title="Download">
+                            <Download size={18} />
+                          </a>
+                        )}
+                        {doc.versionHistory?.length > 1 && (
+                           <button onClick={() => handleOpenHistory(doc)} className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md" title="Version History">
+                             <History size={18} />
+                           </button>
+                        )}
+                        <button onClick={() => handleOpenModal(doc)} className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md" title="Edit">
+                          <Edit2 size={18} />
                         </button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-1 mb-1">{doc.title}</h3>
-                  {doc.originalName && <p className="text-xs text-gray-500 line-clamp-1 mb-3">{doc.originalName}</p>}
-                  
-                  <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-medium">
-                    <span className="truncate pr-2">{doc.author?.name || 'Unknown'}</span>
-                    <div className="flex items-center gap-2">
-                      <span>{formatFileSize(doc.size)}</span>
-                      {doc.fileUrl && (
-                        <a href={`${API_URL}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:bg-blue-50 p-1 rounded transition-colors ml-1" title="Download/View">
-                          <Download size={14} />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                        {(isSuperAdminOrHR || doc.author?._id === user?._id || doc.author === user?._id) && (
+                          <button onClick={() => handleDelete(doc._id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md" title="Delete">
+                            <Trash2 size={18} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
+
+        {/* Pagination Footer */}
+        {filteredDocs.length > 0 && (
+          <div className="px-5 py-3 border-t border-border flex items-center justify-between bg-white">
+            <p className="text-sm text-gray-500 font-medium">
+              Showing <span className="font-semibold text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-semibold text-gray-900">{Math.min(currentPage * itemsPerPage, filteredDocs.length)}</span> of <span className="font-semibold text-gray-900">{filteredDocs.length}</span> results
+            </p>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className="px-3 py-1 text-sm font-medium text-gray-700">
+                Page {currentPage} of {totalPages}
+              </div>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Upload / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-gray-50/50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <UploadCloud className="text-accent-blue" size={20} />
                 {editItem ? (file ? 'Upload New Version' : 'Edit Document Details') : 'Upload Document'}
               </h3>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 font-bold p-1">
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors">
                 <X size={20} />
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 bg-white">
+            <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Document Title</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Document Title</label>
                 <input 
                   type="text" required 
                   value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full bg-white border border-border rounded-xl px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-blue/20"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm"
                   placeholder="e.g., Q3 Marketing Strategy"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Folder</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Folder</label>
                 <select 
-                  className="w-full bg-white border border-border rounded-xl px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-blue/20"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm cursor-pointer"
                   value={formData.folderType}
                   onChange={e => setFormData({...formData, folderType: e.target.value})}
                   disabled={!isSuperAdminOrHR && user?.role !== 'team_leader'}
@@ -336,10 +402,10 @@ const Documents = () => {
               </div>
 
               <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">{editItem ? 'Update File (Optional for new version)' : 'File Attachment'}</label>
-                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border border-dashed rounded-xl hover:border-accent-blue transition-colors bg-gray-50">
+                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">{editItem ? 'Update File (Optional for new version)' : 'File Attachment'}</label>
+                 <div className="mt-1 flex justify-center px-4 pt-4 pb-5 border-2 border-dashed border-gray-300 rounded-xl hover:border-accent-blue hover:bg-blue-50/50 transition-colors bg-gray-50 cursor-pointer group">
                    <div className="space-y-1 text-center">
-                     <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                     <UploadCloud className="mx-auto h-10 w-10 text-gray-400 group-hover:text-accent-blue transition-colors" />
                      <div className="flex justify-center text-sm text-gray-600">
                        <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-accent-blue hover:text-blue-500 focus-within:outline-none">
                          <span>Upload a file</span>
@@ -347,32 +413,32 @@ const Documents = () => {
                        </label>
                        <p className="pl-1">or drag and drop</p>
                      </div>
-                     <p className="text-xs text-gray-500">
+                     <p className="text-xs text-gray-400">
                        Any file type up to 32MB
                      </p>
                      {file && (
-                       <p className="text-sm font-bold text-green-600 mt-2 bg-green-50 px-3 py-1 rounded-full inline-block">Selected: {file.name}</p>
+                       <p className="text-xs font-bold text-green-700 mt-2 bg-green-100 px-3 py-1 rounded-md inline-block max-w-[250px] truncate">{file.name}</p>
                      )}
                    </div>
                  </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
                 <textarea 
                   rows="2"
                   value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
-                  className="w-full bg-white border border-border rounded-xl px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-accent-blue/20 resize-none"
+                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm resize-none"
                   placeholder="Notes about this file..."
                 ></textarea>
               </div>
               
-              <div className="flex justify-end gap-3 pt-4">
-                <button type="button" onClick={handleCloseModal} className="px-5 py-2.5 border border-border text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors">
+              <div className="flex justify-end gap-3 pt-3">
+                <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-sm border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2.5 bg-accent-blue text-white font-medium rounded-xl hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2">
-                  <Save size={18} /> {editItem ? 'Save & Upload Version' : 'Upload Document'}
+                <button type="submit" className="px-5 py-2 text-sm bg-accent-blue text-white font-medium rounded-lg hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2">
+                  <Save size={16} /> {editItem ? 'Save Version' : 'Upload Document'}
                 </button>
               </div>
             </form>
@@ -382,36 +448,43 @@ const Documents = () => {
 
       {/* Version History Modal */}
       {isHistoryModalOpen && historyItem && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-gray-50/50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <History className="text-accent-blue" size={20} />
                 Version History
               </h3>
-              <button onClick={() => setIsHistoryModalOpen(false)} className="text-gray-400 hover:text-gray-600 font-bold p-1">
+              <button onClick={() => setIsHistoryModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors">
                 <X size={20} />
               </button>
             </div>
             
-            <div className="p-6 bg-white overflow-y-auto max-h-[60vh]">
+            <div className="p-5 bg-white overflow-y-auto max-h-[60vh]">
               <h4 className="font-semibold text-gray-900 mb-4">{historyItem.title}</h4>
-              <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+              <div className="space-y-4 relative before:absolute before:inset-0 before:ml-4 md:before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
                 {historyItem.versionHistory && historyItem.versionHistory.slice().reverse().map((ver, idx) => (
-                  <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-100 group-[.is-active]:bg-blue-50 text-slate-500 group-[.is-active]:text-blue-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                  <div key={idx} className="relative flex items-center justify-between group">
+                    <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full border border-white bg-gray-100 group-hover:bg-blue-50 text-gray-500 group-hover:text-accent-blue shadow-sm shrink-0 z-10">
                       <Clock size={16} />
                     </div>
-                    <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <div className="w-[calc(100%-2.5rem)] md:w-[calc(100%-3.5rem)] p-3.5 rounded-xl border border-gray-200 bg-white shadow-sm hover:border-blue-200 transition-colors">
                       <div className="flex items-center justify-between space-x-2 mb-1">
-                        <div className="font-bold text-slate-900 text-sm">Version {historyItem.versionHistory.length - idx}</div>
-                        <time className="font-caveat font-medium text-indigo-500 text-xs">{new Date(ver.updatedAt).toLocaleDateString()}</time>
+                        <div className="font-bold text-gray-900 text-sm">Version {historyItem.versionHistory.length - idx}</div>
+                        <time className="font-medium text-gray-400 text-xs">{new Date(ver.updatedAt).toLocaleDateString()}</time>
                       </div>
-                      <div className="text-slate-500 text-xs flex justify-between items-center">
-                        <span className="truncate max-w-[150px]">{ver.originalName}</span>
-                        <a href={`${API_URL}${ver.fileUrl}`} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">Download</a>
+                      <div className="text-gray-500 text-xs flex justify-between items-center">
+                        <span className="truncate max-w-[150px] font-medium" title={ver.originalName}>{ver.originalName}</span>
+                        <a href={`${API_URL}${ver.fileUrl}`} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline font-semibold flex items-center gap-1">
+                          <Download size={12}/> Get
+                        </a>
                       </div>
-                      <div className="mt-2 text-xs text-gray-400">By: {ver.updatedBy?.name || 'Unknown'}</div>
+                      <div className="mt-2 pt-2 border-t border-gray-100 text-[11px] text-gray-400 flex items-center gap-1.5">
+                        <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">
+                          {ver.updatedBy?.name ? ver.updatedBy.name.charAt(0) : 'U'}
+                        </div>
+                        By {ver.updatedBy?.name || 'Unknown'}
+                      </div>
                     </div>
                   </div>
                 ))}
