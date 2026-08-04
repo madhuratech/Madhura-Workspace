@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video } from 'lucide-react';
+import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, Phone } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
+import VideoCall from './VideoCall';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
@@ -21,6 +22,7 @@ const Chat = () => {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [newChannelData, setNewChannelData] = useState({ name: '', description: '', isPrivate: false, members: [] });
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
+  const [isVideoCallOpen, setIsVideoCallOpen] = useState(false);
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
@@ -359,6 +361,27 @@ const Chat = () => {
   );
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
+  const handleStartVideoCall = async () => {
+    setIsVideoCallOpen(true);
+    
+    try {
+      const text = activeChannel 
+        ? `🎥 I started a Huddle! Click the Video icon at the top to join.`
+        : `📞 I'm calling you! Click the Video icon at the top to answer.`;
+        
+      if (activeChannel) {
+        await axios.post(`${API_URL}/api/messages/channel/${activeChannel._id}`, { text });
+      } else if (activeDM) {
+        await axios.post(`${API_URL}/api/messages/dm`, {
+          recipientId: activeDM.user._id,
+          text
+        });
+      }
+    } catch (error) {
+      console.error('Failed to send call notification:', error);
+    }
+  };
+
   return (
     <div className="h-full flex font-sans border border-border rounded-2xl overflow-hidden shadow-sm bg-bg-secondary">
       {/* Sidebar */}
@@ -466,6 +489,21 @@ const Chat = () => {
               )}
               {getChannelDisplayName(activeChannel, activeDM)}
             </h3>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-2">
+            {(activeChannel || activeDM) && (
+              <button 
+                onClick={handleStartVideoCall}
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-accent-blue/10 text-accent-blue hover:bg-accent-blue hover:text-white transition-colors"
+              >
+                <Video size={18} />
+                <span className="text-sm font-semibold hidden md:inline">
+                  {activeChannel ? 'Join Huddle' : 'Call'}
+                </span>
+              </button>
+            )}
           </div>
         </div>
         
@@ -835,6 +873,16 @@ const Chat = () => {
             onClick={(e) => e.stopPropagation()} 
           />
         </div>
+      )}
+
+      {isVideoCallOpen && (activeChannel || activeDM) && (
+        <VideoCall 
+          roomName={activeChannel ? activeChannel._id : activeDM.dmId}
+          userName={user?.name || user?.email?.split('@')[0]}
+          userEmail={user?.email}
+          isGroup={!!activeChannel}
+          onClose={() => setIsVideoCallOpen(false)}
+        />
       )}
 
     </div>
