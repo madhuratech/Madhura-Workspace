@@ -4,7 +4,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, X, Send, Plus } from 'lucide-react-native';
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/theme';
+const COLORS = {
+  primary: '#5B5BD6',
+  white: '#FFFFFF',
+  background: '#F8FAFC',
+  textPrimary: '#0F172A',
+  textSecondary: '#64748B',
+  border: '#F1F5F9',
+};
+const SIZES = { radius: 12 };
+const FONTS = { bold: 'System', semiBold: 'System', medium: 'System', regular: 'System' };
+const SHADOWS = { small: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 } };
 
 const TicketsScreen = () => {
   const { user } = useContext(AuthContext);

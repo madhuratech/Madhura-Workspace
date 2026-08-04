@@ -362,7 +362,7 @@ const Documents = () => {
       {/* Upload / Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <UploadCloud className="text-accent-blue" size={20} />
@@ -374,31 +374,32 @@ const Documents = () => {
             </div>
             
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Document Title</label>
-                <input 
-                  type="text" required 
-                  value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm"
-                  placeholder="e.g., Q3 Marketing Strategy"
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Document Title</label>
+                  <input 
+                    type="text" required 
+                    value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm"
+                    placeholder="e.g., Q3 Marketing Strategy"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Folder</label>
-                <select 
-                  className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm cursor-pointer"
-                  value={formData.folderType}
-                  onChange={e => setFormData({...formData, folderType: e.target.value})}
-                  disabled={!isSuperAdminOrHR && user?.role !== 'team_leader'}
-                >
-                  {(isSuperAdminOrHR || user?.role === 'hr') && <option value="Employee Docs">Employee Docs</option>}
-                  {(isSuperAdminOrHR || user?.role === 'team_leader') && <option value="Project Files">Project Files</option>}
-                  <option value="General">General</option>
-                </select>
-                {(!isSuperAdminOrHR && user?.role !== 'team_leader') && (
-                  <p className="text-xs text-gray-500 mt-1">You only have permission to upload to General.</p>
-                )}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Folder</label>
+                  <select 
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm cursor-pointer"
+                    value={formData.folderType}
+                    onChange={e => setFormData({...formData, folderType: e.target.value})}
+                  >
+                    {(isSuperAdminOrHR || user?.role === 'hr') && <option value="Employee Docs">Employee Docs</option>}
+                    {(isSuperAdminOrHR || user?.role === 'team_leader') && <option value="Project Files">Project Files</option>}
+                    <option value="General">General</option>
+                  </select>
+                  {(!isSuperAdminOrHR && user?.role !== 'team_leader') && (
+                    <p className="text-xs text-gray-500 mt-1">You only have permission to upload to General.</p>
+                  )}
+                </div>
               </div>
 
               <div>
