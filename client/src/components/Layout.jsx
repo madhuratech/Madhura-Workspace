@@ -360,38 +360,42 @@ const Layout = () => {
 
             {/* Profile Dropdown */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-3 w-64 bg-bg-secondary border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
-                <div className="p-4 border-b border-border bg-bg-primary/30 flex flex-col items-center text-text-primary">
-                  <div className="relative mb-2">
-                    <div className="h-16 w-16 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-2xl shadow-sm border-2 border-accent-blue/20">
+              <div className="absolute right-0 mt-3 w-64 bg-bg-secondary/90 backdrop-blur-xl border border-border/40 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+                <div className="p-5 border-b border-border/40 flex flex-col items-center text-text-primary relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/5 to-transparent"></div>
+                  <div className="relative mb-3 group cursor-pointer">
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-accent-blue/20 to-accent-indigo/20 flex items-center justify-center text-accent-blue font-bold text-2xl shadow-sm border border-white/20 transition-transform group-hover:scale-105">
                       {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
                     </div>
-                    <div className={`absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full border-2 border-bg-primary ${getStatusColor(user?.presenceStatus)}`}></div>
+                    <div className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-[3px] border-bg-secondary ${getStatusColor(user?.presenceStatus)}`}></div>
                   </div>
-                  <h3 className="font-bold text-base font-outfit">{user?.name}</h3>
-                  <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mt-0.5">{user?.role?.replace('_', ' ')}</p>
+                  <h3 className="font-bold text-base font-outfit tracking-wide z-10">{user?.name}</h3>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-1 z-10">{user?.role?.replace('_', ' ')}</p>
                 </div>
                 
-                <div className="p-2 text-text-primary">
-                  <p className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Set Status</p>
+                <div className="p-2.5 text-text-primary">
+                  <p className="px-3 py-1.5 text-[10px] font-bold text-text-secondary/70 uppercase tracking-wider mb-1">Set Status</p>
                   {['Active', 'Busy', 'Break', 'Away'].map(status => (
                     <button 
                       key={status}
                       onClick={() => handleStatusChange(status)}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-bg-primary rounded-lg flex items-center space-x-3 transition-colors"
+                      className={`w-full text-left px-3 py-2.5 text-sm rounded-xl flex items-center space-x-3 transition-all duration-200 ${user?.presenceStatus === status ? 'bg-bg-primary shadow-sm border border-border/50' : 'hover:bg-bg-primary/50 border border-transparent'}`}
                     >
-                      <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)}`}></div>
-                      <span className={user?.presenceStatus === status ? 'font-bold' : 'font-medium'}>{status}</span>
+                      <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)} shadow-sm`}></div>
+                      <span className={user?.presenceStatus === status ? 'font-bold text-text-primary' : 'font-medium text-text-secondary hover:text-text-primary'}>{status}</span>
+                      {user?.presenceStatus === status && (
+                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-text-primary opacity-60"></div>
+                      )}
                     </button>
                   ))}
                 </div>
                 
-                <div className="p-2 border-t border-border">
+                <div className="p-2.5 border-t border-border/40 bg-bg-secondary/50">
                   <button 
                     onClick={handleLogout}
-                    className="w-full text-left px-3 py-2 text-sm text-danger hover:bg-danger/10 rounded-lg flex items-center space-x-3 transition-colors font-medium"
+                    className="w-full text-left px-3 py-2.5 text-sm text-danger hover:bg-danger hover:text-white rounded-xl flex items-center space-x-3 transition-all duration-200 font-semibold group"
                   >
-                    <LogOut size={16} />
+                    <LogOut size={16} className="text-danger group-hover:text-white transition-colors" />
                     <span>Logout</span>
                   </button>
                 </div>
