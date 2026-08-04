@@ -140,95 +140,102 @@ const Meetings = () => {
     for (let i = 0; i < firstDay; i++) days.push(null);
     for (let i = 1; i <= daysInMonth; i++) days.push(i);
 
+    // Calculate how many rows are needed (each week is 7 days)
+    const totalCells = days.length;
+    const rows = Math.ceil(totalCells / 7);
+
+    // Pad the remaining cells in the last week
+    const paddingCells = (rows * 7) - totalCells;
+    for (let i = 0; i < paddingCells; i++) days.push(null);
+
     return (
-      <div className="flex flex-col h-full animate-fade-in">
+      <div className="flex flex-col h-full animate-fade-in overflow-hidden bg-bg-primary">
         {/* Calendar Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-secondary sticky top-0 z-10">
-          <div className="flex items-center space-x-4">
-            <h2 className="text-xl font-extrabold text-text-primary flex items-center tracking-tight">
-              {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-            </h2>
-          </div>
-          <div className="flex space-x-2 bg-bg-primary p-1 rounded-xl border border-border shadow-sm">
-            <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors text-text-secondary hover:text-accent-blue"><ChevronLeft size={20} /></button>
-            <button onClick={() => setCurrentDate(new Date())} className="px-4 py-2 hover:bg-bg-secondary rounded-lg transition-colors font-bold text-sm text-text-primary">Today</button>
-            <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-2 hover:bg-bg-secondary rounded-lg transition-colors text-text-secondary hover:text-accent-blue"><ChevronRight size={20} /></button>
+        <div className="flex items-center justify-between px-6 py-4 bg-bg-primary">
+          <h2 className="text-2xl font-bold text-text-primary flex items-center tracking-tight">
+            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </h2>
+          <div className="flex space-x-1 bg-bg-secondary p-1 rounded-xl shadow-sm border border-border">
+            <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="p-2 hover:bg-bg-primary rounded-lg transition-colors text-text-secondary hover:text-text-primary"><ChevronLeft size={20} /></button>
+            <button onClick={() => setCurrentDate(new Date())} className="px-5 py-2 hover:bg-bg-primary rounded-lg transition-colors font-semibold text-sm text-text-primary">Today</button>
+            <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="p-2 hover:bg-bg-primary rounded-lg transition-colors text-text-secondary hover:text-text-primary"><ChevronRight size={20} /></button>
           </div>
         </div>
 
         {/* Calendar Grid */}
-        <div className="flex-1 overflow-y-auto p-2 md:p-4 bg-bg-primary custom-scrollbar">
-          <div className="grid grid-cols-7 border-t border-l border-border rounded-2xl overflow-hidden bg-bg-secondary shadow-sm">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
-              <div key={d} className="text-right p-2 text-[10px] font-bold uppercase tracking-wider text-text-secondary border-b border-r border-border bg-bg-primary/60">
-                {d}
-              </div>
-            ))}
-            
-            {days.map((day, idx) => {
-              if (!day) return <div key={`empty-${idx}`} className="min-h-[80px] bg-bg-primary/30 border-b border-r border-border"></div>;
-              
-              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-              const dayEvents = meetings.filter(m => new Date(m.date).toISOString().split('T')[0] === dateStr);
-              // Sort events by time if available
-              dayEvents.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
-              
-              const isToday = dateStr === new Date().toISOString().split('T')[0];
-              const isPast = new Date(dateStr) < new Date(new Date().setHours(0,0,0,0));
-              
-              return (
-                <div 
-                  key={day} 
-                  onClick={() => { resetForm(dateStr); setIsModalOpen(true); }}
-                  className={`min-h-[80px] p-1.5 border-b border-r border-border transition-colors cursor-pointer group flex flex-col
-                    ${isToday ? 'bg-accent-blue/5 hover:bg-accent-blue/10' : 'bg-bg-secondary hover:bg-bg-primary'}
-                    ${isPast && !isToday ? 'opacity-70' : ''}
-                  `}
-                >
-                  <div className="flex justify-between items-start mb-2 px-1 pt-1">
-                    {dayEvents.length > 0 ? (
-                       <span className="text-[10px] font-bold text-accent-blue bg-accent-blue/10 px-2 py-0.5 rounded-md border border-accent-blue/20">
-                         {dayEvents.length} {dayEvents.length === 1 ? 'Meet' : 'Meets'}
-                       </span>
-                    ) : (
-                       <span></span>
-                    )}
-                    <span className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold transition-all ${
-                      isToday ? 'bg-accent-blue text-white shadow-md' : 'text-text-secondary group-hover:text-text-primary'
-                    }`}>
-                      {day}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-1.5 flex-1 overflow-y-auto custom-scrollbar">
-                    {dayEvents.map((evt, eIdx) => {
-                      const isGoogleMeet = evt.type === 'google_meet';
-                      return (
-                        <div 
-                          key={evt._id} 
-                          className={`text-xs px-2.5 py-1.5 rounded-lg border-l-4 shadow-sm flex flex-col space-y-1 transition-all hover:-translate-y-0.5 ${
-                            isGoogleMeet 
-                              ? 'bg-bg-primary border-l-blue-500 border border-border/50 text-text-primary hover:shadow-blue-500/20 hover:border-blue-500/30' 
-                              : 'bg-bg-primary border-l-emerald-500 border border-border/50 text-text-primary hover:shadow-emerald-500/20 hover:border-emerald-500/30'
-                          }`}
-                          title={evt.title}
-                          style={{ animationDelay: `${eIdx * 50}ms` }}
-                        >
-                          <div className="flex items-center justify-between font-bold truncate">
-                            <span className="truncate">{evt.title}</span>
-                          </div>
-                          <div className="flex items-center text-[10px] font-medium text-text-secondary space-x-1.5">
-                            {evt.time && <span>{evt.time}</span>}
-                            <span className="opacity-50">•</span>
-                            {isGoogleMeet ? <Video size={10} className="text-blue-500"/> : <UsersIcon size={10} className="text-emerald-500"/>}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+        <div className="flex-1 flex flex-col p-4 pt-0 overflow-hidden">
+          <div className="flex-1 flex flex-col border border-border/50 rounded-3xl overflow-hidden bg-bg-secondary shadow-sm">
+            {/* Days Header */}
+            <div className="grid grid-cols-7 border-b border-border/50 bg-bg-secondary/50">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                <div key={d} className="text-center py-3 text-[11px] font-bold uppercase tracking-widest text-text-secondary">
+                  {d}
                 </div>
-              );
-            })}
+              ))}
+            </div>
+            
+            {/* Grid Cells */}
+            <div className="flex-1 grid grid-cols-7" style={{ gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}>
+              {days.map((day, idx) => {
+                if (!day) return <div key={`empty-${idx}`} className="bg-bg-primary/20 border-b border-r border-border/50 last:border-r-0"></div>;
+                
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayEvents = meetings.filter(m => new Date(m.date).toISOString().split('T')[0] === dateStr);
+                dayEvents.sort((a, b) => (a.time || '00:00').localeCompare(b.time || '00:00'));
+                
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const isPast = new Date(dateStr) < new Date(new Date().setHours(0,0,0,0));
+                
+                return (
+                  <div 
+                    key={day} 
+                    onClick={() => { resetForm(dateStr); setIsModalOpen(true); }}
+                    className={`p-1.5 md:p-2 border-b border-r border-border/50 last:border-r-0 transition-colors cursor-pointer group flex flex-col overflow-hidden
+                      ${isToday ? 'bg-accent-blue/[0.03] hover:bg-accent-blue/[0.06]' : 'bg-bg-secondary hover:bg-bg-primary'}
+                      ${isPast && !isToday ? 'opacity-60 grayscale-[30%]' : ''}
+                    `}
+                  >
+                    <div className="flex justify-between items-center mb-1.5 px-1">
+                      <span className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold transition-all ${
+                        isToday ? 'bg-accent-blue text-white shadow-md' : 'text-text-secondary group-hover:text-text-primary'
+                      }`}>
+                        {day}
+                      </span>
+                      {dayEvents.length > 0 && (
+                         <div className="flex -space-x-1 mr-1">
+                           {dayEvents.slice(0, 3).map((e, i) => (
+                             <div key={i} className={`w-2 h-2 rounded-full ring-2 ring-bg-secondary ${e.type === 'google_meet' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                           ))}
+                           {dayEvents.length > 3 && <div className="w-2 h-2 rounded-full bg-gray-400 ring-2 ring-bg-secondary" />}
+                         </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1.5 px-0.5 pb-1">
+                      {dayEvents.map((evt, eIdx) => {
+                        const isGoogleMeet = evt.type === 'google_meet';
+                        return (
+                          <div 
+                            key={evt._id} 
+                            className={`text-xs px-2 py-1.5 rounded border-l-2 shadow-sm flex flex-col transition-all hover:scale-[1.02] ${
+                              isGoogleMeet 
+                                ? 'bg-bg-primary border-blue-500 text-text-primary' 
+                                : 'bg-bg-primary border-emerald-500 text-text-primary'
+                            }`}
+                            title={evt.title}
+                          >
+                            <span className="font-semibold truncate leading-tight mb-0.5">{evt.title}</span>
+                            <div className="flex items-center text-[9px] font-medium text-text-secondary space-x-1">
+                              {evt.time && <span>{evt.time}</span>}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
