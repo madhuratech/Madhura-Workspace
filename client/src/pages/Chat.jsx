@@ -595,9 +595,18 @@ const Chat = () => {
                           {msg.text && (
                             <div className="relative px-2 py-1.5 flex flex-col">
                               <div className="whitespace-pre-wrap break-words leading-snug text-[13.5px] inline-block relative max-w-full">
-                                {msg.text}
+                                {msg.text.split(/(@\w+)/g).map((part, i) => {
+                                  if (part.startsWith('@')) {
+                                    return (
+                                      <span key={i} className={`font-semibold px-1 rounded ${isMine ? 'bg-white/20 text-white' : 'text-accent-blue bg-accent-blue/10'}`}>
+                                        {part}
+                                      </span>
+                                    );
+                                  }
+                                  return <span key={i}>{part}</span>;
+                                })}
                                 {/* WhatsApp Spacer to prevent overlap and push time to corner */}
-                                <span className="inline-block w-[75px] h-1" aria-hidden="true"></span>
+                                <span className={`inline-block h-1 ${msg.isEdited ? 'w-[110px]' : 'w-[75px]'}`} aria-hidden="true"></span>
                               </div>
 
                               {/* Timestamp and Read Receipt at bottom */}

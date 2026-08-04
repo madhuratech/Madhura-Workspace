@@ -319,11 +319,31 @@ export default function ChatWindowScreen({ route, navigation }) {
                 isMine ? styles.msgTextMine : styles.msgTextOther,
               ]}
             >
-              {item.text}
+              {item.text.split(/(@\w+)/g).map((part, i) => {
+                if (part.startsWith('@')) {
+                  return (
+                    <Text
+                      key={i}
+                      style={[
+                        { fontWeight: '700' },
+                        isMine ? { color: '#fff', backgroundColor: 'rgba(255,255,255,0.2)' } : { color: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)' }
+                      ]}
+                    >
+                      {part}
+                    </Text>
+                  );
+                }
+                return <Text key={i}>{part}</Text>;
+              })}
             </Text>
           ) : null}
 
           <View style={styles.metaContainer}>
+            {item.isEdited && (
+              <Text style={[{ fontSize: 10, fontStyle: 'italic', marginRight: 4 }, isMine ? { color: 'rgba(219,234,254,0.7)' } : { color: 'rgba(148,163,184,0.7)' }]}>
+                edited
+              </Text>
+            )}
             <Text style={[styles.timeText, isMine && { color: '#DBEAFE' }]}>
               {new Date(item.createdAt).toLocaleTimeString([], {
                 hour: '2-digit',
