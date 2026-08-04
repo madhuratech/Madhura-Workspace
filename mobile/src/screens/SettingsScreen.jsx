@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, Animated, Alert, Modal, TextInput, ActivityIndicator
+  ScrollView, Animated, Alert, Modal, TextInput, ActivityIndicator, Switch
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -58,6 +58,13 @@ export default function SettingsScreen({ navigation }) {
   
   const [isHelpModalVisible, setHelpModalVisible] = React.useState(false);
   const [isAboutModalVisible, setAboutModalVisible] = React.useState(false);
+  
+  const [isPersonalInfoModalVisible, setPersonalInfoModalVisible] = React.useState(false);
+  const [isNotificationsModalVisible, setNotificationsModalVisible] = React.useState(false);
+  const [notificationSettings, setNotificationSettings] = React.useState(
+    user?.notificationSettings || { emailNotifications: true, pushNotifications: true, taskReminders: true }
+  );
+  const [isSavingNotifications, setIsSavingNotifications] = React.useState(false);
 
   const profileFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -72,8 +79,8 @@ export default function SettingsScreen({ navigation }) {
     {
       title: 'Account',
       items: [
-        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6', onPress: () => Alert.alert('Coming Soon', 'Personal Information settings are under development.') },
-        { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6', onPress: () => Alert.alert('Coming Soon', 'Notification preferences are under development.') },
+        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6', onPress: () => setPersonalInfoModalVisible(true) },
+        { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6', onPress: () => setNotificationsModalVisible(true) },
         { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316', onPress: () => setPasswordModalVisible(true) },
       ],
     },
@@ -132,6 +139,19 @@ export default function SettingsScreen({ navigation }) {
       Alert.alert('Error', error.response?.data?.message || 'Failed to update password');
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleSaveNotifications = async () => {
+    setIsSavingNotifications(true);
+    try {
+      await axios.put('/users/notification-settings', { notificationSettings });
+      Alert.alert('Success', 'Notification preferences saved.');
+      setNotificationsModalVisible(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save preferences.');
+    } finally {
+      setIsSavingNotifications(false);
     }
   };
 
@@ -336,9 +356,106 @@ export default function SettingsScreen({ navigation }) {
               </Text>
             </View>
             
+            
             <Text style={{ fontSize: 11, color: '#CBD5E1', textAlign: 'center', marginTop: 10 }}>
               © 2026 Madhura Tech. All rights reserved.
             </Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Personal Information Modal */}
+      <Modal visible={isPersonalInfoModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Personal Information</Text>
+              <TouchableOpacity onPress={() => setPersonalInfoModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <User size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput style={[styles.input, { color: '#64748B' }]} value={user?.name || ''} editable={false} />
+            </View>
+            <View style={styles.inputContainer}>
+              <Mail size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput style={[styles.input, { color: '#64748B' }]} value={user?.email || ''} editable={false} />
+            </View>
+            <View style={styles.inputContainer}>
+              <Shield size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput style={[styles.input, { color: '#64748B' }]} value={roleCfg.label} editable={false} />
+            </View>
+
+            <Text style={{ fontSize: 12, color: '#94A3B8', textAlign: 'center', marginVertical: 10 }}>
+              Profile details are currently managed by your workspace administrator.
+            </Text>
+
+            <TouchableOpacity style={styles.saveBtn} onPress={() => setPersonalInfoModalVisible(false)}>
+              <Text style={styles.saveBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Notifications Modal */}
+      <Modal visible={isNotificationsModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Notifications</Text>
+              <TouchableOpacity onPress={() => setNotificationsModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <View>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Email Notifications</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Receive daily summaries</Text>
+                </View>
+                <Switch 
+                  value={notificationSettings.emailNotifications} 
+                  onValueChange={(val) => setNotificationSettings(p => ({ ...p, emailNotifications: val }))} 
+                  trackColor={{ false: '#E2E8F0', true: '#3B82F6' }}
+                />
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <View>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Push Notifications</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Instant alerts on your device</Text>
+                </View>
+                <Switch 
+                  value={notificationSettings.pushNotifications} 
+                  onValueChange={(val) => setNotificationSettings(p => ({ ...p, pushNotifications: val }))} 
+                  trackColor={{ false: '#E2E8F0', true: '#3B82F6' }}
+                />
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Task Reminders</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Alerts for upcoming deadlines</Text>
+                </View>
+                <Switch 
+                  value={notificationSettings.taskReminders} 
+                  onValueChange={(val) => setNotificationSettings(p => ({ ...p, taskReminders: val }))} 
+                  trackColor={{ false: '#E2E8F0', true: '#3B82F6' }}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.saveBtn, isSavingNotifications && { opacity: 0.7 }]} 
+              activeOpacity={0.8}
+              onPress={handleSaveNotifications}
+              disabled={isSavingNotifications}
+            >
+              {isSavingNotifications ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Preferences</Text>}
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
