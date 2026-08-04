@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
+import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import { Plus, Image as ImageIcon, X, Trash2, Edit2, Pin, Search } from 'lucide-react';
 
 const COLORS = [
@@ -15,8 +15,8 @@ const COLORS = [
 ];
 
 const Notes = () => {
-  const { user } = useAuth();
-  const { showToast } = useToast();
+  const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const [workspace, setWorkspace] = useState(null);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
