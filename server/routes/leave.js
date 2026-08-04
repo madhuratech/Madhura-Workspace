@@ -48,9 +48,11 @@ router.post('/', async (req, res) => {
       });
       await notif.save();
 
-      const socketId = req.onlineUsers ? req.onlineUsers.get(rec.user._id.toString()) : null;
-      if (socketId && req.io) {
-        req.io.to(socketId).emit('new_notification', notif);
+      const socketIds = req.onlineUsers ? req.onlineUsers.get(rec.user._id.toString()) : null;
+      if (socketIds && req.io) {
+        socketIds.forEach(socketId => {
+          req.io.to(socketId).emit('new_notification', notif);
+        });
       }
     }
 
@@ -137,9 +139,11 @@ router.put('/:id/status', async (req, res) => {
     });
     await notif.save();
 
-    const socketId = req.onlineUsers ? req.onlineUsers.get(leave.user.toString()) : null;
-    if (socketId && req.io) {
-      req.io.to(socketId).emit('new_notification', notif);
+    const socketIds = req.onlineUsers ? req.onlineUsers.get(leave.user.toString()) : null;
+    if (socketIds && req.io) {
+      socketIds.forEach(socketId => {
+        req.io.to(socketId).emit('new_notification', notif);
+      });
     }
 
   } catch (error) {

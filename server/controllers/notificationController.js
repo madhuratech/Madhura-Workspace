@@ -80,9 +80,11 @@ const sendNotification = async (req, recipientId, type, title, message, link) =>
 
     // 2. Emit to socket if user is online
     if (req.io && req.onlineUsers) {
-      const socketId = req.onlineUsers.get(recipientId.toString());
-      if (socketId) {
-        req.io.to(socketId).emit('new_notification', notification);
+      const socketIds = req.onlineUsers.get(recipientId.toString());
+      if (socketIds) {
+        socketIds.forEach(socketId => {
+          req.io.to(socketId).emit('new_notification', notification);
+        });
       }
     }
   } catch (error) {

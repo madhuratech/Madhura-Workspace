@@ -46,17 +46,23 @@ io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
   
   socket.on('user_connected', (userId) => {
-    onlineUsers.set(userId, socket.id);
+    if (!onlineUsers.has(userId)) {
+      onlineUsers.set(userId, new Set());
+    }
+    onlineUsers.get(userId).add(socket.id);
     io.emit('user_status', { userId, status: 'online' });
     socket.emit('initial_status', Array.from(onlineUsers.keys()));
   });
   
   socket.on('disconnect', () => {
     console.log(`Socket disconnected: ${socket.id}`);
-    for (const [userId, socketId] of onlineUsers.entries()) {
-      if (socketId === socket.id) {
-        onlineUsers.delete(userId);
-        io.emit('user_status', { userId, status: 'offline' });
+    for (const [userId, socketIds] of onlineUsers.entries()) {
+      if (socketIds.has(socket.id)) {
+        socketIds.delete(socket.id);
+        if (socketIds.size === 0) {
+          onlineUsers.delete(userId);
+          io.emit('user_status', { userId, status: 'offline' });
+        }
         break;
       }
     }
