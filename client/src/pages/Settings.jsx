@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Save, Building, Users, Bell, Shield, Key, Lock } from 'lucide-react';
+import { Save, Building, Users, Bell, Shield, Key, Lock, HelpCircle, Info, Mail, MessageSquare } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -225,6 +225,27 @@ const Settings = () => {
           >
             <Shield size={18} />
             <span>Security</span>
+          </button>
+          
+          <div className="h-px bg-border my-2 mx-3"></div>
+
+          <button 
+            onClick={() => setActiveTab('help')}
+            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+              activeTab === 'help' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
+            }`}
+          >
+            <HelpCircle size={18} />
+            <span>Help Desk</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('about')}
+            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+              activeTab === 'about' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
+            }`}
+          >
+            <Info size={18} />
+            <span>About</span>
           </button>
         </div>
 
@@ -482,6 +503,70 @@ const Settings = () => {
                 </div>
                 <button type="submit" className="hidden"></button>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'help' && (
+            <div className="max-w-2xl animate-in fade-in duration-300">
+              <h2 className="text-xl font-bold text-text-primary mb-2">Help & Support</h2>
+              <p className="text-sm text-text-secondary mb-8">We're here to help you get the most out of Madhura Workspace.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-bg-primary border border-border rounded-xl p-5 hover:border-accent-blue transition-colors cursor-pointer group">
+                  <div className="w-10 h-10 rounded-lg bg-accent-blue/10 flex items-center justify-center text-accent-blue mb-4 group-hover:scale-110 transition-transform">
+                    <Mail size={20} />
+                  </div>
+                  <h3 className="font-bold text-text-primary mb-1">Email Support</h3>
+                  <p className="text-xs text-text-secondary mb-3">Get in touch with our team directly.</p>
+                  <a href="mailto:support@madhuratech.com" className="text-sm font-medium text-accent-blue hover:underline">support@madhuratech.com</a>
+                </div>
+                
+                <div className="bg-bg-primary border border-border rounded-xl p-5 hover:border-accent-blue transition-colors cursor-pointer group">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 mb-4 group-hover:scale-110 transition-transform">
+                    <MessageSquare size={20} />
+                  </div>
+                  <h3 className="font-bold text-text-primary mb-1">Live Chat</h3>
+                  <p className="text-xs text-text-secondary mb-3">Chat with our support agents instantly.</p>
+                  <span className="text-sm font-medium text-purple-500">Available 9 AM - 6 PM</span>
+                </div>
+              </div>
+
+              <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-xl p-6 flex items-start space-x-4">
+                <HelpCircle size={24} className="text-accent-blue shrink-0 mt-1" />
+                <div>
+                  <h3 className="font-bold text-text-primary mb-1">Frequently Asked Questions</h3>
+                  <p className="text-sm text-text-secondary mb-3">Find quick answers to common questions about workspace setup, roles, and integrations.</p>
+                  <button className="text-sm font-medium text-accent-blue hover:underline">Visit Help Center →</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'about' && (
+            <div className="max-w-2xl animate-in fade-in duration-300 flex flex-col items-center text-center mt-10">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-blue to-accent-indigo flex items-center justify-center text-white text-4xl font-bold shadow-lg mb-6">
+                M
+              </div>
+              <h2 className="text-3xl font-bold text-text-primary mb-2 font-outfit tracking-wide">Madhura Workspace</h2>
+              <p className="text-sm font-medium text-accent-blue mb-8 bg-accent-blue/10 px-4 py-1 rounded-full">Version 1.0.0 (Build 42)</p>
+              
+              <div className="max-w-lg">
+                <p className="text-text-secondary leading-relaxed mb-8">
+                  A premium workspace management solution designed for seamless collaboration, robust team tracking, and efficient workflow execution. Built with modern web technologies for uncompromising performance and aesthetics.
+                </p>
+                
+                <div className="flex items-center justify-center space-x-6 text-sm font-medium text-text-secondary border-t border-border pt-8">
+                  <a href="#" className="hover:text-accent-blue transition-colors">Terms of Service</a>
+                  <span className="w-1 h-1 rounded-full bg-border"></span>
+                  <a href="#" className="hover:text-accent-blue transition-colors">Privacy Policy</a>
+                  <span className="w-1 h-1 rounded-full bg-border"></span>
+                  <a href="#" className="hover:text-accent-blue transition-colors">Licenses</a>
+                </div>
+                
+                <p className="text-xs text-text-secondary/60 mt-8">
+                  © 2026 Madhura Tech. All rights reserved.
+                </p>
+              </div>
             </div>
           )}
         </div>

@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Settings, LogOut, User, Bell, Shield, HelpCircle,
-  ChevronRight, ArrowLeft, Info, UserPlus, Lock, Key
+  ChevronRight, ArrowLeft, Info, UserPlus, Lock, Key, Mail, MessageSquare, Phone
 } from 'lucide-react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
@@ -53,6 +53,9 @@ export default function SettingsScreen({ navigation }) {
   const [isPasswordModalVisible, setPasswordModalVisible] = React.useState(false);
   const [passwordData, setPasswordData] = React.useState({ currentPassword: '', newPassword: '' });
   const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+  
+  const [isHelpModalVisible, setHelpModalVisible] = React.useState(false);
+  const [isAboutModalVisible, setAboutModalVisible] = React.useState(false);
 
   const profileFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -67,16 +70,16 @@ export default function SettingsScreen({ navigation }) {
     {
       title: 'Account',
       items: [
-        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6' },
-        { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6' },
+        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6', onPress: () => Alert.alert('Coming Soon', 'Personal Information settings are under development.') },
+        { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6', onPress: () => Alert.alert('Coming Soon', 'Notification preferences are under development.') },
         { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316', onPress: () => setPasswordModalVisible(true) },
       ],
     },
     {
       title: 'Support',
       items: [
-        { icon: HelpCircle,  label: 'Help & Support',       sub: 'FAQs and contact us',           iconBg: '#F0FDF4', iconColor: '#10B981' },
-        { icon: Info,        label: 'About',                sub: 'App version and licenses',       iconBg: '#F8FAFC', iconColor: '#64748B' },
+        { icon: HelpCircle,  label: 'Help & Support',       sub: 'FAQs and contact us',           iconBg: '#F0FDF4', iconColor: '#10B981', onPress: () => setHelpModalVisible(true) },
+        { icon: Info,        label: 'About',                sub: 'App version and licenses',       iconBg: '#F8FAFC', iconColor: '#64748B', onPress: () => setAboutModalVisible(true) },
       ],
     },
   ];
@@ -263,6 +266,81 @@ export default function SettingsScreen({ navigation }) {
         </View>
       </Modal>
 
+      {/* Help & Support Modal */}
+      <Modal visible={isHelpModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Help & Support</Text>
+              <TouchableOpacity onPress={() => setHelpModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                <HelpCircle color="#10B981" size={32} />
+              </View>
+              <Text style={{ fontSize: 15, textAlign: 'center', color: '#64748B', paddingHorizontal: 10 }}>
+                We're here to help! Reach out to our support team for any issues or questions.
+              </Text>
+            </View>
+
+            <TouchableOpacity style={styles.supportOptionBtn} activeOpacity={0.8}>
+              <Mail color="#3B82F6" size={20} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Email Support</Text>
+                <Text style={{ fontSize: 12, color: '#94A3B8' }}>support@madhuratech.com</Text>
+              </View>
+              <ChevronRight color="#CBD5E1" size={18} />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.supportOptionBtn} activeOpacity={0.8}>
+              <MessageSquare color="#8B5CF6" size={20} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Live Chat</Text>
+                <Text style={{ fontSize: 12, color: '#94A3B8' }}>Available 9 AM - 6 PM</Text>
+              </View>
+              <ChevronRight color="#CBD5E1" size={18} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={[styles.saveBtn, { marginTop: 10 }]} onPress={() => setHelpModalVisible(false)}>
+              <Text style={styles.saveBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* About Modal */}
+      <Modal visible={isAboutModalVisible} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>About</Text>
+              <TouchableOpacity onPress={() => setAboutModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ alignItems: 'center', marginVertical: 20 }}>
+              <View style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#3B82F6' }}>M</Text>
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#0F172A', marginBottom: 4 }}>Madhura Workspace</Text>
+              <Text style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>Version 1.0.0 (Build 42)</Text>
+              
+              <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 20 }}>
+                A premium workspace management solution designed for seamless collaboration, robust team tracking, and efficient workflow execution.
+              </Text>
+            </View>
+            
+            <Text style={{ fontSize: 11, color: '#CBD5E1', textAlign: 'center', marginTop: 10 }}>
+              © 2026 Madhura Tech. All rights reserved.
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -385,4 +463,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginTop: 8
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  supportOptionBtn: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+    borderRadius: 16, padding: 14, marginBottom: 10,
+    borderWidth: 1, borderColor: '#F1F5F9',
+  }
 });

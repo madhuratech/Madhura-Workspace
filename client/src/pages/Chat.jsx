@@ -494,7 +494,7 @@ const Chat = () => {
                     <div className="w-8 mr-2 flex-shrink-0"></div>
                   )}
 
-                  <div className={`relative max-w-[85%] group/msg flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+                  <div className={`relative max-w-[85%] md:max-w-md lg:max-w-lg group/msg flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
                     
                     {/* Sender Name (only for received in groups, like WhatsApp) */}
                     {!isMine && activeChannel && showHeader && (
@@ -536,7 +536,7 @@ const Chat = () => {
                         )}
 
                         {/* Message Bubble */}
-                        <div className={`relative min-w-[80px] max-w-[85%] shadow-sm flex flex-col ${
+                        <div className={`relative min-w-[80px] max-w-full shadow-sm flex flex-col ${
                           isMine 
                             ? 'bg-[#d9fdd3] text-[#111b21] rounded-2xl rounded-tr-sm' 
                             : 'bg-bg-primary text-text-primary rounded-2xl rounded-tl-sm border border-border/50'
