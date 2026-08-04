@@ -82,9 +82,14 @@ const sendNotification = async (req, recipientId, type, title, message, link) =>
     if (req.io && req.onlineUsers) {
       const socketIds = req.onlineUsers.get(recipientId.toString());
       if (socketIds) {
-        socketIds.forEach(socketId => {
-          req.io.to(socketId).emit('new_notification', notification);
-        });
+        if (socketIds instanceof Set || Array.isArray(socketIds)) {
+          socketIds.forEach(socketId => {
+            req.io.to(socketId).emit('new_notification', notification);
+          });
+        } else if (typeof socketIds === 'string') {
+          // Fallback if server.js hasn't been restarted and still uses string map
+          req.io.to(socketIds).emit('new_notification', notification);
+        }
       }
     }
   } catch (error) {

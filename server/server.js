@@ -105,6 +105,14 @@ app.get('/', (req, res) => {
   res.send('Madhura Workspace API is running...');
 });
 
+app.get('/api/debug/online_users', (req, res) => {
+  const users = {};
+  for (const [key, value] of onlineUsers.entries()) {
+    users[key] = Array.from(value);
+  }
+  res.json(users);
+});
+
 // ── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/auth/google', require('./routes/googleAuthRoutes'));

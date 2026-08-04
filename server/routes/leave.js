@@ -50,9 +50,13 @@ router.post('/', async (req, res) => {
 
       const socketIds = req.onlineUsers ? req.onlineUsers.get(rec.user._id.toString()) : null;
       if (socketIds && req.io) {
-        socketIds.forEach(socketId => {
-          req.io.to(socketId).emit('new_notification', notif);
-        });
+        if (socketIds instanceof Set || Array.isArray(socketIds)) {
+          socketIds.forEach(socketId => {
+            req.io.to(socketId).emit('new_notification', notif);
+          });
+        } else if (typeof socketIds === 'string') {
+          req.io.to(socketIds).emit('new_notification', notif);
+        }
       }
     }
 
@@ -141,9 +145,13 @@ router.put('/:id/status', async (req, res) => {
 
     const socketIds = req.onlineUsers ? req.onlineUsers.get(leave.user.toString()) : null;
     if (socketIds && req.io) {
-      socketIds.forEach(socketId => {
-        req.io.to(socketId).emit('new_notification', notif);
-      });
+      if (socketIds instanceof Set || Array.isArray(socketIds)) {
+        socketIds.forEach(socketId => {
+          req.io.to(socketId).emit('new_notification', notif);
+        });
+      } else if (typeof socketIds === 'string') {
+        req.io.to(socketIds).emit('new_notification', notif);
+      }
     }
 
   } catch (error) {

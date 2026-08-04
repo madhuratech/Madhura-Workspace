@@ -53,6 +53,29 @@ router.post('/checkin', async (req, res) => {
     });
 
     await record.save();
+    
+    // Notify HR and Super Admins
+    try {
+      const User = require('../models/User');
+      const { sendNotification } = require('../controllers/notificationController');
+      const admins = await User.find({ role: { $in: ['super_admin', 'hr'] } }).select('_id');
+      
+      for (const admin of admins) {
+        if (admin._id.toString() !== req.user._id.toString()) {
+          await sendNotification(
+            req,
+            admin._id,
+            'general',
+            'Employee Punched In',
+            `${req.user.name} has punched in (Started).`,
+            `/attendance`
+          );
+        }
+      }
+    } catch (notifErr) {
+      console.error('Failed to notify admins for checkin:', notifErr);
+    }
+
     res.status(201).json(record);
   } catch (error) {
     console.error(error);
