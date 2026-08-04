@@ -218,6 +218,53 @@ const Chat = () => {
     }
   };
 
+  const [showMentionMenu, setShowMentionMenu] = useState(false);
+  const [mentionSearchText, setMentionSearchText] = useState('');
+  const [mentionCursorIndex, setMentionCursorIndex] = useState(null);
+  const mentionInputRef = useRef(null);
+
+  const handleInputChange = (e) => {
+    const text = e.target.value;
+    setNewMessage(text);
+    
+    // Check for @ mentions
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = text.slice(0, cursorPos);
+    const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtSymbol !== -1) {
+      if (lastAtSymbol === 0 || textBeforeCursor[lastAtSymbol - 1] === ' ' || textBeforeCursor[lastAtSymbol - 1] === '\n') {
+        const searchText = textBeforeCursor.slice(lastAtSymbol + 1);
+        if (!searchText.includes(' ')) {
+          setShowMentionMenu(true);
+          setMentionSearchText(searchText.toLowerCase());
+          setMentionCursorIndex(lastAtSymbol);
+          return;
+        }
+      }
+    }
+    
+    setShowMentionMenu(false);
+  };
+
+  const insertMention = (username) => {
+    if (mentionCursorIndex !== null && mentionInputRef.current) {
+      const before = newMessage.slice(0, mentionCursorIndex);
+      const after = newMessage.slice(mentionInputRef.current.selectionStart);
+      const newText = `${before}@${username} ${after}`;
+      setNewMessage(newText);
+      setShowMentionMenu(false);
+      setMentionCursorIndex(null);
+      setTimeout(() => {
+        if (mentionInputRef.current) {
+          mentionInputRef.current.focus();
+          const newCursorPos = before.length + username.length + 2;
+          mentionInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+        }
+      }, 0);
+    }
+  };
+
   const handleSendMessage = async (e, customAttachment = null) => {
     if (e) e.preventDefault();
     if (!customAttachment && !newMessage.trim()) return;
@@ -701,11 +748,35 @@ const Chat = () => {
 
             {uploadingFile && <div className="absolute -top-8 left-0 text-xs text-accent-blue font-bold animate-pulse">Uploading file...</div>}
 
+            {showMentionMenu && (
+              <div className="absolute bottom-full left-4 mb-2 bg-white dark:bg-bg-secondary border border-border shadow-xl rounded-xl w-64 max-h-48 overflow-y-auto z-50 animate-in fade-in slide-in-from-bottom-2 custom-scrollbar">
+                {workspaceMembers
+                  .filter(m => m.name.toLowerCase().includes(mentionSearchText))
+                  .map(m => (
+                    <button
+                      key={m._id}
+                      type="button"
+                      onClick={() => insertMention(m.name.replace(/\s+/g, ''))}
+                      className="w-full flex items-center px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue text-xs font-bold mr-3 shrink-0">
+                        {m.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-sm text-text-primary font-medium truncate">{m.name}</span>
+                    </button>
+                  ))}
+                {workspaceMembers.filter(m => m.name.toLowerCase().includes(mentionSearchText)).length === 0 && (
+                  <div className="px-4 py-3 text-sm text-text-secondary text-center">No members found</div>
+                )}
+              </div>
+            )}
+
             <textarea 
+              ref={mentionInputRef}
               rows="1"
               placeholder={`Message ${getChannelDisplayName(activeChannel, activeDM)}`}
               value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

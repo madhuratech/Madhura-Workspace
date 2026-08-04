@@ -71,6 +71,7 @@ export default function ChatWindowScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchMessages();
+    fetchWorkspaceMembers();
     setupSocket();
 
     const kbListener = Keyboard.addListener('keyboardDidShow', () => {
@@ -114,6 +115,53 @@ export default function ChatWindowScreen({ route, navigation }) {
         setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
       }
     });
+  };
+
+  const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [showMentionMenu, setShowMentionMenu] = useState(false);
+  const [mentionSearchText, setMentionSearchText] = useState('');
+  const [mentionCursorIndex, setMentionCursorIndex] = useState(null);
+
+  const fetchWorkspaceMembers = async () => {
+    try {
+      const res = await axios.get(`/workspaces/${workspaceId}`);
+      if (res.data && res.data.members) {
+        const members = res.data.members
+          .filter((m) => m.user && String(m.user._id) !== String(user._id))
+          .map((m) => m.user);
+        setWorkspaceMembers(members);
+      }
+    } catch (err) {
+      console.error('Fetch members error:', err);
+    }
+  };
+
+  const handleInputChange = (text) => {
+    setNewMessage(text);
+    const lastAtSymbol = text.lastIndexOf('@');
+    if (lastAtSymbol !== -1) {
+      if (lastAtSymbol === 0 || text[lastAtSymbol - 1] === ' ' || text[lastAtSymbol - 1] === '\n') {
+        const searchText = text.slice(lastAtSymbol + 1);
+        if (!searchText.includes(' ')) {
+          setShowMentionMenu(true);
+          setMentionSearchText(searchText.toLowerCase());
+          setMentionCursorIndex(lastAtSymbol);
+          return;
+        }
+      }
+    }
+    setShowMentionMenu(false);
+  };
+
+  const insertMention = (username) => {
+    if (mentionCursorIndex !== null) {
+      const before = newMessage.slice(0, mentionCursorIndex);
+      const after = newMessage.slice(mentionCursorIndex + 1 + mentionSearchText.length);
+      const newText = `${before}@${username} ${after}`;
+      setNewMessage(newText);
+      setShowMentionMenu(false);
+      setMentionCursorIndex(null);
+    }
   };
 
   const fetchMessages = async () => {
@@ -447,6 +495,31 @@ export default function ChatWindowScreen({ route, navigation }) {
           </View>
         )}
 
+        {/* Mention Dropdown */}
+        {showMentionMenu && (
+          <View style={styles.mentionMenuContainer}>
+            <ScrollView keyboardShouldPersistTaps="always">
+              {workspaceMembers
+                .filter(m => m.name.toLowerCase().includes(mentionSearchText))
+                .map(m => (
+                  <TouchableOpacity
+                    key={m._id}
+                    style={styles.mentionItem}
+                    onPress={() => insertMention(m.name.replace(/\s+/g, ''))}
+                  >
+                    <View style={styles.mentionAvatar}>
+                      <Text style={styles.mentionAvatarText}>{m.name.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <Text style={styles.mentionName} numberOfLines={1}>{m.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              {workspaceMembers.filter(m => m.name.toLowerCase().includes(mentionSearchText)).length === 0 && (
+                <Text style={styles.mentionEmpty}>No members found</Text>
+              )}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Input bar */}
         <View style={styles.inputContainer}>
           <TouchableOpacity
@@ -482,7 +555,7 @@ export default function ChatWindowScreen({ route, navigation }) {
             placeholder="Type a message…"
             placeholderTextColor="#94A3B8"
             value={newMessage}
-            onChangeText={setNewMessage}
+            onChangeText={handleInputChange}
             onFocus={() => {
               setShowEmojiPicker(false);
               setShowAttachMenu(false);
@@ -620,7 +693,35 @@ const styles = StyleSheet.create({
     width: 56, height: 56, borderRadius: 28,
     justifyContent: 'center', alignItems: 'center', marginBottom: 8,
   },
-  attachText: { fontSize: 12, color: '#64748B', fontWeight: '600' },
+  attachText: { fontSize: 13, color: '#475569', fontWeight: '500' },
+
+  // Mentions
+  mentionMenuContainer: {
+    maxHeight: 200,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    zIndex: 100,
+  },
+  mentionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  mentionAvatar: {
+    width: 28, height: 28, borderRadius: 14, backgroundColor: '#EFF6FF',
+    justifyContent: 'center', alignItems: 'center', marginRight: 10,
+  },
+  mentionAvatarText: { color: '#3B82F6', fontSize: 12, fontWeight: '700' },
+  mentionName: { fontSize: 14, color: '#1E293B', fontWeight: '500' },
+  mentionEmpty: { padding: 12, textAlign: 'center', color: '#94A3B8', fontSize: 14 },
 
   // Uploading
   uploadingContainer: {
