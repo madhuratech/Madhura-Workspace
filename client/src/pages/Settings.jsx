@@ -36,6 +36,15 @@ const Settings = () => {
     taskReminders: true
   });
 
+  // Custom UI States
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [resetModal, setResetModal] = useState({ isOpen: false, userId: null, newPassword: '', error: '', loading: false });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
+  };
+
   useEffect(() => {
     if (user?.notificationSettings) {
       setNotificationSettings(user.notificationSettings);
@@ -82,9 +91,10 @@ const Settings = () => {
     try {
       await axios.put(`/users/${userId}/role`, { role: newRole });
       setUsersList(usersList.map(u => u._id === userId ? { ...u, role: newRole } : u));
+      showToast('Role updated successfully', 'success');
     } catch (error) {
       console.error('Error updating role:', error);
-      alert('Failed to update role. Ensure you are a super_admin.');
+      showToast('Failed to update role. Ensure you are a super_admin.', 'error');
     }
   };
 
@@ -92,19 +102,28 @@ const Settings = () => {
     setNotificationSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleResetPassword = async (userId) => {
-    const newPass = prompt("Enter new password for this user (min 6 characters):");
-    if (newPass === null) return; // User cancelled
-    if (newPass.length < 6) {
-      alert("Password must be at least 6 characters.");
+  const handleResetPassword = (userId) => {
+    setResetModal({ isOpen: true, userId, newPassword: '', error: '', loading: false });
+  };
+
+  const submitResetPassword = async () => {
+    const { userId, newPassword } = resetModal;
+    if (newPassword.length < 6) {
+      setResetModal(prev => ({ ...prev, error: 'Password must be at least 6 characters' }));
       return;
     }
+    setResetModal(prev => ({ ...prev, loading: true, error: '' }));
     try {
-      await axios.put(`/users/${userId}/reset-password`, { newPassword: newPass });
-      alert("Password reset successfully. Please share it securely with the user.");
+      await axios.put(`/users/${userId}/reset-password`, { newPassword });
+      setResetModal({ isOpen: false, userId: null, newPassword: '', error: '', loading: false });
+      showToast('Password reset successfully. Share it securely.', 'success');
     } catch (error) {
       console.error('Error resetting password:', error);
-      alert(error.response?.data?.message || 'Failed to reset password.');
+      setResetModal(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: error.response?.data?.message || 'Failed to reset password' 
+      }));
     }
   };
 
@@ -148,7 +167,7 @@ const Settings = () => {
       if (activeTab === 'security') {
         setPasswordError(error.response?.data?.message || 'Failed to change password');
       } else {
-        alert('Error saving settings');
+        showToast('Error saving settings', 'error');
       }
     }
     setLoading(false);
@@ -467,6 +486,75 @@ const Settings = () => {
           )}
         </div>
       </div>
+
+      {/* Custom Reset Password Modal */}
+      {resetModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-border shadow-2xl rounded-2xl w-full max-w-sm p-6 transform transition-all animate-in zoom-in-95 duration-200">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue">
+                <Key size={20} />
+              </div>
+              <h2 className="text-lg font-bold text-text-primary font-outfit">Reset Password</h2>
+            </div>
+            
+            <p className="text-sm text-text-secondary mb-5">
+              Enter a new secure password for this user.
+            </p>
+
+            {resetModal.error && (
+              <div className="p-2 mb-4 bg-danger/10 border border-danger/20 text-danger rounded-lg text-xs font-medium">
+                {resetModal.error}
+              </div>
+            )}
+
+            <div className="mb-6 relative">
+              <Lock size={16} className="absolute left-3 top-3 text-text-secondary" />
+              <input 
+                type="password"
+                placeholder="New Password (min 6 chars)"
+                autoFocus
+                value={resetModal.newPassword}
+                onChange={(e) => setResetModal({ ...resetModal, newPassword: e.target.value, error: '' })}
+                className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                onKeyDown={(e) => { if (e.key === 'Enter') submitResetPassword(); }}
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button 
+                onClick={() => setResetModal({ isOpen: false, userId: null, newPassword: '', error: '', loading: false })}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-text-secondary hover:bg-bg-primary transition-colors"
+                disabled={resetModal.loading}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitResetPassword}
+                disabled={resetModal.loading}
+                className="px-4 py-2 bg-accent-blue text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center"
+              >
+                {resetModal.loading ? 'Saving...' : 'Reset Password'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Toast Notification */}
+      {toast.show && (
+        <div className={`fixed bottom-6 right-6 border shadow-2xl rounded-xl p-4 min-w-[280px] animate-in slide-in-from-bottom-5 z-[110] flex items-center space-x-3
+          ${toast.type === 'error' ? 'bg-danger/10 border-danger/20 text-danger' : 'bg-bg-secondary border-border text-text-primary'}
+        `}>
+          {toast.type === 'error' ? (
+            <div className="h-2 w-2 rounded-full bg-danger"></div>
+          ) : (
+            <div className="h-2 w-2 rounded-full bg-success"></div>
+          )}
+          <p className="text-sm font-medium">{toast.message}</p>
+        </div>
+      )}
+
     </div>
   );
 };

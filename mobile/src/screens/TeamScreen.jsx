@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  TouchableOpacity, ActivityIndicator, Animated, Alert
+  TouchableOpacity, ActivityIndicator, Animated, Alert, Modal, TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, ArrowLeft, Users, UserPlus, Key } from 'lucide-react-native';
@@ -80,6 +80,7 @@ export default function TeamScreen({ navigation }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState('employee');
+  const [resetModal, setResetModal] = useState({ isVisible: false, userId: null, newPassword: '', loading: false });
   const headerFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -107,29 +108,24 @@ export default function TeamScreen({ navigation }) {
   };
 
   const handleResetPassword = (userId) => {
-    Alert.prompt(
-      'Reset Password',
-      'Enter new password (min 6 chars):',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset', 
-          onPress: async (newPass) => {
-            if (!newPass || newPass.length < 6) {
-              Alert.alert('Error', 'Password must be at least 6 characters');
-              return;
-            }
-            try {
-              await axios.put(`/users/${userId}/reset-password`, { newPassword: newPass });
-              Alert.alert('Success', 'Password reset successfully');
-            } catch (error) {
-              Alert.alert('Error', error.response?.data?.message || 'Failed to reset password');
-            }
-          }
-        },
-      ],
-      'secure-text'
-    );
+    setResetModal({ isVisible: true, userId, newPassword: '', loading: false });
+  };
+
+  const submitResetPassword = async () => {
+    const { userId, newPassword } = resetModal;
+    if (!newPassword || newPassword.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+    setResetModal(prev => ({ ...prev, loading: true }));
+    try {
+      await axios.put(`/users/${userId}/reset-password`, { newPassword });
+      setResetModal({ isVisible: false, userId: null, newPassword: '', loading: false });
+      Alert.alert('Success', 'Password reset successfully');
+    } catch (error) {
+      setResetModal(prev => ({ ...prev, loading: false }));
+      Alert.alert('Error', error.response?.data?.message || 'Failed to reset password');
+    }
   };
 
   return (
@@ -176,6 +172,48 @@ export default function TeamScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Reset Password Modal */}
+      <Modal visible={resetModal.isVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Reset Password</Text>
+              <TouchableOpacity onPress={() => setResetModal({ isVisible: false, userId: null, newPassword: '', loading: false })} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalSub}>Enter a new password for this user.</Text>
+
+            <View style={styles.inputContainer}>
+              <Key size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="New Password (min 6 chars)"
+                secureTextEntry
+                autoFocus
+                value={resetModal.newPassword}
+                onChangeText={(text) => setResetModal(prev => ({ ...prev, newPassword: text }))}
+              />
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.saveBtn, resetModal.loading && { opacity: 0.7 }]} 
+              activeOpacity={0.8}
+              onPress={submitResetPassword}
+              disabled={resetModal.loading}
+            >
+              {resetModal.loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveBtnText}>Reset Password</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -230,4 +268,38 @@ const styles = StyleSheet.create({
 
   emptyBox: { alignItems: 'center', marginTop: 80 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#94A3B8', marginTop: 14 },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 20
+  },
+  modalContent: {
+    backgroundColor: '#fff', borderRadius: 20, width: '100%',
+    padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1, shadowRadius: 20, elevation: 10
+  },
+  modalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 8
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
+  modalSub: { fontSize: 13, color: '#64748B', marginBottom: 20 },
+  modalCloseBtn: {
+    width: 30, height: 30, borderRadius: 15, backgroundColor: '#F1F5F9',
+    justifyContent: 'center', alignItems: 'center'
+  },
+  modalCloseText: { fontSize: 16, color: '#64748B', fontWeight: 'bold' },
+  inputContainer: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
+    borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    marginBottom: 20, paddingHorizontal: 14, height: 50
+  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 15, color: '#0F172A' },
+  saveBtn: {
+    backgroundColor: '#3B82F6', borderRadius: 12, height: 50,
+    justifyContent: 'center', alignItems: 'center'
+  },
+  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
