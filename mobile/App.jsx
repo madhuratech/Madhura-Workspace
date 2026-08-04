@@ -27,6 +27,7 @@ import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import RegisterMemberScreen from './src/screens/RegisterMemberScreen';
 import TicketsScreen from './src/screens/TicketsScreen';
+import AnnouncementsScreen from './src/screens/AnnouncementsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
@@ -68,6 +69,7 @@ function MoreNavigator() {
       <MoreStack.Screen name="AttendanceLeave" component={AttendanceLeaveScreen} />
       <MoreStack.Screen name="Analytics" component={AnalyticsScreen} />
       <MoreStack.Screen name="Tickets" component={TicketsScreen} />
+      <MoreStack.Screen name="Announcements" component={AnnouncementsScreen} />
     </MoreStack.Navigator>
   );
 }

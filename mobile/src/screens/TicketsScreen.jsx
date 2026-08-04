@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, TextInput, Modal, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, X, Send, Plus } from 'lucide-react-native';
-import api from '../utils/api';
+import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 const COLORS = {
   primary: '#5B5BD6',
@@ -36,7 +36,7 @@ const TicketsScreen = () => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/tickets');
+      const res = await axios.get('/tickets');
       setTickets(res.data);
     } catch (error) {
       console.error('Error fetching tickets', error);
@@ -53,7 +53,7 @@ const TicketsScreen = () => {
     }
     
     try {
-      const res = await api.post('/tickets', formData);
+      const res = await axios.post('/tickets', formData);
       setTickets([res.data, ...tickets]);
       setShowCreateModal(false);
       setFormData({ title: '', description: '', priority: 'Medium', department: 'General' });
@@ -65,7 +65,7 @@ const TicketsScreen = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const res = await api.put(`/tickets/${id}`, { status: newStatus });
+      const res = await axios.put(`/tickets/${id}`, { status: newStatus });
       setTickets(tickets.map(t => t._id === id ? res.data : t));
       if (selectedTicket && selectedTicket._id === id) {
         setSelectedTicket(res.data);
@@ -78,7 +78,7 @@ const TicketsScreen = () => {
   const handleAddComment = async () => {
     if (!commentText.trim() || !selectedTicket) return;
     try {
-      const res = await api.post(`/tickets/${selectedTicket._id}/comments`, { text: commentText });
+      const res = await axios.post(`/tickets/${selectedTicket._id}/comments`, { text: commentText });
       setTickets(tickets.map(t => t._id === selectedTicket._id ? res.data : t));
       setSelectedTicket(res.data);
       setCommentText('');

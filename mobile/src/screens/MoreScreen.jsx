@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   FileText, Users, Settings, ChevronRight,
-  CalendarDays, Mail, Clock, LogOut, User, BarChart3, LifeBuoy
+  CalendarDays, Mail, Clock, LogOut, User, BarChart3, LifeBuoy, Megaphone
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
@@ -63,6 +63,7 @@ export default function MoreScreen({ navigation }) {
     {
       section: 'Communication',
       items: [
+        { icon: Megaphone,    label: 'Notice Board',      sub: 'Announcements & Alerts',          route: 'Announcements',   iconBg: '#EFF6FF', iconColor: '#3B82F6'   },
         { icon: Mail,         label: 'Email',             sub: 'Internal messages',               route: 'Email',           iconBg: '#F0FDF4', iconColor: '#059669'   },
         { icon: CalendarDays, label: 'Meetings',          sub: 'Schedule and upcoming',           route: 'Meetings',        iconBg: '#FFF7ED', iconColor: '#D97706'   },
       ],
