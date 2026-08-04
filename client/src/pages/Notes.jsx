@@ -226,7 +226,7 @@ const Notes = () => {
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   {notes.find(n => n._id === editingNoteId).attachments.map((att, i) => (
                     <div key={i} className="relative rounded-lg overflow-hidden border border-black/10">
-                      <img src={att.url} alt="Attachment" className="w-full h-auto object-cover" />
+                      <img src={att.url.startsWith('http') ? att.url : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${att.url}`} alt="Attachment" className="w-full h-auto object-cover" />
                     </div>
                   ))}
                 </div>
@@ -301,7 +301,7 @@ const Notes = () => {
             
             {note.attachments && note.attachments.length > 0 && (
               <div className="mb-3 -mx-4 -mt-4 overflow-hidden rounded-t-xl">
-                <img src={note.attachments[0].url} alt="Cover" className="w-full object-cover max-h-48" />
+                <img src={note.attachments[0].url.startsWith('http') ? note.attachments[0].url : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${note.attachments[0].url}`} alt="Cover" className="w-full object-cover max-h-48" />
               </div>
             )}
             

@@ -4,6 +4,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote } from 'lucide-react';
+import GlobalQuickNotes from './GlobalQuickNotes';
 
 const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
@@ -13,6 +14,7 @@ const Layout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showQuickNote, setShowQuickNote] = useState(false);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -266,7 +268,14 @@ const Layout = () => {
 
         {/* Profile & Notifications */}
         <div className="flex items-center space-x-4 ml-auto">
-          <button onClick={toggleTheme} className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white">
+          <button 
+            onClick={() => setShowQuickNote(!showQuickNote)}
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
+            title="Quick Notes Scratchpad"
+          >
+            <StickyNote size={18} />
+          </button>
+          <button onClick={toggleTheme} className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white" title="Toggle Theme">
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           
@@ -401,6 +410,8 @@ const Layout = () => {
           </div>
         </div>
       </header>
+
+      {showQuickNote && <GlobalQuickNotes onClose={() => setShowQuickNote(false)} />}
 
       {/* Main Content Area with Sidebars */}
       <div className="flex flex-1 overflow-hidden relative">
