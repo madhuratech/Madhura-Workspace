@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import {
   Users, FolderKanban, CheckSquare, CalendarDays,
-  TrendingUp, ChevronRight, Bell, Zap, Play, Clock
+  TrendingUp, ChevronRight, Bell, Zap, Play, Clock, AlertCircle
 } from 'lucide-react-native';
 import { cachedGet, saveWorkspaceCache, loadWorkspaceCache } from '../utils/api';
 
@@ -148,6 +148,7 @@ export default function DashboardScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reminders, setReminders] = useState([]);
 
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
@@ -172,12 +173,15 @@ export default function DashboardScreen({ navigation }) {
       const ws = await cachedGet('/workspaces');
       setWorkspaces(ws);
       if (ws.length > 0) {
-        const [proj, tasks, meetings, notifs] = await Promise.all([
+        const [proj, tasks, meetings, notifs, rems] = await Promise.all([
           cachedGet(`/workspaces/${ws[0]._id}/projects`).catch(() => []),
           cachedGet('/tasks').catch(() => []),
           cachedGet(`/workspaces/${ws[0]._id}/meetings`).catch(() => []),
           cachedGet('/notifications').catch(() => []),
+          cachedGet('/reminders').catch(() => []),
         ]);
+        
+        if (Array.isArray(rems)) setReminders(rems);
 
         let completedTasks = 0, inProgressTasks = 0, pendingTasks = 0;
         if (Array.isArray(tasks)) {
@@ -317,7 +321,7 @@ export default function DashboardScreen({ navigation }) {
 
         {/* ── Real-Time Tracking Graphs ──────────────────────────── */}
         {stats && (
-          <View style={[styles.section, { paddingBottom: 100 }]}>
+          <View style={styles.section}>
             <Text style={[styles.sectionTitle, { paddingHorizontal: 20 }]}>Performance Tracking</Text>
             
             <View style={styles.graphGrid}>
@@ -341,6 +345,37 @@ export default function DashboardScreen({ navigation }) {
                   {stats.completedProjects} of {stats.projects} projects completed
                 </Text>
               </View>
+            </View>
+          </View>
+        )}
+
+        {/* ── Upcoming Reminders ────────────────────────────── */}
+        {reminders.length > 0 && (
+          <View style={[styles.section, { paddingBottom: 100 }]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Upcoming Reminders</Text>
+            </View>
+            <View style={styles.graphGrid}>
+              {reminders.slice(0, 3).map((rem, i) => {
+                const isMeeting = rem.type === 'meeting';
+                const Icon = isMeeting ? CalendarDays : CheckSquare;
+                const color = isMeeting ? '#8B5CF6' : '#F59E0B';
+                const timeString = new Date(rem.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                return (
+                  <View key={rem._id} style={styles.reminderCard}>
+                    <View style={[styles.reminderIconBox, { backgroundColor: color + '15' }]}>
+                      <Icon color={color} size={22} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.reminderTitle} numberOfLines={1}>{rem.title}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                        <AlertCircle color="#94A3B8" size={14} style={{ marginRight: 4 }} />
+                        <Text style={styles.reminderSub}>{isMeeting ? 'Meeting' : 'Task Due'} • {timeString}</Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           </View>
         )}
@@ -454,4 +489,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   graphTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 20 },
+
+  // Reminder Cards
+  reminderCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    borderRadius: 20, padding: 16,
+    borderWidth: 1, borderColor: '#F1F5F9',
+    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
+    marginBottom: 12,
+  },
+  reminderIconBox: {
+    width: 44, height: 44, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center', marginRight: 16,
+  },
+  reminderTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  reminderSub: { fontSize: 13, color: '#64748B', fontWeight: '500' },
 });

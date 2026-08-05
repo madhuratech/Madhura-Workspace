@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [myTasks, setMyTasks] = useState([]);
   const [upNext, setUpNext] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [reminders, setReminders] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
 
@@ -36,10 +37,11 @@ const Dashboard = () => {
       }
       if (res.data.length > 0) {
         const ws = res.data[0];
-        const [projectsRes, tasksRes, meetingsRes] = await Promise.all([
+        const [projectsRes, tasksRes, meetingsRes, remindersRes] = await Promise.all([
           axios.get(`/workspaces/${ws._id}/projects`).catch(() => ({ data: [] })),
           axios.get('/tasks').catch(() => ({ data: [] })),
-          axios.get('/meetings').catch(() => ({ data: [] }))
+          axios.get('/meetings').catch(() => ({ data: [] })),
+          axios.get('/reminders').catch(() => ({ data: [] }))
         ]);
         
         const tasks = tasksRes.data || [];
@@ -47,6 +49,7 @@ const Dashboard = () => {
         
         setMyTasks(tasks);
         setUpNext(meetings);
+        setReminders(remindersRes.data || []);
         
         // Generate activity feed from tasks and meetings
         const recentActivities = [
@@ -336,6 +339,47 @@ const Dashboard = () => {
           {/* Sidebar Column */}
           <div className="space-y-8">
             
+            {/* Upcoming Reminders Card */}
+            {reminders.length > 0 && (
+              <div className="bg-bg-secondary/80 backdrop-blur-xl border border-border/40 rounded-3xl p-6 shadow-xl shadow-black/5 relative overflow-hidden">
+                <div className="absolute -right-10 -top-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+                
+                <div className="flex justify-between items-center mb-6 relative z-10">
+                  <h2 className="text-sm font-extrabold text-text-primary uppercase tracking-widest flex items-center">
+                    <div className="p-1.5 bg-indigo-500/20 text-indigo-500 rounded-lg mr-3">
+                      <Clock size={16} />
+                    </div>
+                    Upcoming Reminders
+                  </h2>
+                </div>
+                
+                <div className="space-y-4 relative z-10">
+                  {reminders.slice(0, 4).map((rem, i) => {
+                    const isMeeting = rem.type === 'meeting';
+                    const Icon = isMeeting ? CalendarDays : CheckSquare;
+                    const color = isMeeting ? 'text-purple-500' : 'text-amber-500';
+                    const bg = isMeeting ? 'bg-purple-500/10' : 'bg-amber-500/10';
+                    const hoverBorder = isMeeting ? 'hover:border-purple-500/30' : 'hover:border-amber-500/30';
+                    const timeString = new Date(rem.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                    
+                    return (
+                      <div key={rem._id || i} className={`group p-4 border border-border/30 rounded-2xl bg-gradient-to-b from-bg-primary/50 to-bg-primary ${hoverBorder} hover:shadow-md transition-all cursor-default transform hover:-translate-y-0.5`}>
+                        <div className="flex items-start mb-2">
+                          <div className={`p-1.5 ${bg} ${color} rounded-lg mr-3 shadow-sm`}>
+                            <Icon size={16} />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-bold text-text-primary leading-tight">{rem.title}</h4>
+                            <p className="text-[11px] font-semibold text-text-secondary mt-1">{isMeeting ? 'Meeting' : 'Task Deadline'} • {timeString}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Upcoming Schedule Card */}
             <div className="bg-bg-secondary/80 backdrop-blur-xl border border-border/40 rounded-3xl p-6 shadow-xl shadow-black/5 relative overflow-hidden">
               <div className="absolute -right-10 -top-10 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
