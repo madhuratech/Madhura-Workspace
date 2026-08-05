@@ -8,7 +8,7 @@ import { Hash, Lock, MessageCircle, Search, Users } from 'lucide-react-native';
 import { cachedGet } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 
-const PRIMARY = '#5B5BD6';
+const PRIMARY = '#4F46E5';
 
 const CHANNEL_COLORS = [PRIMARY, '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2'];
 
@@ -271,8 +271,8 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    paddingHorizontal: 16, paddingVertical: 16,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
   searchBtn: {
@@ -301,7 +301,8 @@ const styles = StyleSheet.create({
   // Row (channel + DM)
   row: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    paddingHorizontal: 16, paddingVertical: 12,
+    paddingHorizontal: 16, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   rowIconBox: {
     width: 32, height: 32,
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
   
   // DM specific
   dmAvatarWrap: { position: 'relative', marginRight: 12 },
-  dmAvatar: { width: 40, height: 40, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
+  dmAvatar: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   dmAvatarText: { fontSize: 16, fontWeight: '600' },
   onlineRing: {
     position: 'absolute', bottom: -2, right: -2,

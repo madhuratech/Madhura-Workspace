@@ -33,8 +33,7 @@ import NotesScreen from './src/screens/NotesScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
 
-const PRIMARY = '#5B5BD6';
-
+const PRIMARY = '#4F46E5';
 // ─── Stacks ────────────────────────────────────────────────────────────────
 const ProjectsStack = createNativeStackNavigator();
 function ProjectsNavigator() {
@@ -95,7 +94,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
   }
 
   return (
-    <View style={[tabStyles.wrapper, { bottom: Math.max(insets.bottom + 10, 20) }]}>
+    <View style={[tabStyles.wrapper, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <View style={tabStyles.container}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -134,24 +133,15 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
 const tabStyles = StyleSheet.create({
   wrapper: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
   },
   container: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
-    borderRadius: 32,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    shadowColor: '#1a1a2e',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 16,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    paddingHorizontal: 8,
   },
   tab: {
     flex: 1,
@@ -160,19 +150,17 @@ const tabStyles = StyleSheet.create({
     paddingVertical: 4,
   },
   pill: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   pillActive: {
-    // Removed background color to avoid square appearance
   },
   label: {
     fontSize: 10,
-    color: '#9CA3AF',
+    color: '#6B7280',
     fontWeight: '500',
   },
   labelActive: {
@@ -221,24 +209,45 @@ function TabNavigator() {
   );
 }
 
+const AnimatedLoading = () => {
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1200, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A' }}>
+      <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: pulseAnim }], alignItems: 'center' }}>
+        <View style={{
+          width: 72, height: 72, borderRadius: 24,
+          backgroundColor: PRIMARY,
+          justifyContent: 'center', alignItems: 'center',
+          marginBottom: 24,
+          shadowColor: PRIMARY, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 10,
+        }}>
+          <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>M</Text>
+        </View>
+        <Text style={{ fontSize: 24, fontWeight: '700', color: '#fff', letterSpacing: 1 }}>Madhura</Text>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: '#94A3B8', marginTop: 6, letterSpacing: 3, textTransform: 'uppercase' }}>Workspace</Text>
+      </Animated.View>
+    </View>
+  );
+};
+
 // ─── Root ──────────────────────────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading } = useContext(AuthContext);
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <View style={{
-          width: 64, height: 64, borderRadius: 20,
-          backgroundColor: PRIMARY,
-          justifyContent: 'center', alignItems: 'center',
-          marginBottom: 20,
-        }}>
-          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800' }}>M</Text>
-        </View>
-        <ActivityIndicator color={PRIMARY} />
-      </View>
-    );
+    return <AnimatedLoading />;
   }
 
   return (

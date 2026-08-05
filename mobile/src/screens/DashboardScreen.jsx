@@ -4,29 +4,17 @@ import {
   TouchableOpacity, Dimensions,
 } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle } from 'react-native-svg';
 import {
   Users, FolderKanban, CheckSquare, CalendarDays,
-  TrendingUp, ChevronRight, Bell, Zap, Play
+  TrendingUp, ChevronRight, Bell, Zap, Play, Clock
 } from 'lucide-react-native';
 import { cachedGet, saveWorkspaceCache, loadWorkspaceCache } from '../utils/api';
 
 const { width } = Dimensions.get('window');
-const PRIMARY = '#5B5BD6';
-
-const ROLE_CONFIG = {
-  super_admin: { label: 'Super Admin', color: '#7C3AED', bg: '#F5F3FF' },
-  hr:          { label: 'HR',          color: '#2563EB', bg: '#EFF6FF' },
-  team_leader: { label: 'Team Leader', color: '#D97706', bg: '#FFF7ED' },
-  employee:    { label: 'Employee',    color: '#059669', bg: '#F0FDF4' },
-};
-
-const ROLE_DESC = {
-  super_admin: 'Manage your organization and workspaces.',
-  hr:          'Overview of projects, meetings, and team activities.',
-  team_leader: 'Assign tasks, track progress, lead your team.',
-  employee:    "Here's what's on your plate today.",
-};
+const PRIMARY = '#4F46E5';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -37,7 +25,7 @@ function getGreeting() {
 
 const TouchableScale = ({ onPress, style, children, activeOpacity = 0.9 }) => {
   const scale = useRef(new Animated.Value(1)).current;
-  const onPressIn = () => Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }).start();
+  const onPressIn = () => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true }).start();
   const onPressOut = () => Animated.spring(scale, { toValue: 1, friction: 4, tension: 40, useNativeDriver: true }).start();
 
   return (
@@ -48,7 +36,7 @@ const TouchableScale = ({ onPress, style, children, activeOpacity = 0.9 }) => {
       onPressOut={onPressOut}
       style={style}
     >
-      <Animated.View style={{ transform: [{ scale }] }}>
+      <Animated.View style={[{ transform: [{ scale }] }, style]}>
         {children}
       </Animated.View>
     </TouchableOpacity>
@@ -66,67 +54,110 @@ const Skeleton = ({ w, h, r = 8, style }) => {
       ])
     ).start();
   }, []);
-  const bg = anim.interpolate({ inputRange: [0, 1], outputRange: ['#F3F4F6', '#E5E7EB'] });
+  const bg = anim.interpolate({ inputRange: [0, 1], outputRange: ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.2)'] });
   return <Animated.View style={[{ width: w, height: h, borderRadius: r, backgroundColor: bg }, style]} />;
 };
 
-// ── Stat Card ─────────────────────────────────────────────────────────────
-const STAT_META = [
-  { key: 'projects', label: 'Projects',  Icon: FolderKanban, iconBg: '#EEF2FF', iconColor: PRIMARY },
-  { key: 'tasks',    label: 'Tasks',     Icon: CheckSquare,  iconBg: '#F0FDF4', iconColor: '#059669' },
-  { key: 'members',  label: 'Members',   Icon: Users,        iconBg: '#FFF7ED', iconColor: '#D97706' },
-  { key: 'meetings', label: 'Meetings',  Icon: CalendarDays, iconBg: '#FEF2F2', iconColor: '#DC2626' },
-];
-
-const StatCard = ({ meta, value, delay }) => {
-  const anim = useRef(new Animated.Value(0)).current;
-  const slide = useRef(new Animated.Value(16)).current;
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(anim, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
-      Animated.spring(slide, { toValue: 0, speed: 14, bounciness: 4, delay, useNativeDriver: true }),
-    ]).start();
-  }, []);
-  return (
-    <Animated.View style={[styles.statCard, { opacity: anim, transform: [{ translateY: slide }] }]}>
-      <View style={[styles.statIconBox, { backgroundColor: meta.iconBg }]}>
-        <meta.Icon color={meta.iconColor} size={20} strokeWidth={2} />
+// ── Quick Action Chip ──────────────────────────────────────────────────────
+const QAChip = ({ label, Icon, onPress }) => (
+  <TouchableScale onPress={onPress}>
+    <View style={styles.qaChip}>
+      <View style={styles.qaIconBox}>
+        <Icon color={PRIMARY} size={22} strokeWidth={2.5} />
       </View>
-      <Text style={styles.statValue}>{value ?? 0}</Text>
-      <Text style={styles.statLabel}>{meta.label}</Text>
-    </Animated.View>
+      <Text style={styles.qaChipText}>{label}</Text>
+    </View>
+  </TouchableScale>
+);
+
+// ── Animated Graphs ────────────────────────────────────────────────────────
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+const AnimatedProgressRing = ({ percentage, color = PRIMARY, size = 100, strokeWidth = 10 }) => {
+  const animatedValue = useRef(new Animated.Value(0)).current;
+  const radius = (size - strokeWidth) / 2;
+  const circum = radius * 2 * Math.PI;
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: percentage,
+      duration: 1500,
+      useNativeDriver: false,
+    }).start();
+  }, [percentage]);
+  
+  const strokeDashoffset = animatedValue.interpolate({
+    inputRange: [0, 100],
+    outputRange: [circum, 0],
+  });
+
+  return (
+    <View style={{ width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+      <Svg width={size} height={size}>
+        <Circle stroke="#F1F5F9" cx={size / 2} cy={size / 2} r={radius} strokeWidth={strokeWidth} fill="none" />
+        <AnimatedCircle 
+          stroke={color} 
+          cx={size / 2} cy={size / 2} r={radius} 
+          strokeWidth={strokeWidth} fill="none" 
+          strokeDasharray={circum} 
+          strokeDashoffset={strokeDashoffset} 
+          strokeLinecap="round" 
+          transform={`rotate(-90 ${size/2} ${size/2})`} 
+        />
+      </Svg>
+      <View style={{ position: 'absolute' }}>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A' }}>{Math.round(percentage)}%</Text>
+      </View>
+    </View>
   );
 };
 
-// ── Quick Action Chip ──────────────────────────────────────────────────────
-const QAChip = ({ label, Icon, onPress, delay }) => {
-  const anim = useRef(new Animated.Value(0)).current;
+const AnimatedBar = ({ label, value, max, color }) => {
+  const widthAnim = useRef(new Animated.Value(0)).current;
+  const percentage = max > 0 ? (value / max) * 100 : 0;
+  
   useEffect(() => {
-    Animated.timing(anim, { toValue: 1, duration: 350, delay, useNativeDriver: true }).start();
-  }, []);
+    Animated.timing(widthAnim, {
+      toValue: percentage,
+      duration: 1200,
+      useNativeDriver: false
+    }).start();
+  }, [percentage]);
+
+  const width = widthAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%']
+  });
+
   return (
-    <Animated.View style={{ opacity: anim }}>
-      <TouchableScale style={styles.qaChip} onPress={onPress} activeOpacity={0.8}>
-        <Icon color={PRIMARY} size={18} strokeWidth={2.5} />
-        <Text style={styles.qaChipText}>{label}</Text>
-      </TouchableScale>
-    </Animated.View>
+    <View style={{ marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+        <Text style={{ fontSize: 13, fontWeight: '600', color: '#475569' }}>{label}</Text>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: '#0F172A' }}>{value}</Text>
+      </View>
+      <View style={{ height: 8, backgroundColor: '#F1F5F9', borderRadius: 4, overflow: 'hidden' }}>
+        <Animated.View style={{ height: '100%', backgroundColor: color, width, borderRadius: 4 }} />
+      </View>
+    </View>
   );
 };
 
 export default function DashboardScreen({ navigation }) {
   const { user } = useContext(AuthContext);
+  const insets = useSafeAreaInsets();
   const [stats, setStats] = useState(null);
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fade = useRef(new Animated.Value(0)).current;
-  const role = user?.role || 'employee';
-  const rc = ROLE_CONFIG[role] || ROLE_CONFIG.employee;
+  const slide = useRef(new Animated.Value(20)).current;
   const initial = user?.name?.[0]?.toUpperCase() || 'U';
 
   useEffect(() => {
-    Animated.timing(fade, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    Animated.parallel([
+      Animated.timing(fade, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.spring(slide, { toValue: 0, speed: 12, bounciness: 4, useNativeDriver: true })
+    ]).start();
     load();
   }, []);
 
@@ -147,9 +178,31 @@ export default function DashboardScreen({ navigation }) {
           cachedGet(`/workspaces/${ws[0]._id}/meetings`).catch(() => []),
           cachedGet('/notifications').catch(() => []),
         ]);
+
+        let completedTasks = 0, inProgressTasks = 0, pendingTasks = 0;
+        if (Array.isArray(tasks)) {
+          tasks.forEach(t => {
+            const st = t.status?.toLowerCase() || '';
+            if (st === 'completed') completedTasks++;
+            else if (st === 'in progress') inProgressTasks++;
+            else pendingTasks++;
+          });
+        }
+        
+        let completedProjects = 0;
+        if (Array.isArray(proj)) {
+          proj.forEach(p => {
+            if (p.status?.toLowerCase() === 'completed') completedProjects++;
+          });
+        }
+
         const s = {
           projects: Array.isArray(proj) ? proj.length : 0,
+          completedProjects,
           tasks:    Array.isArray(tasks) ? tasks.length : 0,
+          completedTasks,
+          inProgressTasks,
+          pendingTasks,
           members:  ws[0].members?.length || 1,
           meetings: Array.isArray(meetings) ? meetings.length : 0,
           unreadNotifs: Array.isArray(notifs) ? notifs.filter(n => !n.read).length : 0,
@@ -162,185 +215,243 @@ export default function DashboardScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* ── Top Bar ──────────────────────────────── */}
-        <Animated.View style={[styles.topBar, { opacity: fade }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>{getGreeting()},</Text>
-            <Text style={styles.userName} numberOfLines={1}>
-              {user?.name?.split(' ')[0] || 'User'} 👋
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <TouchableOpacity 
-              style={styles.bellBtn} 
-              onPress={() => navigation.navigate('Notifications')}
-            >
-              <Bell color="#4B5563" size={22} strokeWidth={2} />
-              {(stats?.unreadNotifs > 0) && <View style={styles.unreadDot} />}
-            </TouchableOpacity>
-            <View style={[styles.avatarBadge, { backgroundColor: rc.bg, borderColor: rc.color + '30' }]}>
-              <Text style={[styles.avatarLetter, { color: rc.color }]}>{initial}</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* ── Role Banner ──────────────────────────── */}
-        <Animated.View style={[styles.roleBanner, { opacity: fade }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={[styles.roleDot, { backgroundColor: rc.color }]} />
-            <Text style={[styles.roleLabel, { color: rc.color }]}>{rc.label}</Text>
-          </View>
-          <Text style={styles.roleDesc}>{ROLE_DESC[role]}</Text>
-        </Animated.View>
-
-        {/* ── Stats ────────────────────────────────── */}
-        <Text style={styles.sectionTitle}>Overview</Text>
-        {loading || !stats ? (
-          <View style={styles.statsGrid}>
-            {[0, 60, 120, 180].map(d => (
-              <View key={d} style={styles.statCard}>
-                <Skeleton w={40} h={40} r={12} style={{ marginBottom: 12 }} />
-                <Skeleton w={36} h={26} r={6} style={{ marginBottom: 6 }} />
-                <Skeleton w={52} h={12} r={4} />
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+        
+        {/* ── Premium Gradient Header ──────────────────────────────── */}
+        <LinearGradient
+          colors={['#312E81', '#4F46E5', '#6366F1']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.headerGradient, { paddingTop: Math.max(insets.top, 20) + 10 }]}
+        >
+          <Animated.View style={[styles.headerContent, { opacity: fade, transform: [{ translateY: slide }] }]}>
+            <View style={styles.topRow}>
+              <View>
+                <Text style={styles.greeting}>{getGreeting()},</Text>
+                <Text style={styles.userName} numberOfLines={1}>
+                  {user?.name?.split(' ')[0] || 'User'}
+                </Text>
               </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.statsGrid}>
-            {STAT_META.map((m, i) => (
-              <StatCard key={m.key} meta={m} value={stats[m.key]} delay={i * 60} />
-            ))}
-          </View>
-        )}
+              <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.bellBtn} onPress={() => navigation.navigate('Notifications')}>
+                  <View style={styles.bellIconWrap}>
+                    <Bell color="#fff" size={24} strokeWidth={2} />
+                    {(stats?.unreadNotifs > 0) && <View style={styles.unreadDot} />}
+                  </View>
+                </TouchableOpacity>
+                <View style={styles.avatarWrap}>
+                  <Text style={styles.avatarText}>{initial}</Text>
+                </View>
+              </View>
+            </View>
 
-        {/* ── Quick Actions ─────────────────────────── */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.qaRow}>
-          <QAChip label="My Tasks"  Icon={CheckSquare}  delay={0}   onPress={() => navigation.navigate('Tasks')}    />
-          <QAChip label="Projects"  Icon={FolderKanban} delay={50}  onPress={() => navigation.navigate('Projects')} />
-          <QAChip label="Meetings"  Icon={CalendarDays} delay={100} onPress={() => {}}                             />
-          <QAChip label="Activity"  Icon={Zap}          delay={150} onPress={() => {}}                             />
+            {/* Core Stats in Header */}
+            <View style={styles.coreStatsRow}>
+              <View style={styles.coreStatItem}>
+                {loading ? <Skeleton w={30} h={36} r={6} /> : <Text style={styles.coreStatValue}>{stats?.tasks || 0}</Text>}
+                <Text style={styles.coreStatLabel}>Tasks Due</Text>
+              </View>
+              <View style={styles.coreStatDivider} />
+              <View style={styles.coreStatItem}>
+                {loading ? <Skeleton w={30} h={36} r={6} /> : <Text style={styles.coreStatValue}>{stats?.projects || 0}</Text>}
+                <Text style={styles.coreStatLabel}>Projects</Text>
+              </View>
+              <View style={styles.coreStatDivider} />
+              <View style={styles.coreStatItem}>
+                {loading ? <Skeleton w={30} h={36} r={6} /> : <Text style={styles.coreStatValue}>{stats?.meetings || 0}</Text>}
+                <Text style={styles.coreStatLabel}>Meetings</Text>
+              </View>
+            </View>
+          </Animated.View>
+        </LinearGradient>
+
+        {/* ── Overlapping Quick Actions ──────────────────────────── */}
+        <View style={styles.overlapContainer}>
+          <View style={styles.qaGrid}>
+            <QAChip label="Tasks" Icon={CheckSquare} onPress={() => navigation.navigate('Tasks')} />
+            <QAChip label="Projects" Icon={FolderKanban} onPress={() => navigation.navigate('Projects')} />
+            <QAChip label="Team" Icon={Users} onPress={() => navigation.navigate('Menu', { screen: 'Team' })} />
+            <QAChip label="Events" Icon={CalendarDays} onPress={() => navigation.navigate('Menu', { screen: 'Meetings' })} />
+          </View>
         </View>
 
-        {/* ── Workspaces ────────────────────────────── */}
-        {workspaces.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Workspace</Text>
-            {workspaces.map(ws => (
-              <TouchableScale 
-                key={ws._id} 
-                style={styles.wsRow} 
-                onPress={() => navigation.navigate('Projects')}
-                activeOpacity={0.9}
-              >
-                <View style={styles.wsIconBox}>
-                  <FolderKanban color={PRIMARY} size={20} strokeWidth={2.5} />
+        {/* ── Workspace Carousel ──────────────────────────────────── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Your Workspaces</Text>
+            <TouchableOpacity><Text style={styles.seeAll}>See All</Text></TouchableOpacity>
+          </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselPad}>
+            {workspaces.map((ws, i) => (
+              <TouchableScale key={ws._id} style={styles.carouselCard} onPress={() => navigation.navigate('Projects')}>
+                <View style={styles.carouselIcon}>
+                  <Zap color={PRIMARY} size={24} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.wsName}>{ws.name}</Text>
-                  <Text style={styles.wsMeta}>{ws.members?.length || 1} members</Text>
-                </View>
-                <ChevronRight color="#9CA3AF" size={20} />
+                <Text style={styles.carouselTitle}>{ws.name}</Text>
+                <Text style={styles.carouselSub}>{ws.members?.length || 1} Members</Text>
               </TouchableScale>
             ))}
-          </>
-        )}
-
-        {/* ── Activity ──────────────────────────────── */}
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
-        <View style={styles.emptyCard}>
-          <TrendingUp color="#D1D5DB" size={32} />
-          <Text style={styles.emptyTitle}>No activity yet</Text>
-          <Text style={styles.emptyDesc}>Complete tasks to see your activity here.</Text>
+            {workspaces.length === 0 && !loading && (
+              <View style={[styles.carouselCard, { justifyContent: 'center', alignItems: 'center', borderStyle: 'dashed' }]}>
+                <Text style={styles.carouselSub}>No Workspaces</Text>
+              </View>
+            )}
+          </ScrollView>
         </View>
 
+        {/* ── Recent Activity ────────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { paddingHorizontal: 20 }]}>Recent Activity</Text>
+          <View style={styles.activityCard}>
+            <View style={styles.activityIcon}>
+              <Clock color="#94A3B8" size={20} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.activityTitle}>You caught up!</Text>
+              <Text style={styles.activitySub}>No new activity in your workspaces.</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Real-Time Tracking Graphs ──────────────────────────── */}
+        {stats && (
+          <View style={[styles.section, { paddingBottom: 100 }]}>
+            <Text style={[styles.sectionTitle, { paddingHorizontal: 20 }]}>Performance Tracking</Text>
+            
+            <View style={styles.graphGrid}>
+              {/* Task Tracking Card */}
+              <View style={styles.graphCard}>
+                <Text style={styles.graphTitle}>Task Status</Text>
+                <AnimatedBar label="Completed" value={stats.completedTasks} max={stats.tasks} color="#10B981" />
+                <AnimatedBar label="In Progress" value={stats.inProgressTasks} max={stats.tasks} color="#3B82F6" />
+                <AnimatedBar label="Pending" value={stats.pendingTasks} max={stats.tasks} color="#F59E0B" />
+              </View>
+
+              {/* Project Progress Card */}
+              <View style={[styles.graphCard, { alignItems: 'center' }]}>
+                <Text style={[styles.graphTitle, { alignSelf: 'flex-start' }]}>Project Completion</Text>
+                <View style={{ marginTop: 10 }}>
+                  <AnimatedProgressRing 
+                    percentage={stats.projects > 0 ? (stats.completedProjects / stats.projects) * 100 : 0} 
+                  />
+                </View>
+                <Text style={{ marginTop: 16, fontSize: 13, color: '#64748B', fontWeight: '500' }}>
+                  {stats.completedProjects} of {stats.projects} projects completed
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  scroll: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 160 },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
 
-  // Top bar
-  topBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, marginTop: 8 },
-  greeting: { fontSize: 14, color: '#9CA3AF', fontWeight: '500' },
-  userName: { fontSize: 24, fontWeight: '800', color: '#111827', marginTop: 2 },
-  bellBtn: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: '#F3F4F6',
-    justifyContent: 'center', alignItems: 'center', position: 'relative'
+  // Gradient Header
+  headerGradient: {
+    paddingBottom: 60,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+  },
+  headerContent: { paddingHorizontal: 24 },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
+  greeting: { fontSize: 16, color: 'rgba(255,255,255,0.85)', fontWeight: '500', marginBottom: 4 },
+  userName: { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  bellBtn: { position: 'relative', padding: 4 },
+  bellIconWrap: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)'
   },
   unreadDot: {
-    width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444',
     position: 'absolute', top: 10, right: 10,
-    borderWidth: 2, borderColor: '#F3F4F6'
+    width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444',
+    borderWidth: 2, borderColor: '#312E81'
   },
-  avatarBadge: {
-    width: 48, height: 48, borderRadius: 16,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1.5,
+  avatarWrap: {
+    width: 46, height: 46, borderRadius: 23, backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.4)'
   },
-  avatarLetter: { fontSize: 20, fontWeight: '800' },
+  avatarText: { fontSize: 18, fontWeight: '700', color: '#fff' },
 
-  // Role banner
-  roleBanner: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 28,
-    borderWidth: 1, borderColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 1,
+  coreStatsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10 },
+  coreStatItem: { alignItems: 'center' },
+  coreStatValue: { fontSize: 32, fontWeight: '800', color: '#fff', marginBottom: 4 },
+  coreStatLabel: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
+  coreStatDivider: { width: 1, height: 44, backgroundColor: 'rgba(255,255,255,0.25)' },
+
+  // Overlap Container
+  overlapContainer: {
+    marginTop: -42,
+    paddingHorizontal: 20,
+    zIndex: 10,
   },
-  roleDot: { width: 8, height: 8, borderRadius: 4 },
-  roleLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.6 },
-  roleDesc: { fontSize: 13, color: '#6B7280', marginTop: 6, lineHeight: 19 },
-
-  // Section
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12, marginTop: 4 },
-
-  // Stats
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 28 },
-  statCard: {
-    width: '48%', backgroundColor: '#fff', borderRadius: 18,
-    padding: 18, marginBottom: 12,
-    borderWidth: 1, borderColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+  qaGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between',
+    backgroundColor: '#fff', borderRadius: 24, paddingHorizontal: 20, paddingVertical: 20,
+    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 8,
   },
-  statIconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  statValue: { fontSize: 28, fontWeight: '800', color: '#111827', marginBottom: 3 },
-  statLabel: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
-
-  // Quick actions
-  qaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 28 },
   qaChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 14, paddingVertical: 10,
-    backgroundColor: '#fff', borderRadius: 12,
-    borderWidth: 1, borderColor: '#E5E7EB',
+    flex: 1, alignItems: 'center', paddingVertical: 4
   },
-  qaChipText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  qaIconBox: {
+    width: 48, height: 48, borderRadius: 14, backgroundColor: '#EEF2FF',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 8,
+  },
+  qaChipText: { fontSize: 13, fontWeight: '600', color: '#475569', textAlign: 'center' },
 
-  // Workspace
-  wsRow: {
+  // Sections
+  section: { marginTop: 36 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 24, marginBottom: 18 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A', letterSpacing: -0.3 },
+  seeAll: { fontSize: 14, fontWeight: '700', color: PRIMARY },
+
+  // Carousel
+  carouselPad: { paddingHorizontal: 24, paddingRight: 8 },
+  carouselCard: {
+    width: width * 0.7, backgroundColor: '#fff', borderRadius: 24, padding: 24,
+    borderWidth: 1, borderColor: '#F1F5F9',
+    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 4,
+    marginRight: 16,
+  },
+  carouselIcon: {
+    width: 48, height: 48, borderRadius: 16, backgroundColor: '#EEF2FF',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+  },
+  carouselTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  carouselSub: { fontSize: 14, color: '#64748B', fontWeight: '500' },
+
+  // Activity List
+  activityCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 16, padding: 16, marginBottom: 10,
-    borderWidth: 1, borderColor: '#F3F4F6',
+    marginHorizontal: 24, marginTop: 12, padding: 20, borderRadius: 24,
+    borderWidth: 1, borderColor: '#F1F5F9',
+    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 3,
   },
-  wsIconBox: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center', marginRight: 14,
+  activityIcon: {
+    width: 40, height: 40, borderRadius: 12, backgroundColor: '#F8FAFC',
+    justifyContent: 'center', alignItems: 'center', marginRight: 16,
   },
-  wsName: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 2 },
-  wsMeta: { fontSize: 12, color: '#9CA3AF' },
+  activityTitle: { fontSize: 15, fontWeight: '600', color: '#0F172A', marginBottom: 2 },
+  activitySub: { fontSize: 13, color: '#64748B' },
 
-  // Empty
-  emptyCard: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 32,
-    alignItems: 'center', borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 12,
+  // Tracking Graphs
+  graphGrid: {
+    paddingHorizontal: 24,
+    marginTop: 16,
+    gap: 16,
   },
-  emptyTitle: { fontSize: 15, fontWeight: '600', color: '#9CA3AF', marginTop: 12, marginBottom: 4 },
-  emptyDesc: { fontSize: 13, color: '#D1D5DB', textAlign: 'center', lineHeight: 18 },
+  graphCard: {
+    backgroundColor: '#fff', borderRadius: 24, padding: 24,
+    borderWidth: 1, borderColor: '#F1F5F9',
+    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 4,
+    marginBottom: 16,
+  },
+  graphTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 20 },
 });

@@ -613,22 +613,20 @@ const styles = StyleSheet.create({
   msgWrapperOther: { justifyContent: 'flex-start' },
 
   avatar: {
-    width: 30, height: 30, borderRadius: 15, backgroundColor: '#EFF6FF',
+    width: 30, height: 30, borderRadius: 15, backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center',
     marginRight: 8, alignSelf: 'flex-end', marginBottom: 4,
   },
-  avatarText: { fontSize: 13, fontWeight: '700', color: '#3B82F6' },
+  avatarText: { fontSize: 13, fontWeight: '700', color: '#4F46E5' },
   avatarSpacer: { width: 30, marginRight: 8 },
 
   msgBubble: {
-    maxWidth: '82%', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20,
+    maxWidth: '82%', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8,
   },
-  msgBubbleMine: { backgroundColor: '#3B82F6', borderBottomRightRadius: 6 },
+  msgBubbleMine: { backgroundColor: '#4F46E5', borderBottomRightRadius: 2 },
   msgBubbleOther: {
-    backgroundColor: '#fff', borderBottomLeftRadius: 6,
-    borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03, shadowRadius: 6, elevation: 1,
+    backgroundColor: '#fff', borderBottomLeftRadius: 2,
+    borderWidth: 1, borderColor: '#E5E7EB',
   },
 
   senderName: { fontSize: 12, fontWeight: '700', color: '#1E293B', marginBottom: 6 },
@@ -669,16 +667,15 @@ const styles = StyleSheet.create({
   input: {
     flex: 1, backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: '#E2E8F0',
-    borderRadius: 24, paddingHorizontal: 18,
-    paddingTop: 12, paddingBottom: 12,
-    maxHeight: 120, minHeight: 46,
+    borderRadius: 8, paddingHorizontal: 14,
+    paddingTop: 10, paddingBottom: 10,
+    maxHeight: 120, minHeight: 40,
     marginLeft: 4, fontSize: 15, color: '#0F172A',
   },
   sendBtn: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: '#3B82F6', justifyContent: 'center',
+    width: 40, height: 40, borderRadius: 8,
+    backgroundColor: '#4F46E5', justifyContent: 'center',
     alignItems: 'center', marginLeft: 10,
-    shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 3
   },
   sendBtnDisabled: { backgroundColor: '#CBD5E1' },
 
@@ -716,26 +713,26 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
   mentionAvatar: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: '#EFF6FF',
+    width: 28, height: 28, borderRadius: 14, backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center', marginRight: 10,
   },
-  mentionAvatarText: { color: '#3B82F6', fontSize: 12, fontWeight: '700' },
+  mentionAvatarText: { color: '#4F46E5', fontSize: 12, fontWeight: '700' },
   mentionName: { fontSize: 14, color: '#1E293B', fontWeight: '500' },
   mentionEmpty: { padding: 12, textAlign: 'center', color: '#94A3B8', fontSize: 14 },
 
   // Uploading
   uploadingContainer: {
     flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', backgroundColor: '#EFF6FF', padding: 10,
+    justifyContent: 'center', backgroundColor: '#EEF2FF', padding: 10,
   },
-  uploadingText: { marginLeft: 8, fontSize: 13, color: '#3B82F6', fontWeight: '500' },
+  uploadingText: { marginLeft: 8, fontSize: 13, color: '#4F46E5', fontWeight: '500' },
 
   // Editing bar
   editingBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#EFF6FF', paddingHorizontal: 16, paddingVertical: 10,
-    borderTopWidth: 1, borderTopColor: '#DBEAFE',
+    backgroundColor: '#EEF2FF', paddingHorizontal: 16, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: '#C7D2FE',
   },
-  editingText: { fontSize: 13, color: '#3B82F6', fontWeight: '500' },
+  editingText: { fontSize: 13, color: '#4F46E5', fontWeight: '500' },
   cancelEditText: { fontSize: 13, color: '#EF4444', fontWeight: '600' },
 });

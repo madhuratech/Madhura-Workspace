@@ -13,7 +13,7 @@ import { cachedGet, invalidateCache } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
-const PRIMARY = '#5B5BD6';
+const PRIMARY = '#4F46E5';
 
 const PRIORITY = {
   High:   { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
@@ -346,10 +346,10 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingVertical: 16,
     backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
   headerSub: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   progressLabel: { fontSize: 12, fontWeight: '700', color: PRIMARY, minWidth: 52, textAlign: 'right' },
 
   // Filter bar
-  filterBar: { backgroundColor: '#fff', maxHeight: 52, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  filterBar: { backgroundColor: '#fff', maxHeight: 52, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
   filterBarContent: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
   filterChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -392,13 +392,12 @@ const styles = StyleSheet.create({
   filterBadgeTextActive: { color: '#fff' },
 
   // List
-  listPad: { padding: 16, paddingBottom: 160 },
+  listPad: { paddingBottom: 160 },
 
   // Task card
   taskCard: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 10,
-    borderWidth: 1, borderColor: '#F3F4F6', borderLeftWidth: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2,
+    backgroundColor: '#fff', paddingVertical: 16, paddingHorizontal: 16,
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   taskTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   checkWrap: { marginRight: 12, marginTop: 1 },
@@ -418,19 +417,18 @@ const styles = StyleSheet.create({
   // Empty
   emptyWrap: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
   emptyIconBox: {
-    width: 72, height: 72, borderRadius: 20,
-    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6',
+    width: 72, height: 72, borderRadius: 12,
+    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB',
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: '#374151', marginBottom: 6 },
   emptySub: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
 
   // Board
-  boardRow: { flexDirection: 'row', padding: 16, gap: 12, paddingBottom: 160 },
+  boardRow: { flexDirection: 'row', gap: 16, paddingBottom: 160, paddingHorizontal: 16, paddingTop: 16 },
   boardCol: {
-    width: 272, backgroundColor: '#fff', borderRadius: 16,
-    borderWidth: 1, borderColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+    width: 280, backgroundColor: '#F8FAFC', borderRadius: 8,
+    borderWidth: 1, borderColor: '#F1F5F9',
     overflow: 'hidden',
   },
   boardColHead: {
@@ -444,8 +442,9 @@ const styles = StyleSheet.create({
   colEmpty: { padding: 24, alignItems: 'center' },
   colEmptyText: { fontSize: 13, color: '#D1D5DB', fontWeight: '500' },
   boardCard: {
-    flexDirection: 'row', marginHorizontal: 10, marginTop: 10, borderRadius: 12,
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#F3F4F6', overflow: 'hidden',
+    flexDirection: 'row', marginHorizontal: 8, marginTop: 8, borderRadius: 6,
+    backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden',
+    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
   boardAccent: { width: 3 },
   boardBody: { flex: 1, padding: 12 },

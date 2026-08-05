@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FolderKanban, Users, ChevronRight } from 'lucide-react-native';
 import { cachedGet } from '../utils/api';
 
-const PRIMARY = '#5B5BD6';
+const PRIMARY = '#4F46E5';
 
 const ACCENT_COLORS = [PRIMARY, '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2'];
 
@@ -227,8 +227,8 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    paddingHorizontal: 16, paddingVertical: 16,
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
   headerSub: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
@@ -238,15 +238,14 @@ const styles = StyleSheet.create({
   },
   headerBadgeText: { fontSize: 15, fontWeight: '800', color: PRIMARY },
 
-  list: { padding: 16, paddingBottom: 160 },
+  list: { paddingBottom: 160 },
 
   card: {
-    backgroundColor: '#fff', borderRadius: 20, padding: 20, marginBottom: 14,
-    borderWidth: 1, borderColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 3,
+    backgroundColor: '#fff', paddingVertical: 18, paddingHorizontal: 16,
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  iconBox: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  iconBox: { width: 44, height: 44, borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
   statusBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1,
@@ -274,12 +273,12 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 12, fontWeight: '700' },
   noMember: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   noMemberText: { fontSize: 12, color: '#D1D5DB' },
-  arrowBtn: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  arrowBtn: { width: 34, height: 34, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
 
   empty: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
   emptyIconBox: {
-    width: 72, height: 72, borderRadius: 20,
-    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6',
+    width: 72, height: 72, borderRadius: 12,
+    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB',
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: '#374151', marginBottom: 6 },
