@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video } from 'lucide-react';
+import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 
 const Chat = () => {
@@ -407,9 +407,9 @@ const Chat = () => {
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (
-    <div className="h-full flex font-sans border border-border rounded-2xl overflow-hidden shadow-sm bg-bg-secondary">
+    <div className="h-full flex font-sans border border-border rounded-2xl overflow-hidden shadow-sm bg-bg-secondary relative">
       {/* Sidebar */}
-      <div className="w-64 bg-bg-primary border-r border-border flex flex-col">
+      <div className={`w-full md:w-64 bg-bg-primary border-r border-border flex-col absolute inset-0 md:relative z-10 ${activeChannel || activeDM ? 'hidden md:flex' : 'flex'}`}>
         <div className="h-16 flex items-center px-4 border-b border-border shadow-sm">
           <h2 className="font-bold text-text-primary text-lg truncate">{workspace.name} Chat</h2>
         </div>
@@ -499,10 +499,16 @@ const Chat = () => {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col bg-bg-secondary relative">
+      <div className={`flex-1 flex flex-col bg-bg-secondary relative w-full ${!activeChannel && !activeDM ? 'hidden md:flex' : 'flex'}`}>
         {/* Chat Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-border shadow-sm z-10 bg-bg-secondary/90 backdrop-blur">
+        <div className="h-16 flex items-center justify-between px-4 md:px-6 border-b border-border shadow-sm z-10 bg-bg-secondary/90 backdrop-blur">
           <div className="flex items-center">
+            <button 
+              className="md:hidden mr-3 text-text-secondary hover:text-text-primary p-1 rounded-full hover:bg-bg-primary transition-colors shrink-0"
+              onClick={() => { setActiveChannel(null); setActiveDM(null); }}
+            >
+              <ArrowLeft size={20} />
+            </button>
             <h3 className="font-bold text-text-primary flex items-center text-lg">
               {activeChannel ? (
                 <Hash size={20} className="text-text-secondary mr-2" />
