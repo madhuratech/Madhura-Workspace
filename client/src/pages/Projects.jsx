@@ -156,7 +156,7 @@ const Projects = () => {
 
   return (
     <div className="h-full flex flex-col font-sans">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-text-primary tracking-wide font-outfit">Projects</h1>
           <p className="text-text-secondary text-sm mt-1">
@@ -175,7 +175,7 @@ const Projects = () => {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <div className="bg-bg-secondary border border-border rounded-xl p-3 flex items-center space-x-3 shadow-soft hover:shadow-hover transition-all">
           <div className="p-1.5 bg-accent-blue/10 rounded-lg text-accent-blue"><FolderKanban size={16} /></div>
           <div><p className="text-[9px] font-bold text-text-secondary uppercase tracking-wider mb-0">Total Projects</p><p className="text-xl font-bold text-text-primary font-outfit leading-none mt-0.5">{projects.length}</p></div>
