@@ -89,18 +89,21 @@ const Team = () => {
         showToast('Member updated successfully!', 'success');
       } else {
         // Send email invitation
-        await axios.post(`/invitations`, {
+        console.log('[DEBUG FRONTEND] Sending invitation to:', formData.email);
+        const res = await axios.post(`/invitations`, {
           email: formData.email,
           role: formData.role,
           designation: formData.designation,
           workspaceId: workspace._id
         });
+        console.log('[DEBUG FRONTEND] Server responded successfully:', res.data);
         showToast('Invitation sent successfully!', 'success');
       }
       fetchWorkspaceData();
       handleCloseModal();
     } catch (error) {
-      console.error(error);
+      console.error('[DEBUG FRONTEND] Error sending invitation:', error);
+      console.error('[DEBUG FRONTEND] Server error message:', error.response?.data);
       showToast(error.response?.data?.message || 'Error updating member', 'error');
     }
   };
