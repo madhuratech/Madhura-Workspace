@@ -356,11 +356,17 @@ const Layout = () => {
           </div>
 
           <div className="relative" ref={profileRef}>
-            <button 
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="relative flex items-center justify-center focus:outline-none ml-2"
-            >
-              <Avatar user={user} size="w-8 h-8" textClass="text-xs text-white" className="shadow-sm border border-white/20 hover:opacity-90 transition-opacity" />
+            <button className="relative flex items-center justify-center focus:outline-none ml-2">
+              <Avatar 
+                user={user} 
+                size="w-8 h-8" 
+                textClass="text-xs text-white" 
+                className="shadow-sm border border-white/20 hover:opacity-90 transition-opacity" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowProfileMenu(!showProfileMenu);
+                }}
+              />
             </button>
 
             {/* Profile Dropdown */}
