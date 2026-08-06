@@ -63,7 +63,7 @@ exports.inviteUser = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const inviteLink = `${frontendUrl}/register?token=${token}`;
 
-    const senderEmail = workspace.companyEmail || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const senderEmail = 'onboarding@resend.dev'; // Fixed to onboarding email for Resend free tier
     const senderName = workspace.name || 'Madhura Workspace';
 
     try {
