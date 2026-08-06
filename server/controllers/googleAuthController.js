@@ -67,6 +67,7 @@ exports.googleAuthCallback = async (req, res) => {
       user.googleRefreshToken = tokens.refresh_token;
     }
     user.googleTokenExpiry = tokens.expiry_date;
+    user.activeEmailProvider = 'google';
     
     await user.save();
 
@@ -90,6 +91,13 @@ exports.revokeGoogleAccess = async (req, res) => {
     user.googleAccessToken = undefined;
     user.googleRefreshToken = undefined;
     user.googleTokenExpiry = undefined;
+    
+    if (user.activeEmailProvider === 'google') {
+        user.activeEmailProvider = 'none';
+        if (user.microsoftAccessToken) {
+            user.activeEmailProvider = 'microsoft';
+        }
+    }
     
     await user.save();
     

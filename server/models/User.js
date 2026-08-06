@@ -48,6 +48,20 @@ const UserSchema = new mongoose.Schema({
   googleTokenExpiry: {
     type: Number
   },
+  microsoftAccessToken: {
+    type: String
+  },
+  microsoftRefreshToken: {
+    type: String
+  },
+  microsoftTokenExpiry: {
+    type: Number
+  },
+  activeEmailProvider: {
+    type: String,
+    enum: ['google', 'microsoft', 'none'],
+    default: 'none'
+  },
   notificationSettings: {
     emailNotifications: { type: Boolean, default: true },
     pushNotifications: { type: Boolean, default: true },
