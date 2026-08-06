@@ -18,15 +18,27 @@ export const AuthProvider = ({ children }) => {
   axios.defaults.baseURL = `${API_URL}/api`;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    
-    if (token && storedUser) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(JSON.parse(storedUser));
-    }
-    
-    setLoading(false);
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (token && storedUser) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        
+        // Fetch fresh user data to ensure avatar and other details are up to date
+        try {
+          const res = await axios.get(`/users/${parsedUser._id || parsedUser.id}`);
+          setUser(res.data);
+          localStorage.setItem('user', JSON.stringify(res.data));
+        } catch (error) {
+          console.error('Failed to fetch fresh user data:', error);
+        }
+      }
+      setLoading(false);
+    };
+    initAuth();
   }, []);
 
   // Initialize Socket and fetch notifications when user logs in
