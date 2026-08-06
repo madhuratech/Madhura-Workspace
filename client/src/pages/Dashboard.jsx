@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
 import { Plus, Briefcase, CheckCircle2, Users, CalendarDays, Activity, MoreHorizontal, ArrowRight, MessageSquare, Clock, CheckSquare } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -131,9 +132,13 @@ const Dashboard = () => {
         
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex items-center space-x-5">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-accent-blue to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg transform hover:scale-105 transition-transform duration-300">
-              {user?.name?.charAt(0).toUpperCase() || 'M'}
-            </div>
+            <Avatar 
+              user={user} 
+              size="w-16 h-16" 
+              textClass="text-2xl" 
+              className="shadow-lg transform hover:scale-105 transition-transform duration-300"
+              showStatus={false}
+            />
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-primary/70 mb-1">
                 Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, {user?.name?.split(' ')[0]} 👋
@@ -269,12 +274,17 @@ const Dashboard = () => {
                     
                     <div className="mt-auto pt-5 border-t border-border/30 flex items-center justify-between">
                       <div className="flex -space-x-3">
-                        {/* Mock avatars for members */}
-                        {[1,2,3].slice(0, ws.members?.length || 1).map(i => (
-                          <div key={i} className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white border-2 border-bg-secondary shadow-sm ${i === 1 ? 'bg-blue-500' : i === 2 ? 'bg-emerald-500' : 'bg-purple-500'} hover:scale-110 hover:z-10 transition-transform cursor-default`} title={`Member ${i}`}>
-                            M{i}
+                        {/* Real avatars for members */}
+                        {ws.members && ws.members.slice(0, 3).map((m, i) => (
+                          <div key={i} className="-ml-2 first:ml-0 hover:z-10 transition-transform hover:scale-110 cursor-pointer">
+                            <Avatar user={m.user} size="w-8 h-8" textClass="text-xs" showStatus={false} className="border-2 border-bg-secondary" />
                           </div>
                         ))}
+                        {ws.members && ws.members.length > 3 && (
+                          <div className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold text-text-primary bg-bg-primary border-2 border-bg-secondary -ml-2 z-0">
+                            +{ws.members.length - 3}
+                          </div>
+                        )}
                       </div>
                       <div className="text-sm font-bold text-accent-blue flex items-center opacity-0 group-hover:opacity-100 transition-all translate-x-[-15px] group-hover:translate-x-0 duration-300 bg-accent-blue/10 px-3 py-1.5 rounded-lg">
                         Open <ArrowRight size={16} className="ml-1.5" />

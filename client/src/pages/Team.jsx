@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Search, Plus, UserPlus, Shield, X, Mail, Users } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 const Team = () => {
   const { user } = useContext(AuthContext);
@@ -205,17 +206,7 @@ const Team = () => {
                 >
                   {/* Avatar & Name */}
                   <div className="flex items-center w-64 mb-3 md:mb-0">
-                    <div className="relative">
-                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-accent-blue/20 to-accent-indigo/20 flex items-center justify-center text-accent-blue font-bold text-sm border border-accent-blue/10">
-                        {member.user.name ? member.user.name.charAt(0).toUpperCase() : 'U'}
-                      </div>
-                      <div className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-bg-primary ${
-                        member.user.presenceStatus === 'Active' || !member.user.presenceStatus ? 'bg-success' :
-                        member.user.presenceStatus === 'Busy' ? 'bg-danger' :
-                        member.user.presenceStatus === 'Break' ? 'bg-warning' :
-                        'bg-orange-400'
-                      }`}></div>
-                    </div>
+                    <Avatar user={member.user} size="h-10 w-10" />
                     <div className="ml-3 truncate">
                       <p className="font-bold text-sm text-text-primary truncate">{member.user.name || 'Pending User'}</p>
                       <p className="text-[11px] text-text-secondary truncate">{member.user.email}</p>
@@ -333,9 +324,7 @@ const Team = () => {
                   <div className="bg-bg-secondary/50 rounded-xl p-3 mb-4 border border-border/50">
                     <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Team Leader</p>
                     <div className="flex items-center">
-                      <div className="h-6 w-6 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center text-[10px] font-bold mr-2">
-                        {team.leader?.name?.charAt(0).toUpperCase() || 'L'}
-                      </div>
+                      <Avatar user={team.leader} size="h-6 w-6" textClass="text-[10px]" showStatus={false} className="mr-2" />
                       <span className="text-sm font-medium text-text-primary">{team.leader?.name || 'Unassigned'}</span>
                     </div>
                   </div>
@@ -350,9 +339,7 @@ const Team = () => {
                             key={m._id} 
                             className="flex items-center bg-bg-secondary border border-border px-2.5 py-1 rounded-full text-xs font-medium text-text-primary shadow-sm"
                           >
-                            <div className="h-4 w-4 rounded-full bg-accent-indigo/20 text-accent-indigo flex items-center justify-center text-[8px] font-bold mr-1.5 -ml-1">
-                              {m.name.charAt(0).toUpperCase()}
-                            </div>
+                            <Avatar user={m} size="h-4 w-4" textClass="text-[8px]" showStatus={false} className="mr-1.5 -ml-1" />
                             {m.name}
                           </div>
                         ))
@@ -548,9 +535,7 @@ const Team = () => {
           <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-3xl w-full max-w-sm shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden relative">
             <button onClick={() => setViewMember(null)} className="absolute top-4 right-4 text-text-secondary hover:text-danger bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full transition-colors z-10"><X size={18} /></button>
             <div className="bg-gradient-to-b from-accent-blue/20 to-bg-secondary pt-10 pb-6 px-8 border-b border-white/5">
-              <div className="h-24 w-24 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-4xl mb-4 border-4 border-bg-secondary shadow-lg">
-                {viewMember.user.name ? viewMember.user.name.charAt(0).toUpperCase() : 'U'}
-              </div>
+              <Avatar user={viewMember.user} size="h-24 w-24" textClass="text-4xl" showStatus={false} className="mb-4 border-4 border-bg-secondary shadow-lg" />
               <h3 className="text-2xl font-bold text-text-primary font-outfit text-center">{viewMember.user.name || 'Pending User'}</h3>
               <p className="text-text-secondary text-sm font-medium mt-1">{viewMember.user.designation || 'No Designation Set'}</p>
             </div>

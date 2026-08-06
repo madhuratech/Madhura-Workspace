@@ -5,6 +5,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
 import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2 } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -256,8 +257,8 @@ const ProjectDetails = () => {
                               <div className="flex justify-between items-center mt-4 pt-3 border-t border-border/50">
                                 <div className="avatar-stack">
                                   {item.assignees?.map((a) => (
-                                    <div key={a._id} title={a.name} className="h-7 w-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-[10px] text-accent-blue font-bold shadow-sm">
-                                      {a.name?.charAt(0).toUpperCase()}
+                                    <div key={a._id} title={a.name} className="-ml-2 first:ml-0 hover:z-10 transition-transform">
+                                      <Avatar user={a} size="w-7 h-7" textClass="text-[10px]" showStatus={false} className="border-2 border-bg-secondary shadow-sm" />
                                     </div>
                                   ))}
                                 </div>
@@ -356,9 +357,7 @@ const ProjectDetails = () => {
                     workspaceMembers.map(member => (
                       <label key={member.user._id} className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-colors ${formData.assignees.includes(member.user._id) ? 'bg-accent-blue/10 border border-accent-blue/20' : 'hover:bg-bg-primary border border-transparent'}`}>
                         <div className="relative flex items-center justify-center">
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${formData.assignees.includes(member.user._id) ? 'bg-accent-blue text-white' : 'bg-bg-primary text-text-secondary border border-border'}`}>
-                            {member.user.name?.charAt(0).toUpperCase()}
-                          </div>
+                          <Avatar user={member.user} size="w-8 h-8" textClass="text-xs" showStatus={false} />
                           {formData.assignees.includes(member.user._id) && <div className="absolute -bottom-1 -right-1 bg-success h-3.5 w-3.5 rounded-full border-2 border-bg-secondary"></div>}
                         </div>
                         <div className="flex flex-col flex-1">

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Megaphone, Plus, X, Building, Users, AlertTriangle, Clock } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import Avatar from '../components/Avatar';
 
 const Announcements = () => {
   const { user } = useContext(AuthContext);
@@ -98,9 +99,7 @@ const Announcements = () => {
               <div key={announcement._id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-lg border-2 border-white shadow-sm">
-                      {announcement.author?.name ? announcement.author.name.charAt(0) : 'A'}
-                    </div>
+                    <Avatar user={announcement.author} size="w-12 h-12" textClass="text-lg" showStatus={false} className="border-2 border-white shadow-sm" />
                     <div>
                       <h3 className="font-semibold text-gray-900 text-sm">{announcement.author?.name || 'Admin'}</h3>
                       <div className="flex items-center gap-2 text-xs text-gray-500">

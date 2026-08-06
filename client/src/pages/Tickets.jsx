@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Plus, Ticket as TicketIcon, Search, AlertCircle, Clock, ChevronDown, User, Send, CheckCircle, Info } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import Avatar from '../components/Avatar';
 
 const Tickets = () => {
   const { user } = useContext(AuthContext);
@@ -231,9 +232,7 @@ const Tickets = () => {
                 
                 {/* Original Ticket Description (First Message) */}
                 <div className="flex gap-4 mb-8">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
-                    {selectedTicket.createdBy?.name ? selectedTicket.createdBy.name.charAt(0) : 'U'}
-                  </div>
+                  <Avatar user={selectedTicket.createdBy} size="w-10 h-10" textClass="text-sm" showStatus={false} className="shrink-0" />
                   <div className="flex-1 bg-white p-4 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm">
                     <div className="flex items-baseline gap-2 mb-1">
                       <span className="font-bold text-gray-900 text-sm">{selectedTicket.createdBy?.name || 'Unknown'}</span>
@@ -262,9 +261,7 @@ const Tickets = () => {
 
                     return (
                       <div key={index} className={`flex gap-4 ${isMe ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${isMe ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-700'}`}>
-                          {comment.author?.name ? comment.author.name.charAt(0) : 'A'}
-                        </div>
+                        <Avatar user={comment.author} size="w-8 h-8" textClass="text-xs" showStatus={false} className="shrink-0" />
                         <div className={`flex-1 max-w-[80%] ${isMe ? 'text-right' : ''}`}>
                           <div className={`flex items-baseline gap-2 mb-1 ${isMe ? 'flex-row-reverse' : ''}`}>
                             <span className="font-bold text-gray-900 text-xs">{comment.author?.name || 'Agent'}</span>

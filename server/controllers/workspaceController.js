@@ -223,7 +223,7 @@ const addMember = async (req, res) => {
 
           console.log('[ADD_MEMBER DEBUG] Calling Resend API...');
           const resendResponse = await resend.emails.send({
-            from: `${senderName} <${senderEmail}>`,
+            from: senderEmail,
             to: email,
             subject: `Welcome to ${workspace.name}!`,
             html: `

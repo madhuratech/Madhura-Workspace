@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { FolderKanban, CheckCircle2, Clock, AlertCircle, Users, ArrowRight, BarChart3 } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 const TeamLeaderDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -162,8 +163,8 @@ const TeamLeaderDashboard = () => {
                   <div className="flex items-center space-x-2">
                     <div className="flex -space-x-1.5">
                       {project.members?.slice(0, 5).map(m => (
-                        <div key={m._id} title={m.name} className="h-7 w-7 rounded-full bg-accent-blue/20 border-2 border-bg-secondary flex items-center justify-center text-accent-blue text-xs font-bold">
-                          {m.name?.charAt(0).toUpperCase()}
+                        <div key={m._id} title={m.name} className="hover:z-10 transition-transform">
+                          <Avatar user={m} size="w-7 h-7" textClass="text-xs" showStatus={false} className="border-2 border-bg-secondary" />
                         </div>
                       ))}
                     </div>

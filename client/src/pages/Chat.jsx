@@ -4,6 +4,7 @@ import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
 import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
+import Avatar from '../components/Avatar';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
@@ -513,9 +514,7 @@ const Chat = () => {
               {activeChannel ? (
                 <Hash size={20} className="text-text-secondary mr-2" />
               ) : (
-                <div className="h-6 w-6 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center mr-3 text-xs font-bold">
-                  {activeDM?.user?.name?.charAt(0) || '?'}
-                </div>
+                <Avatar user={activeDM?.user} size="w-6 h-6" textClass="text-xs" showStatus={false} className="mr-3" />
               )}
               {getChannelDisplayName(activeChannel, activeDM)}
             </h3>
@@ -537,11 +536,8 @@ const Chat = () => {
               return (
                 <div key={msg._id} className={`flex w-full mb-2 ${isMine ? 'justify-end' : 'justify-start'}`}>
                   
-                  {/* WhatsApp-style avatar for received messages in channels (groups) */}
                   {!isMine && activeChannel && showHeader && (
-                    <div className="w-8 h-8 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs mr-2 mt-auto flex-shrink-0">
-                      {msg.sender?.name?.charAt(0).toUpperCase() || 'U'}
-                    </div>
+                    <Avatar user={msg.sender} size="w-8 h-8" textClass="text-xs" showStatus={false} className="mr-2 mt-auto flex-shrink-0" />
                   )}
                   {!isMine && activeChannel && !showHeader && (
                     <div className="w-8 mr-2 flex-shrink-0"></div>
@@ -765,9 +761,7 @@ const Chat = () => {
                       onClick={() => insertMention(m.name.replace(/\s+/g, ''))}
                       className="w-full flex items-center px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-left"
                     >
-                      <div className="w-7 h-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue text-xs font-bold mr-3 shrink-0">
-                        {m.name.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar user={m} size="w-7 h-7" textClass="text-xs" showStatus={false} className="mr-3 shrink-0" />
                       <span className="text-sm text-text-primary font-medium truncate">{m.name}</span>
                     </button>
                   ))}

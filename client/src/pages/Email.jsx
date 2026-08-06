@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, X, Search, MoreVertical, Trash2, Archive } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 const Email = () => {
   const { user } = useContext(AuthContext);
@@ -388,9 +389,7 @@ const Email = () => {
                               <Star size={18} className={isStarred ? 'fill-warning text-warning' : ''} />
                             </button>
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-6 h-6 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-xs shrink-0">
-                                {displayUser ? displayUser.charAt(0).toUpperCase() : '?'}
-                              </div>
+                              <Avatar user={{ name: displayUser ? displayUser.split('<')[0].trim() : '?' }} size="w-6 h-6" textClass="text-xs" showStatus={false} className="shrink-0" />
                               <span className={`text-sm truncate ${isUnread ? 'text-text-primary font-bold' : 'text-text-primary'}`}>
                                 {displayUser ? displayUser.split('<')[0].trim() : 'Unknown'}
                               </span>
@@ -433,9 +432,7 @@ const Email = () => {
                 <h2 className="text-2xl font-bold text-text-primary mb-6">{viewingEmail.subject || '(No Subject)'}</h2>
                 <div className="flex items-start justify-between mb-8">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-accent-blue/20 flex items-center justify-center text-accent-blue font-bold text-lg shrink-0">
-                      {(viewingEmail.from ? viewingEmail.from.charAt(0) : '?').toUpperCase()}
-                    </div>
+                    <Avatar user={{ name: viewingEmail.from ? viewingEmail.from.split('<')[0].trim() : '?' }} size="w-12 h-12" textClass="text-lg" showStatus={false} className="shrink-0" />
                     <div>
                       <div className="font-bold text-text-primary">{viewingEmail.from}</div>
                       <div className="text-sm text-text-secondary">to {viewingEmail.to}</div>

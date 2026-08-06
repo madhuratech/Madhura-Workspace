@@ -5,6 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
 import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote } from 'lucide-react';
 import GlobalQuickNotes from './GlobalQuickNotes';
+import Avatar from './Avatar';
 
 const Layout = () => {
   const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
@@ -211,9 +212,7 @@ const Layout = () => {
                           onClick={() => { setIsSearchOpen(false); navigate('/team'); }}
                           className="flex items-center px-2 py-2 hover:bg-bg-primary rounded-lg cursor-pointer transition-colors"
                         >
-                          <div className="h-6 w-6 rounded-full bg-accent-blue/20 text-accent-blue flex items-center justify-center font-bold text-xs mr-3">
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
+                          <Avatar user={member} size="w-6 h-6" textClass="text-xs" showStatus={false} className="mr-3" />
                           <div>
                             <p className="text-xs font-bold text-text-primary leading-tight">{member.name}</p>
                             <p className="text-[10px] text-text-secondary">{member.role.replace('_', ' ')}</p>
@@ -359,21 +358,21 @@ const Layout = () => {
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="relative flex items-center justify-center focus:outline-none ml-2"
             >
-              <div className="h-8 w-8 rounded-full bg-accent-blue/80 flex items-center justify-center text-white font-bold text-xs shadow-sm border border-white/20 hover:bg-accent-blue transition-colors">
-                {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
-              </div>
-              <div className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-bg-sidebar ${getStatusColor(user?.presenceStatus)}`}></div>
+              <Avatar user={user} size="w-8 h-8" textClass="text-xs text-white" className="shadow-sm border border-white/20 hover:opacity-90 transition-opacity" />
             </button>
 
             {/* Profile Dropdown */}
             {showProfileMenu && (
               <div className="absolute right-0 mt-3 w-64 bg-bg-secondary border border-border rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="p-5 border-b border-border flex flex-col items-center">
-                  <div className="relative mb-3 group cursor-pointer">
-                    <div className="h-16 w-16 rounded-full bg-accent-blue/10 flex items-center justify-center text-accent-blue font-bold text-2xl shadow-sm border border-accent-blue/10 transition-transform group-hover:scale-105">
-                      {user?.name?.substring(0, 2).toUpperCase() || 'AA'}
-                    </div>
-                    <div className={`absolute bottom-0 right-0 h-4 w-4 rounded-full border-[3px] border-bg-secondary ${getStatusColor(user?.presenceStatus)}`}></div>
+                  <div 
+                    className="relative mb-3 group cursor-pointer"
+                    onClick={() => {
+                      setShowProfileMenu(false);
+                      navigate(`/profile/${user._id || user.id}`);
+                    }}
+                  >
+                    <Avatar user={user} size="w-16 h-16" textClass="text-2xl" className="shadow-sm transition-transform group-hover:scale-105" />
                   </div>
                   <h3 className="font-bold text-base font-outfit text-text-primary">{user?.name}</h3>
                   <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-1">{user?.role?.replace('_', ' ')}</p>

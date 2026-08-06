@@ -76,7 +76,7 @@ exports.inviteUser = async (req, res) => {
       } else {
         console.log('[INVITE DEBUG] Calling Resend API...');
         const resendResponse = await resend.emails.send({
-          from: `${senderName} <${senderEmail}>`,
+          from: senderEmail,
           to: email,
           subject: `You've been invited to join ${workspace.name}!`,
           html: `

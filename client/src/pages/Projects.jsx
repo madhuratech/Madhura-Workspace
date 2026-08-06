@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Search, Calendar, Plus, FolderKanban, X, Users, CheckCircle2, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Avatar from '../components/Avatar';
 
 const Projects = () => {
   const { user } = useContext(AuthContext);
@@ -276,8 +277,8 @@ const Projects = () => {
                   <div>
                     <div className="avatar-stack">
                       {project.members?.slice(0, 4).map(m => (
-                        <div key={m._id} title={m.name} className="h-6 w-6 rounded-full bg-accent-indigo/10 flex items-center justify-center text-accent-indigo text-[9px] font-bold shadow-sm">
-                          {m.name?.charAt(0).toUpperCase()}
+                        <div key={m._id} title={m.name} className="-ml-2 first:ml-0 hover:z-10 transition-transform">
+                          <Avatar user={m} size="w-6 h-6" textClass="text-[9px]" showStatus={false} className="border-2 border-bg-secondary shadow-sm" />
                         </div>
                       ))}
                       {project.members?.length > 4 && (
@@ -386,9 +387,7 @@ const Projects = () => {
                     {workspaceMembers.filter(m => m.user._id !== user._id).map(m => (
                       <label key={m.user._id} className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-colors ${formData.members.includes(m.user._id) ? 'bg-accent-blue/10 border border-accent-blue/20' : 'hover:bg-bg-primary border border-transparent'}`}>
                         <div className="relative flex items-center justify-center">
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${formData.members.includes(m.user._id) ? 'bg-accent-blue text-white' : 'bg-bg-primary text-text-secondary border border-border'}`}>
-                            {m.user.name?.charAt(0).toUpperCase()}
-                          </div>
+                          <Avatar user={m.user} size="w-8 h-8" textClass="text-xs" showStatus={false} />
                           {formData.members.includes(m.user._id) && <div className="absolute -bottom-1 -right-1 bg-success h-3.5 w-3.5 rounded-full border-2 border-bg-secondary"></div>}
                         </div>
                         <div className="flex flex-col flex-1">

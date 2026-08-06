@@ -27,6 +27,7 @@ const ActivityLogs = lazy(() => import('./pages/ActivityLogs'));
 const Tickets = lazy(() => import('./pages/Tickets'));
 const Announcements = lazy(() => import('./pages/Announcements'));
 const Notes = lazy(() => import('./pages/Notes'));
+const UserProfile = lazy(() => import('./pages/UserProfile'));
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
@@ -72,6 +73,7 @@ function App() {
               <Route path="/tickets" element={<Tickets />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/notes" element={<Notes />} />
+              <Route path="/profile/:id" element={<UserProfile />} />
             </Route>
         </Routes>
       </Suspense>

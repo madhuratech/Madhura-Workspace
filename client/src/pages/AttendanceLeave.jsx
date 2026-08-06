@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Calendar, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut, Timer } from 'lucide-react';
+import Avatar from '../components/Avatar';
 
 const DigitalClock = ({ className = "" }) => {
   const [time, setTime] = useState(new Date());
@@ -279,7 +280,12 @@ const AttendanceLeave = () => {
                   {(logView === 'mine' ? attendanceRecords.filter(r => r.user?._id === user._id) : attendanceRecords.filter(r => r.user?._id !== user._id)).map(record => (
                     <tr key={record._id}>
                       <td className="font-medium text-text-primary">{new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
-                      <td className="text-text-secondary">{record.user?.name}</td>
+                      <td className="text-text-secondary">
+                        <div className="flex items-center space-x-2">
+                          <Avatar user={record.user} size="w-6 h-6" textClass="text-[10px]" showStatus={false} />
+                          <span>{record.user?.name}</span>
+                        </div>
+                      </td>
                       <td>
                         <span className="px-2 py-1 rounded text-xs font-medium text-success bg-success/10">
                           {record.status}
@@ -356,7 +362,12 @@ const AttendanceLeave = () => {
                     <tbody>
                       {leaveRecords.filter(l => l.user?._id !== user._id).map(leave => (
                         <tr key={leave._id}>
-                          <td className="font-medium text-text-primary">{leave.user?.name}</td>
+                          <td className="font-medium text-text-primary">
+                            <div className="flex items-center space-x-2">
+                              <Avatar user={leave.user} size="w-6 h-6" textClass="text-[10px]" showStatus={false} />
+                              <span>{leave.user?.name}</span>
+                            </div>
+                          </td>
                           <td className="text-text-secondary">{leave.type}</td>
                           <td className="text-text-secondary">
                             {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}

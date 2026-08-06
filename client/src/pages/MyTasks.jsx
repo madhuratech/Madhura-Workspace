@@ -5,6 +5,7 @@ import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
 import { Calendar, Flag, CheckCircle2, LayoutList, KanbanSquare, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Avatar from '../components/Avatar';
 
 const MyTasks = () => {
   const { user } = useContext(AuthContext);
@@ -291,8 +292,8 @@ const MyTasks = () => {
                                 <div className="flex justify-between items-center mt-4 pt-3 border-t border-border/50">
                                   <div className="avatar-stack">
                                     {item.assignees?.map((a) => (
-                                      <div key={a._id} title={a.name} className="h-7 w-7 rounded-full bg-accent-blue/10 flex items-center justify-center text-[10px] text-accent-blue font-bold shadow-sm">
-                                        {a.name?.charAt(0).toUpperCase()}
+                                      <div key={a._id} title={a.name} className="-ml-2 first:ml-0 hover:z-10 transition-transform">
+                                        <Avatar user={a} size="w-7 h-7" textClass="text-[10px]" showStatus={false} className="border-2 border-bg-secondary shadow-sm" />
                                       </div>
                                     ))}
                                   </div>

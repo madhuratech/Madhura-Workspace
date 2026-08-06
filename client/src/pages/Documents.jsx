@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { FileText, Save, Search, RefreshCw, Plus, Edit2, Trash2, X, UploadCloud, File, FileImage, Download, Folder, FolderOpen, History, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import Avatar from '../components/Avatar';
 
 const FOLDER_COLORS = {
   'Employee Docs': 'bg-pink-100 text-pink-600 border-pink-200',
@@ -292,9 +293,7 @@ const Documents = () => {
                     </td>
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
-                          {doc.author?.name ? doc.author.name.charAt(0).toUpperCase() : 'U'}
-                        </div>
+                        <Avatar user={doc.author} size="w-6 h-6" textClass="text-xs" showStatus={false} />
                         <span className="text-sm text-gray-700">{doc.author?.name || 'Unknown'}</span>
                       </div>
                     </td>
@@ -481,9 +480,7 @@ const Documents = () => {
                         </a>
                       </div>
                       <div className="mt-2 pt-2 border-t border-gray-100 text-[11px] text-gray-400 flex items-center gap-1.5">
-                        <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">
-                          {ver.updatedBy?.name ? ver.updatedBy.name.charAt(0) : 'U'}
-                        </div>
+                        <Avatar user={ver.updatedBy} size="w-4 h-4" textClass="text-[8px]" showStatus={false} />
                         By {ver.updatedBy?.name || 'Unknown'}
                       </div>
                     </div>
