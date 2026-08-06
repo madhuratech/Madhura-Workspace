@@ -41,8 +41,10 @@ export const AuthProvider = ({ children }) => {
       });
 
       newSocket.on('new_notification', (notification) => {
-        setNotifications((prev) => [notification, ...prev]);
-        // We'll show a toast in Layout.jsx when this array changes, but we can also manage it there
+        setNotifications((prev) => {
+          if (prev.find(n => n._id === notification._id)) return prev;
+          return [notification, ...prev];
+        });
       });
 
       fetchNotifications();

@@ -75,6 +75,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (name, email, password, role = 'admin') => {
+    try {
+      const res = await axios.post('/auth/register', { name, email, password, role });
+      const { token, ...userData } = res.data;
+
+      await AsyncStorage.setItem('token', token);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(userData);
+
+      startKeepAlive('https://madhura-workspace.onrender.com/api');
+
+      return { success: true };
+    } catch (error) {
+      console.error('Register error:', error.response?.data?.message || error.message);
+      return { success: false, message: error.response?.data?.message || 'Registration failed' };
+    }
+  };
+
   const logout = async () => {
     stopKeepAlive();
     await AsyncStorage.removeItem('token');
@@ -98,7 +118,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, updateUserStatus }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUserStatus }}>
       {children}
     </AuthContext.Provider>
   );

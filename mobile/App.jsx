@@ -10,6 +10,7 @@ import Toast from 'react-native-toast-message';
 
 // Screens
 import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import MyTasksScreen from './src/screens/MyTasksScreen';
 import ProjectsScreen from './src/screens/ProjectsScreen';
@@ -258,7 +259,10 @@ function RootNavigator() {
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
         </>
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+        </>
       )}
     </Stack.Navigator>
   );

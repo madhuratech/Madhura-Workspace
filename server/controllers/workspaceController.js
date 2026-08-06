@@ -1,6 +1,9 @@
 const Workspace = require('../models/Workspace');
 const User = require('../models/User');
 const { sendNotification } = require('./notificationController');
+const { Resend } = require('resend');
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // @desc    Get all workspaces for user
 // @route   GET /api/workspaces
@@ -208,6 +211,43 @@ const addMember = async (req, res) => {
         role: role || 'employee',   // ← Set global role so backend filters work
         designation: designation || ''
       });
+      
+      if (resend) {
+        try {
+          const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+          const senderEmail = workspace.companyEmail || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+          const senderName = workspace.name || 'Madhura Workspace';
+          
+          await resend.emails.send({
+            from: `${senderName} <${senderEmail}>`,
+            to: email,
+            subject: `Welcome to ${workspace.name}!`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #333;">Welcome to ${workspace.name}!</h2>
+                <p style="font-size: 16px; color: #555;">
+                  Your account has been created successfully as a <strong>${role || 'employee'}</strong>.
+                </p>
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                  <p style="margin: 0 0 10px 0;"><strong>Login Details:</strong></p>
+                  <p style="margin: 0 0 5px 0;">Email: ${email}</p>
+                  <p style="margin: 0;">Password: ${password}</p>
+                </div>
+                <div style="margin: 30px 0; text-align: center;">
+                  <a href="${frontendUrl}/login" style="background-color: #4285f4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                    Login to Workspace
+                  </a>
+                </div>
+                <p style="font-size: 12px; color: #aaa; margin-top: 40px; text-align: center;">
+                  Please change your password after logging in for the first time.
+                </p>
+              </div>
+            `
+          });
+        } catch (emailError) {
+          console.error('Failed to send registration email:', emailError);
+        }
+      }
     } else {
       // If user exists, sync their global role too
       userToAdd.role = role || 'employee';

@@ -115,6 +115,28 @@ export default function ChatWindowScreen({ route, navigation }) {
         setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
       }
     });
+
+    socket.on('messages_read', ({ channelId: readChId, userId }) => {
+      if (!isDM && String(readChId) === String(channelId)) {
+        setMessages((prev) => prev.map(m => {
+          if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+            return { ...m, readBy: [...(m.readBy || []), userId] };
+          }
+          return m;
+        }));
+      }
+    });
+
+    socket.on('dm_messages_read', ({ dmId, userId }) => {
+      if (isDM && String(dmId) === String(channelId)) {
+        setMessages((prev) => prev.map(m => {
+          if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+            return { ...m, readBy: [...(m.readBy || []), userId] };
+          }
+          return m;
+        }));
+      }
+    });
   };
 
   const [workspaceMembers, setWorkspaceMembers] = useState([]);

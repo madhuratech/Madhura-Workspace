@@ -11,7 +11,7 @@ const PRIMARY = '#000000';
 const SECONDARY = '#6B7280';
 const BORDER = '#E5E7EB';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -94,6 +94,13 @@ export default function LoginScreen() {
                 : <Text style={styles.loginBtnText}>Sign In</Text>
               }
             </TouchableOpacity>
+
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.signupLink}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           
           <Text style={styles.footerText}>
@@ -139,6 +146,21 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   loginBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  signupText: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  signupLink: {
+    fontSize: 14,
+    color: PRIMARY,
+    fontWeight: '700',
+  },
   
   footerText: { textAlign: 'center', color: '#D1D5DB', fontSize: 12, marginTop: 40 },
 });
