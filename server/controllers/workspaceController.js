@@ -218,7 +218,11 @@ const addMember = async (req, res) => {
           const senderEmail = 'onboarding@resend.dev'; // Fixed to onboarding email for Resend free tier
           const senderName = workspace.name || 'Madhura Workspace';
           
-          await resend.emails.send({
+          console.log(`[ADD_MEMBER DEBUG] Attempting to send password email to: ${email}`);
+          console.log(`[ADD_MEMBER DEBUG] Using sender email: ${senderEmail}`);
+
+          console.log('[ADD_MEMBER DEBUG] Calling Resend API...');
+          const resendResponse = await resend.emails.send({
             from: `${senderName} <${senderEmail}>`,
             to: email,
             subject: `Welcome to ${workspace.name}!`,
@@ -244,8 +248,9 @@ const addMember = async (req, res) => {
               </div>
             `
           });
+          console.log('[ADD_MEMBER DEBUG] Resend API responded with Success:', resendResponse);
         } catch (emailError) {
-          console.error('Failed to send registration email:', emailError);
+          console.error('[ADD_MEMBER DEBUG] Failed to send registration email. Resend Error:', emailError);
         }
       }
     } else {

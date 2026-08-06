@@ -66,12 +66,16 @@ exports.inviteUser = async (req, res) => {
     const senderEmail = 'onboarding@resend.dev'; // Fixed to onboarding email for Resend free tier
     const senderName = workspace.name || 'Madhura Workspace';
 
+    console.log(`[INVITE DEBUG] Attempting to send invite to: ${email}`);
+    console.log(`[INVITE DEBUG] Using sender email: ${senderEmail}`);
+
     try {
       if (!process.env.RESEND_API_KEY) {
-        console.warn('RESEND_API_KEY is not defined in the environment. Skipping actual email send. Invitation link:');
+        console.warn('[INVITE DEBUG] RESEND_API_KEY is not defined in the environment. Skipping actual email send. Invitation link:');
         console.log(inviteLink);
       } else {
-        await resend.emails.send({
+        console.log('[INVITE DEBUG] Calling Resend API...');
+        const resendResponse = await resend.emails.send({
           from: `${senderName} <${senderEmail}>`,
           to: email,
           subject: `You've been invited to join ${workspace.name}!`,
@@ -96,9 +100,10 @@ exports.inviteUser = async (req, res) => {
             </div>
           `
         });
+        console.log('[INVITE DEBUG] Resend API responded with Success:', resendResponse);
       }
     } catch (emailError) {
-      console.error('Resend Error:', emailError);
+      console.error('[INVITE DEBUG] Resend Error:', emailError);
       return res.status(500).json({ 
         message: 'Failed to send email. If you used a custom Company Email, make sure its domain is verified in Resend.' 
       });
