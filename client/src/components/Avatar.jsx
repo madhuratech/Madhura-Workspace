@@ -19,6 +19,8 @@ const Avatar = ({ user, size = 'w-10 h-10', textClass = 'text-sm', showStatus = 
     if (status === 'Active' || !status) return 'bg-success';
     if (status === 'Busy') return 'bg-danger';
     if (status === 'Break') return 'bg-warning';
+    if (status === 'Lunch') return 'bg-purple-500';
+    if (status === 'Leave') return 'bg-gray-500';
     return 'bg-orange-400';
   };
 

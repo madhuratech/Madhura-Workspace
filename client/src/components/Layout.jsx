@@ -138,6 +138,8 @@ const Layout = () => {
       case 'Active': return 'bg-success';
       case 'Busy': return 'bg-danger';
       case 'Break': return 'bg-warning';
+      case 'Lunch': return 'bg-purple-500';
+      case 'Leave': return 'bg-gray-500';
       case 'Away': return 'bg-orange-400';
       default: return 'bg-success';
     }
@@ -380,7 +382,7 @@ const Layout = () => {
                 
                 <div className="p-2.5">
                   <p className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Set Status</p>
-                  {['Active', 'Busy', 'Break', 'Away'].map(status => (
+                  {['Active', 'Busy', 'Break', 'Lunch', 'Leave', 'Away'].map(status => (
                     <button 
                       key={status}
                       onClick={() => handleStatusChange(status)}

@@ -35,7 +35,7 @@ const getCroppedImg = async (imageSrc, pixelCrop) => {
 const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser, login } = useContext(AuthContext); // Need login to update context user if it's their own profile
+  const { user: currentUser, setUser } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   
   const [profileUser, setProfileUser] = useState(null);
@@ -93,14 +93,10 @@ const UserProfile = () => {
       setProfileUser(res.data);
       showToast('Profile picture updated!', 'success');
       
-      // Update global context so header avatar updates
+      // Update global context so header avatar updates immediately
       const updatedCurrentUser = { ...currentUser, avatar: res.data.avatar };
-      // Note: we can't cleanly update just one field in AuthContext from here unless we refetch or we rely on page reload.
-      // Easiest is to force a reload, or if the context provides a setUser, use it.
-      // Assuming AuthContext doesn't have an explicit 'setUser', we'll rely on the API update.
-      // Next time they refresh, it's there. 
-      // But we can also dispatch a custom event to notify Layout.jsx
-      window.dispatchEvent(new Event('avatar-updated'));
+      setUser(updatedCurrentUser);
+      localStorage.setItem('user', JSON.stringify(updatedCurrentUser));
       
       setIsCropModalOpen(false);
     } catch (e) {
@@ -115,7 +111,9 @@ const UserProfile = () => {
       const res = await axios.put('/users/avatar', { avatar: '' });
       setProfileUser(res.data);
       showToast('Profile picture removed!', 'success');
-      window.dispatchEvent(new Event('avatar-updated'));
+      const updatedCurrentUser = { ...currentUser, avatar: '' };
+      setUser(updatedCurrentUser);
+      localStorage.setItem('user', JSON.stringify(updatedCurrentUser));
     } catch (e) {
       showToast('Error removing profile picture', 'error');
     }
