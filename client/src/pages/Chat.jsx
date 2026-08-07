@@ -90,18 +90,8 @@ const Chat = () => {
       socket.on('message_deleted', handleMessageDeleted);
 
       socket.on('messages_read', ({ channelId, userId }) => {
-        if (activeChannel && String(channelId) === String(activeChannel._id)) {
-          setMessages((prev) => prev.map(m => {
-            if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
-              return { ...m, readBy: [...(m.readBy || []), userId] };
-            }
-            return m;
-          }));
-        }
-      });
-
-      socket.on('dm_messages_read', ({ dmId, userId }) => {
-        if (activeDM && String(dmId) === String(activeDM.dmId)) {
+        if ((activeChannel && String(channelId) === String(activeChannel._id)) || 
+            (activeDM && String(channelId) === String(activeDM.dmId))) {
           setMessages((prev) => prev.map(m => {
             if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
               return { ...m, readBy: [...(m.readBy || []), userId] };
@@ -129,7 +119,6 @@ const Chat = () => {
         socket.off('message_updated', handleMessageUpdated);
         socket.off('message_deleted', handleMessageDeleted);
         socket.off('messages_read');
-        socket.off('dm_messages_read');
       };
     }
   }, [socket, activeChannel, activeDM]);
@@ -604,13 +593,13 @@ const Chat = () => {
                                   {!msg.text && (
                                     <div className="absolute bottom-1.5 right-1.5 flex items-center justify-end space-x-1 text-[10.5px] bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm z-10 pointer-events-none">
                                       <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                      {isMine && (
-                                        msg.readBy?.length > 0 || msg.isRead ? (
-                                          <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />
-                                        ) : (
-                                          <Check size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />
-                                        )
-                                      )}
+                                      {isMine && (() => {
+                                        const isRead = msg.readBy?.length > 0 || msg.isRead;
+                                        const isDelivered = isRead || (activeDM && onlineUsers.has(activeDM.user._id));
+                                        if (isRead) return <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />;
+                                        if (isDelivered) return <CheckCheck size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />;
+                                        return <Check size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />;
+                                      })()}
                                     </div>
                                   )}
                                 </div>
@@ -620,13 +609,13 @@ const Chat = () => {
                                   {!msg.text && (
                                     <div className="absolute bottom-1.5 right-1.5 flex items-center justify-end space-x-1 text-[10.5px] bg-black/40 text-white px-2 py-0.5 rounded-full backdrop-blur-sm shadow-sm z-10 pointer-events-none">
                                       <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                      {isMine && (
-                                        msg.readBy?.length > 0 || msg.isRead ? (
-                                          <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />
-                                        ) : (
-                                          <Check size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />
-                                        )
-                                      )}
+                                      {isMine && (() => {
+                                        const isRead = msg.readBy?.length > 0 || msg.isRead;
+                                        const isDelivered = isRead || (activeDM && onlineUsers.has(activeDM.user._id));
+                                        if (isRead) return <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />;
+                                        if (isDelivered) return <CheckCheck size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />;
+                                        return <Check size={16} strokeWidth={2.5} className="text-white/80 ml-0.5" />;
+                                      })()}
                                     </div>
                                   )}
                                 </div>
@@ -668,13 +657,13 @@ const Chat = () => {
                               <div className={`flex items-center justify-end space-x-1 text-[10.5px] -mt-3.5 ml-auto z-10 mr-1 ${isMine ? 'text-white/80' : 'text-black/50'}`}>
                                 {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
                                 <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                {isMine && (
-                                  msg.readBy?.length > 0 || msg.isRead ? (
-                                    <CheckCheck size={16} strokeWidth={2.5} className="text-white ml-0.5" />
-                                  ) : (
-                                    <Check size={16} strokeWidth={2.5} className="text-white/60 ml-0.5" />
-                                  )
-                                )}
+                                {isMine && (() => {
+                                  const isRead = msg.readBy?.length > 0 || msg.isRead;
+                                  const isDelivered = isRead || (activeDM && onlineUsers.has(activeDM.user._id));
+                                  if (isRead) return <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />;
+                                  if (isDelivered) return <CheckCheck size={16} strokeWidth={2.5} className="text-white/60 ml-0.5" />;
+                                  return <Check size={16} strokeWidth={2.5} className="text-white/60 ml-0.5" />;
+                                })()}
                               </div>
                             </div>
                           )}
