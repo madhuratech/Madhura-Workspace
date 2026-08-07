@@ -79,7 +79,7 @@ export default function SettingsScreen({ navigation }) {
     {
       title: 'Account',
       items: [
-        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#3B82F6', onPress: () => setPersonalInfoModalVisible(true) },
+        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#1b2b4c', onPress: () => setPersonalInfoModalVisible(true) },
         { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6', onPress: () => setNotificationsModalVisible(true) },
         { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316', onPress: () => setPasswordModalVisible(true) },
       ],
@@ -162,7 +162,7 @@ export default function SettingsScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={{ width: 38 }} />
@@ -309,9 +309,9 @@ export default function SettingsScreen({ navigation }) {
             </View>
 
             <TouchableOpacity style={styles.supportOptionBtn} activeOpacity={0.8}>
-              <Mail color="#3B82F6" size={20} style={{ marginRight: 12 }} />
+              <Mail color="#1b2b4c" size={20} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Email Support</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Email Support</Text>
                 <Text style={{ fontSize: 12, color: '#94A3B8' }}>support@madhuratech.com</Text>
               </View>
               <ChevronRight color="#CBD5E1" size={18} />
@@ -320,7 +320,7 @@ export default function SettingsScreen({ navigation }) {
             <TouchableOpacity style={styles.supportOptionBtn} activeOpacity={0.8}>
               <MessageSquare color="#8B5CF6" size={20} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Live Chat</Text>
+                <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Live Chat</Text>
                 <Text style={{ fontSize: 12, color: '#94A3B8' }}>Available 9 AM - 6 PM</Text>
               </View>
               <ChevronRight color="#CBD5E1" size={18} />
@@ -346,9 +346,9 @@ export default function SettingsScreen({ navigation }) {
 
             <View style={{ alignItems: 'center', marginVertical: 20 }}>
               <View style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#3B82F6' }}>M</Text>
+                <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#1b2b4c' }}>M</Text>
               </View>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#0F172A', marginBottom: 4 }}>Madhura Workspace</Text>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1b2b4c', marginBottom: 4 }}>Madhura Workspace</Text>
               <Text style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>Version 1.0.0 (Build 42)</Text>
               
               <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 20 }}>
@@ -413,37 +413,37 @@ export default function SettingsScreen({ navigation }) {
             <View style={{ marginBottom: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <View>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Email Notifications</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Email Notifications</Text>
                   <Text style={{ fontSize: 12, color: '#64748B' }}>Receive daily summaries</Text>
                 </View>
                 <Switch 
                   value={notificationSettings.emailNotifications} 
                   onValueChange={(val) => setNotificationSettings(p => ({ ...p, emailNotifications: val }))} 
-                  trackColor={{ false: '#E2E8F0', true: '#3B82F6' }}
+                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
                 />
               </View>
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <View>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Push Notifications</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Push Notifications</Text>
                   <Text style={{ fontSize: 12, color: '#64748B' }}>Instant alerts on your device</Text>
                 </View>
                 <Switch 
                   value={notificationSettings.pushNotifications} 
                   onValueChange={(val) => setNotificationSettings(p => ({ ...p, pushNotifications: val }))} 
-                  trackColor={{ false: '#E2E8F0', true: '#3B82F6' }}
+                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
                 />
               </View>
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0F172A' }}>Task Reminders</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Task Reminders</Text>
                   <Text style={{ fontSize: 12, color: '#64748B' }}>Alerts for upcoming deadlines</Text>
                 </View>
                 <Switch 
                   value={notificationSettings.taskReminders} 
                   onValueChange={(val) => setNotificationSettings(p => ({ ...p, taskReminders: val }))} 
-                  trackColor={{ false: '#E2E8F0', true: '#3B82F6' }}
+                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
                 />
               </View>
             </View>
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1b2b4c' },
   scrollContent: { padding: 16 },
 
   // Profile card
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 20, padding: 20, marginBottom: 24,
     borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06, shadowRadius: 16, elevation: 3,
   },
   profileAvatar: {
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   profileAvatarText: { fontSize: 26, fontWeight: '700' },
   profileInfo: { flex: 1 },
-  profileName: { fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
+  profileName: { fontSize: 18, fontWeight: '700', color: '#1b2b4c', marginBottom: 2 },
   profileEmail: { fontSize: 12, color: '#94A3B8', marginBottom: 8 },
   roleBadge: {
     alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3,
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 16, padding: 14, marginBottom: 8,
     borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 1 },
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03, shadowRadius: 6, elevation: 1,
   },
   settingIcon: {
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginRight: 14,
   },
   settingText: { flex: 1 },
-  settingLabel: { fontSize: 15, fontWeight: '600', color: '#0F172A', marginBottom: 1 },
+  settingLabel: { fontSize: 15, fontWeight: '600', color: '#1b2b4c', marginBottom: 1 },
   settingSub: { fontSize: 12, color: '#94A3B8' },
 
   // Logout
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: 20
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1b2b4c' },
   modalCloseBtn: {
     width: 30, height: 30, borderRadius: 15, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center'
@@ -576,9 +576,9 @@ const styles = StyleSheet.create({
     marginBottom: 16, paddingHorizontal: 14, height: 50
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, color: '#0F172A' },
+  input: { flex: 1, fontSize: 15, color: '#1b2b4c' },
   saveBtn: {
-    backgroundColor: '#3B82F6', borderRadius: 12, height: 50,
+    backgroundColor: '#1b2b4c', borderRadius: 12, height: 50,
     justifyContent: 'center', alignItems: 'center', marginTop: 8
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },

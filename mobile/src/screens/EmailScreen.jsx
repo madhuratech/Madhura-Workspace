@@ -14,7 +14,7 @@ const FOLDERS = [
 ];
 
 const AVATAR_COLORS = [
-  '#3B82F6','#8B5CF6','#F97316','#10B981','#EC4899','#06B6D4','#EF4444',
+  '#1b2b4c','#8B5CF6','#F97316','#10B981','#EC4899','#06B6D4','#EF4444',
 ];
 
 function getColor(str) {
@@ -123,7 +123,7 @@ export default function EmailScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Email</Text>
@@ -142,7 +142,7 @@ export default function EmailScreen({ navigation }) {
             onPress={() => { setLoading(true); setActiveFolder(f.key); }}
           >
             <f.Icon
-              color={activeFolder === f.key ? '#3B82F6' : '#94A3B8'}
+              color={activeFolder === f.key ? '#1b2b4c' : '#94A3B8'}
               size={16}
               strokeWidth={activeFolder === f.key ? 2.5 : 1.8}
               style={{ marginRight: 6 }}
@@ -156,12 +156,12 @@ export default function EmailScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color="#1b2b4c" />
         </View>
       ) : authRequired ? (
         <View style={styles.center}>
           <View style={styles.gmailIconWrap}>
-            <Mail color="#3B82F6" size={36} />
+            <Mail color="#1b2b4c" size={36} />
           </View>
           <Text style={styles.authTitle}>Connect your Gmail</Text>
           <Text style={styles.authDesc}>
@@ -202,8 +202,8 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
-  headerSub: { fontSize: 12, color: '#3B82F6', fontWeight: '600', marginTop: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#1b2b4c' },
+  headerSub: { fontSize: 12, color: '#1b2b4c', fontWeight: '600', marginTop: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
 
   // Tabs
@@ -215,9 +215,9 @@ const styles = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: 'transparent',
   },
-  tabActive: { borderBottomColor: '#3B82F6' },
+  tabActive: { borderBottomColor: '#1b2b4c' },
   tabText: { fontSize: 13, fontWeight: '600', color: '#94A3B8' },
-  tabTextActive: { color: '#3B82F6' },
+  tabTextActive: { color: '#1b2b4c' },
 
   listContent: { paddingBottom: 100 },
 
@@ -238,9 +238,9 @@ const styles = StyleSheet.create({
   emailDate: { fontSize: 11, color: '#94A3B8' },
   emailSubject: { fontSize: 13, color: '#334155', marginBottom: 2 },
   emailSnippet: { fontSize: 12, color: '#94A3B8' },
-  textBold: { fontWeight: '700', color: '#0F172A' },
+  textBold: { fontWeight: '700', color: '#1b2b4c' },
   unreadDot: {
-    width: 9, height: 9, borderRadius: 5, backgroundColor: '#3B82F6',
+    width: 9, height: 9, borderRadius: 5, backgroundColor: '#1b2b4c',
   },
 
   // Gmail auth
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     width: 80, height: 80, borderRadius: 40, backgroundColor: '#DBEAFE',
     justifyContent: 'center', alignItems: 'center', marginBottom: 20,
   },
-  authTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 10, textAlign: 'center' },
+  authTitle: { fontSize: 20, fontWeight: '700', color: '#1b2b4c', marginBottom: 10, textAlign: 'center' },
   authDesc: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 28, lineHeight: 20 },
   gmailBtn: {
     backgroundColor: '#4285F4', paddingHorizontal: 28, paddingVertical: 14,

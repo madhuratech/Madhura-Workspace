@@ -193,7 +193,7 @@ const Documents = () => {
           </button>
           <button 
             onClick={() => handleOpenModal()}
-            className="bg-accent-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center space-x-2 shadow-sm"
+            className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-4 py-2 rounded-lg hover:bg-[#1b2b4c]/90 transition-colors text-sm font-medium flex items-center space-x-2 shadow-sm"
           >
             <Plus size={16} />
             <span>Upload File</span>
@@ -437,7 +437,7 @@ const Documents = () => {
                 <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-sm border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2 text-sm bg-accent-blue text-white font-medium rounded-lg hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2">
+                <button type="submit" className="px-5 py-2 text-sm bg-[#1b2b4c] text-white hover:text-[#ffca22] font-medium rounded-lg hover:bg-[#1b2b4c]/90 transition-colors shadow-sm flex items-center gap-2">
                   <Save size={16} /> {editItem ? 'Save Version' : 'Upload Document'}
                 </button>
               </div>

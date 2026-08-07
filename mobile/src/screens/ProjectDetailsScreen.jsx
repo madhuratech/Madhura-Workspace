@@ -11,7 +11,7 @@ const FILTERS = ['All', 'To Do', 'In Progress', 'Done'];
 
 const STATUS_CONFIG = {
   'To Do':       { icon: Circle,        color: '#94A3B8' },
-  'In Progress': { icon: Clock,         color: '#3B82F6' },
+  'In Progress': { icon: Clock,         color: '#1b2b4c' },
   'Done':        { icon: CheckCircle2,  color: '#10B981' },
 };
 
@@ -141,7 +141,7 @@ export default function ProjectDetailsScreen({ route, navigation }) {
       {/* ── Header ─────────────────────────────── */}
       <Animated.View style={[styles.header, { opacity: headerFade }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle} numberOfLines={1}>
@@ -153,7 +153,7 @@ export default function ProjectDetailsScreen({ route, navigation }) {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color="#1b2b4c" />
         </View>
       ) : (
         <FlatList
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1b2b4c' },
   headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { padding: 16, paddingBottom: 120 },
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14,
     alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9',
   },
-  statVal: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
+  statVal: { fontSize: 22, fontWeight: '700', color: '#1b2b4c' },
   statLbl: { fontSize: 11, color: '#64748B', fontWeight: '500', marginTop: 2 },
 
   // Progress card
@@ -257,9 +257,9 @@ const styles = StyleSheet.create({
   },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   progressLabel: { fontSize: 13, fontWeight: '600', color: '#334155' },
-  progressPct: { fontSize: 13, fontWeight: '700', color: '#3B82F6' },
+  progressPct: { fontSize: 13, fontWeight: '700', color: '#1b2b4c' },
   progressTrack: { height: 8, backgroundColor: '#F1F5F9', borderRadius: 4, overflow: 'hidden' },
-  progressFill: { height: 8, backgroundColor: '#3B82F6', borderRadius: 4 },
+  progressFill: { height: 8, backgroundColor: '#1b2b4c', borderRadius: 4 },
 
   // Filter
   filterRow: { marginBottom: 14 },
@@ -275,13 +275,13 @@ const styles = StyleSheet.create({
   taskCard: {
     flexDirection: 'row', backgroundColor: '#fff', borderRadius: 16, padding: 14,
     marginBottom: 10, borderWidth: 1, borderColor: '#F1F5F9', alignItems: 'flex-start',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
   },
   taskCardDone: { backgroundColor: '#F8FAFC', shadowOpacity: 0, elevation: 0 },
   statusBtn: { marginRight: 12, marginTop: 2 },
   taskContent: { flex: 1 },
-  taskTitle: { fontSize: 15, fontWeight: '600', color: '#0F172A', lineHeight: 21, marginBottom: 4 },
+  taskTitle: { fontSize: 15, fontWeight: '600', color: '#1b2b4c', lineHeight: 21, marginBottom: 4 },
   taskTitleDone: { textDecorationLine: 'line-through', color: '#94A3B8' },
   taskDesc: { fontSize: 13, color: '#64748B', lineHeight: 18, marginBottom: 8 },
   taskBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateText: { fontSize: 12, color: '#94A3B8' },
   assigneeAvatar: {
-    width: 24, height: 24, borderRadius: 12, backgroundColor: '#3B82F6',
+    width: 24, height: 24, borderRadius: 12, backgroundColor: '#1b2b4c',
     justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff'
   },
   assigneeAvatarText: { fontSize: 10, color: '#fff', fontWeight: '700' },

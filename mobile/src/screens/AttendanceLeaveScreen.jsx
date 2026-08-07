@@ -377,13 +377,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2
   },
   actionTextWrapper: { flex: 1 },
-  actionTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A', marginBottom: 2, fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif' },
+  actionTitle: { fontSize: 20, fontWeight: '800', color: '#1b2b4c', marginBottom: 2, fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif' },
   actionSub: { fontSize: 13, color: '#64748B', fontWeight: '500' },
   checkInBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#1b2b4c',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
@@ -401,14 +401,14 @@ const styles = StyleSheet.create({
   logToggleBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   logToggleBtnActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
   logToggleText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
-  logToggleTextActive: { color: '#0F172A' },
-  shadowSm: { shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  logToggleTextActive: { color: '#1b2b4c' },
+  shadowSm: { shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
 
   clockContainer: { backgroundColor: '#F8FAFC', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center', marginBottom: 24, alignSelf: 'center', width: '100%' },
-  clockTime: { fontSize: 28, fontWeight: '800', color: '#3B82F6', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing: 1 },
+  clockTime: { fontSize: 28, fontWeight: '800', color: '#1b2b4c', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing: 1 },
   clockLabel: { fontSize: 10, color: '#64748B', fontWeight: '700', letterSpacing: 1.5, marginTop: 4 },
   
-  recordName: { fontSize: 12, fontWeight: '700', color: '#3B82F6', marginBottom: 2 },
+  recordName: { fontSize: 12, fontWeight: '700', color: '#1b2b4c', marginBottom: 2 },
   
   sectionTitle: { fontSize: 12, fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
   emptyText: { color: '#9CA3AF', fontSize: 14, fontStyle: 'italic' },

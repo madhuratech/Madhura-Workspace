@@ -14,7 +14,7 @@ import {
 import { cachedGet, saveWorkspaceCache, loadWorkspaceCache } from '../utils/api';
 
 const { width } = Dimensions.get('window');
-const PRIMARY = '#4F46E5';
+const PRIMARY = '#1b2b4c';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -106,7 +106,7 @@ const AnimatedProgressRing = ({ percentage, color = PRIMARY, size = 100, strokeW
         />
       </Svg>
       <View style={{ position: 'absolute' }}>
-        <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A' }}>{Math.round(percentage)}%</Text>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: '#1b2b4c' }}>{Math.round(percentage)}%</Text>
       </View>
     </View>
   );
@@ -133,7 +133,7 @@ const AnimatedBar = ({ label, value, max, color }) => {
     <View style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
         <Text style={{ fontSize: 13, fontWeight: '600', color: '#475569' }}>{label}</Text>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: '#0F172A' }}>{value}</Text>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: '#1b2b4c' }}>{value}</Text>
       </View>
       <View style={{ height: 8, backgroundColor: '#F1F5F9', borderRadius: 4, overflow: 'hidden' }}>
         <Animated.View style={{ height: '100%', backgroundColor: color, width, borderRadius: 4 }} />
@@ -224,7 +224,7 @@ export default function DashboardScreen({ navigation }) {
         
         {/* ── Premium Gradient Header ──────────────────────────────── */}
         <LinearGradient
-          colors={['#312E81', '#4F46E5', '#6366F1']}
+          colors={['#312E81', '#1b2b4c', '#6366F1']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.headerGradient, { paddingTop: Math.max(insets.top, 20) + 10 }]}
@@ -329,7 +329,7 @@ export default function DashboardScreen({ navigation }) {
               <View style={styles.graphCard}>
                 <Text style={styles.graphTitle}>Task Status</Text>
                 <AnimatedBar label="Completed" value={stats.completedTasks} max={stats.tasks} color="#10B981" />
-                <AnimatedBar label="In Progress" value={stats.inProgressTasks} max={stats.tasks} color="#3B82F6" />
+                <AnimatedBar label="In Progress" value={stats.inProgressTasks} max={stats.tasks} color="#1b2b4c" />
                 <AnimatedBar label="Pending" value={stats.pendingTasks} max={stats.tasks} color="#F59E0B" />
               </View>
 
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   qaGrid: {
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between',
     backgroundColor: '#fff', borderRadius: 24, paddingHorizontal: 20, paddingVertical: 20,
-    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 8,
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 8,
   },
   qaChip: {
     flex: 1, alignItems: 'center', paddingVertical: 4
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   // Sections
   section: { marginTop: 36 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 24, marginBottom: 18 },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#0F172A', letterSpacing: -0.3 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: '#1b2b4c', letterSpacing: -0.3 },
   seeAll: { fontSize: 14, fontWeight: '700', color: PRIMARY },
 
   // Carousel
@@ -452,14 +452,14 @@ const styles = StyleSheet.create({
   carouselCard: {
     width: width * 0.7, backgroundColor: '#fff', borderRadius: 24, padding: 24,
     borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 4,
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 4,
     marginRight: 16,
   },
   carouselIcon: {
     width: 48, height: 48, borderRadius: 16, backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
-  carouselTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
+  carouselTitle: { fontSize: 18, fontWeight: '700', color: '#1b2b4c', marginBottom: 4 },
   carouselSub: { fontSize: 14, color: '#64748B', fontWeight: '500' },
 
   // Activity List
@@ -467,13 +467,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     marginHorizontal: 24, marginTop: 12, padding: 20, borderRadius: 24,
     borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 3,
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 3,
   },
   activityIcon: {
     width: 40, height: 40, borderRadius: 12, backgroundColor: '#F8FAFC',
     justifyContent: 'center', alignItems: 'center', marginRight: 16,
   },
-  activityTitle: { fontSize: 15, fontWeight: '600', color: '#0F172A', marginBottom: 2 },
+  activityTitle: { fontSize: 15, fontWeight: '600', color: '#1b2b4c', marginBottom: 2 },
   activitySub: { fontSize: 13, color: '#64748B' },
 
   // Tracking Graphs
@@ -485,23 +485,23 @@ const styles = StyleSheet.create({
   graphCard: {
     backgroundColor: '#fff', borderRadius: 24, padding: 24,
     borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 4,
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 16, elevation: 4,
     marginBottom: 16,
   },
-  graphTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 20 },
+  graphTitle: { fontSize: 17, fontWeight: '700', color: '#1b2b4c', marginBottom: 20 },
 
   // Reminder Cards
   reminderCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 20, padding: 16,
     borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#4F46E5', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
     marginBottom: 12,
   },
   reminderIconBox: {
     width: 44, height: 44, borderRadius: 14,
     justifyContent: 'center', alignItems: 'center', marginRight: 16,
   },
-  reminderTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  reminderTitle: { fontSize: 15, fontWeight: '700', color: '#1b2b4c' },
   reminderSub: { fontSize: 13, color: '#64748B', fontWeight: '500' },
 });

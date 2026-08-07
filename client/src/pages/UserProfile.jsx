@@ -274,7 +274,7 @@ const UserProfile = () => {
                 </button>
                 <button 
                   onClick={saveCroppedImage}
-                  className="px-4 py-2 text-sm font-medium bg-accent-blue text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 text-sm font-medium bg-[#1b2b4c] text-white hover:text-[#ffca22] rounded-lg hover:bg-[#1b2b4c]/90 transition-colors flex items-center gap-2"
                 >
                   <Check size={16}/> Save Picture
                 </button>

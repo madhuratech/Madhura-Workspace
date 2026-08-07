@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FolderKanban, Users, ChevronRight } from 'lucide-react-native';
 import { cachedGet } from '../utils/api';
 
-const PRIMARY = '#4F46E5';
+const PRIMARY = '#1b2b4c';
 
 const ACCENT_COLORS = [PRIMARY, '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2'];
 

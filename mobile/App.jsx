@@ -34,7 +34,7 @@ import NotesScreen from './src/screens/NotesScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
 
-const PRIMARY = '#4F46E5';
+const PRIMARY = '#ffca22';
 // ─── Stacks ────────────────────────────────────────────────────────────────
 const ProjectsStack = createNativeStackNavigator();
 function ProjectsNavigator() {
@@ -225,7 +225,7 @@ const AnimatedLoading = () => {
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A' }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1b2b4c' }}>
       <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: pulseAnim }], alignItems: 'center' }}>
         <View style={{
           width: 72, height: 72, borderRadius: 24,

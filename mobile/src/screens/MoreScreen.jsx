@@ -63,7 +63,7 @@ export default function MoreScreen({ navigation }) {
     {
       section: 'Communication',
       items: [
-        { icon: Megaphone,    label: 'Notice Board',      sub: 'Announcements & Alerts',          route: 'Announcements',   iconBg: '#EFF6FF', iconColor: '#3B82F6'   },
+        { icon: Megaphone,    label: 'Notice Board',      sub: 'Announcements & Alerts',          route: 'Announcements',   iconBg: '#EFF6FF', iconColor: '#1b2b4c'   },
         { icon: Mail,         label: 'Email',             sub: 'Internal messages',               route: 'Email',           iconBg: '#F0FDF4', iconColor: '#059669'   },
         { icon: CalendarDays, label: 'Meetings',          sub: 'Schedule and upcoming',           route: 'Meetings',        iconBg: '#FFF7ED', iconColor: '#D97706'   },
       ],
@@ -72,7 +72,7 @@ export default function MoreScreen({ navigation }) {
       section: 'Tools',
       items: [
         { icon: Clock,        label: 'Attendance & Leave', sub: 'Check in and time off',         route: 'AttendanceLeave', iconBg: '#FEF2F2', iconColor: '#DC2626'   },
-        { icon: LifeBuoy,     label: 'Support Tickets',   sub: 'IT & HR Support requests',       route: 'Tickets',         iconBg: '#EFF6FF', iconColor: '#3B82F6'   },
+        { icon: LifeBuoy,     label: 'Support Tickets',   sub: 'IT & HR Support requests',       route: 'Tickets',         iconBg: '#EFF6FF', iconColor: '#1b2b4c'   },
         { icon: StickyNote,   label: 'Quick Notes',       sub: 'Personal scratchpad',            route: 'Notes',           iconBg: '#FEF9C3', iconColor: '#EAB308'   },
         ...(role === 'super_admin' || role === 'hr' ? [
           { icon: BarChart3,  label: 'Analytics',         sub: 'Reports & Productivity',         route: 'Analytics',       iconBg: '#F5F3FF', iconColor: '#8B5CF6'   }

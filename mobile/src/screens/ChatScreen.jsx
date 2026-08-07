@@ -8,7 +8,7 @@ import { Hash, Lock, MessageCircle, Search, Users } from 'lucide-react-native';
 import { cachedGet } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 
-const PRIMARY = '#4F46E5';
+const PRIMARY = '#1b2b4c';
 
 const CHANNEL_COLORS = [PRIMARY, '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2'];
 

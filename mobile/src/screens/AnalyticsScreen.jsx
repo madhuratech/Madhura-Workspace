@@ -38,7 +38,7 @@ export default function AnalyticsScreen({ navigation }) {
 
   const getProductivityColor = (score) => {
     if (score >= 90) return '#10B981'; // Emerald
-    if (score >= 75) return '#3B82F6'; // Blue
+    if (score >= 75) return '#1b2b4c'; // Blue
     if (score >= 60) return '#F59E0B'; // Amber
     return '#EF4444'; // Red
   };
@@ -112,7 +112,7 @@ export default function AnalyticsScreen({ navigation }) {
             <View style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>Attendance</Text>
-                <TrendingUp color="#3B82F6" size={18} />
+                <TrendingUp color="#1b2b4c" size={18} />
               </View>
               <Text style={styles.cardValue}>{summary.overallAttendanceRate}%</Text>
               <Text style={styles.cardSub}>Avg presence rate</Text>

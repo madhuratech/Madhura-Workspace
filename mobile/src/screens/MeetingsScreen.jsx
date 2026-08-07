@@ -79,11 +79,11 @@ const MeetingCard = ({ item }) => {
 
         <View style={styles.metaRow}>
           {isOnline ? (
-            <Video color="#3B82F6" size={13} style={{ marginRight: 5 }} />
+            <Video color="#1b2b4c" size={13} style={{ marginRight: 5 }} />
           ) : (
             <MapPin color="#10B981" size={13} style={{ marginRight: 5 }} />
           )}
-          <Text style={[styles.metaText, isOnline && { color: '#3B82F6', fontWeight: '600' }]}>
+          <Text style={[styles.metaText, isOnline && { color: '#1b2b4c', fontWeight: '600' }]}>
             {isOnline ? 'Online Meeting' : (item.location || 'Direct Meet')}
           </Text>
         </View>
@@ -150,7 +150,7 @@ export default function MeetingsScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Meetings</Text>
@@ -160,7 +160,7 @@ export default function MeetingsScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color="#1b2b4c" />
         </View>
       ) : sections.length === 0 ? (
         <View style={styles.center}>

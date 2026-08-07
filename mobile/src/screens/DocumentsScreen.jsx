@@ -17,7 +17,7 @@ const FILE_TYPE_CONFIG = {
 
 const FOLDER_COLORS = {
   'Employee Docs': { bg: '#FCE7F3', icon: '#DB2777', border: '#FBCFE8' },
-  'Project Files': { bg: '#E0E7FF', icon: '#4F46E5', border: '#C7D2FE' },
+  'Project Files': { bg: '#E0E7FF', icon: '#1b2b4c', border: '#C7D2FE' },
   'General': { bg: '#DBEAFE', icon: '#2563EB', border: '#BFDBFE' }
 };
 
@@ -66,7 +66,7 @@ const DocCard = ({ item, onDownload }) => {
       </View>
       {item.fileUrl && (
         <TouchableOpacity style={styles.downloadBtn} onPress={() => onDownload(item.fileUrl)}>
-          <Download color="#3B82F6" size={18} strokeWidth={2} />
+          <Download color="#1b2b4c" size={18} strokeWidth={2} />
         </TouchableOpacity>
       )}
     </View>
@@ -114,7 +114,7 @@ export default function DocumentsScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Documents</Text>
@@ -154,7 +154,7 @@ export default function DocumentsScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color="#1b2b4c" />
         </View>
       ) : (
         <FlatList
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
-  headerTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A' },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#1b2b4c' },
   headerSub: { fontSize: 13, color: '#64748B', marginTop: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   listHeaderTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A'
+    color: '#1b2b4c'
   },
 
   listContent: { padding: 16, paddingTop: 4, paddingBottom: 100 },
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
     borderRadius: 16, padding: 14, marginBottom: 10,
     borderWidth: 1, borderColor: '#F1F5F9',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
   },
   fileIconWrap: {
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginRight: 14,
   },
   fileInfo: { flex: 1 },
-  fileTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A', marginBottom: 2 },
+  fileTitle: { fontSize: 15, fontWeight: '700', color: '#1b2b4c', marginBottom: 2 },
   fileName: { fontSize: 12, color: '#94A3B8', marginBottom: 6 },
   fileMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   typeBadge: {

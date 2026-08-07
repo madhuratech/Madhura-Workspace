@@ -13,7 +13,7 @@ import { cachedGet, invalidateCache } from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
-const PRIMARY = '#4F46E5';
+const PRIMARY = '#1b2b4c';
 
 const PRIORITY = {
   High:   { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   boardCard: {
     flexDirection: 'row', marginHorizontal: 8, marginTop: 8, borderRadius: 6,
     backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden',
-    shadowColor: '#0F172A', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
   boardAccent: { width: 3 },
   boardBody: { flex: 1, padding: 12 },

@@ -8,7 +8,7 @@ const COLORS = {
   primary: '#5B5BD6',
   white: '#FFFFFF',
   background: '#F8FAFC',
-  textPrimary: '#0F172A',
+  textPrimary: '#1b2b4c',
   textSecondary: '#64748B',
   border: '#F1F5F9',
 };
@@ -90,7 +90,7 @@ const TicketsScreen = () => {
   const getStatusColor = (status) => {
     switch(status) {
       case 'Open': return '#eab308';
-      case 'In Progress': return '#3b82f6';
+      case 'In Progress': return '#1b2b4c';
       case 'Resolved': return '#22c55e';
       case 'Closed': return '#6b7280';
       default: return '#6b7280';

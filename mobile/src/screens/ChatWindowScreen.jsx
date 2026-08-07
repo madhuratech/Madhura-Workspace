@@ -367,11 +367,11 @@ export default function ChatWindowScreen({ route, navigation }) {
                     Linking.openURL(`${baseUrl}${item.attachment.url}`)
                   }
                 >
-                  <File color={isMine ? '#fff' : '#3B82F6'} size={22} />
+                  <File color={isMine ? '#fff' : '#1b2b4c'} size={22} />
                   <Text
                     style={[
                       styles.fileName,
-                      { color: isMine ? '#fff' : '#3B82F6' },
+                      { color: isMine ? '#fff' : '#1b2b4c' },
                     ]}
                     numberOfLines={1}
                   >
@@ -396,7 +396,7 @@ export default function ChatWindowScreen({ route, navigation }) {
                       key={i}
                       style={[
                         { fontWeight: '700' },
-                        isMine ? { color: '#fff', backgroundColor: 'rgba(255,255,255,0.2)' } : { color: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)' }
+                        isMine ? { color: '#fff', backgroundColor: 'rgba(255,255,255,0.2)' } : { color: '#1b2b4c', backgroundColor: 'rgba(59,130,246,0.1)' }
                       ]}
                     >
                       {part}
@@ -437,7 +437,7 @@ export default function ChatWindowScreen({ route, navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>
@@ -453,7 +453,7 @@ export default function ChatWindowScreen({ route, navigation }) {
       >
         {loading ? (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#3B82F6" />
+            <ActivityIndicator size="large" color="#1b2b4c" />
           </View>
         ) : messages.length === 0 ? (
           <View style={styles.center}>
@@ -482,7 +482,7 @@ export default function ChatWindowScreen({ route, navigation }) {
         {showAttachMenu && (
           <View style={styles.attachMenu}>
             {[
-              { type: 'image',    icon: ImageIcon, color: '#3B82F6', bg: '#EFF6FF', label: 'Image'    },
+              { type: 'image',    icon: ImageIcon, color: '#1b2b4c', bg: '#EFF6FF', label: 'Image'    },
               { type: 'video',    icon: Video,     color: '#EF4444', bg: '#FEF2F2', label: 'Video'    },
               { type: 'file',     icon: File,      color: '#F59E0B', bg: '#FFFBEB', label: 'Document' },
             ].map(({ type, icon: Icon, color, bg, label }) => (
@@ -502,7 +502,7 @@ export default function ChatWindowScreen({ route, navigation }) {
 
         {uploading && (
           <View style={styles.uploadingContainer}>
-            <ActivityIndicator size="small" color="#3B82F6" />
+            <ActivityIndicator size="small" color="#1b2b4c" />
             <Text style={styles.uploadingText}>Uploading file…</Text>
           </View>
         )}
@@ -553,7 +553,7 @@ export default function ChatWindowScreen({ route, navigation }) {
             }}
           >
             <Smile
-              color={showEmojiPicker ? '#3B82F6' : '#94A3B8'}
+              color={showEmojiPicker ? '#1b2b4c' : '#94A3B8'}
               size={22}
             />
           </TouchableOpacity>
@@ -567,7 +567,7 @@ export default function ChatWindowScreen({ route, navigation }) {
             }}
           >
             <Paperclip
-              color={showAttachMenu ? '#3B82F6' : '#94A3B8'}
+              color={showAttachMenu ? '#1b2b4c' : '#94A3B8'}
               size={22}
             />
           </TouchableOpacity>
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
   headerInfo: { flex: 1 },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#1b2b4c' },
 
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: 14, color: '#94A3B8', fontWeight: '500' },
@@ -639,13 +639,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginRight: 8, alignSelf: 'flex-end', marginBottom: 4,
   },
-  avatarText: { fontSize: 13, fontWeight: '700', color: '#4F46E5' },
+  avatarText: { fontSize: 13, fontWeight: '700', color: '#1b2b4c' },
   avatarSpacer: { width: 30, marginRight: 8 },
 
   msgBubble: {
     maxWidth: '82%', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8,
   },
-  msgBubbleMine: { backgroundColor: '#4F46E5', borderBottomRightRadius: 2 },
+  msgBubbleMine: { backgroundColor: '#1b2b4c', borderBottomRightRadius: 2 },
   msgBubbleOther: {
     backgroundColor: '#fff', borderBottomLeftRadius: 2,
     borderWidth: 1, borderColor: '#E5E7EB',
@@ -692,11 +692,11 @@ const styles = StyleSheet.create({
     borderRadius: 8, paddingHorizontal: 14,
     paddingTop: 10, paddingBottom: 10,
     maxHeight: 120, minHeight: 40,
-    marginLeft: 4, fontSize: 15, color: '#0F172A',
+    marginLeft: 4, fontSize: 15, color: '#1b2b4c',
   },
   sendBtn: {
     width: 40, height: 40, borderRadius: 8,
-    backgroundColor: '#4F46E5', justifyContent: 'center',
+    backgroundColor: '#1b2b4c', justifyContent: 'center',
     alignItems: 'center', marginLeft: 10,
   },
   sendBtnDisabled: { backgroundColor: '#CBD5E1' },
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
     width: 28, height: 28, borderRadius: 14, backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center', marginRight: 10,
   },
-  mentionAvatarText: { color: '#4F46E5', fontSize: 12, fontWeight: '700' },
+  mentionAvatarText: { color: '#1b2b4c', fontSize: 12, fontWeight: '700' },
   mentionName: { fontSize: 14, color: '#1E293B', fontWeight: '500' },
   mentionEmpty: { padding: 12, textAlign: 'center', color: '#94A3B8', fontSize: 14 },
 
@@ -747,7 +747,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'center', backgroundColor: '#EEF2FF', padding: 10,
   },
-  uploadingText: { marginLeft: 8, fontSize: 13, color: '#4F46E5', fontWeight: '500' },
+  uploadingText: { marginLeft: 8, fontSize: 13, color: '#1b2b4c', fontWeight: '500' },
 
   // Editing bar
   editingBar: {
@@ -755,6 +755,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF', paddingHorizontal: 16, paddingVertical: 10,
     borderTopWidth: 1, borderTopColor: '#C7D2FE',
   },
-  editingText: { fontSize: 13, color: '#4F46E5', fontWeight: '500' },
+  editingText: { fontSize: 13, color: '#1b2b4c', fontWeight: '500' },
   cancelEditText: { fontSize: 13, color: '#EF4444', fontWeight: '600' },
 });

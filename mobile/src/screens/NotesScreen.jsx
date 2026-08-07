@@ -180,7 +180,7 @@ export default function NotesScreen({ navigation }) {
         <Text style={styles.cardDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
         <View style={styles.cardActions}>
           <TouchableOpacity onPress={() => togglePin(item._id, item.isPinned)} style={styles.iconBtn}>
-            <Pin size={14} color={item.isPinned ? '#3B82F6' : '#94A3B8'} />
+            <Pin size={14} color={item.isPinned ? '#1b2b4c' : '#94A3B8'} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => handleDelete(item._id)} style={styles.iconBtn}>
             <Trash2 size={14} color="#EF4444" />
@@ -195,7 +195,7 @@ export default function NotesScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>Quick Notes</Text>
@@ -204,7 +204,7 @@ export default function NotesScreen({ navigation }) {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color="#1b2b4c" />
         </View>
       ) : (
         <FlatList
@@ -234,15 +234,15 @@ export default function NotesScreen({ navigation }) {
         <KeyboardAvoidingView style={styles.modalContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={[styles.modalHeader, { backgroundColor: color }]}>
             <TouchableOpacity onPress={handleSave} style={styles.modalCloseBtn}>
-              <ArrowLeft color="#0F172A" size={24} />
+              <ArrowLeft color="#1b2b4c" size={24} />
             </TouchableOpacity>
             <View style={styles.modalActions}>
               <TouchableOpacity onPress={() => setIsPinned(!isPinned)} style={styles.modalIconBtn}>
-                <Pin color={isPinned ? '#3B82F6' : '#64748B'} size={22} />
+                <Pin color={isPinned ? '#1b2b4c' : '#64748B'} size={22} />
               </TouchableOpacity>
               <TouchableOpacity onPress={pickImage} style={styles.modalIconBtn}>
                 <ImageIcon color="#64748B" size={22} />
-                {uploadingImage && <ActivityIndicator size="small" color="#3B82F6" style={StyleSheet.absoluteFill} />}
+                {uploadingImage && <ActivityIndicator size="small" color="#1b2b4c" style={StyleSheet.absoluteFill} />}
               </TouchableOpacity>
             </View>
           </View>
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginRight: 12,
   },
   headerInfo: { flex: 1 },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0F172A' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#1b2b4c' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   
   listContent: { padding: 12, paddingBottom: 100 },
@@ -335,9 +335,9 @@ const styles = StyleSheet.create({
   
   fab: {
     position: 'absolute', bottom: 24, right: 24,
-    width: 56, height: 56, borderRadius: 28, backgroundColor: '#3B82F6',
+    width: 56, height: 56, borderRadius: 28, backgroundColor: '#1b2b4c',
     justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#3B82F6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5
+    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5
   },
   
   emptyContainer: { alignItems: 'center', marginTop: 100 },
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   
   modalBody: { flex: 1 },
   modalBodyContent: { padding: 16, paddingBottom: 40 },
-  inputTitle: { fontSize: 24, fontWeight: '700', color: '#0F172A', marginBottom: 16 },
+  inputTitle: { fontSize: 24, fontWeight: '700', color: '#1b2b4c', marginBottom: 16 },
   inputContent: { fontSize: 16, color: '#334155', lineHeight: 24, minHeight: 150 },
   
   attachmentPreview: { marginTop: 16, borderRadius: 12, overflow: 'hidden', position: 'relative' },
@@ -370,5 +370,5 @@ const styles = StyleSheet.create({
     width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)',
     marginRight: 12,
   },
-  colorSelected: { borderWidth: 2, borderColor: '#3B82F6' }
+  colorSelected: { borderWidth: 2, borderColor: '#1b2b4c' }
 });

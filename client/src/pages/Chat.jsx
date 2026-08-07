@@ -586,7 +586,7 @@ const Chat = () => {
                         {/* Message Bubble */}
                         <div className={`relative min-w-[80px] max-w-full shadow-sm flex flex-col ${
                           isMine 
-                            ? 'bg-accent-blue text-white rounded-2xl rounded-tr-sm' 
+                            ? 'bg-[#1b2b4c] text-white hover:text-[#ffca22] rounded-2xl rounded-tr-sm' 
                             : 'bg-bg-primary text-text-primary rounded-2xl rounded-tl-sm border border-border/50'
                         }`}>
                           
@@ -788,7 +788,7 @@ const Chat = () => {
             <button 
               type="submit" 
               disabled={!newMessage.trim()}
-              className="absolute right-3 bottom-2 text-white bg-accent-blue p-1.5 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:bg-text-secondary transition-colors"
+              className="absolute right-3 bottom-2 text-white bg-accent-blue p-1.5 rounded-lg hover:bg-[#1b2b4c]/90 disabled:opacity-50 disabled:bg-text-secondary transition-colors"
             >
               <Send size={16} />
             </button>

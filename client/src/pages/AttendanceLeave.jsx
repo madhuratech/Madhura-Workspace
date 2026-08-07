@@ -165,7 +165,7 @@ const AttendanceLeave = () => {
         </div>
         <div className="flex space-x-6 items-center">
           {activeTab === 'leave' && (
-            <button onClick={() => setIsLeaveModalOpen(true)} className="bg-[#4285f4] text-white px-5 py-2.5 rounded-xl hover:bg-blue-600 transition-colors text-sm font-semibold flex items-center shadow-md">
+            <button onClick={() => setIsLeaveModalOpen(true)} className="bg-[#4285f4] text-white px-5 py-2.5 rounded-xl hover:bg-[#1b2b4c]/90 transition-colors text-sm font-semibold flex items-center shadow-md">
               <span>Apply Leave</span>
             </button>
           )}
@@ -238,7 +238,7 @@ const AttendanceLeave = () => {
                     </div>
                   ) : (
                     <div className="flex flex-col items-end">
-                      <button onClick={handleCheckIn} className="bg-accent-blue text-white px-6 py-2.5 rounded-xl hover:bg-blue-600 transition-all font-bold flex items-center shadow-md hover:shadow-blue-500/25 active:scale-95 group text-sm">
+                      <button onClick={handleCheckIn} className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-6 py-2.5 rounded-xl hover:bg-[#1b2b4c]/90 transition-all font-bold flex items-center shadow-md hover:shadow-blue-500/25 active:scale-95 group text-sm">
                         <LogIn size={18} className="mr-2 group-hover:translate-x-1 transition-transform" />
                         Punch In
                       </button>

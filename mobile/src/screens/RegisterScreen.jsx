@@ -100,7 +100,7 @@ export default function RegisterScreen({ navigation }) {
                 style={styles.input}
                 value="MD (Initial Setup)"
                 editable={false}
-                color="#0F172A"
+                color="#1b2b4c"
               />
             </View>
             <Text style={styles.noteText}>
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   content: { flex: 1, paddingHorizontal: 28, justifyContent: 'center', paddingBottom: 40 },
   header: { marginBottom: 32, marginTop: 40 },
-  title: { fontSize: 32, fontWeight: '800', color: '#0F172A', marginBottom: 12, letterSpacing: -1 },
+  title: { fontSize: 32, fontWeight: '800', color: '#1b2b4c', marginBottom: 12, letterSpacing: -1 },
   subtitle: { fontSize: 16, color: '#64748B', fontWeight: '400' },
   
   errorBox: {
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   errorText: { color: '#DC2626', fontSize: 13, fontWeight: '500', textAlign: 'center' },
   
   form: { width: '100%' },
-  label: { fontSize: 14, fontWeight: '700', color: '#0F172A', marginBottom: 8 },
+  label: { fontSize: 14, fontWeight: '700', color: '#1b2b4c', marginBottom: 8 },
   inputContainer: {
     flexDirection: 'row', alignItems: 'center',
     borderWidth: 1, borderColor: '#E2E8F0',
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   input: {
-    flex: 1, height: '100%', paddingHorizontal: 16, fontSize: 15, color: '#0F172A'
+    flex: 1, height: '100%', paddingHorizontal: 16, fontSize: 15, color: '#1b2b4c'
   },
   eyeIcon: { padding: 16 },
   
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   
   loginBtn: {
-    backgroundColor: '#0F172A', borderRadius: 8,
+    backgroundColor: '#1b2b4c', borderRadius: 8,
     height: 52, justifyContent: 'center', alignItems: 'center',
     marginTop: 8,
   },

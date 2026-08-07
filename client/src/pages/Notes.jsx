@@ -182,7 +182,7 @@ const Notes = () => {
         </div>
         <button 
           onClick={() => openForm()}
-          className="bg-accent-blue text-white px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg shadow-accent-blue/30 hover:bg-blue-600 transition-colors"
+          className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg shadow-accent-blue/30 hover:bg-[#1b2b4c]/90 transition-colors"
         >
           <Plus size={18} />
           <span>New Note</span>
@@ -267,7 +267,7 @@ const Notes = () => {
               
               <div className="flex items-center space-x-2">
                 <button onClick={closeForm} className="px-4 py-1.5 text-sm font-medium text-gray-600 hover:bg-black/5 rounded-lg">Close</button>
-                <button onClick={saveNote} className="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm">Save</button>
+                <button onClick={saveNote} className="px-4 py-1.5 text-sm font-medium text-white bg-[#1b2b4c] hover:bg-blue-700 rounded-lg shadow-sm">Save</button>
               </div>
             </div>
           </div>

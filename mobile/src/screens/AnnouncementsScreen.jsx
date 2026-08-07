@@ -101,7 +101,7 @@ const AnnouncementsScreen = () => {
       <View style={styles.header}>
         <View style={styles.headerTitleContainer}>
           <View style={styles.headerIconBg}>
-            <Megaphone size={20} color="#3b82f6" />
+            <Megaphone size={20} color="#1b2b4c" />
           </View>
           <Text style={styles.headerTitle}>Notice Board</Text>
         </View>
@@ -109,7 +109,7 @@ const AnnouncementsScreen = () => {
 
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#3b82f6" />
+          <ActivityIndicator size="large" color="#1b2b4c" />
         </View>
       ) : (
         <FlatList
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   header: { padding: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
   headerTitleContainer: { flexDirection: 'row', alignItems: 'center' },
   headerIconBg: { padding: 8, backgroundColor: '#eff6ff', borderRadius: 10, marginRight: 12 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#0f172a' },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#1b2b4c' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { padding: 16, paddingBottom: 80 },
   card: { backgroundColor: '#fff', padding: 16, borderRadius: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2, borderWidth: 1, borderColor: '#f1f5f9' },
@@ -215,28 +215,28 @@ const styles = StyleSheet.create({
   dateText: { fontSize: 10, color: '#6b7280', marginLeft: 4 },
   badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   badgeText: { fontSize: 10, fontWeight: '600', marginLeft: 4 },
-  title: { fontSize: 16, fontWeight: 'bold', color: '#0f172a', marginBottom: 8 },
+  title: { fontSize: 16, fontWeight: 'bold', color: '#1b2b4c', marginBottom: 8 },
   contentContainer: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#f1f5f9' },
   content: { fontSize: 14, color: '#475569', lineHeight: 20 },
   emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 60 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: '#64748b', marginTop: 16 },
   emptySub: { fontSize: 14, color: '#94a3b8', marginTop: 8 },
-  fab: { position: 'absolute', right: 20, bottom: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: '#3b82f6', justifyContent: 'center', alignItems: 'center', shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+  fab: { position: 'absolute', right: 20, bottom: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: '#1b2b4c', justifyContent: 'center', alignItems: 'center', shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, minHeight: '60%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#0f172a' },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#1b2b4c' },
   closeBtn: { padding: 8, backgroundColor: '#f1f5f9', borderRadius: 20 },
   formGroup: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#475569', marginBottom: 8 },
-  input: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 12, fontSize: 14, color: '#0f172a' },
+  input: { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, padding: 12, fontSize: 14, color: '#1b2b4c' },
   textArea: { height: 120, textAlignVertical: 'top' },
   typeSelector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   typeOption: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#e2e8f0' },
-  typeOptionActive: { backgroundColor: '#eff6ff', borderColor: '#3b82f6' },
+  typeOptionActive: { backgroundColor: '#eff6ff', borderColor: '#1b2b4c' },
   typeText: { fontSize: 12, fontWeight: '600', color: '#64748b' },
-  typeTextActive: { color: '#3b82f6' },
-  submitBtn: { backgroundColor: '#3b82f6', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 20 },
+  typeTextActive: { color: '#1b2b4c' },
+  submitBtn: { backgroundColor: '#1b2b4c', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 20 },
   submitBtnDisabled: { opacity: 0.7 },
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
 });

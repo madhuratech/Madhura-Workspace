@@ -59,7 +59,7 @@ export default function RegisterMemberScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#0F172A" size={22} />
+          <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Register Member</Text>
         <View style={{ width: 38 }} />
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#1b2b4c' },
   
   content: { padding: 24, paddingBottom: 60 },
   subtitle: { fontSize: 14, color: '#6B7280', marginBottom: 24, lineHeight: 20 },
