@@ -256,13 +256,17 @@ const Chat = () => {
 
   const handleSendMessage = async (e, customAttachment = null) => {
     if (e) e.preventDefault();
-    if (!customAttachment && !newMessage.trim()) return;
+    const textToSend = newMessage;
+    if (!customAttachment && !textToSend.trim()) return;
     if (!workspace) return;
     if (!activeChannel && !activeDM) return;
     
+    // Clear input immediately for snappy feel
+    if (!customAttachment) setNewMessage('');
+
     try {
       const payload = { 
-        text: newMessage,
+        text: textToSend,
         attachment: customAttachment
       };
 
@@ -271,9 +275,10 @@ const Chat = () => {
       } else if (activeDM) {
         await axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages`, payload);
       }
-      setNewMessage('');
     } catch (error) {
       console.error(error);
+      // Restore input if failed
+      if (!customAttachment) setNewMessage(textToSend);
     }
   };
 
@@ -636,13 +641,13 @@ const Chat = () => {
                                   if (!part) return null;
                                   if (part.startsWith('@')) {
                                     return (
-                                      <span key={i} className={`font-semibold px-1 rounded ${isMine ? 'bg-white/20 text-white' : 'text-accent-blue bg-accent-blue/10'}`}>
+                                      <span key={i} className={`font-semibold px-1 rounded ${isMine ? 'bg-accent-text/20 text-accent-text' : 'text-accent-blue bg-accent-blue/10'}`}>
                                         {part}
                                       </span>
                                     );
                                   } else if (part.startsWith('http://') || part.startsWith('https://')) {
                                     return (
-                                      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline hover:opacity-80 break-all ${isMine ? 'text-white font-bold' : 'text-accent-blue'}`}>
+                                      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline hover:opacity-80 break-all font-bold ${isMine ? 'text-accent-text' : 'text-accent-blue'}`}>
                                         {part}
                                       </a>
                                     );
@@ -654,15 +659,15 @@ const Chat = () => {
                               </div>
 
                               {/* Timestamp and Read Receipt at bottom */}
-                              <div className={`flex items-center justify-end space-x-1 text-[10.5px] -mt-3.5 ml-auto z-10 mr-1 ${isMine ? 'text-white/80' : 'text-black/50'}`}>
+                              <div className={`flex items-center justify-end space-x-1 text-[10.5px] -mt-3.5 ml-auto z-10 mr-1 ${isMine ? 'text-accent-text/80' : 'text-text-primary/70'}`}>
                                 {msg.isEdited && <span className="italic opacity-70 mr-1">edited</span>}
                                 <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 {isMine && (() => {
                                   const isRead = msg.readBy?.length > 0 || msg.isRead;
                                   const isDelivered = isRead || (activeDM && onlineUsers.has(activeDM.user._id));
                                   if (isRead) return <CheckCheck size={16} strokeWidth={2.5} className="text-[#53bdeb] ml-0.5" />;
-                                  if (isDelivered) return <CheckCheck size={16} strokeWidth={2.5} className="text-white/60 ml-0.5" />;
-                                  return <Check size={16} strokeWidth={2.5} className="text-white/60 ml-0.5" />;
+                                  if (isDelivered) return <CheckCheck size={16} strokeWidth={2.5} className="text-accent-text/60 ml-0.5" />;
+                                  return <Check size={16} strokeWidth={2.5} className="text-accent-text/60 ml-0.5" />;
                                 })()}
                               </div>
                             </div>
