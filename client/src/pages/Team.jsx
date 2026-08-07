@@ -39,14 +39,15 @@ const Team = () => {
         const currentWs = wsRes.data[0];
         setWorkspace(currentWs);
         
-        // Fetch full workspace details to get members
-        const detailRes = await axios.get(`/workspaces/${currentWs._id}`);
+        // Fetch full workspace details and teams in parallel for high speed
+        const [detailRes, teamsRes] = await Promise.all([
+          axios.get(`/workspaces/${currentWs._id}`),
+          axios.get(`/workspaces/${currentWs._id}/teams`)
+        ]);
+        
         // Filter out any orphaned members where user is null
         const validMembers = (detailRes.data.members || []).filter(m => m.user);
         setMembers(validMembers);
-        
-        // Fetch teams
-        const teamsRes = await axios.get(`/workspaces/${currentWs._id}/teams`);
         setTeams(teamsRes.data || []);
         
         // Find current user's role
@@ -125,9 +126,9 @@ const Team = () => {
   };
 
   if (loading) return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary h-full animate-fade-in">
-      <div className="w-12 h-12 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
-      <p className="text-text-secondary font-medium">Loading workspace...</p>
+    <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] h-full animate-fade-in">
+      <div className="w-10 h-10 border-2 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
+      <p className="text-sm text-text-secondary font-medium">Loading workspace...</p>
     </div>
   );
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
