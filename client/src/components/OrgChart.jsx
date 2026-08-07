@@ -49,14 +49,14 @@ const OrgChart = ({ members, teams }) => {
   const OrgNode = ({ member, isRoot }) => {
     if (!member) return null;
     return (
-      <div className="flex flex-col items-center justify-center p-4 bg-bg-primary border border-border hover:border-accent-blue/50 rounded-2xl shadow-sm transition-all min-w-[160px] max-w-[180px] z-10 bg-white dark:bg-bg-secondary">
-        <Avatar user={member.user} size="h-12 w-12" textClass="text-lg" showStatus={false} className="mb-3 border-2 border-bg-secondary shadow-sm" />
-        <h3 className="font-bold text-text-primary text-sm text-center line-clamp-1 w-full" title={member.user.name}>{member.user.name || 'Pending User'}</h3>
-        <span className={`mt-2 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getRoleColor(member.role)}`}>
+      <div className="flex flex-col items-center justify-center p-2 z-10 relative bg-bg-secondary">
+        <Avatar user={member.user} size="h-20 w-20" textClass="text-2xl" showStatus={true} className="mb-2 shadow-md border-4 border-bg-secondary bg-bg-secondary" />
+        <h3 className="font-bold text-text-primary text-sm text-center line-clamp-1 w-[140px]" title={member.user.name}>{member.user.name || 'Pending User'}</h3>
+        <span className={`mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getRoleColor(member.role)}`}>
           {getRoleLabel(member.role)}
         </span>
         {member.user.designation && (
-          <p className="text-xs text-text-secondary mt-1.5 text-center line-clamp-1 w-full" title={member.user.designation}>
+          <p className="text-[11px] text-text-secondary mt-1 text-center line-clamp-1 w-[140px]" title={member.user.designation}>
             {member.user.designation}
           </p>
         )}
@@ -157,8 +157,11 @@ const OrgChart = ({ members, teams }) => {
                         {leaderMember ? (
                           <OrgNode member={leaderMember} />
                         ) : (
-                          <div className="flex flex-col items-center justify-center p-4 bg-bg-primary border border-dashed border-border rounded-2xl min-w-[160px]">
-                            <p className="text-xs font-bold text-text-secondary uppercase">{team.name}</p>
+                          <div className="flex flex-col items-center justify-center p-2 z-10 relative bg-bg-secondary">
+                            <div className="h-20 w-20 rounded-full bg-bg-primary border-2 border-dashed border-border flex items-center justify-center mb-2 shadow-sm border-4 border-bg-secondary">
+                               <span className="text-xs font-bold text-text-secondary">N/A</span>
+                            </div>
+                            <p className="text-xs font-bold text-text-secondary uppercase line-clamp-1 w-[140px] text-center" title={team.name}>{team.name}</p>
                             <p className="text-[10px] text-text-secondary mt-1">No Leader</p>
                           </div>
                         )}
