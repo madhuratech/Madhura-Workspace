@@ -221,10 +221,17 @@ exports.getUnreadCounts = async (req, res) => {
   try {
     const mongoose = require('mongoose');
     const userId = new mongoose.Types.ObjectId(req.user._id);
+    const workspaceId = new mongoose.Types.ObjectId(req.params.workspaceId);
+
+    // Fetch channels for this workspace
+    const Channel = require('../models/Channel');
+    const channels = await Channel.find({ workspace: req.params.workspaceId });
+    const channelIds = channels.map(c => c._id);
 
     const unreadMessages = await Message.aggregate([
       {
         $match: {
+          channel: { $in: channelIds },
           sender: { $ne: userId },
           readBy: { $ne: userId }
         }
@@ -252,10 +259,16 @@ exports.getUnreadCounts = async (req, res) => {
       }
     });
 
+    // Fetch DMs for this workspace where user is a participant
+    const DM = require('../models/DM');
+    const dms = await DM.find({ workspace: req.params.workspaceId, participants: req.user._id });
+    const dmIds = dms.map(dm => dm._id);
+
     const DMMessage = require('../models/DMMessage');
     const dmUnreadMessages = await DMMessage.aggregate([
       {
         $match: {
+          dm: { $in: dmIds },
           sender: { $ne: userId },
           readBy: { $ne: userId }
         }
