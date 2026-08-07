@@ -173,7 +173,7 @@ const Layout = () => {
 
         {/* Logo area */}
         <div className="flex items-center md:w-[240px]">
-          <div className="h-12 bg-white rounded-lg flex items-center justify-center shadow-sm hidden sm:flex overflow-hidden px-4 py-1.5 w-[200px]">
+          <div className="h-14 flex items-center justify-center hidden sm:flex overflow-hidden px-2 w-[220px]">
             <img src="/Madhura-logo.webp" alt="Madhura Logo" className="h-full w-full object-contain" />
           </div>
         </div>
