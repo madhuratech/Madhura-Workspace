@@ -89,9 +89,12 @@ const Register = () => {
       {/* Left side - Branding (Hidden on mobile) */}
       <div className="hidden lg:flex flex-col justify-center items-center w-1/2 bg-bg-secondary border-r border-border p-12">
         <div className="max-w-md">
-          <h1 className="text-5xl font-extrabold text-text-primary tracking-tight mb-4">
-            Madhura<span className="text-accent-blue">Workspace</span>
-          </h1>
+          <div className="flex items-center mb-6">
+            <img src="/logo-round.svg" alt="Madhura Logo" className="w-16 h-16 mr-4 shadow-[0_0_15px_rgba(255,202,34,0.3)] rounded-full" />
+            <h1 className="text-5xl font-extrabold tracking-tight">
+              <span className="text-[#1b2b4c] dark:text-white">Madhura</span><span className="text-[#ffca22]">Workspace</span>
+            </h1>
+          </div>
           <p className="text-text-secondary text-lg leading-relaxed">
             The minimalist, all-in-one platform for modern teams. Streamline your workflow, collaborate seamlessly, and achieve more.
           </p>
@@ -101,9 +104,10 @@ const Register = () => {
       {/* Right side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 overflow-y-auto">
         <div className="w-full max-w-sm py-8">
-          <div className="mb-10 lg:hidden">
-            <h1 className="text-3xl font-extrabold text-text-primary tracking-tight">
-              Madhura<span className="text-accent-blue">WS</span>
+          <div className="mb-10 lg:hidden flex items-center">
+            <img src="/logo-round.svg" alt="Madhura Logo" className="w-10 h-10 mr-3 shadow-[0_0_10px_rgba(255,202,34,0.3)] rounded-full" />
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              <span className="text-[#1b2b4c] dark:text-white">Madhura</span><span className="text-[#ffca22]">WS</span>
             </h1>
           </div>
 
@@ -171,7 +175,7 @@ const Register = () => {
             )}
             <button 
               type="submit" 
-              className="w-full bg-text-primary text-bg-primary hover:bg-text-secondary font-bold py-3 px-4 rounded-lg transition-colors mt-4"
+              className="w-full bg-[#1b2b4c] text-white hover:bg-[#ffca22] hover:text-[#1b2b4c] hover:shadow-lg hover:-translate-y-0.5 font-bold py-3 px-4 rounded-lg transition-all duration-300 mt-4"
             >
               Sign Up
             </button>
@@ -179,7 +183,7 @@ const Register = () => {
 
           <p className="mt-8 text-center text-sm text-text-secondary">
             Already have an account?{' '}
-            <Link to="/login" className="text-text-primary hover:text-accent-blue font-semibold transition-colors">
+            <Link to="/login" className="text-[#1b2b4c] dark:text-white hover:text-[#ffca22] font-bold transition-colors">
               Sign in
             </Link>
           </p>

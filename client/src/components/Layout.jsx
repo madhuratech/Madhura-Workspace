@@ -438,10 +438,10 @@ const Layout = () => {
                   }`}
                 >
                   {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-blue rounded-r-full"></div>
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#ffca22] rounded-r-full shadow-[0_0_8px_rgba(255,202,34,0.6)]"></div>
                   )}
-                  <div className={`mb-1 ${isActive ? 'text-accent-blue' : ''}`}>{item.icon}</div>
-                  <span className="text-[10px] font-medium">{item.label}</span>
+                  <div className={`mb-1 ${isActive ? 'text-[#ffca22]' : ''}`}>{item.icon}</div>
+                  <span className={`text-[10px] font-medium ${isActive ? 'text-[#ffca22]' : ''}`}>{item.label}</span>
                 </Link>
               )
             })}
@@ -463,8 +463,8 @@ const Layout = () => {
                   : 'text-text-sidebar/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Settings size={22} className={`${location.pathname.startsWith('/settings') ? 'text-accent-blue' : ''}`} />
-              <span className="text-[10px] font-medium mt-1">Settings</span>
+              <Settings size={22} className={`${location.pathname.startsWith('/settings') ? 'text-[#ffca22]' : ''}`} />
+              <span className={`text-[10px] font-medium mt-1 ${location.pathname.startsWith('/settings') ? 'text-[#ffca22]' : ''}`}>Settings</span>
             </Link>
           </div>
         </aside>
