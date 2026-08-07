@@ -219,11 +219,14 @@ exports.markMessagesRead = async (req, res) => {
 
 exports.getUnreadCounts = async (req, res) => {
   try {
+    const mongoose = require('mongoose');
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+
     const unreadMessages = await Message.aggregate([
       {
         $match: {
-          sender: { $ne: req.user._id },
-          readBy: { $ne: req.user._id }
+          sender: { $ne: userId },
+          readBy: { $ne: userId }
         }
       },
       {
@@ -253,8 +256,8 @@ exports.getUnreadCounts = async (req, res) => {
     const dmUnreadMessages = await DMMessage.aggregate([
       {
         $match: {
-          sender: { $ne: req.user._id },
-          readBy: { $ne: req.user._id }
+          sender: { $ne: userId },
+          readBy: { $ne: userId }
         }
       },
       {
