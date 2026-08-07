@@ -491,18 +491,18 @@ const Layout = () => {
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
             
             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-3">Overview</p>
-            <Link to="/" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/' ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <LayoutDashboard size={16} />
               <span>Dashboard</span>
             </Link>
             
             { (user?.role === 'super_admin' || user?.role === 'hr') && (
               <>
-                <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/analytics' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                <Link to="/analytics" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/analytics' ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
                   <BarChart3 size={16} />
                   <span>Analytics & Reports</span>
                 </Link>
-                <Link to="/activity-logs" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/activity-logs' ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                <Link to="/activity-logs" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname === '/activity-logs' ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
                   <Activity size={16} />
                   <span>Activity Logs</span>
                 </Link>
@@ -513,22 +513,22 @@ const Layout = () => {
             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-3">Workspace</p>
             
             {user?.role === 'super_admin' && (
-              <Link to="/team" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/team') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <Link to="/team" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/team') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
                 <Users size={16} />
                 <span>Team Management</span>
               </Link>
             )}
             {user?.role === 'team_leader' && (
-              <Link to="/tl-dashboard" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/tl-dashboard') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+              <Link to="/tl-dashboard" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/tl-dashboard') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
                 <BarChart3 size={16} />
                 <span>TL Overview</span>
               </Link>
             )}
-            <Link to="/projects" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/project') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/projects" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/project') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <FolderKanban size={16} />
               <span>Projects</span>
             </Link>
-            <Link to="/my-tasks" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/my-tasks') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/my-tasks" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/my-tasks') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <CheckSquare size={16} />
               <span>My Tasks</span>
             </Link>
@@ -536,35 +536,35 @@ const Layout = () => {
             <div className="h-px bg-border my-3 mx-2"></div>
             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-3">Apps & Comms</p>
             
-            <Link to="/chat" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/chat') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/chat" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/chat') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <MessageSquare size={16} />
               <span>Chat</span>
             </Link>
-            <Link to="/attendance" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/attendance') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/attendance" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/attendance') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <Clock size={16} />
               <span>Attendance</span>
             </Link>
-            <Link to="/meetings" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/meeting') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/meetings" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/meeting') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <CalendarDays size={16} />
               <span>Meetings</span>
             </Link>
-            <Link to="/email" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/email') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/email" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/email') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <Mail size={16} />
               <span>Email</span>
             </Link>
-            <Link to="/documents" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/document') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/documents" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/document') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <FileText size={16} />
               <span>Documents</span>
             </Link>
-            <Link to="/tickets" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/ticket') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/tickets" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/ticket') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <Ticket size={16} />
               <span>Support Tickets</span>
             </Link>
-            <Link to="/announcements" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/announcement') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/announcements" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/announcement') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <Megaphone size={16} />
               <span>Notice Board</span>
             </Link>
-            <Link to="/notes" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/notes') ? 'bg-accent-blue/10 text-accent-blue font-semibold' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+            <Link to="/notes" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/notes') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
               <StickyNote size={16} />
               <span>Quick Notes</span>
             </Link>
