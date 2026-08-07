@@ -100,6 +100,17 @@ const Chat = () => {
           }));
         }
       });
+
+      socket.on('dm_messages_read', ({ dmId, userId }) => {
+        if (activeDM && String(dmId) === String(activeDM.dmId)) {
+          setMessages((prev) => prev.map(m => {
+            if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
+              return { ...m, readBy: [...(m.readBy || []), userId] };
+            }
+            return m;
+          }));
+        }
+      });
       
       socket.on('initial_status', (users) => {
         setOnlineUsers(new Set(users));
@@ -119,6 +130,7 @@ const Chat = () => {
         socket.off('message_updated', handleMessageUpdated);
         socket.off('message_deleted', handleMessageDeleted);
         socket.off('messages_read');
+        socket.off('dm_messages_read');
       };
     }
   }, [socket, activeChannel, activeDM]);
@@ -142,7 +154,7 @@ const Chat = () => {
           axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/mark-read`).catch(console.error);
           setUnreadCounts(prev => ({ ...prev, [activeChannel._id]: 0 }));
         } else if (activeDM) {
-          axios.post(`/workspaces/${workspace._id}/channels/${activeDM.dmId}/messages/mark-read`).catch(console.error);
+          axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/mark-read`).catch(console.error);
           setUnreadCounts(prev => ({ ...prev, [activeDM.dmId]: 0 }));
         }
       }
