@@ -249,6 +249,28 @@ exports.getUnreadCounts = async (req, res) => {
       }
     });
 
+    const DMMessage = require('../models/DMMessage');
+    const dmUnreadMessages = await DMMessage.aggregate([
+      {
+        $match: {
+          sender: { $ne: req.user._id },
+          readBy: { $ne: req.user._id }
+        }
+      },
+      {
+        $group: {
+          _id: "$sender",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    dmUnreadMessages.forEach(item => {
+      if (item._id) {
+        unreadCounts[`user-${item._id.toString()}`] = item.count;
+      }
+    });
+
     res.status(200).json(unreadCounts);
   } catch (error) {
     res.status(500).json({ message: error.message });

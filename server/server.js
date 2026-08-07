@@ -69,6 +69,12 @@ io.on('connection', (socket) => {
   });
 });
 
+// Cache static uploads (1 day) - MUST be before compression for video Range requests
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1d',
+  etag: true,
+}));
+
 app.use((req, res, next) => {
   req.io = io;
   req.onlineUsers = onlineUsers;
@@ -88,12 +94,6 @@ app.use(compression({
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '100mb' }));
-
-// Cache static uploads (1 day)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  maxAge: '1d',
-  etag: true,
-}));
 
 // ── Health / Keep-Alive Endpoint ─────────────────────────────────────────────
 // Mobile app pings this every 14 min to prevent Render cold starts

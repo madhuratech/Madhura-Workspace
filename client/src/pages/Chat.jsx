@@ -56,13 +56,14 @@ const Chat = () => {
           if (String(msg.sender._id || msg.sender) !== String(user._id)) {
             const isDM = !!msg.dm;
             const channelKey = isDM ? msg.dm : (msg.channel?._id || msg.channel);
+            const senderId = String(msg.sender._id || msg.sender);
             
-            if (channelKey) {
-              setUnreadCounts(prev => ({
-                ...prev,
-                [channelKey]: (prev[channelKey] || 0) + 1
-              }));
-            }
+            setUnreadCounts(prev => {
+              const newCounts = { ...prev };
+              if (channelKey) newCounts[channelKey] = (prev[channelKey] || 0) + 1;
+              if (isDM) newCounts[`user-${senderId}`] = (prev[`user-${senderId}`] || 0) + 1;
+              return newCounts;
+            });
           }
         }
       };
@@ -155,7 +156,7 @@ const Chat = () => {
           setUnreadCounts(prev => ({ ...prev, [activeChannel._id]: 0 }));
         } else if (activeDM) {
           axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/mark-read`).catch(console.error);
-          setUnreadCounts(prev => ({ ...prev, [activeDM.dmId]: 0 }));
+          setUnreadCounts(prev => ({ ...prev, [activeDM.dmId]: 0, [`user-${activeDM.user._id}`]: 0 }));
         }
       }
     }
@@ -466,7 +467,7 @@ const Chat = () => {
               // Calculate DM Name to check unread counts
               const sortedIds = [user._id, member.user._id].sort();
               const dmName = `dm-${sortedIds[0]}-${sortedIds[1]}`;
-              const unreadCount = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || 0;
+              const unreadCount = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || unreadCounts[`user-${member.user._id}`] || 0;
 
               return (
                 <button 
