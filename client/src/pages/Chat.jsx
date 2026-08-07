@@ -473,7 +473,7 @@ const Chat = () => {
                   }`}
                 >
                   <div className="flex items-center truncate">
-                    <div className={`h-2 w-2 rounded-full mr-2 ${isOnline ? 'bg-success shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 'border border-border bg-border'}`}></div>
+                    <Avatar user={{ ...member.user, presenceStatus: isOnline ? 'Active' : 'Offline' }} size="w-7 h-7" textClass="text-xs" showStatus={true} className="mr-3 shrink-0" />
                     <span className="truncate group-hover:font-medium mr-2">{member.user.name || member.user.email.split('@')[0]}</span>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -572,7 +572,7 @@ const Chat = () => {
                         {/* Hover Actions (Delete/Edit) */}
                         {isMine && (
                           <div className="absolute top-0 right-[100%] pr-2 opacity-0 group-hover/msg:opacity-100 flex items-center space-x-1 transition-opacity duration-200 z-10">
-                            {msg.text && (
+                            {msg.text && (new Date() - new Date(msg.createdAt) < 5 * 60 * 1000) && (
                               <button onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }} className="p-1.5 hover:text-accent-blue transition-colors bg-bg-secondary border border-border rounded-lg shadow-sm text-text-secondary">
                                 <Edit2 size={14} />
                               </button>
@@ -643,12 +643,19 @@ const Chat = () => {
                           {msg.text && (
                             <div className="relative px-2 py-1.5 flex flex-col">
                               <div className="whitespace-pre-wrap break-words leading-snug text-[13.5px] inline-block relative max-w-full">
-                                {msg.text.split(/(@\w+)/g).map((part, i) => {
+                                {msg.text.split(/(@\w+|https?:\/\/[^\s]+)/g).map((part, i) => {
+                                  if (!part) return null;
                                   if (part.startsWith('@')) {
                                     return (
                                       <span key={i} className={`font-semibold px-1 rounded ${isMine ? 'bg-white/20 text-white' : 'text-accent-blue bg-accent-blue/10'}`}>
                                         {part}
                                       </span>
+                                    );
+                                  } else if (part.startsWith('http://') || part.startsWith('https://')) {
+                                    return (
+                                      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline hover:opacity-80 break-all ${isMine ? 'text-white font-bold' : 'text-accent-blue'}`}>
+                                        {part}
+                                      </a>
                                     );
                                   }
                                   return <span key={i}>{part}</span>;

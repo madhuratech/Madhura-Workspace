@@ -87,7 +87,7 @@ app.use(compression({
 }));
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '100mb' }));
 
 // Cache static uploads (1 day)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {

@@ -145,6 +145,12 @@ exports.updateMessage = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized to edit this message' });
     }
     
+    // Check if message is older than 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    if (message.createdAt < fiveMinutesAgo) {
+      return res.status(403).json({ message: 'Messages can only be edited within 5 minutes of sending' });
+    }
+    
     message.text = req.body.text;
     message.isEdited = true;
     await message.save();
