@@ -55,6 +55,10 @@ const AttendanceLeave = () => {
         const currentWs = wsRes.data[0];
         setWorkspace(currentWs);
         
+        // Fetch in parallel
+        fetchAttendance(currentWs._id);
+        fetchLeaves(currentWs._id);
+        
         const detailRes = await axios.get(`/workspaces/${currentWs._id}`);
         const validMembers = (detailRes.data.members || []).filter(m => m.user);
         
@@ -62,9 +66,6 @@ const AttendanceLeave = () => {
         if (me) {
           setCurrentUserRole(me.role);
         }
-        
-        fetchAttendance(currentWs._id);
-        fetchLeaves(currentWs._id);
       }
     } catch (error) {
       console.error('Error fetching workspace:', error);

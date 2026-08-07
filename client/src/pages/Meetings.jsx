@@ -40,18 +40,15 @@ const Meetings = () => {
         const currentWs = wsRes.data[0];
         setWorkspace(currentWs);
         
-        // Fetch Meetings
-        const meetingsRes = await axios.get(`/workspaces/${currentWs._id}/meetings`);
-        setMeetings(meetingsRes.data);
-
-        // Fetch Members
-        const detailRes = await axios.get(`/workspaces/${currentWs._id}`);
-        const validMembers = (detailRes.data.members || []).filter(m => m.user);
-        setMembers(validMembers);
+        const [meetingsRes, detailRes, teamsRes] = await Promise.all([
+          axios.get(`/workspaces/${currentWs._id}/meetings`).catch(e => ({ error: true, data: e })),
+          axios.get(`/workspaces/${currentWs._id}`).catch(e => ({ error: true, data: e })),
+          axios.get(`/workspaces/${currentWs._id}/teams`).catch(e => ({ error: true, data: e }))
+        ]);
         
-        // Fetch Teams
-        const teamsRes = await axios.get(`/workspaces/${currentWs._id}/teams`);
-        setTeams(teamsRes.data || []);
+        if (!meetingsRes.error) setMeetings(meetingsRes.data);
+        if (!detailRes.error) setMembers((detailRes.data.members || []).filter(m => m.user));
+        if (!teamsRes.error) setTeams(teamsRes.data || []);
       }
     } catch (error) {
       console.error('Error fetching workspace data:', error);

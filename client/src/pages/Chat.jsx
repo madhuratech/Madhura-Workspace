@@ -169,31 +169,30 @@ const Chat = () => {
       const wsRes = await axios.get('/workspaces');
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
-        
-        // Fetch full workspace to get members
-        const detailRes = await axios.get(`/workspaces/${ws._id}`);
         setWorkspace(ws);
         
-        // Extract members that are not the current user
-        if (ws.members) {
-          const members = ws.members
+        const [detailRes, channelsRes, unreadRes] = await Promise.all([
+          axios.get(`/workspaces/${ws._id}`).catch(e => ({ error: true, data: e })),
+          axios.get(`/workspaces/${ws._id}/channels`).catch(e => ({ error: true, data: e })),
+          axios.get(`/workspaces/${ws._id}/channels/unread`).catch(e => ({ error: true, data: e }))
+        ]);
+        
+        if (!detailRes.error && detailRes.data.members) {
+          const members = detailRes.data.members
             .filter(m => m.user && String(m.user._id) !== String(user._id))
             .map(m => m.user);
           setWorkspaceMembers(members);
         }
 
-        const channelsRes = await axios.get(`/workspaces/${ws._id}/channels`);
-        setChannels(channelsRes.data);
-        if (channelsRes.data.length > 0) {
-          setActiveChannel(channelsRes.data[0]);
+        if (!channelsRes.error) {
+          setChannels(channelsRes.data);
+          if (channelsRes.data.length > 0) {
+            setActiveChannel(channelsRes.data[0]);
+          }
         }
 
-        // Fetch unread counts
-        try {
-          const unreadRes = await axios.get(`/workspaces/${ws._id}/channels/unread`);
+        if (!unreadRes.error) {
           setUnreadCounts(unreadRes.data || {});
-        } catch (err) {
-          console.error("Error fetching unread counts", err);
         }
       }
     } catch (error) {

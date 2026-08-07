@@ -54,18 +54,35 @@ const ProjectDetails = () => {
         const ws = wsRes.data[0];
         setWorkspaceId(ws._id);
         
-        // Fetch project details
-        try {
-          const projRes = await axios.get(`/workspaces/${ws._id}/projects/${id}`);
-          setProject(projRes.data);
-        } catch (e) {
-          console.error("Failed to load project details:", e);
+        let reqs = [
+          axios.get(`/workspaces/${ws._id}/projects/${id}`).catch(e => ({ error: true, data: e })),
+          axios.get(`/workspaces/${ws._id}/projects/${id}/tasks`).catch(e => ({ error: true, data: e }))
+        ];
+        if (user?.role !== 'employee') {
+          reqs.push(axios.get(`/workspaces/${ws._id}/projects/members`).catch(e => ({ error: true, data: e })));
         }
 
-        await fetchTasks(ws._id);
+        const [projRes, tasksRes, membersRes] = await Promise.all(reqs);
 
-        if (user?.role !== 'employee') {
-          const membersRes = await axios.get(`/workspaces/${ws._id}/projects/members`);
+        if (!projRes.error) {
+          setProject(projRes.data);
+        } else {
+          console.error("Failed to load project details:", projRes.data);
+        }
+
+        if (!tasksRes.error) {
+          const cols = {
+            'To Do': { name: 'To Do', color: 'text-slate-400', items: [] },
+            'In Progress': { name: 'In Progress', color: 'text-accent-blue', items: [] },
+            'Done': { name: 'Done', color: 'text-success', items: [] }
+          };
+          tasksRes.data.forEach(t => {
+            if (cols[t.status]) cols[t.status].items.push(t);
+          });
+          setColumns(cols);
+        }
+
+        if (user?.role !== 'employee' && membersRes && !membersRes.error) {
           setWorkspaceMembers((membersRes.data || []).filter(m => m.user));
         }
       }

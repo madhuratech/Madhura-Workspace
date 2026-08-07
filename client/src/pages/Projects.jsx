@@ -38,18 +38,18 @@ const Projects = () => {
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
         setWorkspaceId(ws._id);
+        let reqs = [axios.get(`/workspaces/${ws._id}/projects`)];
+        if (user?.role !== 'employee') {
+          reqs.push(axios.get(`/workspaces/${ws._id}/projects/members`));
+          reqs.push(axios.get(`/workspaces/${ws._id}/teams`));
+        }
         
-        // Get projects (auto-filtered by role on backend)
-        const projRes = await axios.get(`/workspaces/${ws._id}/projects`);
+        const [projRes, membersRes, teamsRes] = await Promise.all(reqs);
         setProjects(projRes.data);
 
-        // Get workspace members and teams for assignment (only for super_admin/hr/team_leader)
         if (user?.role !== 'employee') {
-          const membersRes = await axios.get(`/workspaces/${ws._id}/projects/members`);
-          setWorkspaceMembers((membersRes.data || []).filter(m => m.user));
-          
-          const teamsRes = await axios.get(`/workspaces/${ws._id}/teams`);
-          setTeams(teamsRes.data || []);
+          setWorkspaceMembers((membersRes?.data || []).filter(m => m.user));
+          setTeams(teamsRes?.data || []);
         }
       }
     } catch (error) {
