@@ -92,7 +92,7 @@ const Register = () => {
           <div className="flex items-center mb-6">
             <img src="/logo-round.svg" alt="Madhura Logo" className="w-16 h-16 mr-4 shadow-[0_0_15px_rgba(255,202,34,0.3)] rounded-full" />
             <h1 className="text-5xl font-extrabold tracking-tight">
-              <span className="text-[#1b2b4c] dark:text-white">Madhura</span><span className="text-[#ffca22]">Workspace</span>
+              <span className="text-[#1b2b4c] text-[color:var(--text-primary)]">Madhura</span><span className="text-[#ffca22]">Workspace</span>
             </h1>
           </div>
           <p className="text-text-secondary text-lg leading-relaxed">
@@ -107,7 +107,7 @@ const Register = () => {
           <div className="mb-10 lg:hidden flex items-center">
             <img src="/logo-round.svg" alt="Madhura Logo" className="w-10 h-10 mr-3 shadow-[0_0_10px_rgba(255,202,34,0.3)] rounded-full" />
             <h1 className="text-3xl font-extrabold tracking-tight">
-              <span className="text-[#1b2b4c] dark:text-white">Madhura</span><span className="text-[#ffca22]">WS</span>
+              <span className="text-[#1b2b4c] text-[color:var(--text-primary)]">Madhura</span><span className="text-[#ffca22]">WS</span>
             </h1>
           </div>
 
@@ -183,7 +183,7 @@ const Register = () => {
 
           <p className="mt-8 text-center text-sm text-text-secondary">
             Already have an account?{' '}
-            <Link to="/login" className="text-[#1b2b4c] dark:text-white hover:text-[#ffca22] font-bold transition-colors">
+            <Link to="/login" className="text-[#1b2b4c] text-[color:var(--text-primary)] hover:text-[#ffca22] font-bold transition-colors">
               Sign in
             </Link>
           </p>
