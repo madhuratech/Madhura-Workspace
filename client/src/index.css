@@ -13,6 +13,7 @@
   --color-border: var(--border-color);
   --color-accent-blue: var(--accent-color);
   --color-accent-indigo: var(--accent-color-darker);
+  --color-accent-text: var(--accent-text);
   --color-brand-blue: var(--heading-color);
   --color-danger: #ef4444;
   --color-success: #10b981;
@@ -23,6 +24,7 @@
   :root {
     --accent-color: #1b2b4c; /* Dark Blue */
     --accent-color-darker: #0f172a;
+    --accent-text: #ffffff; /* White text on Dark Blue */
     --heading-color: #1b2b4c;
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
@@ -37,6 +39,7 @@
   .dark {
     --accent-color: #ffca22; /* Yellow */
     --accent-color-darker: #f59e0b;
+    --accent-text: #0f172a; /* Dark text on Yellow */
     --heading-color: #ffca22;
     --bg-primary: #0a0e17;
     --bg-secondary: #141a27;

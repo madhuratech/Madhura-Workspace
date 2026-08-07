@@ -182,7 +182,7 @@ const Notes = () => {
         </div>
         <button 
           onClick={() => openForm()}
-          className="bg-accent-blue text-white dark:text-text-primary px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg shadow-accent-blue/30 hover:bg-accent-indigo transition-colors"
+          className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg flex items-center space-x-2 shadow-lg shadow-accent-blue/30 hover:bg-accent-indigo transition-colors"
         >
           <Plus size={18} />
           <span>New Note</span>

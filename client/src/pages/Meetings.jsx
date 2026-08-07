@@ -194,7 +194,7 @@ const Meetings = () => {
                   >
                     <div className="flex justify-between items-center mb-1.5 px-1">
                       <span className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold transition-all ${
-                        isToday ? 'bg-accent-blue text-white dark:text-text-primary shadow-md' : 'text-text-secondary group-hover:text-text-primary'
+                        isToday ? 'bg-accent-blue text-accent-text shadow-md' : 'text-text-secondary group-hover:text-text-primary'
                       }`}>
                         {day}
                       </span>
@@ -257,7 +257,7 @@ const Meetings = () => {
         {user?.role !== 'employee' && (
           <button 
             onClick={handleOpenModal}
-            className="bg-accent-blue text-white dark:text-text-primary px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
+            className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
           >
             <Plus size={16} />
             <span>Schedule Meeting</span>
@@ -315,7 +315,7 @@ const Meetings = () => {
                             <div className="flex items-center text-accent-blue">
                               <Video size={14} className="mr-1.5" /> Online meeting
                               {m.link && (
-                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-3 text-xs bg-accent-blue text-white dark:text-text-primary px-3 py-1 rounded hover:bg-accent-indigo transition-colors">
+                                <a href={m.link} target="_blank" rel="noopener noreferrer" className="ml-3 text-xs bg-accent-blue text-accent-text px-3 py-1 rounded hover:bg-accent-indigo transition-colors">
                                   Attend Meeting
                                 </a>
                               )}

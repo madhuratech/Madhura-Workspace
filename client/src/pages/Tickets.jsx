@@ -126,7 +126,7 @@ const Tickets = () => {
         </div>
         <button 
           onClick={() => setShowModal(true)}
-          className="bg-accent-blue text-white dark:text-text-primary px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center gap-2 shadow-sm"
+          className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center gap-2 shadow-sm"
         >
           <Plus size={16} />
           New Ticket
@@ -267,7 +267,7 @@ const Tickets = () => {
                             <span className="font-bold text-gray-900 text-xs">{comment.author?.name || 'Agent'}</span>
                             <span className="text-[10px] text-gray-400">{new Date(comment.createdAt).toLocaleString()}</span>
                           </div>
-                          <div className={`inline-block p-3 rounded-2xl border text-sm text-left shadow-sm ${isMe ? 'bg-accent-blue text-white dark:text-text-primary border-transparent rounded-tr-none' : 'bg-white text-gray-800 border-gray-100 rounded-tl-none'}`}>
+                          <div className={`inline-block p-3 rounded-2xl border text-sm text-left shadow-sm ${isMe ? 'bg-accent-blue text-accent-text border-transparent rounded-tr-none' : 'bg-white text-gray-800 border-gray-100 rounded-tl-none'}`}>
                             {comment.text}
                           </div>
                         </div>
@@ -292,7 +292,7 @@ const Tickets = () => {
                     <button 
                       type="submit"
                       disabled={!commentText.trim()}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-accent-blue text-white dark:text-text-primary rounded-full hover:bg-accent-indigo disabled:opacity-50 transition-colors shadow-sm"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-accent-blue text-accent-text rounded-full hover:bg-accent-indigo disabled:opacity-50 transition-colors shadow-sm"
                     >
                       <Send size={16} />
                     </button>
@@ -381,7 +381,7 @@ const Tickets = () => {
                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-sm border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-6 py-2.5 text-sm bg-accent-blue text-white dark:text-text-primary font-medium rounded-lg hover:bg-accent-indigo transition-colors shadow-sm flex items-center gap-2">
+                <button type="submit" className="px-6 py-2.5 text-sm bg-accent-blue text-accent-text font-medium rounded-lg hover:bg-accent-indigo transition-colors shadow-sm flex items-center gap-2">
                   <TicketIcon size={16} /> Submit Ticket
                 </button>
               </div>

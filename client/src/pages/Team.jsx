@@ -143,7 +143,7 @@ const Team = () => {
         {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && activeTab === 'members' && (
           <button 
             onClick={() => handleOpenModal()}
-            className="bg-accent-blue text-white dark:text-text-primary px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
+            className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
           >
             <UserPlus size={16} />
             <span>Invite Member</span>
@@ -152,7 +152,7 @@ const Team = () => {
         {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && activeTab === 'teams' && (
           <button 
             onClick={() => { setEditTeamItem(null); setIsTeamModalOpen(true); }}
-            className="bg-accent-blue text-white dark:text-text-primary px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
+            className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
           >
             <Plus size={16} />
             <span>Create Team</span>

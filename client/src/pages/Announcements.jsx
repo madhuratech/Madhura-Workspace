@@ -76,7 +76,7 @@ const Announcements = () => {
         {isAuthorized && (
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-accent-blue text-white dark:text-text-primary px-5 py-2.5 rounded-xl hover:bg-accent-indigo transition-colors shadow-sm font-medium flex items-center gap-2"
+            className="bg-accent-blue text-accent-text px-5 py-2.5 rounded-xl hover:bg-accent-indigo transition-colors shadow-sm font-medium flex items-center gap-2"
           >
             <Plus size={18} /> New Post
           </button>
@@ -176,7 +176,7 @@ const Announcements = () => {
                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-sm border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-6 py-2.5 text-sm bg-accent-blue text-white dark:text-text-primary font-medium rounded-lg hover:bg-accent-indigo transition-colors shadow-sm flex items-center gap-2">
+                <button type="submit" className="px-6 py-2.5 text-sm bg-accent-blue text-accent-text font-medium rounded-lg hover:bg-accent-indigo transition-colors shadow-sm flex items-center gap-2">
                   <Megaphone size={16} /> Post Now
                 </button>
               </div>

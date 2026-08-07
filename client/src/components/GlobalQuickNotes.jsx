@@ -103,7 +103,7 @@ const GlobalQuickNotes = ({ onClose }) => {
              />
           ))}
         </div>
-        <button onClick={saveNote} className="text-xs font-semibold bg-accent-blue text-white px-3 py-1 rounded-lg hover:bg-blue-700 shadow-sm">
+        <button onClick={saveNote} className="text-xs font-semibold bg-accent-blue text-accent-text px-3 py-1 rounded-lg hover:bg-blue-700 shadow-sm">
           Save
         </button>
       </div>

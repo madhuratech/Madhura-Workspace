@@ -238,7 +238,7 @@ const AttendanceLeave = () => {
                     </div>
                   ) : (
                     <div className="flex flex-col items-end">
-                      <button onClick={handleCheckIn} className="bg-accent-blue text-white dark:text-text-primary px-6 py-2.5 rounded-xl hover:bg-accent-indigo transition-all font-bold flex items-center shadow-md hover:shadow-blue-500/25 active:scale-95 group text-sm">
+                      <button onClick={handleCheckIn} className="bg-accent-blue text-accent-text px-6 py-2.5 rounded-xl hover:bg-accent-indigo transition-all font-bold flex items-center shadow-md hover:shadow-blue-500/25 active:scale-95 group text-sm">
                         <LogIn size={18} className="mr-2 group-hover:translate-x-1 transition-transform" />
                         Punch In
                       </button>

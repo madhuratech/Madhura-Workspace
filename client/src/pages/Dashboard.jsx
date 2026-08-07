@@ -183,7 +183,7 @@ const Dashboard = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => setShowModal(true)}
-              className="bg-accent-blue text-white dark:text-text-primary px-6 py-3 rounded-xl hover:bg-accent-indigo font-semibold transition-all shadow-lg inline-flex items-center space-x-2"
+              className="bg-accent-blue text-accent-text px-6 py-3 rounded-xl hover:bg-accent-indigo font-semibold transition-all shadow-lg inline-flex items-center space-x-2"
             >
               <Plus size={20} />
               <span>Create Workspace</span>

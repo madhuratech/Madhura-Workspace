@@ -586,7 +586,7 @@ const Chat = () => {
                         {/* Message Bubble */}
                         <div className={`relative min-w-[80px] max-w-full shadow-sm flex flex-col ${
                           isMine 
-                            ? 'bg-accent-blue text-white dark:text-text-primary rounded-2xl rounded-tr-sm' 
+                            ? 'bg-accent-blue text-accent-text rounded-2xl rounded-tr-sm' 
                             : 'bg-bg-primary text-text-primary rounded-2xl rounded-tl-sm border border-border/50'
                         }`}>
                           
