@@ -26,7 +26,7 @@ const Avatar = ({ user, size = 'w-10 h-10', textClass = 'text-sm', showStatus = 
 
   return (
     <div 
-      className={`relative inline-block cursor-pointer ${className}`}
+      className={`relative inline-block cursor-pointer rounded-full ${className}`}
       onClick={handleClick}
       title={user.name || 'User Profile'}
     >
