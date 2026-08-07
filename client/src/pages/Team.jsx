@@ -181,6 +181,11 @@ const Team = () => {
         </button>
       </div>
 
+      {activeTab === 'org_chart' ? (
+        <div className="flex-1 flex flex-col overflow-hidden rounded-xl bg-bg-secondary border border-border/50">
+          <OrgChart members={members} teams={teams} />
+        </div>
+      ) : (
       <div className="bg-bg-secondary border border-border rounded-xl flex-1 flex flex-col overflow-hidden shadow-sm">
         <div className="p-4 border-b border-border flex items-center justify-between gap-4 flex-wrap">
           <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -194,9 +199,7 @@ const Team = () => {
         </div>
 
         <div className="overflow-x-auto flex-1">
-          {activeTab === 'org_chart' ? (
-             <OrgChart members={members} teams={teams} />
-          ) : activeTab === 'members' ? (
+          {activeTab === 'members' ? (
             <div className="p-4 space-y-3">
               {/* Header Row */}
               <div className="flex items-center px-4 py-2 text-[10px] font-bold text-text-secondary uppercase tracking-wider hidden md:flex">
@@ -370,6 +373,7 @@ const Team = () => {
           )}
         </div>
       </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">

@@ -50,7 +50,7 @@ const OrgChart = ({ members, teams }) => {
     if (!member) return null;
     return (
       <div className="flex flex-col items-center justify-center p-2 z-10 relative bg-bg-secondary">
-        <Avatar user={member.user} size="h-20 w-20" textClass="text-2xl" showStatus={true} className="mb-2 shadow-md border-4 border-bg-secondary bg-bg-secondary" />
+        <Avatar user={member.user} size="h-16 w-16" textClass="text-xl" showStatus={true} className="mb-2 shadow-md border-4 border-bg-secondary bg-bg-secondary" />
         <h3 className="font-bold text-text-primary text-sm text-center line-clamp-1 w-[140px]" title={member.user.name}>{member.user.name || 'Pending User'}</h3>
         <span className={`mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${getRoleColor(member.role)}`}>
           {getRoleLabel(member.role)}
@@ -158,7 +158,7 @@ const OrgChart = ({ members, teams }) => {
                           <OrgNode member={leaderMember} />
                         ) : (
                           <div className="flex flex-col items-center justify-center p-2 z-10 relative bg-bg-secondary">
-                            <div className="h-20 w-20 rounded-full bg-bg-primary border-2 border-dashed border-border flex items-center justify-center mb-2 shadow-sm border-4 border-bg-secondary">
+                            <div className="h-16 w-16 rounded-full bg-bg-primary border-2 border-dashed border-border flex items-center justify-center mb-2 shadow-sm border-4 border-bg-secondary">
                                <span className="text-xs font-bold text-text-secondary">N/A</span>
                             </div>
                             <p className="text-xs font-bold text-text-secondary uppercase line-clamp-1 w-[140px] text-center" title={team.name}>{team.name}</p>
