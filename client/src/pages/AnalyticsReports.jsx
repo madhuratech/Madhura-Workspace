@@ -161,7 +161,7 @@ const AnalyticsReports = () => {
           onClick={() => setActiveTab('overview')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${
             activeTab === 'overview'
-              ? 'bg-[#1b2b4c] text-white hover:text-[#ffca22] shadow-lg shadow-accent-blue/25'
+              ? 'bg-accent-blue text-white dark:text-text-primary shadow-lg shadow-accent-blue/25'
               : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
           }`}
         >
@@ -172,7 +172,7 @@ const AnalyticsReports = () => {
           onClick={() => setActiveTab('employees')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${
             activeTab === 'employees'
-              ? 'bg-[#1b2b4c] text-white hover:text-[#ffca22] shadow-lg shadow-accent-blue/25'
+              ? 'bg-accent-blue text-white dark:text-text-primary shadow-lg shadow-accent-blue/25'
               : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
           }`}
         >
@@ -183,7 +183,7 @@ const AnalyticsReports = () => {
           onClick={() => setActiveTab('projects')}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${
             activeTab === 'projects'
-              ? 'bg-[#1b2b4c] text-white hover:text-[#ffca22] shadow-lg shadow-accent-blue/25'
+              ? 'bg-accent-blue text-white dark:text-text-primary shadow-lg shadow-accent-blue/25'
               : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
           }`}
         >

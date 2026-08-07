@@ -11,9 +11,9 @@
   --color-text-secondary: var(--text-secondary);
   --color-text-sidebar: var(--text-sidebar);
   --color-border: var(--border-color);
-  --color-accent-blue: #ffca22;
-  --color-accent-indigo: #1b2b4c;
-  --color-brand-blue: #1b2b4c;
+  --color-accent-blue: var(--accent-color);
+  --color-accent-indigo: var(--accent-color-darker);
+  --color-brand-blue: var(--heading-color);
   --color-danger: #ef4444;
   --color-success: #10b981;
   --color-warning: #f59e0b;
@@ -21,6 +21,9 @@
 
 @layer base {
   :root {
+    --accent-color: #1b2b4c; /* Dark Blue */
+    --accent-color-darker: #0f172a;
+    --heading-color: #1b2b4c;
     --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
     --bg-sidebar: #1b2b4c; /* Sleek dark navy */
@@ -32,6 +35,9 @@
   }
   
   .dark {
+    --accent-color: #ffca22; /* Yellow */
+    --accent-color-darker: #f59e0b;
+    --heading-color: #ffca22;
     --bg-primary: #0a0e17;
     --bg-secondary: #141a27;
     --bg-sidebar: #0a0e17;

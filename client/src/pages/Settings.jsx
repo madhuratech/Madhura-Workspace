@@ -180,7 +180,7 @@ const Settings = () => {
         <button 
           onClick={saveSettings}
           disabled={loading}
-          className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-4 py-2 rounded-lg hover:bg-[#1b2b4c]/90 transition-colors text-sm font-medium flex items-center space-x-2 disabled:opacity-50"
+          className="bg-accent-blue text-white dark:text-text-primary px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2 disabled:opacity-50"
         >
           <Save size={16} />
           <span>{loading ? 'Saving...' : (saveSuccess ? 'Saved!' : 'Save Changes')}</span>
@@ -617,7 +617,7 @@ const Settings = () => {
               <button 
                 onClick={submitResetPassword}
                 disabled={resetModal.loading}
-                className="px-4 py-2 bg-[#1b2b4c] text-white hover:text-[#ffca22] rounded-lg text-sm font-medium hover:bg-[#1b2b4c]/90 transition-colors disabled:opacity-50 flex items-center"
+                className="px-4 py-2 bg-accent-blue text-white dark:text-text-primary rounded-lg text-sm font-medium hover:bg-accent-indigo transition-colors disabled:opacity-50 flex items-center"
               >
                 {resetModal.loading ? 'Saving...' : 'Reset Password'}
               </button>

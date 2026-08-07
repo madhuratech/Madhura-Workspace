@@ -167,7 +167,7 @@ const Projects = () => {
         {user?.role !== 'employee' && (
           <button
             onClick={() => handleOpenModal()}
-            className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-5 py-2.5 rounded-xl hover:bg-[#1b2b4c]/90 shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
+            className="bg-accent-blue text-white dark:text-text-primary px-5 py-2.5 rounded-xl hover:bg-accent-indigo shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
           >
             <Plus size={18} />
             <span>New Project</span>
@@ -262,7 +262,7 @@ const Projects = () => {
                     <span className="text-[8px] font-bold text-text-secondary uppercase tracking-wider mb-0.5">Created</span>
                     <span className="text-[11px] font-semibold text-text-primary flex items-center">
                       <Calendar size={10} className="mr-1 text-text-secondary" />
-                      {new Date(project.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}
+                      {( project.createdAt ? new Date(project.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}) : "N/A" )}
                     </span>
                   </div>
                   <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase shadow-sm ${
@@ -351,7 +351,7 @@ const Projects = () => {
                 <label className="block text-sm font-bold text-text-primary mb-4 font-outfit">Add Participants</label>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {['all', 'team', 'role', 'specific'].map(type => (
-                    <label key={type} className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${formData.participantType === type ? 'bg-[#1b2b4c] text-white hover:text-[#ffca22] shadow-soft' : 'bg-bg-secondary text-text-secondary border border-border hover:bg-border/50'}`}>
+                    <label key={type} className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${formData.participantType === type ? 'bg-accent-blue text-white dark:text-text-primary shadow-soft' : 'bg-bg-secondary text-text-secondary border border-border hover:bg-border/50'}`}>
                       <input type="radio" name="pType" value={type} checked={formData.participantType === type} onChange={() => setFormData({...formData, participantType: type, members: type === 'specific' ? formData.members : []})} className="hidden" />
                       <span className="capitalize">{type.replace('specific', 'select individuals').replace('all', 'workspace')}</span>
                     </label>

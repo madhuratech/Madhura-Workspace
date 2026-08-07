@@ -183,7 +183,7 @@ const Dashboard = () => {
           {user?.role === 'super_admin' && (
             <button
               onClick={() => setShowModal(true)}
-              className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-6 py-3 rounded-xl hover:bg-[#1b2b4c]/90 font-semibold transition-all shadow-lg inline-flex items-center space-x-2"
+              className="bg-accent-blue text-white dark:text-text-primary px-6 py-3 rounded-xl hover:bg-accent-indigo font-semibold transition-all shadow-lg inline-flex items-center space-x-2"
             >
               <Plus size={20} />
               <span>Create Workspace</span>
@@ -370,7 +370,7 @@ const Dashboard = () => {
                     const color = isMeeting ? 'text-purple-500' : 'text-amber-500';
                     const bg = isMeeting ? 'bg-purple-500/10' : 'bg-amber-500/10';
                     const hoverBorder = isMeeting ? 'hover:border-purple-500/30' : 'hover:border-amber-500/30';
-                    const timeString = new Date(rem.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+                    const timeString = ( rem.time ? new Date(rem.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : "N/A" );
                     
                     return (
                       <div key={rem._id || i} className={`group p-4 border border-border/30 rounded-2xl bg-gradient-to-b from-bg-primary/50 to-bg-primary ${hoverBorder} hover:shadow-md transition-all cursor-default transform hover:-translate-y-0.5`}>

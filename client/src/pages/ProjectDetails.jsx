@@ -207,7 +207,7 @@ const ProjectDetails = () => {
         {user?.role !== 'employee' && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-5 py-2.5 rounded-xl hover:bg-[#1b2b4c]/90 shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
+            className="bg-accent-blue text-white dark:text-text-primary px-5 py-2.5 rounded-xl hover:bg-accent-indigo shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
           >
             <Plus size={18} />
             <span>Add Task</span>

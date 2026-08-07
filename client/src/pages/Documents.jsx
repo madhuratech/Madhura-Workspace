@@ -193,7 +193,7 @@ const Documents = () => {
           </button>
           <button 
             onClick={() => handleOpenModal()}
-            className="bg-[#1b2b4c] text-white hover:text-[#ffca22] px-4 py-2 rounded-lg hover:bg-[#1b2b4c]/90 transition-colors text-sm font-medium flex items-center space-x-2 shadow-sm"
+            className="bg-accent-blue text-white dark:text-text-primary px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2 shadow-sm"
           >
             <Plus size={16} />
             <span>Upload File</span>
@@ -298,7 +298,7 @@ const Documents = () => {
                       </div>
                     </td>
                     <td className="py-4 px-5 text-sm text-gray-500">
-                      {new Date(doc.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                      {( doc.createdAt ? new Date(doc.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "N/A" )}
                     </td>
                     <td className="py-4 px-5 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -437,7 +437,7 @@ const Documents = () => {
                 <button type="button" onClick={handleCloseModal} className="px-4 py-2 text-sm border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-5 py-2 text-sm bg-[#1b2b4c] text-white hover:text-[#ffca22] font-medium rounded-lg hover:bg-[#1b2b4c]/90 transition-colors shadow-sm flex items-center gap-2">
+                <button type="submit" className="px-5 py-2 text-sm bg-accent-blue text-white dark:text-text-primary font-medium rounded-lg hover:bg-accent-indigo transition-colors shadow-sm flex items-center gap-2">
                   <Save size={16} /> {editItem ? 'Save Version' : 'Upload Document'}
                 </button>
               </div>
