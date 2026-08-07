@@ -245,7 +245,6 @@ exports.getUnreadCounts = async (req, res) => {
     ]);
 
     // Populate channel details to get names
-    const Channel = require('../models/Channel');
     await Channel.populate(unreadMessages, { path: '_id', select: 'name' });
 
     const unreadCounts = {};
