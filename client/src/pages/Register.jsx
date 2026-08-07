@@ -111,7 +111,7 @@ const Register = () => {
             {isInvite ? 'Accept Invitation' : 'Create an account'}
           </h2>
           <p className="text-text-secondary mb-8">
-            {isInvite ? `Join ${workspaceName || 'the workspace'} by setting up your account.` : 'Set up your workspace super admin account.'}
+            {isInvite ? `Join ${workspaceName || 'the workspace'} by setting up your account.` : 'Set up your workspace MD account.'}
           </p>
 
           {error && (
@@ -164,9 +164,9 @@ const Register = () => {
                   onChange={(e) => setRole(e.target.value)}
                   className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-accent-blue transition-colors appearance-none"
                 >
-                  <option value="super_admin">Super Admin (Initial Setup)</option>
+                  <option value="super_admin">MD (Initial Setup)</option>
                 </select>
-                <p className="text-xs text-text-secondary mt-2">Note: Employees do not use this page. They are created by the Super Admin internally.</p>
+                <p className="text-xs text-text-secondary mt-2">Note: Employees do not use this page. They are created by the MD or HR internally.</p>
               </div>
             )}
             <button 

@@ -12,7 +12,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
 const ROLE_CONFIG = {
-  super_admin: { bg: '#F5F3FF', border: '#DDD6FE', text: '#7C3AED', label: 'Super Admin' },
+  super_admin: { bg: '#F5F3FF', border: '#DDD6FE', text: '#7C3AED', label: 'MD' },
   hr:          { bg: '#EFF6FF', border: '#BFDBFE', text: '#2563EB', label: 'HR'          },
   team_leader: { bg: '#FFF7ED', border: '#FED7AA', text: '#C2410C', label: 'Team Leader' },
   employee:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', label: 'Employee'    },

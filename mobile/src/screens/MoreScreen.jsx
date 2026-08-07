@@ -13,7 +13,7 @@ import { AuthContext } from '../context/AuthContext';
 const PRIMARY = '#5B5BD6';
 
 const ROLE_CFG = {
-  super_admin: { label: 'Super Admin', color: '#7C3AED', bg: '#F5F3FF' },
+  super_admin: { label: 'MD', color: '#7C3AED', bg: '#F5F3FF' },
   hr:          { label: 'HR',          color: '#2563EB', bg: '#EFF6FF' },
   team_leader: { label: 'Team Leader', color: '#D97706', bg: '#FFF7ED' },
   employee:    { label: 'Employee',    color: '#059669', bg: '#F0FDF4' },

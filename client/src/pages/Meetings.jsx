@@ -461,7 +461,7 @@ const Meetings = () => {
                     className="w-full bg-bg-secondary border border-border rounded-lg px-3 py-2 text-text-primary focus:outline-none text-sm"
                     required
                   >
-                    <option value="super_admin">Super Admins</option>
+                    <option value="super_admin">MD (Managing Director)</option>
                     <option value="hr">HR</option>
                     <option value="team_leader">Team Leaders</option>
                     <option value="employee">Employees</option>

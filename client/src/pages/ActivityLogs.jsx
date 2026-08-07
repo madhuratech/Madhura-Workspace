@@ -77,7 +77,7 @@ const ActivityLogs = () => {
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
         <Activity size={48} className="text-text-secondary opacity-50 mb-4" />
         <h2 className="text-xl font-bold text-text-primary mb-2">Access Denied</h2>
-        <p className="text-text-secondary">Only Super Admins and HR can view the Activity Logs.</p>
+        <p className="text-text-secondary">Only MDs and HR can view the Activity Logs.</p>
       </div>
     );
   }

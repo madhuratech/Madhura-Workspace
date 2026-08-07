@@ -308,7 +308,7 @@ const Settings = () => {
                   <Key size={18} className="shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold">Access Denied</p>
-                    <p>You must be a Super Admin to view and modify system roles.</p>
+                    <p>You must be an MD (Managing Director) to view and modify system roles.</p>
                   </div>
                 </div>
               ) : (
@@ -360,7 +360,7 @@ const Settings = () => {
                                   <option value="employee">Employee</option>
                                   <option value="team_leader">Team Leader</option>
                                   <option value="hr">HR</option>
-                                  <option value="super_admin">Super Admin</option>
+                                  <option value="super_admin">MD (Managing Director)</option>
                                 </select>
                                 <button
                                   onClick={() => handleResetPassword(u._id)}
@@ -381,7 +381,7 @@ const Settings = () => {
                     <h3 className="text-sm font-bold text-text-primary mb-3">Permissions Reference</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h4 className="text-xs font-bold text-danger uppercase mb-1">Super Admin</h4>
+                        <h4 className="text-xs font-bold text-danger uppercase mb-1">MD (Managing Director)</h4>
                         <p className="text-xs text-text-secondary">Full access to all modules, settings, user management, and global configurations.</p>
                       </div>
                       <div>

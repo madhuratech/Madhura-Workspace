@@ -98,7 +98,7 @@ const TeamLeaderDashboard = () => {
       {projects.length === 0 ? (
         <div className="bg-bg-secondary border border-border rounded-2xl p-12 text-center text-text-secondary">
           <FolderKanban size={48} className="mx-auto mb-4 opacity-20" />
-          <p>No projects assigned yet. Contact your Super Admin.</p>
+          <p>No projects assigned yet. Contact your MD or HR.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

@@ -29,7 +29,7 @@ const createTeam = async (req, res) => {
                         (currentMember && ['super_admin', 'hr'].includes(currentMember.role));
     
     if (!isAuthorized) {
-      return res.status(403).json({ message: 'Only super admin and hr can create teams' });
+      return res.status(403).json({ message: 'Only MD and HR can create teams' });
     }
 
     const { name, leader, members } = req.body;
@@ -70,7 +70,7 @@ const updateTeam = async (req, res) => {
                         (currentMember && ['super_admin', 'hr'].includes(currentMember.role)));
     
     if (!isAuthorized) {
-      return res.status(403).json({ message: 'Only super admin and hr can update teams' });
+      return res.status(403).json({ message: 'Only MD and HR can update teams' });
     }
 
     const team = await Team.findByIdAndUpdate(req.params.id, req.body, { new: true })
@@ -95,7 +95,7 @@ const deleteTeam = async (req, res) => {
                         (currentMember && ['super_admin', 'hr'].includes(currentMember.role)));
 
     if (!isAuthorized) {
-      return res.status(403).json({ message: 'Only super admin and hr can delete teams' });
+      return res.status(403).json({ message: 'Only MD and HR can delete teams' });
     }
 
     const team = await Team.findByIdAndDelete(req.params.id);

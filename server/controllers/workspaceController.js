@@ -36,7 +36,7 @@ const createWorkspace = async (req, res) => {
     }
 
     if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Only super admin can create workspaces' });
+      return res.status(403).json({ message: 'Only MD can create workspaces' });
     }
 
     // Prepare members list: Owner is super_admin. Other selected members get their global roles or default to employee.

@@ -42,7 +42,7 @@ export default function RegisterScreen({ navigation }) {
           
           <View style={styles.header}>
             <Text style={styles.title}>Create an account</Text>
-            <Text style={styles.subtitle}>Set up your workspace super admin account.</Text>
+            <Text style={styles.subtitle}>Set up your workspace MD account.</Text>
           </View>
 
           {error ? (
@@ -98,13 +98,13 @@ export default function RegisterScreen({ navigation }) {
             <View style={[styles.inputContainer, styles.inputDisabled]}>
               <TextInput
                 style={styles.input}
-                value="Super Admin (Initial Setup)"
+                value="MD (Initial Setup)"
                 editable={false}
                 color="#0F172A"
               />
             </View>
             <Text style={styles.noteText}>
-              Note: Employees do not use this page. They are created by the Super Admin internally.
+              Note: Employees do not use this page. They are created by the MD or HR internally.
             </Text>
 
             <TouchableOpacity

@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Search, Plus, UserPlus, Shield, X, Mail, Users } from 'lucide-react';
 import Avatar from '../components/Avatar';
+import OrgChart from '../components/OrgChart';
 
 const Team = () => {
   const { user } = useContext(AuthContext);
@@ -11,7 +12,7 @@ const Team = () => {
   const [workspace, setWorkspace] = useState(null);
   const [members, setMembers] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [activeTab, setActiveTab] = useState('members'); // 'members' or 'teams'
+  const [activeTab, setActiveTab] = useState('org_chart'); // 'members', 'teams', 'org_chart'
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState('employee');
   
@@ -172,6 +173,12 @@ const Team = () => {
         >
           Teams
         </button>
+        <button 
+          onClick={() => setActiveTab('org_chart')}
+          className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'org_chart' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+        >
+          Organization Chart
+        </button>
       </div>
 
       <div className="bg-bg-secondary border border-border rounded-xl flex-1 flex flex-col overflow-hidden shadow-sm">
@@ -187,7 +194,9 @@ const Team = () => {
         </div>
 
         <div className="overflow-x-auto flex-1">
-          {activeTab === 'members' ? (
+          {activeTab === 'org_chart' ? (
+             <OrgChart members={members} teams={teams} />
+          ) : activeTab === 'members' ? (
             <div className="p-4 space-y-3">
               {/* Header Row */}
               <div className="flex items-center px-4 py-2 text-[10px] font-bold text-text-secondary uppercase tracking-wider hidden md:flex">
@@ -413,7 +422,7 @@ const Team = () => {
                     value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
                     className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
                   >
-                    <option value="super_admin">Super Admin (Full Access)</option>
+                    <option value="super_admin">MD (Managing Director)</option>
                     <option value="hr">HR (Management Access)</option>
                     <option value="team_leader">Team Leader (Assign Tasks)</option>
                     <option value="employee">Employee (Standard Access)</option>

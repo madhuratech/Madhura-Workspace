@@ -375,7 +375,7 @@ const Projects = () => {
                     className="premium-input mb-2"
                     required
                   >
-                    <option value="super_admin">Super Admins</option>
+                    <option value="super_admin">MD (Managing Director)</option>
                     <option value="hr">HR</option>
                     <option value="team_leader">Team Leaders</option>
                     <option value="employee">Employees</option>

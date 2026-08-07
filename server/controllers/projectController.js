@@ -56,7 +56,7 @@ const createProject = async (req, res) => {
 
     // Only super_admin, hr, team_leader can create projects
     if (req.user.role === 'employee') {
-      return res.status(401).json({ message: 'Not authorized. Only Super Admins, HR, and Team Leaders can create projects.' });
+      return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Team Leaders can create projects.' });
     }
 
     const project = await Project.create({
