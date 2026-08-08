@@ -409,16 +409,16 @@ const Chat = () => {
 
   if (loading) return (
     <div className="flex h-full bg-bg-primary">
-      {/* Skeleton sidebar */}
-      <div className="w-60 bg-bg-sidebar flex flex-col p-4 space-y-6">
-        <div className="h-6 w-36 bg-white/10 rounded animate-pulse"></div>
-        <div className="space-y-2">
-          <div className="h-3 w-20 bg-white/10 rounded animate-pulse"></div>
-          {[1,2,3].map(i=><div key={i} className="h-7 w-full bg-white/5 rounded-lg animate-pulse"></div>)}
+      {/* Skeleton sidebar — light */}
+      <div className="w-60 bg-white border-r border-gray-200 flex flex-col p-4 space-y-5">
+        <div className="h-10 w-full bg-gray-100 rounded-lg animate-pulse"></div>
+        <div className="space-y-1.5">
+          <div className="h-3 w-20 bg-gray-200 rounded animate-pulse mb-2"></div>
+          {[1,2,3].map(i=><div key={i} className="h-8 w-full bg-gray-100 rounded-lg animate-pulse"></div>)}
         </div>
-        <div className="space-y-2">
-          <div className="h-3 w-28 bg-white/10 rounded animate-pulse"></div>
-          {[1,2,3,4].map(i=><div key={i} className="h-8 w-full bg-white/5 rounded-lg animate-pulse"></div>)}
+        <div className="space-y-1.5">
+          <div className="h-3 w-28 bg-gray-200 rounded animate-pulse mb-2"></div>
+          {[1,2,3,4].map(i=><div key={i} className="h-8 w-full bg-gray-100 rounded-lg animate-pulse"></div>)}
         </div>
       </div>
       {/* Skeleton main */}
@@ -426,7 +426,7 @@ const Chat = () => {
         <div className="h-14 border-b border-border px-6 flex items-center">
           <div className="h-5 w-32 bg-border rounded animate-pulse"></div>
         </div>
-        <div className="flex-1 p-6 space-y-6">
+        <div className="flex-1 p-6 space-y-5">
           {[1,2,3,4,5].map(i=>(
             <div key={i} className={`flex items-end gap-3 ${i%2===0?'justify-end':''}`}>
               {i%2!==0&&<div className="w-8 h-8 rounded-full bg-border animate-pulse shrink-0"></div>}
@@ -442,148 +442,96 @@ const Chat = () => {
   );
 
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
-
   return (
     <div className="h-full flex font-sans overflow-hidden bg-bg-primary">
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• LEFT SIDEBAR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ═══════════════════ LEFT SIDEBAR — White/Light ═══════════════════ */}
       <div className={`
-        w-full md:w-[240px] shrink-0 bg-bg-sidebar flex flex-col
+        w-full md:w-[220px] shrink-0 flex flex-col
         absolute inset-0 md:relative z-20
         ${activeChannel || activeDM ? 'hidden md:flex' : 'flex'}
-        border-r border-white/5
+        bg-white dark:bg-[#1e2533] border-r border-gray-200 dark:border-white/8
       `}>
 
         {/* Workspace header */}
-        <div className="h-14 flex items-center justify-between px-4 border-b border-white/10 shrink-0">
-          <div className="flex items-center space-x-2 min-w-0">
-            <div className="w-6 h-6 rounded-md bg-accent-blue flex items-center justify-center shrink-0">
-              <MessageSquare size={13} className="text-white" />
+        <div className="h-14 flex items-center px-4 border-b border-gray-200 dark:border-white/8 shrink-0 bg-white dark:bg-[#1e2533]">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-accent-blue flex items-center justify-center shrink-0 shadow-sm">
+              <MessageSquare size={14} className="text-white" />
             </div>
-            <h2 className="font-bold text-text-sidebar text-sm truncate">{workspace.name}</h2>
+            <div className="min-w-0">
+              <h2 className="font-bold text-gray-900 dark:text-white text-[13px] truncate leading-none">{workspace.name}</h2>
+              <p className="text-[10px] text-gray-400 dark:text-gray-400 mt-0.5">Workspace</p>
+            </div>
           </div>
         </div>
 
         {/* Sidebar scroll area */}
-        <div className="flex-1 overflow-y-auto py-4 custom-scrollbar space-y-1">
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-[#1e2533]">
 
-          {/* â”€â”€ CHANNELS â”€â”€ */}
-          <div className="px-3 mb-1">
-            <button
-              onClick={() => setChannelsCollapsed(c => !c)}
-              className="w-full flex items-center justify-between py-1 px-1 group rounded hover:bg-white/5 transition-colors"
-            >
-              <div className="flex items-center space-x-1.5">
-                {channelsCollapsed
-                  ? <ChevronRight size={12} className="text-text-sidebar/40 group-hover:text-text-sidebar/70 transition-colors" />
-                  : <ChevronDown size={12} className="text-text-sidebar/40 group-hover:text-text-sidebar/70 transition-colors" />
-                }
-                <span className="text-[11px] font-semibold text-text-sidebar/50 uppercase tracking-widest group-hover:text-text-sidebar/80 transition-colors">
-                  Channels
-                </span>
-              </div>
-              {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
-                <span
-                  onClick={(e) => { e.stopPropagation(); handleOpenChannelModal(); }}
-                  className="opacity-0 group-hover:opacity-100 text-text-sidebar/50 hover:text-text-sidebar transition-all p-0.5 rounded"
-                >
-                  <Plus size={13} />
-                </span>
-              )}
-            </button>
-          </div>
-
-          <div className={`transition-all duration-200 ease-in-out overflow-hidden ${channelsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'}`}>
-            <div className="px-2 space-y-0.5 mb-3">
-              {channels.filter(c => !c.name.startsWith('dm-')).map(channel => {
-                const isActive = activeChannel?._id === channel._id;
-                return (
-                  <button
-                    key={channel._id}
-                    onClick={() => { setActiveChannel(channel); setActiveDM(null); }}
-                    className={`w-full flex items-center justify-between px-3 py-1.5 rounded-md text-[13px] transition-all group/ch ${
-                      isActive
-                        ? 'bg-white/15 text-white font-semibold'
-                        : 'text-text-sidebar/60 hover:bg-white/8 hover:text-text-sidebar font-medium'
-                    }`}
+          {/* ── CHANNELS ── */}
+          <div className="pt-4 pb-1">
+            <div className="px-4 mb-1">
+              <button
+                onClick={() => setChannelsCollapsed(c => !c)}
+                className="w-full flex items-center justify-between group"
+              >
+                <div className="flex items-center space-x-1">
+                  {channelsCollapsed
+                    ? <ChevronRight size={11} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 transition-colors" />
+                    : <ChevronDown size={11} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 transition-colors" />
+                  }
+                  <span className="text-[10.5px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                    Channels
+                  </span>
+                </div>
+                {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
+                  <span
+                    onClick={(e) => { e.stopPropagation(); handleOpenChannelModal(); }}
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-accent-blue transition-all p-0.5 rounded"
+                    title="New channel"
                   >
-                    <div className="flex items-center min-w-0">
-                      <Hash size={14} className={`mr-2 shrink-0 ${isActive ? 'text-white/80' : 'text-text-sidebar/40'}`} />
-                      <span className="truncate">{channel.name}</span>
-                    </div>
-                    {unreadCounts[channel._id] > 0 && !isActive && (
-                      <span className="bg-danger text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
-                        {unreadCounts[channel._id]}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                    <Plus size={13} />
+                  </span>
+                )}
+              </button>
             </div>
-          </div>
 
-          {/* â”€â”€ DIRECT MESSAGES â”€â”€ */}
-          <div className="px-3 mb-1">
-            <button
-              onClick={() => setDmsCollapsed(d => !d)}
-              className="w-full flex items-center space-x-1.5 py-1 px-1 group rounded hover:bg-white/5 transition-colors"
-            >
-              {dmsCollapsed
-                ? <ChevronRight size={12} className="text-text-sidebar/40 group-hover:text-text-sidebar/70 transition-colors" />
-                : <ChevronDown size={12} className="text-text-sidebar/40 group-hover:text-text-sidebar/70 transition-colors" />
-              }
-              <span className="text-[11px] font-semibold text-text-sidebar/50 uppercase tracking-widest group-hover:text-text-sidebar/80 transition-colors">
-                Direct Messages
-              </span>
-            </button>
-          </div>
-
-          <div className={`transition-all duration-200 ease-in-out overflow-hidden ${dmsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'}`}>
-            <div className="px-2 space-y-0.5">
-              {workspace.members && workspace.members
-                .filter(m => m.user && m.user._id !== user?._id)
-                .map(member => {
-                  const isOnline = onlineUsers.has(member.user._id);
-                  const isActiveDM = activeDM?.user?._id === member.user._id;
-                  const sortedIds = [user._id, member.user._id].sort();
-                  const dmName = `dm-${sortedIds[0]}-${sortedIds[1]}`;
-                  const dmUnread = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || unreadCounts[`user-${member.user._id}`] || 0;
-
+            <div className={`transition-all duration-200 ease-in-out overflow-hidden ${channelsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'}`}>
+              <div className="px-2 mt-0.5 space-y-0.5">
+                {channels.filter(c => !c.name.startsWith('dm-')).map(channel => {
+                  const isActive = activeChannel?._id === channel._id;
                   return (
                     <button
-                      key={member.user._id}
-                      onClick={() => handleDMClick(member.user)}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-[13px] transition-all ${
-                        isActiveDM
-                          ? 'bg-white/15 text-white font-semibold'
-                          : 'text-text-sidebar/60 hover:bg-white/8 hover:text-text-sidebar'
+                      key={channel._id}
+                      onClick={() => { setActiveChannel(channel); setActiveDM(null); }}
+                      className={`w-full flex items-center justify-between px-2.5 py-[7px] rounded-lg text-[13px] transition-all ${
+                        isActive
+                          ? 'bg-accent-blue/10 text-accent-blue font-semibold'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
                       <div className="flex items-center min-w-0">
-                        <div className="relative mr-2.5 shrink-0">
-                          <Avatar user={member.user} size="w-6 h-6" textClass="text-[9px]" showStatus={false} />
-                          <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-bg-sidebar ${isOnline ? 'bg-green-400' : 'bg-text-sidebar/20'}`}></span>
-                        </div>
-                        <span className="truncate">{member.user.name || member.user.email?.split('@')[0]}</span>
+                        <Hash size={14} className={`mr-2 shrink-0 ${isActive ? 'text-accent-blue' : 'text-gray-400'}`} />
+                        <span className="truncate">{channel.name}</span>
                       </div>
-                      {dmUnread > 0 && !isActiveDM && (
+                      {unreadCounts[channel._id] > 0 && !isActive && (
                         <span className="bg-danger text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
-                          {dmUnread}
+                          {unreadCounts[channel._id]}
                         </span>
                       )}
                     </button>
                   );
                 })}
-            </div>
           </div>
         </div>
       </div>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MAIN CHAT AREA â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-bg-secondary ${!activeChannel && !activeDM ? 'hidden md:flex' : 'flex'}`}>
+      {/* ═══════════════════ MAIN CHAT AREA ═══════════════════ */}
+      <div className={`flex-1 flex flex-col min-w-0 bg-white dark:bg-bg-secondary ${!activeChannel && !activeDM ? 'hidden md:flex' : 'flex'}`}>
 
-        {/* â”€â”€ Chat Top Bar â”€â”€ */}
-        <div className="h-14 flex items-center justify-between px-5 border-b border-border bg-bg-secondary/95 backdrop-blur-sm shrink-0 z-10">
+        {/* ── Chat Top Bar ── */}
+        <div className="h-14 flex items-center justify-between px-5 border-b border-gray-200 dark:border-border bg-white dark:bg-bg-secondary shrink-0 z-10">
           <div className="flex items-center space-x-3 min-w-0">
             {/* Mobile back */}
             <button
@@ -615,7 +563,7 @@ const Chat = () => {
                 <div className="min-w-0">
                   <p className="font-semibold text-text-primary text-[15px] truncate leading-none">{activeDM.user.name}</p>
                   <p className="text-[11px] text-text-secondary mt-0.5">
-                    {onlineUsers.has(activeDM.user._id) ? 'ðŸŸ¢ Active now' : 'Offline'}
+                    {onlineUsers.has(activeDM.user._id) ? '🟢 Active now' : 'Offline'}
                   </p>
                 </div>
               </div>
@@ -633,8 +581,8 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* â”€â”€ Messages Area â”€â”€ */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1 custom-scrollbar">
+        {/* ── Messages Area ── */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1 custom-scrollbar bg-white dark:bg-bg-secondary">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
               <div className="w-14 h-14 rounded-2xl bg-accent-blue/10 flex items-center justify-center mb-4">
@@ -665,7 +613,7 @@ const Chat = () => {
               return (
                 <div key={msg._id} className={`flex w-full group/row ${isMine ? 'justify-end' : 'justify-start'} ${showHeader ? 'mt-4' : 'mt-0.5'}`}>
 
-                  {/* Avatar â€” only for others, only on first message in group */}
+                  {/* Avatar — only for others, only on first message in group */}
                   {!isMine && (
                     <div className="w-8 shrink-0 mr-2.5 mt-auto">
                       {showHeader && (
@@ -688,7 +636,7 @@ const Chat = () => {
                     {/* Message bubble + actions */}
                     <div className="relative flex items-center gap-1.5 w-full">
 
-                      {/* Hover action buttons â€” my messages (left of bubble) */}
+                      {/* Hover action buttons — my messages (left of bubble) */}
                       {isMine && (
                         <div className="opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center space-x-1 order-first">
                           {msg.text && (new Date() - new Date(msg.createdAt) < 5 * 60 * 1000) && (
@@ -822,8 +770,8 @@ const Chat = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* â”€â”€ Message Input Bar â”€â”€ */}
-        <div className="px-4 pb-4 pt-2 bg-bg-secondary shrink-0">
+        {/* ── Message Input Bar ── */}
+        <div className="px-4 pb-4 pt-3 bg-white dark:bg-bg-secondary border-t border-gray-200 dark:border-border shrink-0">
           {uploadingFile && (
             <div className="flex items-center space-x-2 mb-2 px-3 py-2 bg-accent-blue/10 border border-accent-blue/20 rounded-xl">
               <div className="w-3 h-3 rounded-full border-2 border-accent-blue border-t-transparent animate-spin"></div>
@@ -852,7 +800,7 @@ const Chat = () => {
             </div>
           )}
 
-          <div className="relative flex items-end bg-bg-primary border border-border rounded-xl focus-within:border-accent-blue/50 focus-within:ring-2 focus-within:ring-accent-blue/10 transition-all">
+          <div className="relative flex items-end bg-gray-100 dark:bg-bg-primary border border-gray-200 dark:border-border rounded-xl focus-within:border-accent-blue/50 focus-within:ring-2 focus-within:ring-accent-blue/10 transition-all">
 
             {/* Left toolbar */}
             <div className="flex items-center pl-2 pb-2 space-x-0.5 shrink-0">
@@ -927,7 +875,7 @@ const Chat = () => {
                   handleSendMessage(e);
                 }
               }}
-              className="flex-1 bg-transparent border-0 outline-none resize-none py-3 px-2 text-sm text-text-primary placeholder:text-text-secondary leading-relaxed"
+              className="flex-1 bg-transparent border-0 outline-none resize-none py-3 px-2 text-sm text-gray-800 dark:text-text-primary placeholder:text-gray-400 dark:placeholder:text-text-secondary leading-relaxed"
               style={{ minHeight: '40px', maxHeight: '140px' }}
             />
 
@@ -951,9 +899,9 @@ const Chat = () => {
         </div>
       </div>
 
-      {/* â•â•â• Empty state when nothing selected on desktop â•â•â• */}
+      {/* ═══ Empty state when nothing selected on desktop ═══ */}
       {!activeChannel && !activeDM && (
-        <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-bg-primary text-center p-8">
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-white dark:bg-bg-primary text-center p-8">
           <div className="w-16 h-16 rounded-2xl bg-accent-blue/10 flex items-center justify-center mb-5">
             <MessageSquare size={28} className="text-accent-blue" />
           </div>

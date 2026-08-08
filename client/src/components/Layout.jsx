@@ -571,8 +571,12 @@ const Layout = () => {
           </nav>
         </aside>
 
-        {/* Page Content — Chat gets full screen, other pages get padding */}
-        <main className="flex-1 overflow-hidden bg-bg-primary relative flex flex-col sm:rounded-tl-2xl shadow-[inset_0_4px_6px_rgba(0,0,0,0.02)] border-l border-t border-border/50 sm:mt-1 sm:ml-1 transition-all pb-[env(safe-area-inset-bottom)] md:pb-0 mb-14 md:mb-0">
+        {/* Page Content — Chat gets full screen flush, other pages get padded card */}
+        <main className={`flex-1 overflow-hidden relative flex flex-col transition-all pb-[env(safe-area-inset-bottom)] md:pb-0 mb-14 md:mb-0 ${
+          location.pathname === '/chat'
+            ? 'bg-bg-secondary'
+            : 'bg-bg-primary sm:rounded-tl-2xl shadow-[inset_0_4px_6px_rgba(0,0,0,0.02)] border-l border-t border-border/50 sm:mt-1 sm:ml-1'
+        }`}>
           {location.pathname === '/chat' ? (
             <div className="flex-1 overflow-hidden h-full">
               <Outlet />
