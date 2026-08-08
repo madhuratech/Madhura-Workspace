@@ -8,13 +8,16 @@ export default defineConfig({
     // Split large vendor chunks for better caching
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['lucide-react', 'emoji-picker-react'],
-          'vendor-calendar': ['@fullcalendar/core', '@fullcalendar/daygrid', '@fullcalendar/interaction', '@fullcalendar/react'],
-          'vendor-dnd': ['@hello-pangea/dnd'],
-          'vendor-socket': ['socket.io-client'],
-          'vendor-editor': ['react-quill'],
+        // Vite 8 (rolldown) requires manualChunks to be a function
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'vendor-react';
+            if (id.includes('@fullcalendar')) return 'vendor-calendar';
+            if (id.includes('socket.io') || id.includes('engine.io')) return 'vendor-socket';
+            if (id.includes('react-quill') || id.includes('quill')) return 'vendor-editor';
+            if (id.includes('@hello-pangea') || id.includes('dnd')) return 'vendor-dnd';
+            if (id.includes('lucide') || id.includes('emoji-picker')) return 'vendor-ui';
+          }
         },
       },
     },
