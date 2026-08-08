@@ -523,7 +523,69 @@ const Chat = () => {
                     </button>
                   );
                 })}
+              </div>
+            </div>
           </div>
+
+          {/* ── DIRECT MESSAGES ── */}
+          <div className="pt-3 pb-4">
+            <div className="px-4 mb-1">
+              <button
+                onClick={() => setDmsCollapsed(d => !d)}
+                className="w-full flex items-center space-x-1 group"
+              >
+                {dmsCollapsed
+                  ? <ChevronRight size={11} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 transition-colors" />
+                  : <ChevronDown size={11} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 transition-colors" />
+                }
+                <span className="text-[10.5px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+                  Direct Messages
+                </span>
+              </button>
+            </div>
+
+            <div className={`transition-all duration-200 ease-in-out overflow-hidden ${dmsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'}`}>
+              <div className="px-2 mt-0.5 space-y-0.5">
+                {workspace.members && workspace.members
+                  .filter(m => m.user && m.user._id !== user?._id)
+                  .map(member => {
+                    const isOnline = onlineUsers.has(member.user._id);
+                    const isActiveDM = activeDM?.user?._id === member.user._id;
+                    const sortedIds = [user._id, member.user._id].sort();
+                    const dmName = `dm-${sortedIds[0]}-${sortedIds[1]}`;
+                    const dmUnread = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || unreadCounts[`user-${member.user._id}`] || 0;
+
+                    return (
+                      <button
+                        key={member.user._id}
+                        onClick={() => handleDMClick(member.user)}
+                        className={`w-full flex items-center justify-between px-2.5 py-[7px] rounded-lg text-[13px] transition-all ${
+                          isActiveDM
+                            ? 'bg-accent-blue/10 text-accent-blue font-semibold'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center min-w-0">
+                          <div className="relative mr-2.5 shrink-0">
+                            <Avatar user={member.user} size="w-6 h-6" textClass="text-[9px]" showStatus={false} />
+                            <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2 ${
+                              isActiveDM ? 'border-blue-50' : 'border-white dark:border-[#1e2533]'
+                            } ${isOnline ? 'bg-green-400' : 'bg-gray-300 dark:bg-gray-600'}`}></span>
+                          </div>
+                          <span className="truncate font-medium">{member.user.name || member.user.email?.split('@')[0]}</span>
+                        </div>
+                        {dmUnread > 0 && !isActiveDM && (
+                          <span className="bg-danger text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
+                            {dmUnread}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
