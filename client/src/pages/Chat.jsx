@@ -773,7 +773,7 @@ const Chat = () => {
                         ) : (
                           <div className={`relative rounded-2xl overflow-hidden shadow-sm ${
                             isMine
-                              ? 'bg-accent-blue text-white rounded-br-sm'
+                              ? 'bg-accent-blue text-accent-text rounded-br-sm'
                               : 'bg-bg-primary text-text-primary border border-border/60 rounded-bl-sm'
                           }`}>
 
@@ -809,26 +809,26 @@ const Chat = () => {
                                   {msg.text.split(/(@\w+|https?:\/\/[^\s]+)/g).map((part, i) => {
                                     if (!part) return null;
                                     if (part.startsWith('@')) return (
-                                      <span key={i} className={`font-semibold px-1 rounded-sm ${isMine ? 'bg-white/20' : 'text-accent-blue bg-accent-blue/10'}`}>{part}</span>
+                                      <span key={i} className={`font-semibold px-1 rounded-sm ${isMine ? 'bg-accent-text/20' : 'text-accent-blue bg-accent-blue/10'}`}>{part}</span>
                                     );
                                     if (part.startsWith('http')) return (
-                                      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline break-all ${isMine ? 'text-white/90' : 'text-accent-blue'}`}>{part}</a>
+                                      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline break-all ${isMine ? 'text-accent-text/90' : 'text-accent-blue'}`}>{part}</a>
                                     );
                                     return <span key={i}>{part}</span>;
                                   })}
                                 </div>
                                 {/* Time + read receipt */}
-                                <div className={`flex items-center justify-end space-x-1 mt-1 ${isMine ? 'text-white/60' : 'text-text-secondary'}`}>
+                                <div className={`flex items-center justify-end space-x-1 mt-1 ${isMine ? 'text-accent-text/60' : 'text-text-secondary'}`}>
                                   {msg.isEdited && <span className="text-[10px] italic mr-1">edited</span>}
                                   <span className="text-[10px]">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                   {isMine && (
                                     isRead
-                                      ? <CheckCheck size={14} strokeWidth={2.5} className="text-sky-300" />
+                                      ? <CheckCheck size={14} strokeWidth={2.5} className="text-sky-300 dark:text-gray-700" />
                                       : isDelivered
-                                        ? <CheckCheck size={14} strokeWidth={2.5} className="text-white/50" />
-                                        : <Check size={14} strokeWidth={2.5} className="text-white/50" />
+                                        ? <CheckCheck size={14} strokeWidth={2.5} className="text-accent-text/50" />
+                                        : <Check size={14} strokeWidth={2.5} className="text-accent-text/50" />
                                   )}
                                 </div>
                               </div>
