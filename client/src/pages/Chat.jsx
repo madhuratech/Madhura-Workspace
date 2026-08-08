@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft } from 'lucide-react';
+import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 import Avatar from '../components/Avatar';
 
@@ -26,6 +26,8 @@ const Chat = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [channelsCollapsed, setChannelsCollapsed] = useState(false);
+  const [dmsCollapsed, setDmsCollapsed] = useState(false);
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -414,94 +416,125 @@ const Chat = () => {
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 
   return (
-    <div className="h-full flex font-sans border border-border rounded-2xl overflow-hidden shadow-sm bg-bg-secondary relative">
+    <div className="h-full flex font-sans bg-bg-secondary relative overflow-hidden">
       {/* Sidebar */}
-      <div className={`w-full md:w-64 bg-bg-primary border-r border-border flex-col absolute inset-0 md:relative z-10 ${activeChannel || activeDM ? 'hidden md:flex' : 'flex'}`}>
-        <div className="h-16 flex items-center px-4 border-b border-border shadow-sm">
-          <h2 className="font-bold text-text-primary text-lg truncate">{workspace.name} Chat</h2>
+      <div className={`w-full md:w-60 bg-bg-primary border-r border-border flex-col absolute inset-0 md:relative z-10 ${activeChannel || activeDM ? 'hidden md:flex' : 'flex'}`}>
+        <div className="h-14 flex items-center px-4 border-b border-border shadow-sm">
+          <h2 className="font-bold text-text-primary text-base truncate">{workspace.name}</h2>
         </div>
         
-        <div className="flex-1 overflow-y-auto py-4">
-          <div className="px-4 mb-2 flex items-center justify-between group">
-            <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Channels</span>
-            {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
-              <button onClick={handleOpenChannelModal} className="text-text-secondary hover:text-text-primary transition-colors">
-                <Plus size={16} />
-              </button>
-            )}
-          </div>
-          
-          <div className="space-y-0.5 px-2 mb-6">
-            {channels.filter(c => !c.name.startsWith('dm-')).map(channel => (
-              <button 
-                key={channel._id}
-                onClick={() => { setActiveChannel(channel); setActiveDM(null); }}
-                className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors ${
-                  activeChannel?._id === channel._id 
-                    ? 'bg-accent-blue/10 text-accent-blue font-medium' 
-                    : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
-                }`}
-              >
-                <div className="flex items-center truncate">
-                  <Hash size={16} className="mr-2 opacity-70" />
-                  <span className="truncate">{channel.name}</span>
-                </div>
-                {unreadCounts[channel._id] > 0 && activeChannel?._id !== channel._id && (
-                  <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-zoom-in shadow-sm">
-                    {unreadCounts[channel._id]}
-                  </span>
-                )}
-              </button>
-            ))}
+        <div className="flex-1 overflow-y-auto py-3 custom-scrollbar">
+
+          {/* ── CHANNELS section ── */}
+          <div className="px-3 mb-1">
+            <button
+              onClick={() => setChannelsCollapsed(c => !c)}
+              className="w-full flex items-center justify-between py-1 group"
+            >
+              <div className="flex items-center space-x-1">
+                {channelsCollapsed
+                  ? <ChevronRight size={13} className="text-text-secondary group-hover:text-text-primary transition-colors" />
+                  : <ChevronDown size={13} className="text-text-secondary group-hover:text-text-primary transition-colors" />
+                }
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-wider group-hover:text-text-primary transition-colors">Channels</span>
+              </div>
+              {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleOpenChannelModal(); }}
+                  className="text-text-secondary hover:text-text-primary transition-colors p-0.5 rounded hover:bg-bg-secondary"
+                >
+                  <Plus size={14} />
+                </button>
+              )}
+            </button>
           </div>
 
-          <div className="px-4 mb-2 flex items-center justify-between">
-            <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Direct Messages</span>
-          </div>
-          
-          <div className="space-y-1 px-2">
-            {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user?._id).map(member => {
-              const isOnline = onlineUsers.has(member.user._id);
-              const isActiveDM = activeDM?.user?._id === member.user._id;
-              
-              // Calculate DM Name to check unread counts
-              const sortedIds = [user._id, member.user._id].sort();
-              const dmName = `dm-${sortedIds[0]}-${sortedIds[1]}`;
-              const unreadCount = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || unreadCounts[`user-${member.user._id}`] || 0;
-
-              return (
+          {/* Channels list — collapsible */}
+          <div className={`overflow-hidden transition-all duration-200 ${channelsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[400px] opacity-100'}`}>
+            <div className="space-y-0.5 px-2 mb-4">
+              {channels.filter(c => !c.name.startsWith('dm-')).map(channel => (
                 <button 
-                  key={member.user._id} 
-                  onClick={() => handleDMClick(member.user)}
-                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors group ${
-                    isActiveDM
-                      ? 'bg-accent-blue/10 text-accent-blue font-medium' 
+                  key={channel._id}
+                  onClick={() => { setActiveChannel(channel); setActiveDM(null); }}
+                  className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                    activeChannel?._id === channel._id 
+                      ? 'bg-accent-blue/10 text-accent-blue font-semibold' 
                       : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
                   }`}
                 >
                   <div className="flex items-center truncate">
-                    <Avatar user={{ ...member.user, presenceStatus: isOnline ? 'Active' : 'Offline' }} size="w-7 h-7" textClass="text-xs" showStatus={true} className="mr-3 shrink-0" />
-                    <span className="truncate group-hover:font-medium mr-2">{member.user.name || member.user.email.split('@')[0]}</span>
+                    <Hash size={15} className="mr-2 opacity-60 shrink-0" />
+                    <span className="truncate">{channel.name}</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {unreadCount > 0 && !isActiveDM && (
-                      <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center animate-zoom-in shadow-sm">
-                        {unreadCount}
-                      </span>
-                    )}
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                      member.role === 'super_admin' ? 'bg-purple-500/10 text-purple-500' :
-                      member.role === 'hr' ? 'bg-accent-blue/10 text-accent-blue' :
-                      member.role === 'team_leader' ? 'bg-orange-400/10 text-orange-400' :
-                      'bg-success/10 text-success'
-                    }`}>
-                      {member.role === 'super_admin' ? 'S.ADMIN' : member.role === 'team_leader' ? 'TL' : member.role.toUpperCase()}
+                  {unreadCounts[channel._id] > 0 && activeChannel?._id !== channel._id && (
+                    <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-sm shrink-0">
+                      {unreadCounts[channel._id]}
                     </span>
-                  </div>
+                  )}
                 </button>
-              );
-            })}
+              ))}
+            </div>
           </div>
+
+          {/* ── DIRECT MESSAGES section ── */}
+          <div className="px-3 mb-1">
+            <button
+              onClick={() => setDmsCollapsed(d => !d)}
+              className="w-full flex items-center space-x-1 py-1 group"
+            >
+              {dmsCollapsed
+                ? <ChevronRight size={13} className="text-text-secondary group-hover:text-text-primary transition-colors" />
+                : <ChevronDown size={13} className="text-text-secondary group-hover:text-text-primary transition-colors" />
+              }
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-wider group-hover:text-text-primary transition-colors">Direct Messages</span>
+            </button>
+          </div>
+
+          {/* DMs list — collapsible */}
+          <div className={`overflow-hidden transition-all duration-200 ${dmsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'}`}>
+            <div className="space-y-0.5 px-2">
+              {workspace.members && workspace.members.filter(m => m.user && m.user._id !== user?._id).map(member => {
+                const isOnline = onlineUsers.has(member.user._id);
+                const isActiveDM = activeDM?.user?._id === member.user._id;
+                const sortedIds = [user._id, member.user._id].sort();
+                const dmName = `dm-${sortedIds[0]}-${sortedIds[1]}`;
+                const unreadCount = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || unreadCounts[`user-${member.user._id}`] || 0;
+
+                return (
+                  <button 
+                    key={member.user._id} 
+                    onClick={() => handleDMClick(member.user)}
+                    className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors group ${
+                      isActiveDM
+                        ? 'bg-accent-blue/10 text-accent-blue font-semibold' 
+                        : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    <div className="flex items-center truncate min-w-0">
+                      <Avatar user={{ ...member.user, presenceStatus: isOnline ? 'Active' : 'Offline' }} size="w-6 h-6" textClass="text-[10px]" showStatus={true} className="mr-2.5 shrink-0" />
+                      <span className="truncate text-[13px]">{member.user.name || member.user.email.split('@')[0]}</span>
+                    </div>
+                    <div className="flex items-center space-x-1.5 shrink-0">
+                      {unreadCount > 0 && !isActiveDM && (
+                        <span className="bg-danger text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-sm">
+                          {unreadCount}
+                        </span>
+                      )}
+                      <span className={`text-[8px] px-1 py-0.5 rounded font-bold uppercase hidden group-hover:inline-block ${
+                        member.role === 'super_admin' ? 'bg-purple-500/10 text-purple-500' :
+                        member.role === 'hr' ? 'bg-accent-blue/10 text-accent-blue' :
+                        member.role === 'team_leader' ? 'bg-orange-400/10 text-orange-400' :
+                        'bg-success/10 text-success'
+                      }`}>
+                        {member.role === 'super_admin' ? 'Admin' : member.role === 'team_leader' ? 'TL' : member.role.toUpperCase()}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
       </div>
 
