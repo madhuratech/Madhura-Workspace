@@ -6,6 +6,11 @@ import { Search, Calendar, Plus, FolderKanban, X, Users, CheckCircle2, Clock } f
 import { Link } from 'react-router-dom';
 import Avatar from '../components/Avatar';
 
+// Generate URL-safe slug from project title + short id suffix
+const toSlug = (title = '', id = '') =>
+  title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') +
+  '-' + String(id).slice(-6);
+
 const Projects = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
@@ -153,7 +158,51 @@ const Projects = () => {
     p.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="h-full flex flex-col font-sans">
+      {/* Skeleton header */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <div className="h-8 w-36 bg-border rounded-xl animate-pulse mb-2"></div>
+          <div className="h-4 w-56 bg-border/60 rounded-lg animate-pulse"></div>
+        </div>
+        <div className="h-10 w-32 bg-border rounded-xl animate-pulse"></div>
+      </div>
+      {/* Skeleton stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        {[1,2,3].map(i => (
+          <div key={i} className="bg-bg-secondary border border-border rounded-xl p-3 flex items-center space-x-3">
+            <div className="h-8 w-8 bg-border rounded-lg animate-pulse"></div>
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-16 bg-border/60 rounded animate-pulse"></div>
+              <div className="h-6 w-10 bg-border rounded animate-pulse"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Skeleton cards */}
+      <div className="bg-bg-secondary border border-border rounded-2xl flex-1 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="bg-bg-primary border border-border rounded-xl p-4 overflow-hidden">
+              <div className="h-1 w-full bg-border/50 rounded mb-4 animate-pulse"></div>
+              <div className="h-4 w-20 bg-border rounded mb-4 animate-pulse"></div>
+              <div className="h-5 w-3/4 bg-border rounded-lg animate-pulse mb-2"></div>
+              <div className="h-3 w-full bg-border/60 rounded animate-pulse mb-1"></div>
+              <div className="h-3 w-4/5 bg-border/60 rounded animate-pulse mb-6"></div>
+              <div className="h-10 w-full bg-border/40 rounded-lg animate-pulse mb-4"></div>
+              <div className="flex justify-between items-center pt-2 border-t border-border">
+                <div className="flex -space-x-2">
+                  {[1,2,3].map(j => <div key={j} className="h-6 w-6 rounded-full bg-border animate-pulse border-2 border-bg-secondary"></div>)}
+                </div>
+                <div className="h-6 w-20 bg-border/60 rounded-md animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="h-full flex flex-col font-sans">
@@ -290,7 +339,7 @@ const Projects = () => {
                   </div>
                   
                   <Link 
-                    to={`/project/${project._id}`} 
+                    to={`/projects/${toSlug(project.title, project._id)}`} 
                     className="text-[11px] font-bold text-accent-blue hover:text-white hover:bg-accent-blue px-2.5 py-1 rounded-md transition-colors border border-accent-blue/20 bg-accent-blue/5"
                   >
                     Open Board

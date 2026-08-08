@@ -58,7 +58,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tl-dashboard" element={<TeamLeaderDashboard />} />
               <Route path="/projects" element={<Projects />} />
-              <Route path="/projects/:id" element={<ProjectDetails />} />
+              <Route path="/projects/:slug" element={<ProjectDetails />} />
               <Route path="/my-tasks" element={<MyTasks />} />
               <Route path="/team" element={<Team />} />
               <Route path="/meetings" element={<Meetings />} />

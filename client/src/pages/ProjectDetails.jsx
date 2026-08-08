@@ -7,8 +7,67 @@ import { AuthContext } from '../context/AuthContext';
 import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2 } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
+// Extract the 24-char MongoDB ObjectId that was appended as the last segment of the slug
+const idFromSlug = (slug = '') => {
+  // Slug format: "project-name-title-XXXXXX" where XXXXXX is the last 6 chars of the _id
+  // We need to find the full _id by matching against projects, so we just pass the suffix
+  return slug.split('-').pop(); // returns the 6-char suffix for lookup
+};
+
+// Kanban skeleton loader
+const KanbanSkeleton = () => (
+  <div className="h-full flex flex-col font-sans">
+    {/* Header skeleton */}
+    <div className="flex justify-between items-center mb-8">
+      <div className="flex items-center space-x-4">
+        <div className="h-9 w-9 bg-border rounded-full animate-pulse"></div>
+        <div>
+          <div className="h-7 w-56 bg-border rounded-xl animate-pulse mb-2"></div>
+          <div className="h-3.5 w-40 bg-border/60 rounded animate-pulse"></div>
+        </div>
+      </div>
+      <div className="h-10 w-28 bg-border rounded-xl animate-pulse"></div>
+    </div>
+    {/* Kanban columns skeleton */}
+    <div className="flex gap-5 flex-1 overflow-hidden">
+      {['To Do', 'In Progress', 'Done'].map((col) => (
+        <div key={col} className="flex flex-col w-72 shrink-0">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center space-x-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-border animate-pulse"></div>
+              <div className="h-4 w-20 bg-border rounded animate-pulse"></div>
+            </div>
+            <div className="h-5 w-6 bg-border/60 rounded-full animate-pulse"></div>
+          </div>
+          <div className="flex-1 rounded-3xl p-4 bg-bg-primary/80 border border-border/60 min-h-[500px]">
+            {[1, 2, col === 'To Do' ? 3 : null].filter(Boolean).map((i) => (
+              <div key={i} className="p-5 mb-4 rounded-2xl border border-border bg-bg-secondary shadow-sm">
+                <div className="flex justify-between items-center mb-3">
+                  <div className="h-4 w-14 bg-border/60 rounded animate-pulse"></div>
+                  <div className="h-4 w-4 bg-border/40 rounded animate-pulse"></div>
+                </div>
+                <div className="h-5 w-4/5 bg-border rounded-lg animate-pulse mb-2"></div>
+                <div className="h-3 w-full bg-border/50 rounded animate-pulse mb-1"></div>
+                <div className="h-3 w-3/4 bg-border/50 rounded animate-pulse mb-5"></div>
+                <div className="flex justify-between items-center pt-3 border-t border-border/50">
+                  <div className="flex -space-x-2">
+                    {[1,2].map(j => <div key={j} className="h-7 w-7 rounded-full bg-border animate-pulse border-2 border-bg-secondary"></div>)}
+                  </div>
+                  <div className="h-3 w-16 bg-border/50 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 const ProjectDetails = () => {
-  const { id } = useParams();
+  const { slug } = useParams();
+  // The slug ends with the last 6 chars of the MongoDB _id (e.g. "my-project-fe5b")
+  const slugSuffix = idFromSlug(slug);
   const { user } = useContext(AuthContext);
   const [columns, setColumns] = useState({
     'To Do': { name: 'To Do', color: 'text-slate-400', items: [] },
@@ -18,6 +77,8 @@ const ProjectDetails = () => {
   const [workspaceId, setWorkspaceId] = useState(null);
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [project, setProject] = useState(null);
+  const [projectId, setProjectId] = useState(null); // real MongoDB _id resolved from slug
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', priority: 'Medium', dueDate: '', assignees: [] });
   const [socket, setSocket] = useState(null);
@@ -37,38 +98,49 @@ const ProjectDetails = () => {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on('taskCreated', (t) => { if (t.project === id) fetchTasks(workspaceId); });
-    socket.on('taskUpdated', (t) => { if (t.project === id) fetchTasks(workspaceId); });
+    socket.on('taskCreated', (t) => { if (t.project === projectId) fetchTasks(workspaceId); });
+    socket.on('taskUpdated', (t) => { if (t.project === projectId) fetchTasks(workspaceId); });
     return () => { socket.off('taskCreated'); socket.off('taskUpdated'); };
-  }, [socket, id, workspaceId]);
+  }, [socket, projectId, workspaceId]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!slugSuffix) return;
     initData();
-  }, [id]);
+  }, [slug]);
 
   const initData = async () => {
     try {
+      setLoading(true);
       const wsRes = await axios.get('/workspaces');
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
         setWorkspaceId(ws._id);
-        
+
+        // Fetch all projects to find the one matching our slug suffix
+        const allProjRes = await axios.get(`/workspaces/${ws._id}/projects`);
+        const matched = (allProjRes.data || []).find(p =>
+          String(p._id).endsWith(slugSuffix) ||
+          String(p._id).slice(-6) === slugSuffix
+        );
+
+        if (!matched) {
+          console.error('Project not found for slug:', slug);
+          setLoading(false);
+          return;
+        }
+
+        const resolvedId = matched._id;
+        setProjectId(resolvedId);
+        setProject(matched);
+
         let reqs = [
-          axios.get(`/workspaces/${ws._id}/projects/${id}`).catch(e => ({ error: true, data: e })),
-          axios.get(`/workspaces/${ws._id}/projects/${id}/tasks`).catch(e => ({ error: true, data: e }))
+          axios.get(`/workspaces/${ws._id}/projects/${resolvedId}/tasks`).catch(e => ({ error: true, data: e }))
         ];
         if (user?.role !== 'employee') {
           reqs.push(axios.get(`/workspaces/${ws._id}/projects/members`).catch(e => ({ error: true, data: e })));
         }
 
-        const [projRes, tasksRes, membersRes] = await Promise.all(reqs);
-
-        if (!projRes.error) {
-          setProject(projRes.data);
-        } else {
-          console.error("Failed to load project details:", projRes.data);
-        }
+        const [tasksRes, membersRes] = await Promise.all(reqs);
 
         if (!tasksRes.error) {
           const cols = {
@@ -88,13 +160,16 @@ const ProjectDetails = () => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchTasks = async (wsId) => {
-    if (!wsId) return;
+  const fetchTasks = async (wsId, pid) => {
+    const resolvedId = pid || projectId;
+    if (!wsId || !resolvedId) return;
     try {
-      const res = await axios.get(`/workspaces/${wsId}/projects/${id}/tasks`);
+      const res = await axios.get(`/workspaces/${wsId}/projects/${resolvedId}/tasks`);
       const cols = {
         'To Do': { name: 'To Do', color: 'text-slate-400', items: [] },
         'In Progress': { name: 'In Progress', color: 'text-accent-blue', items: [] },
@@ -136,9 +211,9 @@ const ProjectDetails = () => {
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
-    if (!workspaceId) return;
+    if (!workspaceId || !projectId) return;
     try {
-      await axios.post(`/workspaces/${workspaceId}/projects/${id}/tasks`, {
+      await axios.post(`/workspaces/${workspaceId}/projects/${projectId}/tasks`, {
         ...formData,
         workspace: workspaceId,
         assignees: formData.assignees.length > 0 ? formData.assignees : undefined
@@ -185,6 +260,8 @@ const ProjectDetails = () => {
     'In Progress': 'bg-accent-blue',
     'Done': 'bg-success',
   };
+
+  if (loading) return <KanbanSkeleton />;
 
   return (
     <div className="h-full flex flex-col font-sans">
