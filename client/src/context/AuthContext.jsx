@@ -1,12 +1,24 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
 export const AuthContext = createContext();
 
+// Synchronously read from localStorage so first render has user data immediately
+const getInitialUser = () => {
+  try {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    return null;
+  }
+};
+
+const getInitialToken = () => localStorage.getItem('token') || null;
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(getInitialUser);
+  const [loading, setLoading] = useState(false); // No blocking — user is set synchronously
   
   // Notification and Socket State
   const [socket, setSocket] = useState(null);
@@ -17,28 +29,31 @@ export const AuthProvider = ({ children }) => {
   // Setup Axios defaults
   axios.defaults.baseURL = `${API_URL}/api`;
 
+  // Set token in axios header immediately on mount
+  const initialToken = getInitialToken();
+  if (initialToken) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${initialToken}`;
+  }
+
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      const storedUser = localStorage.getItem('user');
-      
-      if (token && storedUser) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        
-        // Fetch fresh user data to ensure avatar and other details are up to date
-        try {
-          const res = await axios.get(`/users/${parsedUser._id || parsedUser.id}`);
-          setUser(res.data);
-          localStorage.setItem('user', JSON.stringify(res.data));
-        } catch (error) {
-          console.error('Failed to fetch fresh user data:', error);
-        }
+    // Silently refresh user data in the background — does NOT block rendering
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (!token || !storedUser) return;
+
+    const parsedUser = JSON.parse(storedUser);
+    const refreshUser = async () => {
+      try {
+        const res = await axios.get(`/users/${parsedUser._id || parsedUser.id}`);
+        setUser(res.data);
+        localStorage.setItem('user', JSON.stringify(res.data));
+      } catch (error) {
+        console.error('Failed to fetch fresh user data:', error);
       }
-      setLoading(false);
     };
-    initAuth();
+    // Small delay so initial paint happens first
+    const timer = setTimeout(refreshUser, 300);
+    return () => clearTimeout(timer);
   }, []);
 
   // Initialize Socket and fetch notifications when user logs in
@@ -176,7 +191,7 @@ export const AuthProvider = ({ children }) => {
       user, setUser, loading, login, register, logout, loginWithToken, updateUserStatus,
       socket, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications 
     }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
