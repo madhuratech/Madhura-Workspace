@@ -25,33 +25,41 @@ export const ToastProvider = ({ children }) => {
       {children}
       {toast && (
         <div className="fixed bottom-6 right-6 z-[9999] animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className={`relative overflow-hidden flex flex-col min-w-[300px] max-w-sm rounded-xl shadow-2xl border backdrop-blur-xl ${
-            toast.type === 'success' ? 'bg-success/95 border-success/20 text-white' :
-            toast.type === 'error' ? 'bg-danger/95 border-danger/20 text-white' :
-            toast.type === 'warning' ? 'bg-orange-500/95 border-orange-500/20 text-white' :
-            'bg-accent-blue/95 border-accent-blue/20 text-white'
-          }`}>
-            <div className="flex items-start p-4">
-              <div className="shrink-0 mr-3 mt-0.5">
-                {toast.type === 'success' && <CheckCircle2 size={20} className="text-white drop-shadow-md" />}
-                {toast.type === 'error' && <XCircle size={20} className="text-white drop-shadow-md" />}
-                {toast.type === 'warning' && <AlertCircle size={20} className="text-white drop-shadow-md" />}
-                {toast.type === 'info' && <Info size={20} className="text-white drop-shadow-md" />}
+          <div className="relative flex items-center min-w-[300px] max-w-sm rounded-xl shadow-lg border border-border bg-bg-secondary text-text-primary overflow-hidden">
+            <div className={`w-1.5 self-stretch shrink-0 ${
+              toast.type === 'success' ? 'bg-emerald-500' :
+              toast.type === 'error' ? 'bg-rose-500' :
+              toast.type === 'warning' ? 'bg-amber-500' :
+              'bg-blue-500'
+            }`} />
+            
+            <div className="flex-1 flex items-center p-3.5 pl-3">
+              <div className="shrink-0 mr-3">
+                {toast.type === 'success' && <CheckCircle2 size={18} className="text-emerald-500" />}
+                {toast.type === 'error' && <XCircle size={18} className="text-rose-500" />}
+                {toast.type === 'warning' && <AlertCircle size={18} className="text-amber-500" />}
+                {toast.type === 'info' && <Info size={18} className="text-blue-500" />}
               </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-sm tracking-wide capitalize drop-shadow-sm">
-                  {toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Error' : toast.type === 'warning' ? 'Warning' : 'Info'}
-                </h4>
-                <p className="font-medium text-xs mt-0.5 opacity-90 leading-tight drop-shadow-sm">{toast.message}</p>
+              <div className="flex-1 pr-2">
+                <p className="font-semibold text-[13px] leading-tight">{toast.message}</p>
               </div>
-              <button onClick={hideToast} className="ml-4 opacity-70 hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded-md">
+              <button 
+                onClick={hideToast} 
+                className="shrink-0 text-text-secondary hover:text-text-primary transition-colors p-1 rounded-md hover:bg-bg-primary"
+              >
                 <XCircle size={16} />
               </button>
             </div>
+            
             {/* Progress Bar */}
-            <div className="h-1 w-full bg-white/20">
+            <div className="absolute bottom-0 left-0 h-[2px] w-full bg-border/50">
               <div 
-                className="h-full bg-white/60 animate-[shrink_linear_forwards]" 
+                className={`h-full animate-[shrink_linear_forwards] ${
+                  toast.type === 'success' ? 'bg-emerald-500' :
+                  toast.type === 'error' ? 'bg-rose-500' :
+                  toast.type === 'warning' ? 'bg-amber-500' :
+                  'bg-blue-500'
+                }`} 
                 style={{ animationDuration: '3000ms' }}
               />
             </div>
