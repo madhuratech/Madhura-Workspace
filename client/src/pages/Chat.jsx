@@ -28,6 +28,8 @@ const Chat = () => {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [channelsCollapsed, setChannelsCollapsed] = useState(false);
   const [dmsCollapsed, setDmsCollapsed] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -633,19 +635,48 @@ const Chat = () => {
           </div>
 
           {/* Right actions */}
-          <div className="flex items-center space-x-1 shrink-0">
-            <button className="p-2 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors" title="Search in conversation">
-              <Search size={16} />
-            </button>
-            <button className="p-2 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors" title="Members">
+          <div className="flex items-center space-x-2 shrink-0">
+            {showSearch && (
+              <div className="relative animate-in fade-in slide-in-from-right-4 duration-200">
+                <input
+                  type="text"
+                  placeholder="Search in chat..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 bg-gray-100 dark:bg-bg-primary border border-gray-200 dark:border-border rounded-lg text-sm text-gray-800 dark:text-text-primary focus:outline-none focus:border-accent-blue/50 focus:ring-1 focus:ring-accent-blue/50 w-48 sm:w-64 transition-all"
+                  autoFocus
+                />
+                <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
+                <button 
+                  onClick={() => { setShowSearch(false); setSearchQuery(''); }}
+                  className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            {!showSearch && (
+              <button 
+                onClick={() => setShowSearch(true)}
+                className="p-2 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors" 
+                title="Search in conversation"
+              >
+                <Search size={16} />
+              </button>
+            )}
+            
+            <button className="flex items-center space-x-1.5 p-1.5 px-2 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors" title="Members">
               <Users size={16} />
+              <span className="text-xs font-semibold">
+                {activeChannel ? (activeChannel.members?.length || workspaceMembers.length) : activeDM ? 2 : 0}
+              </span>
             </button>
           </div>
         </div>
 
         {/* ── Messages Area ── */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1 custom-scrollbar bg-white dark:bg-bg-secondary">
-          {messages.length === 0 ? (
+          {messages.filter(m => !searchQuery || m.text?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
               <div className="w-14 h-14 rounded-2xl bg-accent-blue/10 flex items-center justify-center mb-4">
                 {activeChannel
@@ -664,9 +695,9 @@ const Chat = () => {
               </p>
             </div>
           ) : (
-            messages.map((msg, idx) => {
+            messages.filter(m => !searchQuery || m.text?.toLowerCase().includes(searchQuery.toLowerCase())).map((msg, idx, filteredMessages) => {
               const isMine = user?._id === msg.sender?._id;
-              const prevMsg = messages[idx - 1];
+              const prevMsg = filteredMessages[idx - 1];
               const showHeader = idx === 0 || prevMsg?.sender?._id !== msg.sender?._id
                 || (new Date(msg.createdAt) - new Date(prevMsg?.createdAt)) > 5 * 60 * 1000;
               const isRead = msg.readBy?.length > 0 || msg.isRead;
