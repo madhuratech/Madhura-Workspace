@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Save, Building, Users, Bell, Shield, Key, Lock, HelpCircle, Info, Mail, MessageSquare } from 'lucide-react';
+import { Save, Building, Users, Bell, Shield, Key, Lock, HelpCircle, Info, Mail, MessageSquare, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -24,6 +24,9 @@ const Settings = () => {
     newPassword: '',
     confirmPassword: '',
   });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
   // Members & Roles Tab
@@ -38,7 +41,14 @@ const Settings = () => {
 
   // Custom UI States
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const [resetModal, setResetModal] = useState({ isOpen: false, userId: null, newPassword: '', error: '', loading: false });
+  const [resetModal, setResetModal] = useState({
+    isOpen: false,
+    userId: null,
+    newPassword: '',
+    error: '',
+    loading: false
+  });
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -468,11 +478,14 @@ const Settings = () => {
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-3 text-text-secondary" />
                     <input 
-                      type="password" required 
+                      type={showCurrentPassword ? "text" : "password"} required 
                       value={passwordData.currentPassword} onChange={e => setPasswordData({...passwordData, currentPassword: e.target.value})}
                       placeholder="Enter current password"
-                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-10 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
                     />
+                    <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                      {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
                 
@@ -481,11 +494,14 @@ const Settings = () => {
                   <div className="relative">
                     <Key size={16} className="absolute left-3 top-3 text-text-secondary" />
                     <input 
-                      type="password" required 
+                      type={showNewPassword ? "text" : "password"} required 
                       value={passwordData.newPassword} onChange={e => setPasswordData({...passwordData, newPassword: e.target.value})}
                       placeholder="Enter new password (min 6 characters)"
-                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-10 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
                     />
+                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
 
@@ -494,11 +510,14 @@ const Settings = () => {
                   <div className="relative">
                     <Key size={16} className="absolute left-3 top-3 text-text-secondary" />
                     <input 
-                      type="password" required 
+                      type={showConfirmPassword ? "text" : "password"} required 
                       value={passwordData.confirmPassword} onChange={e => setPasswordData({...passwordData, confirmPassword: e.target.value})}
                       placeholder="Re-enter new password"
-                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-10 py-2.5 text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
                     />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
                   </div>
                 </div>
                 <button type="submit" className="hidden"></button>
@@ -596,14 +615,17 @@ const Settings = () => {
             <div className="mb-6 relative">
               <Lock size={16} className="absolute left-3 top-3 text-text-secondary" />
               <input 
-                type="password"
+                type={showResetPassword ? "text" : "password"}
                 placeholder="New Password (min 6 chars)"
                 autoFocus
                 value={resetModal.newPassword}
                 onChange={(e) => setResetModal({ ...resetModal, newPassword: e.target.value, error: '' })}
-                className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-10 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
                 onKeyDown={(e) => { if (e.key === 'Enter') submitResetPassword(); }}
               />
+              <button type="button" onClick={() => setShowResetPassword(!showResetPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary">
+                {showResetPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
 
             <div className="flex justify-end space-x-3">
