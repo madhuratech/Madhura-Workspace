@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Plus, Ticket as TicketIcon, Search, AlertCircle, Clock, ChevronDown, User, Send, CheckCircle, Info } from 'lucide-react';
+import { Plus, Ticket as TicketIcon, Search, AlertCircle, Clock, ChevronDown, User, Send, CheckCircle, Info, X } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
