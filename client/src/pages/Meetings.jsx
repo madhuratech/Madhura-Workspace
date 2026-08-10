@@ -489,13 +489,15 @@ const Meetings = () => {
           {/* TAB BAR */}
           <div style={{display:'flex',background:'var(--bg-sidebar)',padding:'0 16px',borderBottom:'1px solid var(--border-color)',flexShrink:0}}>
             {[{k:'calendar',l:'Calendar'},{k:'logs',l:'Meeting Logs'}].map(({k,l})=>(
-              <div key={k} 
-                style={{position:'relative',cursor:'pointer',padding:'10px 18px',color:view===k?T_PRIMARY:'var(--text-sidebar)',fontWeight:view===k?700:500,fontSize:14,transition:'all 0.15s',opacity:view===k?1:0.6}} 
-                onClick={()=>setView(k)}
+              <button key={k} onClick={()=>setView(k)}
+                className="relative"
+                style={{padding:'12px 18px',border:'none',background:'none',cursor:'pointer',color:view===k?'#ffca22':'var(--text-sidebar)',fontWeight:view===k?600:500,fontSize:14,transition:'all 0.15s',opacity:view===k?1:0.7}}
               >
                 {l}
-                {view===k && <div style={{position:'absolute',bottom:-1,left:0,right:0,height:3,background:T_PRIMARY,borderTopLeftRadius:3,borderTopRightRadius:3,zIndex:1}} />}
-              </div>
+                {view===k && (
+                  <div style={{position:'absolute',bottom:-1,left:0,width:'100%',height:3,backgroundColor:'#ffca22',borderRadius:'3px 3px 0 0'}} />
+                )}
+              </button>
             ))}
           </div>
 
