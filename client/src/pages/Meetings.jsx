@@ -489,8 +489,13 @@ const Meetings = () => {
           {/* TAB BAR */}
           <div style={{display:'flex',background:'var(--bg-sidebar)',padding:'0 16px',borderBottom:'1px solid var(--border-color)',flexShrink:0}}>
             {[{k:'calendar',l:'Calendar'},{k:'logs',l:'Meeting Logs'}].map(({k,l})=>(
-              <button key={k} onClick={()=>setView(k)}
-                style={{padding:'8px 18px',border:'none',background:'none',cursor:'pointer',color:view===k?T_PRIMARY:'var(--text-sidebar)',fontWeight:view===k?600:400,fontSize:13,borderBottom:view===k?`2px solid ${T_PRIMARY}`:'2px solid transparent',marginBottom:-1,transition:'all 0.15s',opacity:view===k?1:0.6}}>{l}</button>
+              <div key={k} 
+                style={{position:'relative',cursor:'pointer',padding:'10px 18px',color:view===k?T_PRIMARY:'var(--text-sidebar)',fontWeight:view===k?700:500,fontSize:14,transition:'all 0.15s',opacity:view===k?1:0.6}} 
+                onClick={()=>setView(k)}
+              >
+                {l}
+                {view===k && <div style={{position:'absolute',bottom:-1,left:0,right:0,height:3,background:T_PRIMARY,borderTopLeftRadius:3,borderTopRightRadius:3,zIndex:1}} />}
+              </div>
             ))}
           </div>
 

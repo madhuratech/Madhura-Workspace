@@ -124,41 +124,76 @@ const Dashboard = () => {
   return (
     <div className="h-full overflow-y-auto pr-2 pb-10 custom-scrollbar font-sans">
       
-      {/* Header Section with dynamic styling */}
-      <div className="relative mb-10 p-8 rounded-3xl overflow-hidden bg-gradient-to-r from-bg-secondary to-bg-primary border border-border/50 shadow-sm">
-        {/* Abstract decorative elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-accent-blue/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-20 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl translate-y-1/2"></div>
+      {/* ── NEW TEAMS-STYLE HERO ANIMATION ── */}
+      <div className="relative mb-10 rounded-3xl overflow-hidden bg-[#0A0B1A] border border-white/5 shadow-2xl min-h-[340px] flex items-center" style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, rgba(139,92,246,0.15) 0%, transparent 50%), radial-gradient(circle at 0% 100%, rgba(59,130,246,0.1) 0%, transparent 40%)' }}>
         
-        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex items-center space-x-5">
-            <Avatar 
-              user={user} 
-              size="w-16 h-16" 
-              textClass="text-2xl" 
-              className="shadow-lg transform hover:scale-105 transition-transform duration-300"
-              showStatus={false}
-            />
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-primary/70 mb-1">
-                Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, {user?.name?.split(' ')[0]} 👋
-              </h1>
-              <p className="text-sm text-text-secondary font-medium flex items-center">
-                <Activity size={14} className="mr-1.5 text-success" />
-                Here's what's happening in your workspace today.
-              </p>
+        {/* Floating 3D Shapes Background */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[10%] left-[60%] w-32 h-32 shape-3d-sphere" style={{ animation: 'float-slow 8s ease-in-out infinite' }} />
+          <div className="absolute bottom-[20%] right-[10%] w-48 h-20 shape-3d-pill" style={{ animation: 'float-medium 12s ease-in-out infinite', transform: 'rotate(-15deg)' }} />
+          <div className="absolute top-[30%] right-[30%] w-16 h-16 shape-3d-cube" style={{ animation: 'float-fast 6s ease-in-out infinite' }} />
+          <div className="absolute -bottom-10 left-[20%] w-40 h-40 shape-3d-sphere opacity-50" style={{ background: 'radial-gradient(circle at 30% 30%, #4facfe, #00f2fe)', animation: 'float-slow 10s ease-in-out infinite reverse' }} />
+          <div className="absolute top-1/4 left-[10%] w-12 h-12 rounded-full border-4 border-purple-500/30" style={{ animation: 'float-fast 7s ease-in-out infinite' }} />
+        </div>
+
+        {/* Content Container */}
+        <div className="relative z-10 w-full p-8 md:p-12 flex flex-col md:flex-row justify-between items-center gap-10">
+          
+          {/* Left Text Column */}
+          <div className="flex-1 text-white">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70">
+              Welcome back, {user?.name?.split(' ')[0]} 👋
+            </h1>
+            <p className="text-lg text-white/70 font-medium max-w-lg mb-8 leading-relaxed">
+              Your workspaces, projects, and recent activity are all synced up. Let's make today productive.
+            </p>
+            
+            {user?.role === 'super_admin' && (
+              <button 
+                onClick={() => setShowModal(true)}
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-xl font-semibold flex items-center space-x-2 transform hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+              >
+                <Plus size={18} />
+                <span>Create Workspace</span>
+              </button>
+            )}
+          </div>
+
+          {/* Right Floating Glassmorphism Card */}
+          <div className="glass-panel rounded-2xl p-5 w-full max-w-sm shrink-0 border border-white/10" style={{ animation: 'float-slow 6s ease-in-out infinite' }}>
+            <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <Activity size={16} />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-sm">Recent Activity</h3>
+                  <p className="text-white/50 text-[10px] flex items-center"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span>Live update</p>
+                </div>
+              </div>
             </div>
+            
+            <div className="space-y-3">
+              {activities.length > 0 ? activities.slice(0, 3).map((act, i) => (
+                <div key={act.id || i} className="flex items-center space-x-3 bg-white/5 hover:bg-white/10 rounded-xl p-2.5 transition-colors cursor-pointer border border-transparent hover:border-white/10">
+                  <div className={`h-8 w-8 rounded-full ${act.bg} ${act.color} flex items-center justify-center shrink-0`}>
+                    {act.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{act.title}</p>
+                    <p className="text-[10px] text-white/50 truncate">Just now</p>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-4 text-white/50 text-xs">No recent activity</div>
+              )}
+            </div>
+            
+            <button className="w-full mt-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white text-sm font-bold shadow-lg hover:shadow-indigo-500/25 transition-all transform hover:-translate-y-0.5">
+              View All Feed
+            </button>
           </div>
           
-          {user?.role === 'super_admin' && (
-            <button 
-              onClick={() => setShowModal(true)}
-              className="bg-text-primary text-bg-primary hover:bg-accent-blue hover:text-white px-6 py-3 rounded-xl transition-all duration-300 shadow-md hover:shadow-xl font-semibold flex items-center space-x-2 transform hover:-translate-y-0.5"
-            >
-              <Plus size={18} />
-              <span>New Workspace</span>
-            </button>
-          )}
         </div>
       </div>
 
