@@ -355,7 +355,7 @@ const Chat = () => {
       } else if (activeDM) {
         await axios.delete(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/${msgId}`);
       }
-      setMessages(messages.filter(m => m._id !== msgId));
+      setMessages(messages.map(m => m._id === msgId ? { ...m, isDeleted: true, text: '' } : m));
     } catch (error) {
       console.error(error);
     }
@@ -507,10 +507,10 @@ const Chat = () => {
                     <button
                       key={channel._id}
                       onClick={() => { setActiveChannel(channel); setActiveDM(null); }}
-                      className={`w-full flex items-center justify-between px-2.5 py-[7px] rounded-lg text-[13px] transition-all ${
+                      className={`w-full flex items-center justify-between px-2.5 py-[7px] text-[13px] transition-all ${
                         isActive
-                          ? 'bg-accent-blue/10 text-accent-blue font-semibold'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                          ? 'bg-accent-blue/10 text-accent-blue font-bold border-l-4 border-accent-blue rounded-r-lg rounded-l-sm'
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white rounded-lg border-l-4 border-transparent'
                       }`}
                     >
                       <div className="flex items-center min-w-0">
@@ -561,10 +561,10 @@ const Chat = () => {
                       <button
                         key={member.user._id}
                         onClick={() => handleDMClick(member.user)}
-                        className={`w-full flex items-center justify-between px-2.5 py-[7px] rounded-lg text-[13px] transition-all ${
+                        className={`w-full flex items-center justify-between px-2.5 py-[7px] text-[13px] transition-all ${
                           isActiveDM
-                            ? 'bg-accent-blue/10 text-accent-blue font-semibold'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                            ? 'bg-accent-blue/10 text-accent-blue font-bold border-l-4 border-accent-blue rounded-r-lg rounded-l-sm'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white rounded-lg border-l-4 border-transparent'
                         }`}
                       >
                         <div className="flex items-center min-w-0">
