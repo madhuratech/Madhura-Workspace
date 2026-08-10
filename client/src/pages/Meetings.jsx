@@ -294,8 +294,8 @@ const Meetings = () => {
           <div style={{flex:1,overflowY:'auto',background:'var(--bg-primary)'}}>
             {/* Timezone */}
             <div style={{display:'flex',alignItems:'center',gap:5,padding:'10px 60px',borderBottom:'1px solid var(--border-color)'}}>
-              <span style={{fontSize:13,color:T_PRIMARY,cursor:'default'}}>Time zone: {TZ_LABEL}</span>
-              <ChevronDown size={13} color={T_PRIMARY}/>
+              <span style={{fontSize:14,color:'var(--text-primary)',cursor:'default'}}>Time zone: <span style={{color:'#145C9E'}}>{TZ_LABEL}</span></span>
+              <ChevronDown size={14} color="#145C9E"/>
             </div>
             {/* Info banner */}
             <div style={{display:'flex',alignItems:'center',gap:10,margin:'12px 60px',padding:'10px 14px',background:'var(--bg-secondary)',border:'1px solid var(--border-color)',borderRadius:6}}>
@@ -679,11 +679,10 @@ const Meetings = () => {
                 ].map(({k,l,icon})=>(
                   <button key={k} onClick={()=>setAdvTab(k)}
                     style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 14px',
-                      background:advTab===k?'var(--bg-sidebar-hover)':'transparent',
+                      background:advTab===k?'rgba(255,255,255,0.06)':'transparent',
                       border:'none',borderRadius:6,
-                      color:advTab===k?'var(--accent-color)':'var(--text-sidebar)',
+                      color:advTab===k?'#5a81fa':'var(--text-sidebar)',
                       cursor:'pointer',fontSize:14,fontWeight:advTab===k?600:400,textAlign:'left',
-                      borderLeft:advTab===k?'3px solid var(--accent-color)':'3px solid transparent',
                       opacity:advTab===k?1:0.7,transition:'all 0.15s'
                     }}
                     onMouseEnter={e=>{if(advTab!==k)e.currentTarget.style.opacity=1;}}
