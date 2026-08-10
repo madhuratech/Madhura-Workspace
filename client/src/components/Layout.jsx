@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2 } from 'lucide-react';
 import GlobalQuickNotes from './GlobalQuickNotes';
 import Avatar from './Avatar';
 
@@ -14,6 +14,7 @@ const Layout = () => {
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showStatusSubmenu, setShowStatusSubmenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showQuickNote, setShowQuickNote] = useState(false);
   
@@ -35,6 +36,7 @@ const Layout = () => {
       }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfileMenu(false);
+        setShowStatusSubmenu(false);
       }
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsSearchOpen(false);
@@ -133,20 +135,104 @@ const Layout = () => {
     navigate('/login');
   };
 
+  // Teams-style status definitions
+  const teamsStatuses = [
+    {
+      key: 'Active',
+      label: 'Available',
+      icon: (
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+          <circle cx="8" cy="8" r="7.5" fill="#92C353" stroke="#92C353" />
+          <path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
+    {
+      key: 'Busy',
+      label: 'Busy',
+      icon: (
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+          <circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B" />
+          <circle cx="8" cy="8" r="3" fill="white" />
+        </svg>
+      ),
+    },
+    {
+      key: 'Break',
+      label: 'Do not disturb',
+      icon: (
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+          <circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B" />
+          <rect x="4" y="7" width="8" height="2" rx="1" fill="white" />
+        </svg>
+      ),
+    },
+    {
+      key: 'Lunch',
+      label: 'Be right back',
+      icon: (
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+          <circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739" />
+          <path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+    },
+    {
+      key: 'Away',
+      label: 'Appear away',
+      icon: (
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+          <circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739" />
+          <path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="12" r="3.5" fill="#605E5C" stroke="white" strokeWidth="1" />
+          <rect x="11" y="11" width="2" height="2" rx="0.5" fill="white" />
+        </svg>
+      ),
+    },
+    {
+      key: 'Leave',
+      label: 'Appear offline',
+      icon: (
+        <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4">
+          <circle cx="8" cy="8" r="7.5" fill="none" stroke="#8A8886" strokeWidth="1.5" />
+          <circle cx="8" cy="8" r="4" fill="#8A8886" />
+          <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+  ];
+
+  const getCurrentStatusDef = () => {
+    return teamsStatuses.find(s => s.key === user?.presenceStatus) || teamsStatuses[0];
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'bg-success';
-      case 'Busy': return 'bg-danger';
-      case 'Break': return 'bg-warning';
-      case 'Lunch': return 'bg-purple-500';
+      case 'Active': return 'bg-green-500';
+      case 'Busy': return 'bg-red-500';
+      case 'Break': return 'bg-red-500';
+      case 'Lunch': return 'bg-yellow-500';
       case 'Leave': return 'bg-gray-500';
-      case 'Away': return 'bg-orange-400';
-      default: return 'bg-success';
+      case 'Away': return 'bg-yellow-500';
+      default: return 'bg-green-500';
     }
   };
 
-  const handleStatusChange = (status) => {
-    updateUserStatus(status);
+  const getStatusDotStyle = (status) => {
+    switch (status) {
+      case 'Active': return { background: '#92C353' };
+      case 'Busy': return { background: '#C4314B' };
+      case 'Break': return { background: '#C4314B' };
+      case 'Lunch': return { background: '#F8B739' };
+      case 'Leave': return { background: '#8A8886' };
+      case 'Away': return { background: '#F8B739' };
+      default: return { background: '#92C353' };
+    }
+  };
+
+  const handleStatusChange = (statusKey) => {
+    updateUserStatus(statusKey);
+    setShowStatusSubmenu(false);
     setShowProfileMenu(false);
   };
 
@@ -355,61 +441,188 @@ const Layout = () => {
           </div>
 
           <div className="relative" ref={profileRef}>
-            <button className="relative flex items-center justify-center focus:outline-none ml-2">
-              <Avatar 
-                user={user} 
-                size="w-8 h-8" 
-                textClass="text-xs text-white" 
-                className="shadow-sm border border-white/20 hover:opacity-90 transition-opacity" 
+            {/* Avatar trigger button */}
+            <button
+              id="profile-menu-trigger"
+              className="relative flex items-center justify-center focus:outline-none ml-2"
+              onClick={(e) => {
+                e.preventDefault();
+                setShowProfileMenu(!showProfileMenu);
+                setShowStatusSubmenu(false);
+              }}
+            >
+              <Avatar
+                user={user}
+                size="w-8 h-8"
+                textClass="text-xs text-white"
+                className="shadow-sm border-2 border-white/20 hover:border-white/50 transition-all duration-200"
+                showStatus={true}
                 onClick={(e) => {
                   e.preventDefault();
                   setShowProfileMenu(!showProfileMenu);
+                  setShowStatusSubmenu(false);
                 }}
               />
             </button>
 
-            {/* Profile Dropdown */}
+            {/* ── Teams-style Profile Dropdown ── */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-3 w-64 bg-bg-secondary border border-border rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="p-5 border-b border-border flex flex-col items-center">
-                  <div 
-                    className="relative mb-3 group cursor-pointer"
-                    onClick={() => {
-                      setShowProfileMenu(false);
-                      navigate(`/profile/${user._id || user.id}`);
+              <div
+                id="profile-dropdown"
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 'calc(100% + 10px)',
+                  width: '300px',
+                  background: 'var(--color-bg-sidebar, #1f2937)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '8px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+                  zIndex: 9999,
+                  overflow: 'hidden',
+                  animation: 'teamsDropdownIn 0.18s ease-out',
+                }}
+              >
+                {/* ── Header: Personal + Sign out ── */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.02em' }}>Personal</span>
+                  <button
+                    id="profile-signout-btn"
+                    onClick={handleLogout}
+                    style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', borderRadius: '4px', transition: 'color 0.15s' }}
+                    onMouseEnter={e => e.target.style.color = 'white'}
+                    onMouseLeave={e => e.target.style.color = 'rgba(255,255,255,0.55)'}
+                  >
+                    Sign out
+                  </button>
+                </div>
+
+                {/* ── User Info Card ── */}
+                <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
+                    onClick={() => { setShowProfileMenu(false); navigate(`/profile/${user?._id || user?.id}`); }}
+                  >
+                    <Avatar
+                      user={user}
+                      size="w-14 h-14"
+                      textClass="text-xl"
+                      className="shadow-md border-2 border-white/10"
+                      showStatus={false}
+                    />
+                    {/* Status dot on avatar */}
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 1,
+                        right: 1,
+                        width: 13,
+                        height: 13,
+                        borderRadius: '50%',
+                        border: '2px solid #1f2937',
+                        ...getStatusDotStyle(user?.presenceStatus),
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 700, fontSize: '15px', color: 'white', margin: 0, lineHeight: 1.2 }}>{user?.name}</p>
+                    <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: '3px 0 5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</p>
+                    <button
+                      id="profile-myaccount-btn"
+                      onClick={() => { setShowProfileMenu(false); navigate(`/profile/${user?._id || user?.id}`); }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '11px', color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                      My account
+                      <ExternalLink size={10} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Current Status Row (Teams main button) ── */}
+                <div style={{ padding: '8px' }}>
+                  <button
+                    id="profile-status-toggle"
+                    onClick={() => setShowStatusSubmenu(!showStatusSubmenu)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '10px 12px',
+                      borderRadius: 6,
+                      background: showStatusSubmenu ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)',
+                      border: showStatusSubmenu ? '1px solid rgba(255,255,255,0.12)' : '1px solid transparent',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      textAlign: 'left',
+                    }}
+                    onMouseEnter={e => { if (!showStatusSubmenu) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                    onMouseLeave={e => { if (!showStatusSubmenu) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                  >
+                    {getCurrentStatusDef().icon}
+                    <span style={{ flex: 1, fontSize: '14px', fontWeight: 600, color: 'white' }}>
+                      {getCurrentStatusDef().label}
+                    </span>
+                    <ChevronRight
+                      size={16}
+                      style={{
+                        color: 'rgba(255,255,255,0.4)',
+                        transform: showStatusSubmenu ? 'rotate(90deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s ease',
+                      }}
+                    />
+                  </button>
+
+                  {/* ── Status Submenu (animated slide-down) ── */}
+                  <div
+                    style={{
+                      maxHeight: showStatusSubmenu ? '300px' : '0px',
+                      overflow: 'hidden',
+                      transition: 'max-height 0.22s ease',
                     }}
                   >
-                    <Avatar user={user} size="w-16 h-16" textClass="text-2xl" className="shadow-sm transition-transform group-hover:scale-105" />
+                    <div style={{ paddingTop: 4 }}>
+                      {teamsStatuses.map((s) => {
+                        const isActive = (user?.presenceStatus || 'Active') === s.key;
+                        return (
+                          <button
+                            key={s.key}
+                            id={`status-option-${s.key.toLowerCase()}`}
+                            onClick={() => handleStatusChange(s.key)}
+                            style={{
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 12,
+                              padding: '9px 12px',
+                              borderRadius: 6,
+                              background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'background 0.12s',
+                            }}
+                            onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                            onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                          >
+                            {s.icon}
+                            <span
+                              style={{
+                                flex: 1,
+                                fontSize: '13px',
+                                fontWeight: isActive ? 600 : 400,
+                                color: isActive ? 'white' : 'rgba(255,255,255,0.75)',
+                              }}
+                            >
+                              {s.label}
+                            </span>
+                            {isActive && (
+                              <Check size={14} style={{ color: 'rgba(255,255,255,0.7)', flexShrink: 0 }} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <h3 className="font-bold text-base font-outfit text-text-primary">{user?.name}</h3>
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-1">{user?.role?.replace('_', ' ')}</p>
-                </div>
-                
-                <div className="p-2.5">
-                  <p className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Set Status</p>
-                  {['Active', 'Busy', 'Break', 'Lunch', 'Leave', 'Away'].map(status => (
-                    <button 
-                      key={status}
-                      onClick={() => handleStatusChange(status)}
-                      className={`w-full text-left px-3 py-2.5 text-sm rounded-xl flex items-center space-x-3 transition-all duration-200 ${user?.presenceStatus === status ? 'bg-accent-blue/10' : 'hover:bg-bg-primary'}`}
-                    >
-                      <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)} shadow-sm`}></div>
-                      <span className={user?.presenceStatus === status ? 'font-bold text-accent-blue' : 'font-medium text-text-secondary hover:text-text-primary'}>{status}</span>
-                      {user?.presenceStatus === status && (
-                        <div className="ml-auto h-1.5 w-1.5 rounded-full bg-accent-blue"></div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="p-2.5 border-t border-border bg-bg-primary/30">
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full text-left px-3 py-2.5 text-sm text-danger hover:bg-danger hover:text-white rounded-xl flex items-center space-x-3 transition-all duration-200 font-semibold group"
-                  >
-                    <LogOut size={16} className="text-danger group-hover:text-white transition-colors" />
-                    <span>Logout</span>
-                  </button>
                 </div>
               </div>
             )}
