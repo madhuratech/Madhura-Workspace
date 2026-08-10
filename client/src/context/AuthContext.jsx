@@ -4,6 +4,44 @@ import { io } from 'socket.io-client';
 
 export const AuthContext = createContext();
 
+// Simple Global API Cache to prevent redundant fetching and loading spinners
+const apiCache = new Map();
+
+// Optionally intercept to clear or read cache
+axios.interceptors.request.use((config) => {
+  if (config.method === 'get') {
+    const key = config.url;
+    
+    // Skip caching for real-time endpoints (chat, notifications)
+    if (key && (key.includes('/messages') || key.includes('/notifications') || key.includes('/chat'))) {
+      return config;
+    }
+
+    if (apiCache.has(key)) {
+      const { data, timestamp } = apiCache.get(key);
+      if (Date.now() - timestamp < 15000) { // 15 seconds TTL
+        // Override adapter to return cached data immediately
+        config.adapter = () => Promise.resolve({
+          data, status: 200, statusText: 'OK', headers: {}, config, request: {}
+        });
+      } else {
+        apiCache.delete(key);
+      }
+    }
+  } else {
+    // If POST, PUT, DELETE - clear cache to ensure next GET is fresh
+    apiCache.clear();
+  }
+  return config;
+});
+
+axios.interceptors.response.use((response) => {
+  if (response.config.method === 'get') {
+    apiCache.set(response.config.url, { data: response.data, timestamp: Date.now() });
+  }
+  return response;
+});
+
 // Synchronously read from localStorage so first render has user data immediately
 const getInitialUser = () => {
   try {
@@ -165,6 +203,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+    apiCache.clear();
   };
 
   const loginWithToken = (token, userData) => {
