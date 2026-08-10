@@ -7,6 +7,59 @@ import { Camera, Mail, Shield, User as UserIcon, X, Check } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import Cropper from 'react-easy-crop';
 
+// ── Teams-style status config (shared definition) ──
+const TEAMS_STATUSES = [
+  {
+    key: 'Active', label: 'Available',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#92C353" stroke="#92C353" /><path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+    dotColor: '#92C353',
+  },
+  {
+    key: 'Busy', label: 'Busy',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B" /><circle cx="8" cy="8" r="3" fill="white" /></svg>,
+    dotColor: '#C4314B',
+  },
+  {
+    key: 'Break', label: 'Do not disturb',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B" /><rect x="4" y="7" width="8" height="2" rx="1" fill="white" /></svg>,
+    dotColor: '#C4314B',
+  },
+  {
+    key: 'Lunch', label: 'Be right back',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739" /><path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+    dotColor: '#F8B739',
+  },
+  {
+    key: 'Away', label: 'Appear away',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739" /><path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+    dotColor: '#F8B739',
+  },
+  {
+    key: 'Leave', label: 'Appear offline',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 14, height: 14, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="none" stroke="#8A8886" strokeWidth="1.5" /><circle cx="8" cy="8" r="4" fill="#8A8886" /><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="white" strokeWidth="1.2" strokeLinecap="round" /></svg>,
+    dotColor: '#8A8886',
+  },
+];
+
+const getStatusDef = (key) => TEAMS_STATUSES.find(s => s.key === key) || TEAMS_STATUSES[0];
+
+// Inline Teams-style status badge
+const StatusBadge = ({ status }) => {
+  const def = getStatusDef(status);
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      padding: '4px 10px', borderRadius: 20,
+      background: `${def.dotColor}18`,
+      border: `1px solid ${def.dotColor}40`,
+      fontSize: 12, fontWeight: 600, color: def.dotColor,
+    }}>
+      {def.icon}
+      {def.label}
+    </span>
+  );
+};
+
 // Helper function to create the cropped image
 const getCroppedImg = async (imageSrc, pixelCrop) => {
   const image = new Image();
@@ -218,7 +271,7 @@ const UserProfile = () => {
               <p className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-2 flex items-center gap-2">
                 <UserIcon size={14}/> Status
               </p>
-              <p className="text-text-primary font-medium">{profileUser.presenceStatus || 'Active'}</p>
+              <StatusBadge status={profileUser.presenceStatus || 'Active'} />
             </div>
           </div>
         </div>

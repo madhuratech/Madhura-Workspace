@@ -6,6 +6,59 @@ import { Search, Plus, UserPlus, Shield, X, Mail, Users } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import OrgChart from '../components/OrgChart';
 
+// ── Teams-style status definitions ──
+const TEAMS_STATUSES = [
+  {
+    key: 'Active', label: 'Available',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#92C353" stroke="#92C353" /><path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+    dotColor: '#92C353',
+  },
+  {
+    key: 'Busy', label: 'Busy',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B" /><circle cx="8" cy="8" r="3" fill="white" /></svg>,
+    dotColor: '#C4314B',
+  },
+  {
+    key: 'Break', label: 'Do not disturb',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B" /><rect x="4" y="7" width="8" height="2" rx="1" fill="white" /></svg>,
+    dotColor: '#C4314B',
+  },
+  {
+    key: 'Lunch', label: 'Be right back',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739" /><path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+    dotColor: '#F8B739',
+  },
+  {
+    key: 'Away', label: 'Appear away',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739" /><path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+    dotColor: '#F8B739',
+  },
+  {
+    key: 'Leave', label: 'Appear offline',
+    icon: <svg viewBox="0 0 16 16" fill="none" style={{ width: 13, height: 13, flexShrink: 0 }}><circle cx="8" cy="8" r="7.5" fill="none" stroke="#8A8886" strokeWidth="1.5" /><circle cx="8" cy="8" r="4" fill="#8A8886" /><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="white" strokeWidth="1.2" strokeLinecap="round" /></svg>,
+    dotColor: '#8A8886',
+  },
+];
+
+const getStatusDef = (key) => TEAMS_STATUSES.find(s => s.key === key) || TEAMS_STATUSES[0];
+
+const StatusBadge = ({ status }) => {
+  const def = getStatusDef(status);
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '3px 8px', borderRadius: 20,
+      background: `${def.dotColor}18`,
+      border: `1px solid ${def.dotColor}35`,
+      fontSize: 11, fontWeight: 600, color: def.dotColor,
+      whiteSpace: 'nowrap',
+    }}>
+      {def.icon}
+      {def.label}
+    </span>
+  );
+};
+
 const Team = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
@@ -227,15 +280,8 @@ const Team = () => {
                   </div>
 
                   {/* Status */}
-                  <div className="w-32 mb-3 md:mb-0">
-                    <span className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      member.user.presenceStatus === 'Active' || !member.user.presenceStatus ? 'text-success bg-success/10' :
-                      member.user.presenceStatus === 'Busy' ? 'text-danger bg-danger/10' :
-                      member.user.presenceStatus === 'Break' ? 'text-warning bg-warning/10' :
-                      'text-orange-400 bg-orange-400/10'
-                    }`}>
-                      {member.user.presenceStatus || 'Active'}
-                    </span>
+                  <div className="w-44 mb-3 md:mb-0">
+                    <StatusBadge status={member.user.presenceStatus || 'Active'} />
                   </div>
 
                   {/* Designation */}

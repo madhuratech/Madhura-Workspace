@@ -8,6 +8,24 @@ import {
   RefreshCw, FileText, ChevronDown, CheckSquare, Zap, Target, PieChart
 } from 'lucide-react';
 
+// ── Teams-style status badge ──
+const STATUS_MAP = {
+  Active:  { label: 'Available',      color: '#92C353', icon: <svg viewBox="0 0 16 16" fill="none" style={{width:12,height:12,flexShrink:0}}><circle cx="8" cy="8" r="7.5" fill="#92C353" stroke="#92C353"/><path d="M4.5 8.5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  Busy:    { label: 'Busy',           color: '#C4314B', icon: <svg viewBox="0 0 16 16" fill="none" style={{width:12,height:12,flexShrink:0}}><circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B"/><circle cx="8" cy="8" r="3" fill="white"/></svg> },
+  Break:   { label: 'Do not disturb', color: '#C4314B', icon: <svg viewBox="0 0 16 16" fill="none" style={{width:12,height:12,flexShrink:0}}><circle cx="8" cy="8" r="7.5" fill="#C4314B" stroke="#C4314B"/><rect x="4" y="7" width="8" height="2" rx="1" fill="white"/></svg> },
+  Lunch:   { label: 'Be right back',  color: '#F8B739', icon: <svg viewBox="0 0 16 16" fill="none" style={{width:12,height:12,flexShrink:0}}><circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739"/><path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  Away:    { label: 'Appear away',    color: '#F8B739', icon: <svg viewBox="0 0 16 16" fill="none" style={{width:12,height:12,flexShrink:0}}><circle cx="8" cy="8" r="7.5" fill="#F8B739" stroke="#F8B739"/><path d="M8 4.5v3.75l2.25 2.25" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  Leave:   { label: 'Appear offline', color: '#8A8886', icon: <svg viewBox="0 0 16 16" fill="none" style={{width:12,height:12,flexShrink:0}}><circle cx="8" cy="8" r="7.5" fill="none" stroke="#8A8886" strokeWidth="1.5"/><circle cx="8" cy="8" r="4" fill="#8A8886"/><path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="white" strokeWidth="1.2" strokeLinecap="round"/></svg> },
+};
+const StatusBadge = ({ status }) => {
+  const s = STATUS_MAP[status] || STATUS_MAP.Active;
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', gap:4, padding:'2px 7px', borderRadius:20, background:`${s.color}18`, border:`1px solid ${s.color}35`, fontSize:10, fontWeight:700, color:s.color, whiteSpace:'nowrap' }}>
+      {s.icon}{s.label}
+    </span>
+  );
+};
+
 const AnalyticsReports = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
@@ -500,10 +518,7 @@ const AnalyticsReports = () => {
                               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold capitalize bg-white/5 text-text-primary border border-white/10">
                                 {emp.role?.replace('_', ' ') || 'Employee'}
                               </span>
-                              <span className="text-[11px] text-text-secondary flex items-center gap-1">
-                                <span className={`w-1.5 h-1.5 rounded-full ${emp.presenceStatus === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                                {emp.presenceStatus || 'Active'}
-                              </span>
+                              <StatusBadge status={emp.presenceStatus || 'Active'} />
                             </div>
                           </td>
 
