@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft, ChevronDown, ChevronRight } from 'lucide-react';
+import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft, ChevronDown, ChevronRight, Ban } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 import Avatar from '../components/Avatar';
 
@@ -730,7 +730,7 @@ const Chat = () => {
                     <div className="relative flex items-center gap-1.5 w-full">
 
                       {/* Hover action buttons — my messages (left of bubble) */}
-                      {isMine && (
+                      {isMine && !msg.isDeleted && (
                         <div className="opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center space-x-1 order-first">
                           {msg.text && (new Date() - new Date(msg.createdAt) < 5 * 60 * 1000) && (
                             <button
@@ -802,24 +802,31 @@ const Chat = () => {
                               </div>
                             )}
 
-                            {/* Text */}
-                            {msg.text && (
+                            {/* Text or Deleted state */}
+                            {(msg.text || msg.isDeleted) && (
                               <div className="px-3 py-2">
-                                <div className="whitespace-pre-wrap break-words text-[13.5px] leading-relaxed">
-                                  {msg.text.split(/(@\w+|https?:\/\/[^\s]+)/g).map((part, i) => {
-                                    if (!part) return null;
-                                    if (part.startsWith('@')) return (
-                                      <span key={i} className={`font-semibold px-1 rounded-sm ${isMine ? 'bg-accent-text/20' : 'text-accent-blue bg-accent-blue/10'}`}>{part}</span>
-                                    );
-                                    if (part.startsWith('http')) return (
-                                      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline break-all ${isMine ? 'text-accent-text/90' : 'text-accent-blue'}`}>{part}</a>
-                                    );
-                                    return <span key={i}>{part}</span>;
-                                  })}
-                                </div>
+                                {msg.isDeleted ? (
+                                  <div className={`italic text-[13.5px] flex items-center space-x-1.5 ${isMine ? 'text-accent-text/80' : 'text-text-secondary/80'}`}>
+                                    <Ban size={13} />
+                                    <span>This message was deleted</span>
+                                  </div>
+                                ) : (
+                                  <div className="whitespace-pre-wrap break-words text-[13.5px] leading-relaxed">
+                                    {msg.text.split(/(@\w+|https?:\/\/[^\s]+)/g).map((part, i) => {
+                                      if (!part) return null;
+                                      if (part.startsWith('@')) return (
+                                        <span key={i} className={`font-semibold px-1 rounded-sm ${isMine ? 'bg-accent-text/20' : 'text-accent-blue bg-accent-blue/10'}`}>{part}</span>
+                                      );
+                                      if (part.startsWith('http')) return (
+                                        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline break-all ${isMine ? 'text-accent-text/90' : 'text-accent-blue'}`}>{part}</a>
+                                      );
+                                      return <span key={i}>{part}</span>;
+                                    })}
+                                  </div>
+                                )}
                                 {/* Time + read receipt */}
                                 <div className={`flex items-center justify-end space-x-1 mt-1 ${isMine ? 'text-accent-text/60' : 'text-text-secondary'}`}>
-                                  {msg.isEdited && <span className="text-[10px] italic mr-1">edited</span>}
+                                  {msg.isEdited && !msg.isDeleted && <span className="text-[10px] italic mr-1">edited</span>}
                                   <span className="text-[10px]">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>

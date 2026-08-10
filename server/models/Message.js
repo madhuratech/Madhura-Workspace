@@ -24,6 +24,10 @@ const MessageSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
   parentMessage: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Message',

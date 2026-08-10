@@ -160,10 +160,15 @@ exports.deleteDMMessage = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized to delete this message' });
     }
     
-    await DMMessage.findByIdAndDelete(req.params.messageId);
+    message.isDeleted = true;
+    message.text = '';
+    message.attachment = undefined;
+    await message.save();
+    
+    const populatedMessage = await message.populate('sender', 'name email avatar');
     
     if (req.io) {
-      req.io.emit('message_deleted', { messageId: req.params.messageId, channelId: req.params.dmId });
+      req.io.emit('message_updated', Object.assign(populatedMessage.toObject(), { dm: req.params.dmId }));
     }
     
     res.status(200).json({ message: 'Message deleted' });

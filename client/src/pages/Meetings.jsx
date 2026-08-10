@@ -65,7 +65,6 @@ const defaultNewMtg = () => {
     endDate:toDateStr(new Date()), endTime:`${pad(Math.floor(em/60)%24)}:${pad(em%60)}`,
     allDay:false,
     type:'google_meet', link:'', location:'', description:'',
-    advanced:{ lobbyBypass:'invited', whoCanPresent:'everyone' },
   };
 };
 
@@ -90,8 +89,6 @@ const Meetings = () => {
 
   // ── view: 'calendar' | 'new-meeting' | 'logs' ──
   const [view,         setView]        = useState('calendar');
-  const [showAdvanced, setShowAdv]     = useState(false);
-  const [advTab,       setAdvTab]      = useState('access');
 
   // ── calendar ──
   const [viewMode,    setViewMode]    = useState('workweek');
@@ -243,7 +240,7 @@ const Meetings = () => {
             const isF=inWk&&!pInWk,isL=inWk&&!nInWk;
             return(
               <div key={i} onClick={()=>{viewMode==='day'?setSelDay(dt):setWeekStart(getMondayOf(dt));setShowMiniCal(false);}}
-                style={{display:'flex',alignItems:'center',justifyContent:'center',padding:'3px 0',cursor:'pointer',background:inWk?'var(--bg-sidebar-hover)':'transparent',borderRadius:isF&&isL?20:isF?'20px 0 0 20px':isL?'0 20px 20px 0':0}}>
+                style={{display:'flex',alignItems:'center',justifyContent:'center',padding:'3px 0',cursor:'pointer',background:inWk?'rgba(59, 130, 246, 0.08)':'transparent',borderRadius:isF&&isL?20:isF?'20px 0 0 20px':isL?'0 20px 20px 0':0}}>
                 <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:26,height:26,borderRadius:'50%',fontSize:12,fontWeight:isTd?700:400,background:isTd?T_PRIMARY:'transparent',color:isTd?'var(--accent-text)':inWk?'var(--text-primary)':'var(--text-secondary)'}}>{d}</span>
               </div>
             );
@@ -292,11 +289,6 @@ const Meetings = () => {
 
           {/* Form body */}
           <div style={{flex:1,overflowY:'auto',background:'var(--bg-primary)'}}>
-            {/* Timezone */}
-            <div style={{display:'flex',alignItems:'center',gap:5,padding:'10px 60px',borderBottom:'1px solid var(--border-color)'}}>
-              <span style={{fontSize:14,color:'var(--text-primary)',cursor:'default'}}>Time zone: <span style={{color:'#145C9E'}}>{TZ_LABEL}</span></span>
-              <ChevronDown size={14} color="#145C9E"/>
-            </div>
             {/* Info banner */}
             <div style={{display:'flex',alignItems:'center',gap:10,margin:'12px 60px',padding:'10px 14px',background:'var(--bg-secondary)',border:'1px solid var(--border-color)',borderRadius:6}}>
               <Info size={15} color="var(--text-tertiary)"/>
@@ -407,16 +399,6 @@ const Meetings = () => {
                     <span style={{fontSize:13,color:'var(--text-secondary)'}}>All day</span>
                   </label>
                 </div>
-              </div>
-
-              {/* ── Advanced options ── */}
-              <div style={{...fieldRow,alignItems:'center',padding:'10px 0'}}>
-                <div style={{...iconCol,paddingTop:0}}><Settings size={16}/></div>
-                <button onClick={()=>setShowAdv(true)}
-                  style={{background:'transparent',border:'1px solid var(--border-color)',borderRadius:4,padding:'6px 16px',color:'var(--text-primary)',cursor:'pointer',fontSize:13,fontWeight:500}}
-                  onMouseEnter={e=>e.currentTarget.style.background='var(--bg-secondary)'}
-                  onMouseLeave={e=>e.currentTarget.style.background='transparent'}
-                >Advanced options</button>
               </div>
 
               {/* ── Meeting type + link ── */}
@@ -623,117 +605,39 @@ const Meetings = () => {
                     {days.map((day,di)=>{
                       const dateStr=toDateStr(day),evts=dayMeetings(dateStr),isTodayC=isToday(day);
                       return(
-                        <div key={di} style={{flex:1,borderLeft:'1px solid var(--border-color)',position:'relative',background:isTodayC?'var(--bg-sidebar-hover)':'transparent'}}>
+                        <div key={di} style={{flex:1,borderLeft:'1px solid var(--border-color)',position:'relative',background:isTodayC?'rgba(59, 130, 246, 0.08)':'transparent'}}>
                           {hours.map(h=>(
                             <div key={h} onClick={()=>openNewMeeting(dateStr,`${pad(h)}:00`)}
                               style={{height:SLOT_H,borderBottom:'1px solid var(--border-color)',cursor:'pointer',boxSizing:'border-box',opacity:0.5,transition:'all 0.1s'}}
-                              onMouseEnter={e=>{e.currentTarget.style.background='var(--bg-sidebar-hover)';e.currentTarget.style.opacity='1';}}
+                              onMouseEnter={e=>{e.currentTarget.style.background='rgba(59, 130, 246, 0.08)';e.currentTarget.style.opacity='1';}}
                               onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.opacity='0.5';}}
                             />
                           ))}
-                          {evts.map(m=>{const s=evtStyle(m);if(!s)return null;const c=evtColor(m.type);
+                          {evts.map(m=>{const s=evtStyle(m);if(!s)return null;const c=evtColor(m.type);const isShort=s.height<=30;
                             return(
-                              <div key={m._id} style={{position:'absolute',top:s.top,left:3,right:3,height:s.height,background:c.bg,borderLeft:`3px solid ${c.border}`,borderRadius:4,padding:'3px 7px',overflow:'hidden',zIndex:3,cursor:'pointer',boxShadow:'0 1px 5px rgba(0,0,0,0.1)'}}>
-                                <div style={{fontSize:12,fontWeight:600,color:'#fff',lineHeight:1.3}}>{m.title}</div>
-                                {m.time&&<div style={{fontSize:10,color:'rgba(255,255,255,0.9)',marginTop:1}}>{m.time}</div>}
+                              <div key={m._id} style={{position:'absolute',top:s.top,left:3,right:3,height:s.height,background:c.bg,borderLeft:`3px solid ${c.border}`,borderRadius:4,padding:isShort?'2px 6px':'4px 8px',overflow:'hidden',zIndex:3,cursor:'pointer',boxShadow:'0 1px 5px rgba(0,0,0,0.1)',display:'flex',flexDirection:isShort?'row':'column',gap:isShort?6:1,alignItems:isShort?'center':'flex-start'}}>
+                                <div style={{fontSize:12,fontWeight:600,color:'#fff',lineHeight:1.2,whiteSpace:'nowrap',textOverflow:'ellipsis',overflow:'hidden'}}>{m.title}</div>
+                                {m.time&&<div style={{fontSize:10,color:'rgba(255,255,255,0.9)',whiteSpace:'nowrap'}}>{m.time}</div>}
                               </div>
                             );
                           })}
+                          {/* Red Line specifically on today's column */}
+                          {timeLineTop!==null&&isTodayC&&(
+                            <div style={{position:'absolute',top:timeLineTop,left:0,right:0,zIndex:2,pointerEvents:'none'}}>
+                              <div style={{height:2,background:'#E8353B',position:'relative'}}>
+                                <div style={{position:'absolute',left:-5,top:'50%',transform:'translateY(-50%)',width:10,height:10,borderRadius:'50%',background:'#E8353B'}}/>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
-                    {timeLineTop!==null&&todayVisible&&(
-                      <div style={{position:'absolute',top:timeLineTop,left:0,right:0,zIndex:10,pointerEvents:'none'}}>
-                        <div style={{height:2,background:'#E8353B',position:'relative'}}>
-                          <div style={{position:'absolute',left:-1,top:'50%',transform:'translateY(-50%)',width:10,height:10,borderRadius:'50%',background:'#E8353B'}}/>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
             </div>
           )}
         </>
-      )}
-
-      {/* ════════════════ ADVANCED OPTIONS MODAL ═════════════════════════════ */}
-      {showAdvanced&&(
-        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:3000,display:'flex',alignItems:'center',justifyContent:'center'}}>
-          <div style={{background:'var(--bg-primary)',border:'1px solid var(--border-color)',borderRadius:12,width:640,maxHeight:'80vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',overflow:'hidden'}}>
-            
-            {/* Modal Header */}
-            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 24px',borderBottom:'1px solid var(--border-color)',background:'var(--bg-primary)'}}>
-              <h2 style={{margin:0,fontSize:18,fontWeight:700,color:'var(--text-primary)'}}>Meeting options</h2>
-              <button onClick={()=>setShowAdv(false)} style={{background:'none',border:'none',color:'var(--text-secondary)',cursor:'pointer'}}
-                onMouseEnter={e=>e.currentTarget.style.color='var(--text-primary)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-secondary)'}
-              ><X size={20}/></button>
-            </div>
-
-            <div style={{display:'flex',flex:1,overflow:'hidden'}}>
-              {/* Sidebar */}
-              <div style={{width:220,borderRight:'1px solid var(--border-color)',padding:'16px 8px',flexShrink:0,background:'var(--bg-sidebar)'}}>
-                {[
-                  {k:'access',l:'Meeting access',icon:<UsersIcon size={14}/>},
-                  {k:'roles', l:'Roles',          icon:<User size={14}/>},
-                ].map(({k,l,icon})=>(
-                  <button key={k} onClick={()=>setAdvTab(k)}
-                    style={{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'10px 14px',
-                      background:advTab===k?'rgba(255,255,255,0.06)':'transparent',
-                      border:'none',borderRadius:6,
-                      color:advTab===k?'#5a81fa':'var(--text-sidebar)',
-                      cursor:'pointer',fontSize:14,fontWeight:advTab===k?600:400,textAlign:'left',
-                      opacity:advTab===k?1:0.7,transition:'all 0.15s'
-                    }}
-                    onMouseEnter={e=>{if(advTab!==k)e.currentTarget.style.opacity=1;}}
-                    onMouseLeave={e=>{if(advTab!==k)e.currentTarget.style.opacity=0.7;}}
-                  >
-                    {icon}{l}
-                  </button>
-                ))}
-              </div>
-              {/* Content */}
-              <div style={{flex:1,overflowY:'auto',padding:'24px 28px',background:'var(--bg-primary)'}}>
-                {advTab==='access'&&(
-                  <div>
-                    <h3 style={{color:'var(--text-primary)',margin:'0 0 16px',fontSize:16,fontWeight:700,paddingBottom:12,borderBottom:'1px solid var(--border-color)'}}>Meeting access</h3>
-                    <p style={{color:'var(--text-primary)',fontWeight:600,fontSize:14,margin:'0 0 6px'}}>Who can bypass the lobby?</p>
-                    <p style={{color:'var(--text-secondary)',fontSize:13,margin:'0 0 16px',lineHeight:1.6}}>Based on your meeting policy, people joining without an account, people from untrusted orgs, and people dialing in, may wait in the lobby.</p>
-                    <select value={newMtg.advanced.lobbyBypass}
-                      onChange={e=>setNewMtg(p=>({...p,advanced:{...p.advanced,lobbyBypass:e.target.value}}))}
-                      style={{width:'100%',background:'var(--bg-secondary)',border:'1px solid var(--border-color)',borderRadius:8,padding:'12px 14px',color:'var(--text-primary)',fontSize:14,outline:'none',cursor:'pointer'}}>
-                      <option value="everyone">Everyone</option>
-                      <option value="invited">People who were invited</option>
-                      <option value="organizer">Only the organizer</option>
-                    </select>
-                  </div>
-                )}
-                {advTab==='roles'&&(
-                  <div>
-                    <h3 style={{color:'var(--text-primary)',margin:'0 0 16px',fontSize:16,fontWeight:700,paddingBottom:12,borderBottom:'1px solid var(--border-color)'}}>Roles</h3>
-                    <p style={{color:'var(--text-primary)',fontWeight:600,fontSize:14,margin:'0 0 12px'}}>Who can present?</p>
-                    <select value={newMtg.advanced.whoCanPresent}
-                      onChange={e=>setNewMtg(p=>({...p,advanced:{...p.advanced,whoCanPresent:e.target.value}}))}
-                      style={{width:'100%',background:'var(--bg-secondary)',border:'1px solid var(--border-color)',borderRadius:8,padding:'12px 14px',color:'var(--text-primary)',fontSize:14,outline:'none',cursor:'pointer'}}>
-                      <option value="everyone">Everyone</option>
-                      <option value="organizer">Only me (organizer)</option>
-                      <option value="workspace">Workspace members only</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Modal Footer */}
-            <div style={{padding:'14px 24px',borderTop:'1px solid var(--border-color)',display:'flex',justifyContent:'flex-end',gap:12,background:'var(--bg-secondary)'}}>
-              <button onClick={()=>setShowAdv(false)}
-                style={{padding:'9px 24px',borderRadius:6,border:'1px solid var(--border-color)',background:'var(--bg-primary)',color:'var(--text-primary)',cursor:'pointer',fontSize:14,fontWeight:600,transition:'all 0.15s',boxShadow:'0 1px 2px rgba(0,0,0,0.05)'}}
-                onMouseEnter={e=>{e.currentTarget.style.background='var(--bg-secondary)';e.currentTarget.style.boxShadow='0 2px 4px rgba(0,0,0,0.08)'}}
-                onMouseLeave={e=>{e.currentTarget.style.background='var(--bg-primary)';e.currentTarget.style.boxShadow='0 1px 2px rgba(0,0,0,0.05)'}}
-              >Apply</button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
