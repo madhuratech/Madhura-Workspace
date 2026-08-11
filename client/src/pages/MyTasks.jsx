@@ -239,21 +239,21 @@ const MyTasks = () => {
         </div>
       ) : (
         <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
-          <div className="flex gap-6 h-full min-w-max px-2">
+          <div className="flex gap-4 h-full min-w-max px-1">
             <DragDropContext onDragEnd={onDragEnd}>
               {Object.entries(columns).map(([columnId, column]) => (
-                <div className="flex flex-col w-[340px] shrink-0" key={columnId}>
+                <div className="flex flex-col w-[280px] shrink-0" key={columnId}>
                   {/* Column Header */}
-                  <div className={`flex items-center justify-between mb-4 px-4 py-3 rounded-2xl border bg-bg-secondary/60 backdrop-blur-md ${colHeaderConfig[columnId]?.border} ${colHeaderConfig[columnId]?.glow}`}>
-                    <div className="flex items-center space-x-3">
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-xl ${colHeaderConfig[columnId]?.bg}`}>
-                        {columnId === 'To Do' && <KanbanSquare size={16} className={colHeaderConfig[columnId]?.text} />}
-                        {columnId === 'In Progress' && <Flag size={16} className={colHeaderConfig[columnId]?.text} />}
-                        {columnId === 'Done' && <CheckCircle2 size={16} className={colHeaderConfig[columnId]?.text} />}
+                  <div className={`flex items-center justify-between mb-3 px-3 py-2.5 rounded-xl border bg-bg-secondary/60 backdrop-blur-md ${colHeaderConfig[columnId]?.border} ${colHeaderConfig[columnId]?.glow}`}>
+                    <div className="flex items-center space-x-2.5">
+                      <div className={`flex items-center justify-center w-7 h-7 rounded-lg ${colHeaderConfig[columnId]?.bg}`}>
+                        {columnId === 'To Do' && <KanbanSquare size={14} className={colHeaderConfig[columnId]?.text} />}
+                        {columnId === 'In Progress' && <Flag size={14} className={colHeaderConfig[columnId]?.text} />}
+                        {columnId === 'Done' && <CheckCircle2 size={14} className={colHeaderConfig[columnId]?.text} />}
                       </div>
-                      <h2 className="text-[15px] font-bold text-text-primary tracking-wide">{column.name}</h2>
+                      <h2 className="text-[13px] font-bold text-text-primary tracking-wide">{column.name}</h2>
                     </div>
-                    <span className="bg-bg-primary shadow-sm border border-border text-text-secondary text-xs px-2.5 py-1 rounded-full font-bold">
+                    <span className="bg-bg-primary shadow-sm border border-border text-text-secondary text-xs px-2 py-0.5 rounded-full font-bold">
                       {column.items.length}
                     </span>
                   </div>
@@ -264,56 +264,56 @@ const MyTasks = () => {
                       <div
                         {...provided.droppableProps}
                         ref={provided.innerRef}
-                        className={`flex-1 rounded-[2rem] p-3 transition-all duration-300 min-h-[500px] border-2 ${
+                        className={`flex-1 rounded-2xl p-2 transition-all duration-300 min-h-[400px] border-2 ${
                           snapshot.isDraggingOver
                             ? `bg-bg-secondary/40 border-dashed ${colHeaderConfig[columnId]?.border}`
                             : 'bg-bg-primary/20 border-transparent hover:bg-bg-primary/40'
                         }`}
                       >
                         {column.items.map((item, index) => (
-                          <Draggable key={item._id} draggableId={item._id} index={index}>
+                          <Draggable key={item._id} draggableId={String(item._id)} index={index}>
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={`group relative p-5 mb-4 rounded-[1.25rem] border backdrop-blur-sm transition-all duration-300 ${
+                                className={`group relative p-3.5 mb-3 rounded-xl border backdrop-blur-sm ${
                                   snapshot.isDragging
-                                    ? `bg-bg-secondary border-accent-blue shadow-[0_15px_40px_rgba(0,0,0,0.15)] z-50 scale-105 rotate-2`
-                                    : 'bg-bg-secondary border-border shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-accent-blue/40'
+                                    ? `bg-bg-secondary border-accent-blue shadow-[0_10px_25px_rgba(0,0,0,0.15)] z-50`
+                                    : 'bg-bg-secondary border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-accent-blue/40 transition-all duration-300'
                                 }`}
                               >
                                 {/* Decorative line */}
-                                <div className={`absolute left-0 top-6 bottom-6 w-1 rounded-r-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${colHeaderConfig[item.status]?.bg.replace('/10', '')}`} />
+                                <div className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${colHeaderConfig[item.status]?.bg.replace('/10', '')}`} />
 
-                                <div className="flex justify-between items-start mb-3">
-                                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priorityColor(item.priority)}`}>
+                                <div className="flex justify-between items-start mb-2.5">
+                                  <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${priorityColor(item.priority)}`}>
                                     {item.priority}
                                   </span>
-                                  <Link to={`/project/${item.project?._id}`} className="text-[11px] text-text-secondary hover:text-accent-blue bg-bg-primary px-2 py-1 rounded-md transition-colors font-medium border border-border/50">
+                                  <Link to={`/project/${item.project?._id}`} className="text-[10px] text-text-secondary hover:text-accent-blue bg-bg-primary px-1.5 py-0.5 rounded transition-colors font-medium border border-border/50">
                                     {item.project?.title || 'Unknown'}
                                   </Link>
                                 </div>
-                                <h3 className={`text-[15px] font-bold mb-2 font-outfit leading-snug ${item.status === 'Done' ? 'text-text-secondary line-through' : 'text-text-primary group-hover:text-accent-blue transition-colors'}`}>
+                                <h3 className={`text-[13px] font-bold mb-1.5 font-outfit leading-tight ${item.status === 'Done' ? 'text-text-secondary line-through' : 'text-text-primary group-hover:text-accent-blue transition-colors'}`}>
                                   {item.title}
                                 </h3>
                                 {item.description && (
-                                  <p className="text-xs text-text-secondary line-clamp-2 mb-4 leading-relaxed opacity-80">
+                                  <p className="text-[11px] text-text-secondary line-clamp-2 mb-3 leading-relaxed opacity-80">
                                     {item.description}
                                   </p>
                                 )}
-                                <div className="flex justify-between items-center mt-4 pt-4 border-t border-border/40">
+                                <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/40">
                                   <div className="avatar-stack flex">
                                     {item.assignees?.map((a) => (
-                                      <div key={a._id} title={a.name} className="-ml-2 first:ml-0 hover:z-10 hover:-translate-y-1 transition-all duration-200">
-                                        <Avatar user={a} size="w-8 h-8" textClass="text-[10px]" showStatus={false} className="border-[2.5px] border-bg-secondary shadow-sm" />
+                                      <div key={a._id} title={a.name} className="-ml-1.5 first:ml-0 hover:z-10 hover:-translate-y-1 transition-all duration-200">
+                                        <Avatar user={a} size="w-6 h-6" textClass="text-[9px]" showStatus={false} className="border-2 border-bg-secondary shadow-sm" />
                                       </div>
                                     ))}
                                   </div>
                                   {item.dueDate && (
-                                    <div className="flex items-center space-x-1.5 bg-bg-primary/50 px-2 py-1 rounded-lg border border-border/50">
-                                      <Calendar size={12} className="text-text-secondary" />
-                                      <span className="text-[11px] font-medium text-text-secondary">
+                                    <div className="flex items-center space-x-1 bg-bg-primary/50 px-1.5 py-0.5 rounded-md border border-border/50">
+                                      <Calendar size={10} className="text-text-secondary" />
+                                      <span className="text-[10px] font-medium text-text-secondary">
                                         {new Date(item.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                       </span>
                                     </div>
@@ -325,9 +325,9 @@ const MyTasks = () => {
                         ))}
                         {provided.placeholder}
                         {column.items.length === 0 && (
-                          <div className="flex flex-col items-center justify-center h-40 text-text-secondary/50 border-2 border-dashed border-border/30 rounded-2xl m-2">
-                            <LayoutList size={32} className="mb-2 opacity-40" />
-                            <p className="text-xs font-medium">Drop tasks here</p>
+                          <div className="flex flex-col items-center justify-center h-24 text-text-secondary/50 border-2 border-dashed border-border/30 rounded-xl m-1">
+                            <LayoutList size={24} className="mb-1 opacity-40" />
+                            <p className="text-[11px] font-medium">Drop tasks here</p>
                           </div>
                         )}
                       </div>
