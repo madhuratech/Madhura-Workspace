@@ -102,11 +102,8 @@ const Login = () => {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-text-secondary">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-[#1b2b4c] text-[color:var(--text-primary)] hover:text-[#ffca22] font-bold transition-colors">
-              Sign up
-            </Link>
+          <p className="mt-8 text-center text-xs text-text-secondary opacity-50">
+            For access, please contact your workspace administrator.
           </p>
         </div>
       </div>
