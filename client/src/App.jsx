@@ -37,11 +37,11 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+import AnimatedLoader from './components/AnimatedLoader';
+
 // Minimalist Loading Fallback
 const PageLoader = () => (
-  <div className="flex min-h-screen w-full items-center justify-center bg-bg-primary">
-    <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-blue/30 border-t-accent-blue"></div>
-  </div>
+  <AnimatedLoader fullScreen={true} />
 );
 
 function App() {

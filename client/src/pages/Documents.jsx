@@ -3,6 +3,7 @@ import { FileText, Save, Search, RefreshCw, Plus, Edit2, Trash2, X, UploadCloud,
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
+import AnimatedLoader from '../components/AnimatedLoader';
 
 const FOLDER_COLORS = {
   'Employee Docs': 'bg-pink-100 text-pink-600 border-pink-200',
@@ -256,7 +257,7 @@ const Documents = () => {
         
         <div className="flex-1 overflow-auto">
           {loading ? (
-             <div className="flex justify-center py-20"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>
+             <AnimatedLoader />
           ) : filteredDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-text-secondary py-20">
                <UploadCloud size={56} className="mb-4 text-gray-300" />

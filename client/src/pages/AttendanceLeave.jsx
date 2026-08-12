@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Calendar, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut, Timer } from 'lucide-react';
 import Avatar from '../components/Avatar';
+import AnimatedLoader from '../components/AnimatedLoader';
 
 const DigitalClock = ({ className = "" }) => {
   const [time, setTime] = useState(new Date());
@@ -149,10 +150,7 @@ const AttendanceLeave = () => {
   };
 
   if (loading) return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary h-full animate-fade-in">
-      <div className="w-12 h-12 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
-      <p className="text-text-secondary font-medium">Loading workspace...</p>
-    </div>
+    <AnimatedLoader />
   );
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 

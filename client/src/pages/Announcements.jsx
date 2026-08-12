@@ -2,7 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Megaphone, Plus, X, Building, Users, AlertTriangle, Clock } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import Avatar from '../components/Avatar';
+import AnimatedLoader from '../components/AnimatedLoader';
 
 const Announcements = () => {
   const { user } = useContext(AuthContext);
@@ -85,7 +87,7 @@ const Announcements = () => {
 
       <div className="space-y-6">
         {loading ? (
-          <div className="flex justify-center p-12"><div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>
+          <AnimatedLoader />
         ) : announcements.length === 0 ? (
           <div className="bg-white p-12 text-center rounded-2xl border border-gray-100 shadow-sm">
             <Megaphone size={48} className="mx-auto text-gray-300 mb-4" />

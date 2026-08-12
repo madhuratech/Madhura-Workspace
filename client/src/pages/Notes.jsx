@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
+import AnimatedLoader from '../components/AnimatedLoader';
 import { Plus, Image as ImageIcon, X, Trash2, Edit2, Pin, Search } from 'lucide-react';
 
 const COLORS = [
@@ -167,9 +168,7 @@ const Notes = () => {
 
   if (loading) {
     return (
-      <div className="p-8 flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-blue"></div>
-      </div>
+      <AnimatedLoader />
     );
   }
 
