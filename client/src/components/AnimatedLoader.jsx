@@ -24,7 +24,7 @@ const AnimatedLoader = ({ fullScreen = false }) => {
                 e.target.parentElement.innerHTML = '<span class="text-accent-blue font-bold text-xl">M</span>';
               }}
             />
-          </div>
+          </div> 
         </div>
       </div>
       <p className="mt-4 text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-purple-500 uppercase tracking-widest animate-pulse">
