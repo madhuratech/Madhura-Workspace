@@ -592,7 +592,7 @@ const Chat = () => {
       </div>
 
       {/* ═══════════════════ MAIN CHAT AREA ═══════════════════ */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-white dark:bg-bg-secondary ${!activeChannel && !activeDM ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 bg-white dark:bg-bg-secondary ${!activeChannel && !activeDM ? 'hidden' : 'flex'}`}>
 
         {/* ── Chat Top Bar ── */}
         <div className="h-14 flex items-center justify-between px-5 border-b border-gray-200 dark:border-border bg-white dark:bg-bg-secondary shrink-0 z-10">
@@ -1001,12 +1001,49 @@ const Chat = () => {
 
       {/* ═══ Empty state when nothing selected on desktop ═══ */}
       {!activeChannel && !activeDM && (
-        <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-white dark:bg-bg-primary text-center p-8">
-          <div className="w-16 h-16 rounded-2xl bg-accent-blue/10 flex items-center justify-center mb-5">
-            <MessageSquare size={28} className="text-accent-blue" />
+        <div className="hidden md:flex flex-1 relative flex-col items-center justify-center bg-gray-50 dark:bg-bg-primary overflow-hidden">
+          {/* Decorative background gradients */}
+          <div className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] rounded-full bg-accent-blue/10 dark:bg-accent-blue/5 blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '6s' }}></div>
+          <div className="absolute bottom-[-15%] right-[-10%] w-[60%] h-[60%] rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }}></div>
+          
+          <div className="relative z-10 flex flex-col items-center text-center p-12 max-w-lg mx-auto bg-white/60 dark:bg-bg-secondary/40 backdrop-blur-2xl border border-gray-100 dark:border-white/5 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] group transition-all duration-500 hover:shadow-[0_20px_60px_-10px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_60px_-10px_rgba(0,0,0,0.4)]">
+            
+            <div className="relative mb-10">
+              {/* Outer rotating dashed ring */}
+              <div className="absolute inset-[-16px] rounded-full border-2 border-dashed border-accent-blue/20 dark:border-accent-blue/30 animate-[spin_15s_linear_infinite] group-hover:border-accent-blue/50 transition-colors duration-700"></div>
+              {/* Inner rotating dashed ring (reverse) */}
+              <div className="absolute inset-[-8px] rounded-full border border-dashed border-purple-500/20 dark:border-purple-500/30 animate-[spin_10s_linear_infinite_reverse] group-hover:border-purple-500/50 transition-colors duration-700"></div>
+              
+              {/* Floating icon container */}
+              <div className="relative w-28 h-28 rounded-[2rem] bg-gradient-to-tr from-accent-blue to-purple-500 p-[3px] shadow-2xl animate-[bounce_4s_ease-in-out_infinite] group-hover:shadow-accent-blue/40 transition-shadow duration-500">
+                <div className="w-full h-full bg-white dark:bg-[#1e2533] rounded-[1.8rem] flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-accent-blue/5 to-purple-500/5"></div>
+                  <MessageCircle size={48} className="text-accent-blue relative z-10 group-hover:scale-110 transition-transform duration-500" />
+                </div>
+              </div>
+            </div>
+            
+            <h3 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 text-3xl mb-4 tracking-tight">
+              Welcome to Chat
+            </h3>
+            
+            <p className="text-gray-500 dark:text-gray-400 text-[15px] mb-10 leading-relaxed max-w-sm">
+              Connect with your team in real-time. Select a <span className="font-semibold text-gray-700 dark:text-gray-200">channel</span> for group discussions or start a <span className="font-semibold text-gray-700 dark:text-gray-200">direct message</span> for 1-on-1 conversations.
+            </p>
+            
+            <div className="flex items-center space-x-6 text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-bg-primary/50 px-6 py-3 rounded-full">
+              <div className="flex items-center space-x-2">
+                <Hash size={16} className="text-accent-blue" />
+                <span className="text-gray-600 dark:text-gray-300">Channels</span>
+              </div>
+              <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+              <div className="flex items-center space-x-2">
+                <Users size={16} className="text-purple-500" />
+                <span className="text-gray-600 dark:text-gray-300">Direct Messages</span>
+              </div>
+            </div>
+
           </div>
-          <h3 className="font-bold text-text-primary text-xl mb-2">Open a conversation</h3>
-          <p className="text-text-secondary text-sm max-w-xs">Select a channel or direct message from the sidebar to start chatting.</p>
         </div>
       )}
 
