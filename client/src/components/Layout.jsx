@@ -679,7 +679,7 @@ const Layout = () => {
                   {isActive && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#ffca22] rounded-r-full shadow-[0_0_8px_rgba(255,202,34,0.6)]"></div>
                   )}
-                  <div className={`mb-1 ${isActive ? 'text-[#ffca22]' : ''}`}>{item.icon}</div>
+                  <div className={`mb-1 group-hover:animate-[spin_1s_linear_infinite] origin-center ${isActive ? 'text-[#ffca22]' : ''}`}>{item.icon}</div>
                   <span className={`text-[10px] font-medium ${isActive ? 'text-[#ffca22]' : ''}`}>{item.label}</span>
                 </Link>
               )
@@ -691,7 +691,9 @@ const Layout = () => {
               onClick={handleLogout}
               className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 group text-text-sidebar/70 hover:text-danger hover:bg-danger/10"
             >
-              <LogOut size={22} className="group-hover:text-danger transition-colors" />
+              <div className="group-hover:animate-[spin_1s_linear_infinite] origin-center mb-1">
+                <LogOut size={22} className="group-hover:text-danger transition-colors" />
+              </div>
               <span className="text-[10px] font-medium mt-1">Logout</span>
             </button>
             <Link 
@@ -702,7 +704,9 @@ const Layout = () => {
                   : 'text-text-sidebar/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              <Settings size={22} className={`${location.pathname.startsWith('/settings') ? 'text-[#ffca22]' : ''}`} />
+              <div className="group-hover:animate-[spin_1s_linear_infinite] origin-center mb-1">
+                <Settings size={22} className={`${location.pathname.startsWith('/settings') ? 'text-[#ffca22]' : ''}`} />
+              </div>
               <span className={`text-[10px] font-medium mt-1 ${location.pathname.startsWith('/settings') ? 'text-[#ffca22]' : ''}`}>Settings</span>
             </Link>
           </div>

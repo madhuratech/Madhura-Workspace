@@ -116,7 +116,7 @@ const Dashboard = () => {
             <span className="w-2 h-2 rounded-full bg-accent-blue animate-pulse mr-2"></span>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
-          <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 tracking-tight leading-tight">
+          <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 tracking-tight leading-tight">
             {getGreeting()},<br />{user?.name?.split(' ')[0]}.
           </h1>
         </div>
@@ -144,40 +144,40 @@ const Dashboard = () => {
         
         <div className="relative group p-[2px] rounded-[24px] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="relative flex items-center space-x-5 p-6 bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[22px] border border-gray-100 dark:border-white/5 shadow-lg group-hover:bg-white/90 dark:group-hover:bg-bg-secondary/90 transition-colors duration-500">
-            <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
-              <CheckSquare size={24} className="text-blue-500 z-10 group-hover:scale-110 group-hover:animate-bounce transition-all duration-500" />
+          <div className="relative flex items-center space-x-4 p-5 bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[22px] border border-gray-100 dark:border-white/5 shadow-lg group-hover:bg-white/90 dark:group-hover:bg-bg-secondary/90 transition-colors duration-500">
+            <div className="relative h-12 w-12 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-900/40 dark:to-blue-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+              <CheckSquare size={20} className="text-blue-500 z-10 group-hover:scale-110 group-hover:animate-bounce transition-all duration-500" />
             </div>
             <div>
-              <p className="text-3xl font-black text-text-primary tracking-tight">{stats.tasks}</p>
-              <p className="text-[11px] text-text-secondary font-bold uppercase tracking-widest mt-1">Open Tasks</p>
+              <p className="text-2xl font-black text-text-primary tracking-tight">{stats.tasks}</p>
+              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-0.5">Open Tasks</p>
             </div>
           </div>
         </div>
 
         <div className="relative group p-[2px] rounded-[24px] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="relative flex items-center space-x-5 p-6 bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[22px] border border-gray-100 dark:border-white/5 shadow-lg group-hover:bg-white/90 dark:group-hover:bg-bg-secondary/90 transition-colors duration-500">
-            <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900/40 dark:to-orange-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
-              <CalendarDays size={24} className="text-orange-500 z-10 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-500" />
+          <div className="relative flex items-center space-x-4 p-5 bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[22px] border border-gray-100 dark:border-white/5 shadow-lg group-hover:bg-white/90 dark:group-hover:bg-bg-secondary/90 transition-colors duration-500">
+            <div className="relative h-12 w-12 rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900/40 dark:to-orange-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+              <CalendarDays size={20} className="text-orange-500 z-10 group-hover:scale-110 group-hover:-rotate-12 transition-all duration-500" />
             </div>
             <div>
-              <p className="text-3xl font-black text-text-primary tracking-tight">{stats.meetings}</p>
-              <p className="text-[11px] text-text-secondary font-bold uppercase tracking-widest mt-1">Meetings Today</p>
+              <p className="text-2xl font-black text-text-primary tracking-tight">{stats.meetings}</p>
+              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-0.5">Meetings Today</p>
             </div>
           </div>
         </div>
 
         <div className="relative group p-[2px] rounded-[24px] overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="relative flex items-center space-x-5 p-6 bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[22px] border border-gray-100 dark:border-white/5 shadow-lg group-hover:bg-white/90 dark:group-hover:bg-bg-secondary/90 transition-colors duration-500">
-            <div className="relative h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/40 dark:to-emerald-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+          <div className="relative flex items-center space-x-4 p-5 bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[22px] border border-gray-100 dark:border-white/5 shadow-lg group-hover:bg-white/90 dark:group-hover:bg-bg-secondary/90 transition-colors duration-500">
+            <div className="relative h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 dark:from-emerald-900/40 dark:to-emerald-900/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
               <div className="absolute inset-0 border-2 border-dashed border-emerald-400/30 rounded-xl animate-[spin_8s_linear_infinite_reverse]"></div>
-              <Activity size={24} className="text-emerald-500 z-10 group-hover:scale-110 transition-transform duration-500" />
+              <Activity size={20} className="text-emerald-500 z-10 group-hover:scale-110 transition-transform duration-500" />
             </div>
             <div>
-              <p className="text-3xl font-black text-text-primary tracking-tight">{activities.length}</p>
-              <p className="text-[11px] text-text-secondary font-bold uppercase tracking-widest mt-1">Recent Updates</p>
+              <p className="text-2xl font-black text-text-primary tracking-tight">{activities.length}</p>
+              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-0.5">Recent Updates</p>
             </div>
           </div>
         </div>
@@ -189,6 +189,35 @@ const Dashboard = () => {
         {/* LEFT COLUMN: Priorities */}
         <div className="lg:col-span-7 space-y-12">
           
+          {/* Weekly Activity Chart (CSS Bar Chart) */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[14px] font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-500 dark:from-gray-200 dark:to-gray-400 uppercase tracking-[0.2em]">Activity Overview</h2>
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider bg-bg-secondary px-3 py-1 rounded-full border border-border shadow-sm">This Week</span>
+            </div>
+            
+            <div className="bg-white/60 dark:bg-bg-secondary/40 backdrop-blur-xl rounded-[24px] border border-gray-100 dark:border-white/5 shadow-lg p-6 group">
+              <div className="flex items-end justify-between h-44 gap-2 sm:gap-4 mt-2">
+                {[
+                  { day: 'Mon', val: 30 }, { day: 'Tue', val: 70 }, 
+                  { day: 'Wed', val: 45 }, { day: 'Thu', val: 90 }, 
+                  { day: 'Fri', val: 60 }, { day: 'Sat', val: 20 }, 
+                  { day: 'Sun', val: 40 }
+                ].map((item, i) => (
+                  <div key={i} className="flex flex-col items-center flex-1 h-full justify-end cursor-pointer">
+                    <div className="w-full relative bg-gray-100 dark:bg-bg-primary rounded-t-xl h-full flex items-end overflow-hidden group-hover:bg-gray-200/50 dark:group-hover:bg-bg-primary/70 transition-colors">
+                      <div 
+                        className="w-full bg-gradient-to-t from-accent-blue/80 to-purple-500/80 rounded-t-xl hover:opacity-100 hover:from-accent-blue hover:to-purple-500 transition-all duration-300 shadow-[0_-5px_15px_rgba(59,130,246,0.2)]"
+                        style={{ height: `${item.val}%`, minHeight: '10%' }}
+                      ></div>
+                    </div>
+                    <span className="text-[10px] font-bold text-text-secondary mt-3 uppercase tracking-wider">{item.day}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {/* My Tasks */}
           <section>
             <div className="flex items-center justify-between mb-6">
