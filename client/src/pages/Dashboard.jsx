@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [myTasks, setMyTasks] = useState([]);
   const [upNext, setUpNext] = useState([]);
   const [activities, setActivities] = useState([]);
+  const [attendanceStats, setAttendanceStats] = useState({ onTime: 0, late: 0, absent: 0, total: 0, rate: 0 });
 
   useEffect(() => { fetchData(); }, []);
 
@@ -24,16 +25,48 @@ const Dashboard = () => {
       if (res.data.length > 0) {
         const ws = res.data[0];
         setWorkspace(ws);
-        const [tasksRes, meetingsRes] = await Promise.all([
+        const [tasksRes, meetingsRes, attendanceRes] = await Promise.all([
           axios.get('/tasks').catch(() => ({ data: [] })),
-          axios.get(`/workspaces/${ws._id}/meetings`).catch(() => ({ data: [] }))
+          axios.get(`/workspaces/${ws._id}/meetings`).catch(() => ({ data: [] })),
+          axios.get(`/workspaces/${ws._id}/attendance`).catch(() => ({ data: [] }))
         ]);
         const tasks = tasksRes.data || [];
         const meetings = meetingsRes.data || [];
+        const attendance = attendanceRes.data || [];
+        
         setMyTasks(tasks.filter(t => t.status !== 'completed'));
         const todayStr = new Date().toISOString().split('T')[0];
         const todayMeetings = meetings.filter(m => m.date && new Date(m.date).toISOString().split('T')[0] === todayStr);
         setUpNext(todayMeetings.sort((a, b) => (a.time || '').localeCompare(b.time || '')));
+        
+        // Calculate My Attendance Stats (Current Month)
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        // Count working days (Mon-Fri) from 1st of month to today
+        let workingDays = 0;
+        for (let d = 1; d <= now.getDate(); d++) {
+          const dayOfWeek = new Date(currentYear, currentMonth, d).getDay();
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) workingDays++; // Skip Sunday (0) and Saturday (6)
+        }
+        
+        // Filter my attendance for current month
+        const myAttendance = attendance.filter(a => {
+          if (a.user?._id && a.user._id !== user._id && a.user !== user._id) return false;
+          if (!a.date) return false;
+          const aDate = new Date(a.date);
+          return aDate.getMonth() === currentMonth && aDate.getFullYear() === currentYear;
+        });
+
+        const late = myAttendance.filter(a => a.isLate).length;
+        const totalPresent = myAttendance.length;
+        const onTime = totalPresent - late;
+        const absent = Math.max(0, workingDays - totalPresent);
+        const rate = workingDays > 0 ? Math.round((totalPresent / workingDays) * 100) : 100;
+        
+        setAttendanceStats({ onTime, late, absent, total: workingDays, rate });
+
         const recentActivities = [
           ...tasks.slice(0, 5).map(t => ({
             id: `task-${t._id}`, type: 'task',
@@ -158,30 +191,40 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Team Attendance Donut */}
+            {/* My Attendance Donut */}
             <div className="rounded-2xl bg-bg-secondary/50 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[12px] font-black text-text-primary uppercase tracking-widest">Team Attendance</h2>
-                <Link to="/attendance" className="text-[10px] font-bold text-[#1b2b4c] dark:text-[#ffca22] hover:underline">View All</Link>
+                <h2 className="text-[12px] font-black text-text-primary uppercase tracking-widest">My Monthly Attendance</h2>
+                <Link to="/attendance" className="text-[10px] font-bold text-[#1b2b4c] dark:text-[#ffca22] hover:underline">View Log</Link>
               </div>
               <div className="flex items-center gap-6">
                 <div className="relative shrink-0 w-24 h-24">
                   <svg viewBox="0 0 36 36" className="w-24 h-24 -rotate-90">
                     <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3.5" />
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" strokeWidth="3.5" strokeDasharray="75 25" strokeLinecap="round" />
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f59e0b" strokeWidth="3.5" strokeDasharray="12.5 87.5" strokeDashoffset="-75" strokeLinecap="round" />
-                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeDasharray="12.5 87.5" strokeDashoffset="-87.5" strokeLinecap="round" />
+                    {(() => {
+                      const total = attendanceStats.total || 1;
+                      const onTimePct = (attendanceStats.onTime / total) * 100;
+                      const latePct = (attendanceStats.late / total) * 100;
+                      const absentPct = (attendanceStats.absent / total) * 100;
+                      return (
+                        <>
+                          {onTimePct > 0 && <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" strokeWidth="3.5" strokeDasharray={`${onTimePct} ${100 - onTimePct}`} strokeLinecap="round" />}
+                          {latePct > 0 && <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f59e0b" strokeWidth="3.5" strokeDasharray={`${latePct} ${100 - latePct}`} strokeDashoffset={`-${onTimePct}`} strokeLinecap="round" />}
+                          {absentPct > 0 && <circle cx="18" cy="18" r="15.9" fill="none" stroke="#ef4444" strokeWidth="3.5" strokeDasharray={`${absentPct} ${100 - absentPct}`} strokeDashoffset={`-${onTimePct + latePct}`} strokeLinecap="round" />}
+                        </>
+                      );
+                    })()}
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-black text-text-primary">{stats.members}</span>
-                    <span className="text-[9px] font-bold text-text-secondary uppercase">Total</span>
+                    <span className="text-xl font-black text-text-primary">{attendanceStats.total}</span>
+                    <span className="text-[9px] font-bold text-text-secondary uppercase">Days</span>
                   </div>
                 </div>
                 <div className="space-y-2.5 flex-1">
                   {[
-                    { label: 'On Time', color: 'bg-emerald-500', val: Math.round(stats.members * 0.75) },
-                    { label: 'Late', color: 'bg-amber-400', val: Math.round(stats.members * 0.125) },
-                    { label: 'Absent', color: 'bg-red-400', val: Math.round(stats.members * 0.125) },
+                    { label: 'On Time', color: 'bg-emerald-500', val: attendanceStats.onTime },
+                    { label: 'Late', color: 'bg-amber-400', val: attendanceStats.late },
+                    { label: 'Absent', color: 'bg-red-400', val: attendanceStats.absent },
                   ].map((r, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -193,7 +236,7 @@ const Dashboard = () => {
                   ))}
                   <div className="flex items-center gap-1.5 pt-2 border-t border-border">
                     <TrendingUp size={11} className="text-emerald-500" />
-                    <span className="text-[10px] font-semibold text-emerald-600">75% attendance rate today</span>
+                    <span className="text-[10px] font-semibold text-emerald-600">{attendanceStats.rate}% on-time rate this month</span>
                   </div>
                 </div>
               </div>
