@@ -1023,15 +1023,15 @@ const Chat = () => {
               </div>
             </div>
             
-            <h3 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 text-3xl mb-4 tracking-tight">
+            <h3 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 text-2xl mb-3 tracking-tight">
               Welcome to Chat
             </h3>
             
-            <p className="text-gray-500 dark:text-gray-400 text-[15px] mb-10 leading-relaxed max-w-sm">
+            <p className="text-gray-500 dark:text-gray-400 text-sm mb-8 leading-relaxed max-w-sm">
               Connect with your team in real-time. Select a <span className="font-semibold text-gray-700 dark:text-gray-200">channel</span> for group discussions or start a <span className="font-semibold text-gray-700 dark:text-gray-200">direct message</span> for 1-on-1 conversations.
             </p>
             
-            <div className="flex items-center space-x-6 text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-bg-primary/50 px-6 py-3 rounded-full">
+            <div className="flex items-center space-x-6 text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-bg-primary/50 px-5 py-2.5 rounded-full">
               <div className="flex items-center space-x-2">
                 <Hash size={16} className="text-accent-blue" />
                 <span className="text-gray-600 dark:text-gray-300">Channels</span>
