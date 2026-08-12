@@ -25,6 +25,22 @@ const attendanceSchema = new mongoose.Schema({
   },
   checkOut: {
     type: Date
+  },
+  isLate: {
+    type: Boolean,
+    default: false
+  },
+  lateMinutes: {
+    type: Number,
+    default: 0
+  },
+  isEarlyLeave: {
+    type: Boolean,
+    default: false
+  },
+  earlyLeaveApproved: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

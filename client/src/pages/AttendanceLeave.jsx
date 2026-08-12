@@ -44,6 +44,12 @@ const AttendanceLeave = () => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [leaveData, setLeaveData] = useState({ type: 'Sick', startDate: '', endDate: '', reason: '' });
 
+  // Early Leave State
+  const [earlyLeaves, setEarlyLeaves] = useState([]);
+  const [isEarlyLeaveModalOpen, setIsEarlyLeaveModalOpen] = useState(false);
+  const [earlyLeaveData, setEarlyLeaveData] = useState({ reason: '', requestedLeaveTime: '' });
+  const [todayEarlyLeaveStatus, setTodayEarlyLeaveStatus] = useState(null);
+
   useEffect(() => {
     fetchWorkspaceData();
   }, []);
@@ -58,6 +64,7 @@ const AttendanceLeave = () => {
         // Fetch in parallel
         fetchAttendance(currentWs._id);
         fetchLeaves(currentWs._id);
+        fetchEarlyLeaves(currentWs._id);
         
         const detailRes = await axios.get(`/workspaces/${currentWs._id}`);
         const validMembers = (detailRes.data.members || []).filter(m => m.user);
@@ -87,6 +94,9 @@ const AttendanceLeave = () => {
         if (todayRecord.checkOut) {
           setIsCheckedOut(true);
         }
+        if (todayRecord.earlyLeaveApproved) {
+          setTodayEarlyLeaveStatus('approved');
+        }
       }
     } catch (error) {
       console.error('Error fetching attendance:', error);
@@ -102,6 +112,21 @@ const AttendanceLeave = () => {
     }
   };
 
+  const fetchEarlyLeaves = async (wsId) => {
+    try {
+      const res = await axios.get(`/workspaces/${wsId}/early-leaves`);
+      setEarlyLeaves(res.data);
+      
+      const todayStr = new Date().toISOString().split('T')[0];
+      const todayReq = res.data.find(r => r.date === todayStr && r.employee?._id === user._id);
+      if (todayReq && todayEarlyLeaveStatus !== 'approved') {
+        setTodayEarlyLeaveStatus(todayReq.status);
+      }
+    } catch (error) {
+      console.error('Error fetching early leaves:', error);
+    }
+  };
+
   const handleCheckIn = async () => {
     try {
       await axios.post(`/workspaces/${workspace._id}/attendance/checkin`);
@@ -114,13 +139,51 @@ const AttendanceLeave = () => {
   };
 
   const handleCheckOut = async () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    
+    if (currentHour < 18 && todayEarlyLeaveStatus !== 'approved') {
+      setIsEarlyLeaveModalOpen(true);
+      return;
+    }
+
     try {
       await axios.put(`/workspaces/${workspace._id}/attendance/checkout`);
       showToast('Checked out successfully!', 'success');
       setIsCheckedOut(true);
       fetchAttendance(workspace._id);
     } catch (error) {
-      showToast(error.response?.data?.message || 'Check-out failed', 'error');
+      if (error.response?.data?.requiresEarlyLeave) {
+         setIsEarlyLeaveModalOpen(true);
+      } else {
+         showToast(error.response?.data?.message || 'Check-out failed', 'error');
+      }
+    }
+  };
+
+  const submitEarlyLeave = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`/workspaces/${workspace._id}/early-leaves`, earlyLeaveData);
+      showToast('Early leave request submitted', 'success');
+      setIsEarlyLeaveModalOpen(false);
+      setTodayEarlyLeaveStatus('pending_tl');
+      fetchEarlyLeaves(workspace._id);
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Error submitting request', 'error');
+    }
+  };
+
+  const handleEarlyLeaveApproval = async (id, action) => {
+    try {
+      await axios.put(`/workspaces/${workspace._id}/early-leaves/${id}/${action}`, { note: 'Processed via Dashboard' });
+      showToast(`Request ${action}d`, 'success');
+      fetchEarlyLeaves(workspace._id);
+      if (action === 'approve') {
+         fetchAttendance(workspace._id);
+      }
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Error processing request', 'error');
     }
   };
 
@@ -185,6 +248,12 @@ const AttendanceLeave = () => {
         >
           Leave Requests
         </button>
+        <button 
+          onClick={() => setActiveTab('early-leave')}
+          className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'early-leave' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
+        >
+          Early Leaves
+        </button>
       </div>
 
       <div className="bg-bg-secondary border border-border rounded-xl flex-1 flex flex-col overflow-hidden shadow-sm">
@@ -224,10 +293,17 @@ const AttendanceLeave = () => {
                   {isCheckedIn ? (
                     <div className="flex flex-col items-end">
                       {!isCheckedOut ? (
-                        <button onClick={handleCheckOut} className="bg-orange-500 text-white px-6 py-2.5 rounded-xl hover:bg-orange-600 transition-all font-semibold flex items-center shadow-md hover:shadow-orange-500/25 active:scale-95 group text-sm">
-                          <LogOut size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
-                          Punch Out
-                        </button>
+                        <>
+                          {todayEarlyLeaveStatus && todayEarlyLeaveStatus !== 'approved' && todayEarlyLeaveStatus !== 'rejected' ? (
+                            <div className="bg-orange-500/10 border border-orange-500/20 px-6 py-2.5 rounded-xl text-orange-500 font-bold flex items-center shadow-inner text-sm mb-2">
+                               Pending Early Leave Approval
+                            </div>
+                          ) : null}
+                          <button onClick={handleCheckOut} className="bg-orange-500 text-white px-6 py-2.5 rounded-xl hover:bg-orange-600 transition-all font-semibold flex items-center shadow-md hover:shadow-orange-500/25 active:scale-95 group text-sm">
+                            <LogOut size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+                            Punch Out
+                          </button>
+                        </>
                       ) : (
                         <div className="bg-success/10 border border-success/20 px-6 py-2.5 rounded-xl text-success font-bold flex items-center shadow-inner text-sm">
                           <CheckCircle size={18} className="mr-2" />
@@ -288,9 +364,21 @@ const AttendanceLeave = () => {
                         </div>
                       </td>
                       <td>
-                        <span className="px-2 py-1 rounded text-xs font-medium text-success bg-success/10">
-                          {record.status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-medium text-success bg-success/10 w-fit">
+                            {record.status}
+                          </span>
+                          {record.isLate && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium text-danger bg-danger/10 w-fit whitespace-nowrap">
+                              Late by {record.lateMinutes}m
+                            </span>
+                          )}
+                          {record.isEarlyLeave && (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-medium text-orange-500 bg-orange-500/10 w-fit whitespace-nowrap">
+                              Early Leave
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="text-text-secondary">{record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
                       <td className="text-text-secondary">{record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
@@ -407,6 +495,105 @@ const AttendanceLeave = () => {
               )}
             </div>
           </div>
+          </div>
+        ) : activeTab === 'early-leave' ? (
+          <div className="overflow-x-auto flex-1 p-4">
+            <div className="space-y-8 p-2">
+              <div>
+                <h3 className="text-lg font-bold text-text-primary mb-4 px-2">My Early Leaves</h3>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th className="text-left w-32">DATE</th>
+                      <th className="text-left w-32">TIME</th>
+                      <th className="text-left">REASON</th>
+                      <th className="text-left w-48">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {earlyLeaves.filter(l => l.employee?._id === user._id).map(leave => (
+                      <tr key={leave._id}>
+                        <td className="font-medium text-text-primary">{leave.date}</td>
+                        <td className="text-text-secondary">{leave.requestedLeaveTime}</td>
+                        <td className="text-text-secondary">{leave.reason}</td>
+                        <td>
+                          <span className={`px-2 py-1 rounded text-[10px] font-medium uppercase tracking-wider ${
+                            leave.status === 'approved' ? 'text-success bg-success/10' :
+                            leave.status === 'rejected' ? 'text-danger bg-danger/10' :
+                            'text-orange-500 bg-orange-500/10'
+                          }`}>
+                            {leave.status.replace('_', ' ')}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {earlyLeaves.filter(l => l.employee?._id === user._id).length === 0 && (
+                      <tr><td colSpan="4" className="text-center py-8 text-text-secondary">No early leave requests found.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && (
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary mb-4 px-2">Team Early Leave Requests</h3>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th className="text-left w-48">EMPLOYEE</th>
+                        <th className="text-left w-32">DATE / TIME</th>
+                        <th className="text-left">REASON</th>
+                        <th className="text-left w-32">STATUS</th>
+                        <th className="text-right w-32">ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {earlyLeaves.filter(l => l.employee?._id !== user._id).map(leave => (
+                        <tr key={leave._id}>
+                          <td className="font-medium text-text-primary">
+                            <div className="flex items-center space-x-2">
+                              <Avatar user={leave.employee} size="w-6 h-6" textClass="text-[10px]" showStatus={false} />
+                              <span>{leave.employee?.name}</span>
+                            </div>
+                          </td>
+                          <td className="text-text-secondary">
+                            {leave.date}<br/>{leave.requestedLeaveTime}
+                          </td>
+                          <td className="text-text-secondary text-sm">{leave.reason}</td>
+                          <td>
+                            <span className={`px-2 py-1 rounded text-[10px] font-medium uppercase tracking-wider ${
+                              leave.status === 'approved' ? 'text-success bg-success/10' :
+                              leave.status === 'rejected' ? 'text-danger bg-danger/10' :
+                              'text-orange-500 bg-orange-500/10'
+                            }`}>
+                              {leave.status.replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td className="text-right space-x-2 whitespace-nowrap">
+                            {(
+                              (currentUserRole === 'team_leader' && leave.status === 'pending_tl') ||
+                              (currentUserRole === 'hr' && leave.status === 'pending_hr') ||
+                              (currentUserRole === 'super_admin' && leave.status === 'pending_md')
+                            ) ? (
+                              <>
+                                <button onClick={() => handleEarlyLeaveApproval(leave._id, 'approve')} className="text-success hover:bg-success/10 p-1.5 rounded transition-colors" title="Approve"><Check size={18} /></button>
+                                <button onClick={() => handleEarlyLeaveApproval(leave._id, 'reject')} className="text-danger hover:bg-danger/10 p-1.5 rounded transition-colors" title="Reject"><X size={18} /></button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-text-secondary opacity-50">Processed</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {earlyLeaves.filter(l => l.employee?._id !== user._id).length === 0 && (
+                        <tr><td colSpan="5" className="text-center py-8 text-text-secondary">No team requests found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
@@ -478,6 +665,52 @@ const AttendanceLeave = () => {
                   className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
                 >
                   Submit Request
+                </button>
+              </div>
+            </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEarlyLeaveModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-[420px] shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-text-primary mb-1">Early Leave Request</h3>
+                <p className="text-xs text-text-secondary">Punching out before 6:00 PM requires approval.</p>
+              </div>
+              <button onClick={() => setIsEarlyLeaveModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar">
+            <form onSubmit={submitEarlyLeave} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">Leave Time</label>
+                <input 
+                  type="time" required 
+                  value={earlyLeaveData.requestedLeaveTime} onChange={e => setEarlyLeaveData({...earlyLeaveData, requestedLeaveTime: e.target.value})}
+                  className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-text-primary text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">Reason for Leaving Early</label>
+                <textarea 
+                  required rows="3"
+                  value={earlyLeaveData.reason} onChange={e => setEarlyLeaveData({...earlyLeaveData, reason: e.target.value})}
+                  className="w-full bg-bg-primary border border-border rounded-xl px-4 py-3 text-text-primary text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all resize-none"
+                  placeholder="Explain why you need to punch out early..."
+                ></textarea>
+              </div>
+              <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
+                <button type="button" onClick={() => setIsEarlyLeaveModalOpen(false)} className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium">
+                  Cancel
+                </button>
+                <button type="submit" className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-orange-500/20">
+                  Request Permission
                 </button>
               </div>
             </form>

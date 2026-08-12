@@ -37,19 +37,42 @@ router.get('/', async (req, res) => {
 router.post('/checkin', async (req, res) => {
   try {
     const { workspaceId } = req.params;
-    const dateStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
 
     const existing = await Attendance.findOne({ workspace: workspaceId, user: req.user._id, date: dateStr });
     if (existing) {
       return res.status(400).json({ message: 'Already checked in today' });
     }
 
+    // Calculate Late from 9:40 AM
+    // Convert current time to India Time for comparison (user is in +05:30)
+    // Actually, let's just use local time for now based on 'now'
+    // A more robust way is using hours/minutes of the local server if it matches user timezone
+    let isLate = false;
+    let lateMinutes = 0;
+    
+    // Using UTC offset or assuming server time matches user time
+    // For simplicity, let's use the Date object methods which use local time
+    const checkInHour = now.getHours();
+    const checkInMinute = now.getMinutes();
+
+    // 9:40 AM is the cutoff
+    if (checkInHour > 9 || (checkInHour === 9 && checkInMinute > 40)) {
+      isLate = true;
+      // Calculate minutes late from 9:40 AM
+      const lateTimeInMinutes = (checkInHour * 60 + checkInMinute) - (9 * 60 + 40);
+      lateMinutes = lateTimeInMinutes > 0 ? lateTimeInMinutes : 0;
+    }
+
     const record = new Attendance({
       workspace: workspaceId,
       user: req.user._id,
       date: dateStr,
-      checkIn: new Date(),
-      status: 'Present'
+      checkIn: now,
+      status: 'Present',
+      isLate,
+      lateMinutes
     });
 
     await record.save();
@@ -67,7 +90,7 @@ router.post('/checkin', async (req, res) => {
             admin._id,
             'general',
             'Employee Punched In',
-            `${req.user.name} has punched in (Started).`,
+            `${req.user.name} has punched in${isLate ? ` (Late by ${lateMinutes} mins)` : ''}.`,
             `/attendance`
           );
         }
@@ -87,7 +110,8 @@ router.post('/checkin', async (req, res) => {
 router.put('/checkout', async (req, res) => {
   try {
     const { workspaceId } = req.params;
-    const dateStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
 
     const record = await Attendance.findOne({ workspace: workspaceId, user: req.user._id, date: dateStr });
     if (!record) {
@@ -98,7 +122,18 @@ router.put('/checkout', async (req, res) => {
       return res.status(400).json({ message: 'Already checked out today' });
     }
 
-    record.checkOut = new Date();
+    // Check early leave: Before 18:00 (6:00 PM)
+    const checkOutHour = now.getHours();
+    
+    // If it's before 18:00 (6 PM) and they haven't been approved for early leave
+    if (checkOutHour < 18 && !record.earlyLeaveApproved) {
+      return res.status(400).json({ 
+        message: 'It is before 6:00 PM. Please request early leave permission first.',
+        requiresEarlyLeave: true 
+      });
+    }
+
+    record.checkOut = now;
     await record.save();
 
     res.json(record);
