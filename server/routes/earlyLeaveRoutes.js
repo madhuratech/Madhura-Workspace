@@ -126,7 +126,7 @@ router.put('/:id/approve', async (req, res) => {
         await sendNotification(req, hr.user, 'alert', 'Early Leave Approval Pending', `TL approved early leave for ${earlyLeave.employee.name}. Waiting for your approval.`, `/attendance`);
       }
     } 
-    else if (role === 'hr' && earlyLeave.status === 'pending_hr') {
+    else if (role === 'hr' && ['pending_tl', 'pending_hr'].includes(earlyLeave.status)) {
       earlyLeave.status = 'pending_md';
       earlyLeave.hrApprovedBy = req.user._id;
       earlyLeave.hrApprovedAt = new Date();
@@ -138,7 +138,7 @@ router.put('/:id/approve', async (req, res) => {
         await sendNotification(req, md.user, 'alert', 'Early Leave Approval Pending', `HR approved early leave for ${earlyLeave.employee.name}. Waiting for MD approval.`, `/attendance`);
       }
     }
-    else if (role === 'super_admin' && earlyLeave.status === 'pending_md') {
+    else if (role === 'super_admin' && ['pending_tl', 'pending_hr', 'pending_md'].includes(earlyLeave.status)) {
       earlyLeave.status = 'approved';
       earlyLeave.mdApprovedBy = req.user._id;
       earlyLeave.mdApprovedAt = new Date();

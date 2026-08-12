@@ -45,17 +45,15 @@ router.post('/checkin', async (req, res) => {
       return res.status(400).json({ message: 'Already checked in today' });
     }
 
-    // Calculate Late from 9:40 AM
-    // Convert current time to India Time for comparison (user is in +05:30)
-    // Actually, let's just use local time for now based on 'now'
-    // A more robust way is using hours/minutes of the local server if it matches user timezone
+    // Calculate Late from 9:40 AM (IST)
     let isLate = false;
     let lateMinutes = 0;
     
-    // Using UTC offset or assuming server time matches user time
-    // For simplicity, let's use the Date object methods which use local time
-    const checkInHour = now.getHours();
-    const checkInMinute = now.getMinutes();
+    // Get current time in Asia/Kolkata (IST)
+    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const istDate = new Date(istString);
+    const checkInHour = istDate.getHours();
+    const checkInMinute = istDate.getMinutes();
 
     // 9:40 AM is the cutoff
     if (checkInHour > 9 || (checkInHour === 9 && checkInMinute > 40)) {
@@ -122,8 +120,10 @@ router.put('/checkout', async (req, res) => {
       return res.status(400).json({ message: 'Already checked out today' });
     }
 
-    // Check early leave: Before 18:00 (6:00 PM)
-    const checkOutHour = now.getHours();
+    // Check early leave: Before 18:00 (6:00 PM) (IST)
+    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const istDate = new Date(istString);
+    const checkOutHour = istDate.getHours();
     
     // If it's before 18:00 (6 PM) and they haven't been approved for early leave
     if (checkOutHour < 18 && !record.earlyLeaveApproved) {

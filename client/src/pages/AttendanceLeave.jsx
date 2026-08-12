@@ -143,6 +143,8 @@ const AttendanceLeave = () => {
     const currentHour = now.getHours();
     
     if (currentHour < 18 && todayEarlyLeaveStatus !== 'approved') {
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      setEarlyLeaveData({ ...earlyLeaveData, requestedLeaveTime: timeStr });
       setIsEarlyLeaveModalOpen(true);
       return;
     }
@@ -571,8 +573,8 @@ const AttendanceLeave = () => {
                           <td className="text-right space-x-2 whitespace-nowrap">
                             {(
                               (currentUserRole === 'team_leader' && leave.status === 'pending_tl') ||
-                              (currentUserRole === 'hr' && leave.status === 'pending_hr') ||
-                              (currentUserRole === 'super_admin' && leave.status === 'pending_md')
+                              (currentUserRole === 'hr' && ['pending_tl', 'pending_hr'].includes(leave.status)) ||
+                              (currentUserRole === 'super_admin' && ['pending_tl', 'pending_hr', 'pending_md'].includes(leave.status))
                             ) ? (
                               <>
                                 <button onClick={() => handleEarlyLeaveApproval(leave._id, 'approve')} className="text-success hover:bg-success/10 p-1.5 rounded transition-colors" title="Approve"><Check size={18} /></button>
