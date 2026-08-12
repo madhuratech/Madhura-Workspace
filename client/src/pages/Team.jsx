@@ -5,7 +5,6 @@ import { ToastContext } from '../context/ToastContext';
 import { Search, Plus, UserPlus, Shield, X, Mail, Users } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import OrgChart from '../components/OrgChart';
-import AddMemberModal from '../components/AddMemberModal';
 import AnimatedLoader from '../components/AnimatedLoader';
 
 // ── Teams-style status definitions ──
