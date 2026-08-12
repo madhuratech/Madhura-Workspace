@@ -263,11 +263,11 @@ const Layout = () => {
   };
 
   const primaryNavItems = [
-    { icon: <LayoutDashboard size={22} />, label: 'Home', path: '/' },
-    { icon: <MessageSquare size={22} />, label: 'Chat', path: '/chat' },
-    { icon: <FolderKanban size={22} />, label: 'Projects', path: '/projects' },
-    { icon: <CheckSquare size={22} />, label: 'Tasks', path: '/my-tasks' },
-    { icon: <CalendarDays size={22} />, label: 'Calendar', path: '/meetings' },
+    { icon: <LayoutDashboard size={22} />, label: 'Home', path: '/', hoverAnim: 'group-hover:animate-pulse' },
+    { icon: <MessageSquare size={22} />, label: 'Chat', path: '/chat', hoverAnim: 'group-hover:scale-125 group-hover:-translate-y-1 transition-all duration-300' },
+    { icon: <FolderKanban size={22} />, label: 'Projects', path: '/projects', hoverAnim: 'group-hover:rotate-12 group-hover:scale-110 transition-all duration-300' },
+    { icon: <CheckSquare size={22} />, label: 'Tasks', path: '/my-tasks', hoverAnim: 'group-hover:translate-x-1 group-hover:-rotate-6 transition-all duration-300' },
+    { icon: <CalendarDays size={22} />, label: 'Calendar', path: '/meetings', hoverAnim: 'group-hover:animate-bounce' },
   ];
 
   return (
@@ -679,7 +679,7 @@ const Layout = () => {
                   {isActive && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#ffca22] rounded-r-full shadow-[0_0_8px_rgba(255,202,34,0.6)]"></div>
                   )}
-                  <div className={`mb-1 group-hover:animate-[spin_1s_linear_infinite] origin-center ${isActive ? 'text-[#ffca22]' : ''}`}>{item.icon}</div>
+                  <div className={`mb-1 origin-center ${item.hoverAnim || ''} ${isActive ? 'text-[#ffca22]' : ''}`}>{item.icon}</div>
                   <span className={`text-[10px] font-medium ${isActive ? 'text-[#ffca22]' : ''}`}>{item.label}</span>
                 </Link>
               )
@@ -691,7 +691,7 @@ const Layout = () => {
               onClick={handleLogout}
               className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 group text-text-sidebar/70 hover:text-danger hover:bg-danger/10"
             >
-              <div className="group-hover:animate-[spin_1s_linear_infinite] origin-center mb-1">
+              <div className="group-hover:translate-x-1 transition-transform duration-300 origin-center mb-1">
                 <LogOut size={22} className="group-hover:text-danger transition-colors" />
               </div>
               <span className="text-[10px] font-medium mt-1">Logout</span>
@@ -704,7 +704,7 @@ const Layout = () => {
                   : 'text-text-sidebar/70 hover:text-white hover:bg-white/5'
               }`}
             >
-              <div className="group-hover:animate-[spin_1s_linear_infinite] origin-center mb-1">
+              <div className="group-hover:rotate-90 transition-transform duration-500 origin-center mb-1">
                 <Settings size={22} className={`${location.pathname.startsWith('/settings') ? 'text-[#ffca22]' : ''}`} />
               </div>
               <span className={`text-[10px] font-medium mt-1 ${location.pathname.startsWith('/settings') ? 'text-[#ffca22]' : ''}`}>Settings</span>
