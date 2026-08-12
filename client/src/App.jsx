@@ -1,7 +1,8 @@
-import React, { Suspense, lazy, useContext } from 'react';
+import React, { Suspense, lazy, useContext, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import SplashScreen from './components/AnimatedLoader';
 
 // Layout
 import Layout from './components/Layout';
@@ -37,16 +38,29 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-import AnimatedLoader from './components/AnimatedLoader';
-
-// Minimalist Loading Fallback
+// Minimal fallback for lazy route switches (not the splash)
 const PageLoader = () => (
-  <AnimatedLoader fullScreen={true} />
+  <div className="flex min-h-screen w-full items-center justify-center bg-bg-primary">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-blue/30 border-t-accent-blue"></div>
+  </div>
 );
 
 function App() {
+  // Only show splash on the very first load of the session
+  const [showSplash, setShowSplash] = useState(() => {
+    const seen = sessionStorage.getItem('splashShown');
+    if (!seen) {
+      sessionStorage.setItem('splashShown', '1');
+      return true;
+    }
+    return false;
+  });
+
   return (
     <ToastProvider>
+      {/* Splash screen sits on top; removed after fade completes */}
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<Login />} />
