@@ -119,13 +119,39 @@ const Layout = () => {
       const handleNotification = (msg) => {
         showToast(msg.title, msg.message);
       };
+      const handleNewMessage = (msg) => {
+        if (msg.sender && (msg.sender._id === user._id || msg.sender === user._id)) return;
+        showToast('New Message', msg.text || 'Sent an attachment');
+      };
+      const handleTaskCreated = (task) => {
+        showToast('New Task Assigned', task.title);
+      };
+      const handleMeetingCreated = (meeting) => {
+        showToast('New Meeting Scheduled', meeting.title);
+      };
+      const handleTicketCreated = (ticket) => {
+        showToast('New Ticket Created', ticket.title);
+      };
+      const handleProjectCreated = (project) => {
+        showToast('New Project Created', project.title);
+      };
       
       socket.on('activity', handleActivity);
       socket.on('new_notification', handleNotification);
+      socket.on('new_message', handleNewMessage);
+      socket.on('taskCreated', handleTaskCreated);
+      socket.on('meetingCreated', handleMeetingCreated);
+      socket.on('ticketCreated', handleTicketCreated);
+      socket.on('projectCreated', handleProjectCreated);
       
       return () => {
         socket.off('activity', handleActivity);
         socket.off('new_notification', handleNotification);
+        socket.off('new_message', handleNewMessage);
+        socket.off('taskCreated', handleTaskCreated);
+        socket.off('meetingCreated', handleMeetingCreated);
+        socket.off('ticketCreated', handleTicketCreated);
+        socket.off('projectCreated', handleProjectCreated);
       };
     }
   }, [socket, user]);

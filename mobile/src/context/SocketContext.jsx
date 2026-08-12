@@ -50,6 +50,42 @@ export const SocketProvider = ({ children }) => {
         });
       });
 
+      socket.on('taskCreated', (task) => {
+        Toast.show({
+          type: 'info',
+          text1: 'New Task Assigned',
+          text2: task.title,
+          position: 'top',
+        });
+      });
+
+      socket.on('meetingCreated', (meeting) => {
+        Toast.show({
+          type: 'info',
+          text1: 'New Meeting Scheduled',
+          text2: meeting.title,
+          position: 'top',
+        });
+      });
+
+      socket.on('ticketCreated', (ticket) => {
+        Toast.show({
+          type: 'info',
+          text1: 'New Ticket Created',
+          text2: ticket.title,
+          position: 'top',
+        });
+      });
+
+      socket.on('projectCreated', (project) => {
+        Toast.show({
+          type: 'info',
+          text1: 'New Project Created',
+          text2: project.title,
+          position: 'top',
+        });
+      });
+
       return () => {
         socket.disconnect();
       };
