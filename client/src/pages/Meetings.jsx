@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import AnimatedLoader from '../components/AnimatedLoader';
 import {
   Plus, X, Video, ChevronLeft, ChevronRight, Calendar as CalendarIcon,
   Check, MapPin, RefreshCw, Settings, Clock, Info, Pencil,
@@ -252,7 +251,10 @@ const Meetings = () => {
   };
 
   if(loading) return(
-    <AnimatedLoader />
+    <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary h-full">
+      <div className="w-12 h-12 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"/>
+      <p className="text-text-secondary font-medium">Loading calendar…</p>
+    </div>
   );
   if(!workspace) return<div className="p-8 text-danger">Please create a workspace first.</div>;
 

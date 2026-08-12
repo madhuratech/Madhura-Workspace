@@ -3,7 +3,6 @@ import { Plus, Ticket as TicketIcon, Search, AlertCircle, Clock, ChevronDown, Us
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
-import AnimatedLoader from '../components/AnimatedLoader';
 
 const Tickets = () => {
   const { user } = useContext(AuthContext);
@@ -154,7 +153,7 @@ const Tickets = () => {
           
           <div className="flex-1 overflow-y-auto">
             {loading ? (
-              <AnimatedLoader />
+              <div className="flex justify-center p-8"><div className="w-6 h-6 border-2 border-accent-blue border-t-transparent rounded-full animate-spin"></div></div>
             ) : filteredTickets.length === 0 ? (
               <div className="p-8 text-center text-gray-500 text-sm">
                 No tickets found.

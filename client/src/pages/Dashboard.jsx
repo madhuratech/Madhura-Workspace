@@ -4,7 +4,6 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import AnimatedLoader from '../components/AnimatedLoader';
 import { CheckCircle2, CalendarDays, Activity, MessageSquare, Clock, CheckSquare, ChevronRight, Plus, Users } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
@@ -89,7 +88,9 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <AnimatedLoader />
+      <div className="flex flex-col items-center justify-center h-full bg-bg-primary">
+        <div className="w-8 h-8 border-4 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
+      </div>
     );
   }
 

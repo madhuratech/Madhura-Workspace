@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import AnimatedLoader from '../components/AnimatedLoader';
 import { Camera, Mail, Shield, User as UserIcon, X, Check } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import Cropper from 'react-easy-crop';
@@ -176,7 +175,7 @@ const UserProfile = () => {
   if (loading || !profileUser) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-bg-primary animate-fade-in">
-        <AnimatedLoader />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-blue/30 border-t-accent-blue"></div>
       </div>
     );
   }

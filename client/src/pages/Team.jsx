@@ -5,7 +5,6 @@ import { ToastContext } from '../context/ToastContext';
 import { Search, Plus, UserPlus, Shield, X, Mail, Users } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import OrgChart from '../components/OrgChart';
-import AnimatedLoader from '../components/AnimatedLoader';
 
 // ── Teams-style status definitions ──
 const TEAMS_STATUSES = [
@@ -180,7 +179,10 @@ const Team = () => {
   };
 
   if (loading) return (
-    <AnimatedLoader />
+    <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] h-full animate-fade-in">
+      <div className="w-10 h-10 border-2 border-border border-t-accent-blue rounded-full animate-spin mb-4"></div>
+      <p className="text-sm text-text-secondary font-medium">Loading workspace...</p>
+    </div>
   );
   if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
 

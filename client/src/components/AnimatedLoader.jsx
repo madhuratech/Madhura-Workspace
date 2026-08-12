@@ -7,13 +7,13 @@ const AnimatedLoader = ({ fullScreen = false }) => {
         {/* Ambient Glow */}
         <div className="absolute inset-[-10px] rounded-full bg-gradient-to-r from-accent-blue to-purple-500 opacity-30 blur-md animate-pulse"></div>
         
-        <div className="relative w-16 h-16 flex items-center justify-center">
+        <div className="relative w-32 h-32 flex items-center justify-center">
           {/* Spinning dashed border */}
-          <div className="absolute inset-0 border-2 border-dashed border-accent-blue/40 rounded-full animate-[spin_4s_linear_infinite]"></div>
-          <div className="absolute inset-0 border-2 border-dashed border-purple-500/30 rounded-full animate-[spin_6s_linear_infinite_reverse]"></div>
+          <div className="absolute inset-0 border-[3px] border-dashed border-accent-blue/40 rounded-full animate-[spin_4s_linear_infinite]"></div>
+          <div className="absolute inset-0 border-[3px] border-dashed border-purple-500/30 rounded-full animate-[spin_6s_linear_infinite_reverse]"></div>
           
           {/* Logo container pulsing */}
-          <div className="w-12 h-12 bg-white dark:bg-bg-secondary rounded-full flex items-center justify-center shadow-lg animate-pulse overflow-hidden p-2">
+          <div className="w-24 h-24 bg-white dark:bg-bg-secondary rounded-full flex items-center justify-center shadow-2xl animate-pulse overflow-hidden p-3">
             <img 
               src="/Madhura-logo.webp" 
               alt="Loading..." 
@@ -27,7 +27,7 @@ const AnimatedLoader = ({ fullScreen = false }) => {
           </div> 
         </div>
       </div>
-      <p className="mt-4 text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-purple-500 uppercase tracking-widest animate-pulse">
+      <p className="mt-8 text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-purple-500 uppercase tracking-[0.3em] animate-pulse">
         Loading...
       </p>
     </div>

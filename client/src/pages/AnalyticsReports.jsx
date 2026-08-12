@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import AnimatedLoader from '../components/AnimatedLoader';
 import { ToastContext } from '../context/ToastContext';
 import {
   BarChart3, TrendingUp, Users, FolderKanban, CheckCircle2, Clock,
@@ -96,7 +95,12 @@ const AnalyticsReports = () => {
 
   if (loading && !analyticsData) {
     return (
-      <AnimatedLoader />
+      <div className="flex-1 flex items-center justify-center min-h-[500px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-medium text-text-secondary">Generating live analytical reports...</p>
+        </div>
+      </div>
     );
   }
 

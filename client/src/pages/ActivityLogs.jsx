@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import AnimatedLoader from '../components/AnimatedLoader';
 import { Activity, Search, Filter, Clock, User, FileText, CheckCircle, Plus, Edit, Trash, LayoutDashboard, Calendar, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -136,7 +135,9 @@ const ActivityLogs = () => {
       <div className="flex-1 overflow-hidden bg-bg-secondary/50 border border-border rounded-2xl flex flex-col shadow-sm">
         <div className="overflow-auto custom-scrollbar flex-1 p-4">
           {loading && logs.length === 0 ? (
-            <AnimatedLoader />
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-accent-blue"></div>
+            </div>
           ) : logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-center text-text-secondary">
               <FileText size={32} className="opacity-50 mb-3" />
