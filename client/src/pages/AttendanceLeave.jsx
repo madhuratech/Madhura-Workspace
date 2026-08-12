@@ -495,7 +495,6 @@ const AttendanceLeave = () => {
               )}
             </div>
           </div>
-          </div>
         ) : activeTab === 'early-leave' ? (
           <div className="overflow-x-auto flex-1 p-4">
             <div className="space-y-8 p-2">
