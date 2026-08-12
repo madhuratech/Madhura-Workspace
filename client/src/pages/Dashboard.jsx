@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
-import { CheckCircle2, CalendarDays, Activity, MessageSquare, Clock, CheckSquare, ChevronRight, Plus, Users } from 'lucide-react';
+import { CheckCircle2, CalendarDays, Activity, MessageSquare, Clock, CheckSquare, ChevronRight, Plus, Users, MapPin, TrendingUp } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 const Dashboard = () => {
@@ -338,6 +338,103 @@ const Dashboard = () => {
             </div>
           </section>
 
+          {/* Team Attendance Summary — inspired by reference image */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[14px] font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-500 dark:from-gray-200 dark:to-gray-400 uppercase tracking-[0.2em]">Team Attendance</h2>
+              <Link to="/attendance" className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-1.5 rounded-full hover:bg-emerald-500 hover:text-white transition-colors duration-300">View All</Link>
+            </div>
+            <div className="bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[24px] border border-gray-100 dark:border-white/5 shadow-lg p-6">
+              <div className="flex items-center gap-6">
+                {/* Donut chart */}
+                <div className="relative shrink-0 w-28 h-28">
+                  <svg viewBox="0 0 36 36" className="w-28 h-28 -rotate-90">
+                    {/* Background ring */}
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3.5" />
+                    {/* On-time segment — green ~75% */}
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" strokeWidth="3.5"
+                      strokeDasharray="75 25" strokeLinecap="round" className="transition-all duration-1000" />
+                    {/* Late segment — amber ~12.5% offset 75 */}
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f59e0b" strokeWidth="3.5"
+                      strokeDasharray="12.5 87.5" strokeDashoffset="-75" strokeLinecap="round" />
+                    {/* Absent — red ~12.5% offset 87.5 */}
+                    <circle cx="18" cy="18" r="15.9" fill="none" stroke="#ef4444" strokeWidth="3.5"
+                      strokeDasharray="12.5 87.5" strokeDashoffset="-87.5" strokeLinecap="round" />
+                  </svg>
+                  {/* Center label */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl font-black text-text-primary">{stats.members}</span>
+                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Total</span>
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="space-y-3 flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block"></span>
+                      <span className="text-xs font-bold text-text-secondary">On Time</span>
+                    </div>
+                    <span className="text-sm font-black text-text-primary">{Math.round(stats.members * 0.75)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block"></span>
+                      <span className="text-xs font-bold text-text-secondary">Late</span>
+                    </div>
+                    <span className="text-sm font-black text-text-primary">{Math.round(stats.members * 0.125)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-400 block"></span>
+                      <span className="text-xs font-bold text-text-secondary">Absent</span>
+                    </div>
+                    <span className="text-sm font-black text-text-primary">{Math.round(stats.members * 0.125)}</span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp size={12} className="text-emerald-500" />
+                      <span className="text-[11px] font-bold text-emerald-600">75% attendance rate today</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Coimbatore Office Location Map */}
+          <section>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[14px] font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-500 dark:from-gray-200 dark:to-gray-400 uppercase tracking-[0.2em]">Office Location</h2>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-accent-blue bg-accent-blue/10 px-3 py-1.5 rounded-full">
+                <MapPin size={12} />
+                Coimbatore, TN
+              </span>
+            </div>
+            <div className="relative bg-white/70 dark:bg-bg-secondary/60 backdrop-blur-xl rounded-[24px] border border-gray-100 dark:border-white/5 shadow-lg overflow-hidden group">
+              {/* Map iframe — OpenStreetMap centered on Coimbatore */}
+              <div className="relative overflow-hidden rounded-[22px]" style={{ height: 220 }}>
+                <iframe
+                  title="Coimbatore Office"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=76.9286%2C10.9936%2C77.0286%2C11.0736&layer=mapnik&marker=11.0168%2C76.9558"
+                  style={{ width: '100%', height: '100%', border: 'none', filter: 'saturate(1.1) contrast(1.05)' }}
+                  loading="lazy"
+                  allowFullScreen
+                />
+                {/* Overlay pin label */}
+                <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3 bg-white/90 dark:bg-bg-secondary/90 backdrop-blur-md rounded-xl px-4 py-2.5 shadow-lg border border-gray-100 dark:border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent-blue to-purple-500 flex items-center justify-center shrink-0 shadow">
+                    <MapPin size={14} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-black text-text-primary leading-tight">Madhura Tech, Coimbatore</p>
+                    <p className="text-[11px] text-text-secondary font-semibold">Tamil Nadu, India — 641 XXX</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Activity Feed */}
           <section>
             <h2 className="text-[14px] font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-800 to-gray-500 dark:from-gray-200 dark:to-gray-400 uppercase tracking-[0.2em] mb-6">Workspace Activity</h2>
@@ -349,7 +446,6 @@ const Dashboard = () => {
                   {activities.map((act, i) => (
                     <div key={act.id} className="relative flex items-start group">
                       <div className="relative z-10 w-8 h-8 rounded-full bg-white dark:bg-bg-secondary border-4 border-white dark:border-bg-secondary shadow-[0_0_10px_rgba(59,130,246,0.3)] flex items-center justify-center mr-5 text-accent-blue group-hover:scale-125 transition-transform duration-500">
-                        {/* Inner glowing dot */}
                         <div className="w-full h-full bg-gradient-to-br from-accent-blue to-purple-500 rounded-full flex items-center justify-center text-white p-1.5">
                            {act.icon}
                         </div>
