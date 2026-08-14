@@ -589,6 +589,37 @@ const Chat = () => {
           </div>
 
         </div>
+
+        {/* --- Workspace Stats Component --- */}
+        <div className="p-3 border-t border-gray-200 dark:border-white/8 bg-gray-50/50 dark:bg-[#1e2533]/50 shrink-0">
+          <div className="bg-white dark:bg-[#252c3c] rounded-xl p-3 border border-gray-200 dark:border-border shadow-sm flex flex-col gap-2 relative overflow-hidden group hover:shadow-md transition-shadow">
+            <div className="absolute -right-6 -top-6 w-16 h-16 bg-accent-blue/10 rounded-full blur-xl group-hover:bg-accent-blue/20 transition-colors"></div>
+            
+            <div className="flex items-center justify-between z-10">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded bg-accent-blue/10 flex items-center justify-center">
+                  <Info size={10} className="text-accent-blue" />
+                </div>
+                <span className="text-[11px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Activity</span>
+              </div>
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-[10px] text-green-600 dark:text-green-400 font-medium">Live</span>
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mt-1 z-10">
+              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-bg-primary rounded-lg border border-gray-100 dark:border-white/5">
+                <span className="text-lg font-bold text-accent-blue leading-none mb-1">{onlineUsers.size}</span>
+                <span className="text-[9px] text-gray-500 uppercase tracking-widest font-semibold flex items-center gap-1"><Users size={9} /> Online</span>
+              </div>
+              <div className="flex flex-col items-center p-2 bg-gray-50 dark:bg-bg-primary rounded-lg border border-gray-100 dark:border-white/5">
+                <span className="text-lg font-bold text-text-primary leading-none mb-1">{channels.length}</span>
+                <span className="text-[9px] text-gray-500 uppercase tracking-widest font-semibold flex items-center gap-1"><Hash size={9} /> Channels</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ═══════════════════ MAIN CHAT AREA ═══════════════════ */}
