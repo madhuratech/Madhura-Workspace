@@ -25,6 +25,20 @@ const DigitalClock = ({ className = "" }) => {
   );
 };
 
+const formatMinutes = (totalMinutes) => {
+  if (!totalMinutes) return '0 mins';
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  
+  if (hours > 0 && minutes > 0) {
+    return `${hours} hour ${minutes} mins`;
+  } else if (hours > 0) {
+    return `${hours} hour`;
+  } else {
+    return `${minutes} mins`;
+  }
+};
+
 const AttendanceLeave = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
@@ -372,7 +386,7 @@ const AttendanceLeave = () => {
                           </span>
                           {record.isLate && (
                             <span className="px-2 py-0.5 rounded text-[10px] font-medium text-danger bg-danger/10 w-fit whitespace-nowrap">
-                              Late by {record.lateMinutes}m
+                              Late by {formatMinutes(record.lateMinutes)}
                             </span>
                           )}
                           {record.isEarlyLeave && (
