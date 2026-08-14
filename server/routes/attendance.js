@@ -83,12 +83,21 @@ router.post('/checkin', async (req, res) => {
       
       for (const admin of admins) {
         if (admin._id.toString() !== req.user._id.toString()) {
+          let lateString = '';
+          if (isLate) {
+            const h = Math.floor(lateMinutes / 60);
+            const m = lateMinutes % 60;
+            if (h > 0 && m > 0) lateString = ` (Late by ${h} hour ${m} mins)`;
+            else if (h > 0) lateString = ` (Late by ${h} hour)`;
+            else lateString = ` (Late by ${m} mins)`;
+          }
+
           await sendNotification(
             req,
             admin._id,
             'general',
             'Employee Punched In',
-            `${req.user.name} has punched in${isLate ? ` (Late by ${lateMinutes} mins)` : ''}.`,
+            `${req.user.name} has punched in${lateString}.`,
             `/attendance`
           );
         }

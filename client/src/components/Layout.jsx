@@ -832,17 +832,17 @@ const Layout = () => {
 
           {/* Real-time Toast Popup */}
           {toastNotif && (
-            <div className="absolute bottom-6 right-6 bg-bg-secondary border border-border shadow-2xl rounded-xl p-4 pr-10 min-w-[300px] animate-bounce-in z-50">
+            <div className="fixed top-6 right-6 bg-bg-secondary border border-border shadow-2xl rounded-xl p-4 pr-10 min-w-[300px] animate-bounce-in z-[9999] group cursor-pointer hover:shadow-accent-blue/10">
               <div className="flex items-center space-x-3 mb-1">
-                <div className="h-2 w-2 rounded-full bg-accent-blue"></div>
+                <div className="h-2 w-2 rounded-full bg-accent-blue shadow-[0_0_8px_rgba(66,133,244,0.6)] animate-pulse"></div>
                 <h4 className="font-bold text-text-primary text-sm">{toastNotif.title}</h4>
               </div>
               <p className="text-xs text-text-secondary line-clamp-2 ml-5">{toastNotif.message}</p>
               <button 
-                onClick={() => setToastNotif(null)}
-                className="absolute top-2 right-2 text-text-secondary hover:text-text-primary"
+                onClick={(e) => { e.stopPropagation(); setToastNotif(null); }}
+                className="absolute top-2 right-2 text-text-secondary hover:text-text-primary p-1 bg-bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                &times;
+                <X size={14} />
               </button>
             </div>
           )}
