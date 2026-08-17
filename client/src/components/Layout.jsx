@@ -801,11 +801,11 @@ const Layout = () => {
           </nav>
         </aside>
 
-        {/* Page Content — Chat gets full screen flush, other pages get padded card */}
+        {/* Page Content — All pages full screen flush */}
         <main className={`flex-1 overflow-hidden relative flex flex-col transition-all pb-[env(safe-area-inset-bottom)] md:pb-0 mb-14 md:mb-0 ${
           ['/chat', '/attendance', '/meetings', '/tickets', '/projects', '/my-tasks'].some(p => location.pathname.startsWith(p))
             ? 'bg-bg-secondary'
-            : 'bg-bg-primary sm:rounded-tl-2xl shadow-[inset_0_4px_6px_rgba(0,0,0,0.02)] border-l border-t border-border/50 sm:mt-1 sm:ml-1'
+            : 'bg-bg-primary'
         }`}>
           {['/chat', '/attendance', '/meetings', '/tickets', '/projects', '/my-tasks'].some(p => location.pathname.startsWith(p)) ? (
             <div className="flex-1 overflow-hidden h-full flex flex-col">
