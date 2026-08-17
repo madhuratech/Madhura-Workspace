@@ -8,6 +8,7 @@ import Avatar from '../components/Avatar';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const [workspace, setWorkspace] = useState(null);
   const [allWorkspaces, setAllWorkspaces] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
