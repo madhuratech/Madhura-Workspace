@@ -533,20 +533,7 @@ const Layout = () => {
                       size="w-14 h-14"
                       textClass="text-xl"
                       className="shadow-md border-2 border-white/10"
-                      showStatus={false}
-                    />
-                    {/* Status dot on avatar */}
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: 1,
-                        right: 1,
-                        width: 13,
-                        height: 13,
-                        borderRadius: '50%',
-                        border: '2px solid #1f2937',
-                        ...getStatusDotStyle(user?.presenceStatus),
-                      }}
+                      showStatus={true}
                     />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
