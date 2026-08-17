@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Activity, Clock, CheckSquare, ChevronRight, Plus, Users, TrendingUp, Sparkles, LayoutDashboard, ChevronDown, Trash2 } from 'lucide-react';
+import { CalendarDays, Activity, Clock, CheckSquare, ChevronRight, Plus, Users, TrendingUp, Sparkles, LayoutDashboard, ChevronDown, Trash2, X } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 const Dashboard = () => {
@@ -11,6 +11,9 @@ const Dashboard = () => {
   const [workspace, setWorkspace] = useState(null);
   const [allWorkspaces, setAllWorkspaces] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newWorkspaceData, setNewWorkspaceData] = useState({ name: '', description: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ tasks: 0, meetings: 0, members: 0 });
   const [myTasks, setMyTasks] = useState([]);
@@ -97,20 +100,35 @@ const Dashboard = () => {
     return 'Good evening';
   };
 
-  const handleCreateWorkspace = async () => {
-    const name = window.prompt("Enter new workspace name:");
-    if (!name || !name.trim()) return;
+  const handleCreateWorkspaceSubmit = async (e) => {
+    e.preventDefault();
+    if (!newWorkspaceData.name.trim()) {
+      showToast('Workspace name is required', 'error');
+      return;
+    }
+    
+    setIsSubmitting(true);
     try {
-      const res = await axios.post('/workspaces', { name, description: '' });
+      const res = await axios.post('/workspaces', newWorkspaceData);
       showToast('Workspace created successfully', 'success');
       setAllWorkspaces([...allWorkspaces, res.data]);
-      setWorkspace(res.data);
+      setWorkspace(res.data); // Switch to the new workspace immediately
+      setShowCreateModal(false);
+      setNewWorkspaceData({ name: '', description: '' });
       setDropdownOpen(false);
+      // Re-fetch data for the newly created empty workspace
       fetchData();
     } catch (err) {
       console.error(err);
-      showToast('Failed to create workspace', 'error');
+      showToast(err.response?.data?.message || 'Failed to create workspace', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const openCreateModal = () => {
+    setDropdownOpen(false);
+    setShowCreateModal(true);
   };
 
   const handleDeleteWorkspace = async (e, id) => {
@@ -220,7 +238,7 @@ const Dashboard = () => {
                 </div>
                 <div className="p-2 border-t border-border/50 bg-bg-primary/30">
                   <button 
-                    onClick={handleCreateWorkspace}
+                    onClick={openCreateModal}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-blue text-white rounded-xl text-sm font-bold hover:bg-accent-indigo transition-colors shadow-sm"
                   >
                     <Plus size={16} /> Create Workspace
@@ -485,6 +503,68 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* CREATE WORKSPACE MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-border/50 rounded-3xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowCreateModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-accent-blue/10 text-accent-blue rounded-2xl flex items-center justify-center mb-4 border border-accent-blue/20">
+                <LayoutDashboard size={24} />
+              </div>
+              <h3 className="text-2xl font-bold text-text-primary font-outfit">Create Workspace</h3>
+              <p className="text-sm text-text-secondary mt-1">Set up a new workspace for your team.</p>
+            </div>
+
+            <form onSubmit={handleCreateWorkspaceSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Workspace Name</label>
+                <input 
+                  type="text"
+                  value={newWorkspaceData.name}
+                  onChange={e => setNewWorkspaceData({...newWorkspaceData, name: e.target.value})}
+                  placeholder="e.g. Acme Corp"
+                  className="w-full bg-bg-primary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Description <span className="normal-case font-normal opacity-70">(Optional)</span></label>
+                <textarea 
+                  value={newWorkspaceData.description}
+                  onChange={e => setNewWorkspaceData({...newWorkspaceData, description: e.target.value})}
+                  placeholder="What is this workspace for?"
+                  rows={3}
+                  className="w-full bg-bg-primary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all resize-none"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  type="submit"
+                  disabled={isSubmitting || !newWorkspaceData.name.trim()}
+                  className="w-full bg-accent-blue hover:bg-accent-indigo text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                >
+                  {isSubmitting ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : 'Create Workspace'}
+                </button>
+              </div>
+              
+              <p className="text-center text-xs text-text-secondary mt-4">
+                You can invite team members to this workspace from the <strong className="text-text-primary">Team</strong> module after creation.
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
