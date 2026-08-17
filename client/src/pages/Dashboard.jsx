@@ -183,13 +183,6 @@ const Dashboard = () => {
                 <span className="text-xs font-bold text-text-secondary bg-bg-primary px-3 py-1.5 rounded-full border border-border/50 shadow-sm">This Week</span>
               </div>
               <div className="flex items-end justify-between gap-3 h-32 mt-4 relative">
-                {/* Chart Grid Lines */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20">
-                  <div className="w-full border-b border-border border-dashed h-0"></div>
-                  <div className="w-full border-b border-border border-dashed h-0"></div>
-                  <div className="w-full border-b border-border border-dashed h-0"></div>
-                </div>
-
                 {[
                   { day: 'Mon', val: 30 }, { day: 'Tue', val: 70 },
                   { day: 'Wed', val: 45 }, { day: 'Thu', val: 90 },
@@ -198,12 +191,8 @@ const Dashboard = () => {
                 ].map((item, i) => (
                   <div key={i} className="flex flex-col items-center flex-1 h-full justify-end group z-10">
                     <div className="w-full h-full flex items-end relative">
-                      {/* Tooltip */}
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-text-primary text-bg-primary text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg">
-                        {item.val}% Activity
-                      </div>
                       <div
-                        className="w-full bg-gradient-to-t from-accent-indigo to-accent-blue dark:from-accent-blue/80 dark:to-accent-blue rounded-t-xl opacity-80 group-hover:opacity-100 transition-all duration-300"
+                        className="w-full bg-[#1b2b4c] dark:bg-[#ffca22] rounded-t-lg opacity-80 group-hover:opacity-100 transition-all duration-300"
                         style={{ height: `${item.val}%`, minHeight: '8px' }}
                       />
                     </div>
