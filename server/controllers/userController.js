@@ -24,7 +24,7 @@ const getUsers = async (req, res) => {
 const updatePresence = async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['Active', 'Busy', 'Break', 'Away'].includes(status)) {
+    if (!['Active', 'Busy', 'Break', 'Lunch', 'Away', 'Leave'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
     

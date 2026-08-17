@@ -36,7 +36,7 @@ const UserSchema = new mongoose.Schema({
   },
   presenceStatus: {
     type: String,
-    enum: ['Active', 'Busy', 'Break', 'Away'],
+    enum: ['Active', 'Busy', 'Break', 'Lunch', 'Away', 'Leave'],
     default: 'Active'
   },
   googleAccessToken: {
