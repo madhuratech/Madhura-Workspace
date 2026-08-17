@@ -675,8 +675,8 @@ const AttendanceLeave = () => {
                         <tr key={leave._id}>
                           <td className="font-medium text-text-primary">
                             <div className="flex items-center space-x-2">
-                              <Avatar user={leave.user} size="w-6 h-6" textClass="text-[10px]" showStatus={false} />
-                              <span>{leave.user?.name}</span>
+                              <Avatar user={leave.user || leave.employee} size="w-6 h-6" textClass="text-[10px]" showStatus={false} />
+                              <span>{(leave.user || leave.employee)?.name}</span>
                             </div>
                           </td>
                           <td className="text-text-secondary">{leave.type}</td>

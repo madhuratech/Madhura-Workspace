@@ -816,11 +816,11 @@ const Layout = () => {
 
         {/* Page Content — Chat gets full screen flush, other pages get padded card */}
         <main className={`flex-1 overflow-hidden relative flex flex-col transition-all pb-[env(safe-area-inset-bottom)] md:pb-0 mb-14 md:mb-0 ${
-          location.pathname === '/chat'
+          ['/chat', '/attendance', '/meetings', '/tickets'].includes(location.pathname)
             ? 'bg-bg-secondary'
             : 'bg-bg-primary sm:rounded-tl-2xl shadow-[inset_0_4px_6px_rgba(0,0,0,0.02)] border-l border-t border-border/50 sm:mt-1 sm:ml-1'
         }`}>
-          {location.pathname === '/chat' ? (
+          {['/chat', '/attendance', '/meetings', '/tickets'].includes(location.pathname) ? (
             <div className="flex-1 overflow-hidden h-full">
               <Outlet />
             </div>

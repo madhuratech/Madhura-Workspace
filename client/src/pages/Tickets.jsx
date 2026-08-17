@@ -113,7 +113,7 @@ const Tickets = () => {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] -mt-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="flex flex-col h-full bg-white overflow-hidden">
       
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50/50">
