@@ -3,12 +3,14 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 import { Link } from 'react-router-dom';
-import { CalendarDays, Activity, Clock, CheckSquare, ChevronRight, Plus, Users, TrendingUp, Sparkles, LayoutDashboard } from 'lucide-react';
+import { CalendarDays, Activity, Clock, CheckSquare, ChevronRight, Plus, Users, TrendingUp, Sparkles, LayoutDashboard, ChevronDown, Trash2 } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const [workspace, setWorkspace] = useState(null);
+  const [allWorkspaces, setAllWorkspaces] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ tasks: 0, meetings: 0, members: 0 });
   const [myTasks, setMyTasks] = useState([]);
@@ -23,7 +25,8 @@ const Dashboard = () => {
       setLoading(true);
       const res = await axios.get('/workspaces');
       if (res.data.length > 0) {
-        const ws = res.data[0];
+        setAllWorkspaces(res.data);
+        const ws = workspace || res.data[0];
         setWorkspace(ws);
         const [tasksRes, meetingsRes, attendanceRes] = await Promise.all([
           axios.get('/tasks').catch(() => ({ data: [] })),
@@ -94,6 +97,44 @@ const Dashboard = () => {
     return 'Good evening';
   };
 
+  const handleCreateWorkspace = async () => {
+    const name = window.prompt("Enter new workspace name:");
+    if (!name || !name.trim()) return;
+    try {
+      const res = await axios.post('/workspaces', { name, description: '' });
+      showToast('Workspace created successfully', 'success');
+      setAllWorkspaces([...allWorkspaces, res.data]);
+      setWorkspace(res.data);
+      setDropdownOpen(false);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to create workspace', 'error');
+    }
+  };
+
+  const handleDeleteWorkspace = async (e, id) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this workspace? This action cannot be undone.")) return;
+    try {
+      await axios.delete(`/workspaces/${id}`);
+      showToast('Workspace deleted successfully', 'success');
+      const updated = allWorkspaces.filter(w => w._id !== id);
+      setAllWorkspaces(updated);
+      if (workspace._id === id) {
+        if (updated.length > 0) {
+          setWorkspace(updated[0]);
+          fetchData();
+        } else {
+          setWorkspace(null);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to delete workspace', 'error');
+    }
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center h-full bg-bg-primary">
       <div className="w-10 h-10 border-[4px] border-border border-t-accent-blue dark:border-t-accent-blue rounded-full animate-spin shadow-lg"></div>
@@ -136,16 +177,57 @@ const Dashboard = () => {
             </h1>
           </div>
 
-          {/* Workspace badge with glassmorphism */}
-          <div className="flex items-center gap-3 bg-bg-secondary/70 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl px-5 py-3 shadow-soft hover:shadow-hover transition-all duration-300 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden">
-              <img src="/Madhura-logo.webp" alt="Logo" className="w-full h-full object-contain p-1.5"
-                onError={e => { e.target.style.display='none'; e.target.parentElement.textContent = workspace.name.charAt(0); e.target.parentElement.className += " font-bold text-accent-blue text-lg"; }} />
+          {/* Workspace badge with dropdown */}
+          <div className="relative">
+            <div 
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-3 bg-bg-secondary/70 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl px-5 py-3 shadow-soft hover:shadow-hover transition-all duration-300 animate-in fade-in slide-in-from-right-4 duration-500 cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden">
+                <img src="/Madhura-logo.webp" alt="Logo" className="w-full h-full object-contain p-1.5"
+                  onError={e => { e.target.style.display='none'; e.target.parentElement.textContent = workspace.name.charAt(0); e.target.parentElement.className += " font-bold text-accent-blue text-lg"; }} />
+              </div>
+              <div className="flex-1 pr-2">
+                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-none mb-1">Workspace</p>
+                <p className="text-[14px] font-extrabold text-text-primary font-outfit leading-none">{workspace.name}</p>
+              </div>
+              <ChevronDown size={16} className={`text-text-secondary transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-none mb-1">Workspace</p>
-              <p className="text-[14px] font-extrabold text-text-primary font-outfit leading-none">{workspace.name}</p>
-            </div>
+
+            {dropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-64 bg-bg-secondary border border-border/50 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                  {allWorkspaces.map(w => (
+                    <div 
+                      key={w._id} 
+                      onClick={() => {
+                        setWorkspace(w);
+                        setDropdownOpen(false);
+                        fetchData();
+                      }}
+                      className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-primary transition-colors border-b border-border/30 ${workspace._id === w._id ? 'bg-bg-primary/50' : ''}`}
+                    >
+                      <span className={`text-sm font-bold ${workspace._id === w._id ? 'text-accent-blue' : 'text-text-primary'}`}>{w.name}</span>
+                      <button 
+                        onClick={(e) => handleDeleteWorkspace(e, w._id)}
+                        className="text-red-500 opacity-60 hover:opacity-100 p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                        title="Delete Workspace"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-2 border-t border-border/50 bg-bg-primary/30">
+                  <button 
+                    onClick={handleCreateWorkspace}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-blue text-white rounded-xl text-sm font-bold hover:bg-accent-indigo transition-colors shadow-sm"
+                  >
+                    <Plus size={16} /> Create Workspace
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
