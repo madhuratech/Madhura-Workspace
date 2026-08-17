@@ -24,13 +24,14 @@ const Dashboard = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (targetWorkspace = null) => {
     try {
       setLoading(true);
       const res = await axios.get('/workspaces');
       if (res.data.length > 0) {
         setAllWorkspaces(res.data);
-        const ws = workspace || res.data[0];
+        // Ensure we use the target workspace if provided, since state updates are async
+        const ws = targetWorkspace || workspace || res.data[0];
         setWorkspace(ws);
         const [tasksRes, meetingsRes, attendanceRes] = await Promise.all([
           axios.get('/tasks').catch(() => ({ data: [] })),
@@ -118,7 +119,7 @@ const Dashboard = () => {
       setNewWorkspaceData({ name: '', description: '' });
       setDropdownOpen(false);
       // Re-fetch data for the newly created empty workspace
-      fetchData();
+      fetchData(res.data);
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.message || 'Failed to create workspace', 'error');
@@ -143,7 +144,7 @@ const Dashboard = () => {
       if (workspace._id === id) {
         if (updated.length > 0) {
           setWorkspace(updated[0]);
-          fetchData();
+          fetchData(updated[0]);
         } else {
           setWorkspace(null);
         }
@@ -222,7 +223,7 @@ const Dashboard = () => {
                       onClick={() => {
                         setWorkspace(w);
                         setDropdownOpen(false);
-                        fetchData();
+                        fetchData(w);
                       }}
                       className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-primary transition-colors border-b border-border/30 ${workspace._id === w._id ? 'bg-bg-primary/50' : ''}`}
                     >
