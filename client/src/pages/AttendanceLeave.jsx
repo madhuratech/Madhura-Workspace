@@ -474,7 +474,7 @@ const AttendanceLeave = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden flex flex-col px-8 pb-8">
+      <div className="flex-1 overflow-hidden flex flex-col px-8">
         {activeTab === 'attendance' ? (
           <div className="flex flex-col h-full space-y-6 overflow-y-auto custom-scrollbar pr-2">
             {/* Modern Check In / Check Out Area */}
