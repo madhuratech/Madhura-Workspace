@@ -145,7 +145,7 @@ const MyTasks = () => {
   };
 
   return (
-    <div className="h-full flex flex-col font-sans">
+    <div className="h-full flex flex-col font-sans p-6 md:p-8 bg-bg-primary overflow-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-text-primary tracking-wide font-outfit">My Tasks</h1>

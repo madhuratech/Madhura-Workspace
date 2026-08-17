@@ -471,10 +471,10 @@ const Meetings = () => {
       {view!=='new-meeting'&&(
         <>
           {/* TOP BAR */}
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',background:'var(--bg-sidebar)',borderBottom:'1px solid var(--border-color)',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',background:'var(--bg-primary)',borderBottom:'1px solid var(--border-color)',flexShrink:0}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
               <div style={{background:T_PRIMARY,borderRadius:6,padding:'5px 6px',display:'flex',alignItems:'center'}}><CalendarIcon size={17} color="var(--accent-text)"/></div>
-              <span style={{fontWeight:700,fontSize:18,color:'var(--text-sidebar)'}}>Calendar</span>
+              <span style={{fontWeight:700,fontSize:18,color:'var(--text-primary)'}}>Calendar</span>
             </div>
             <div style={{display:'flex',gap:8}}>
               {/* New meeting – opens full-page form */}
@@ -487,15 +487,15 @@ const Meetings = () => {
           </div>
 
           {/* TAB BAR */}
-          <div style={{display:'flex',background:'var(--bg-sidebar)',padding:'0 16px',borderBottom:'1px solid var(--border-color)',flexShrink:0}}>
+          <div style={{display:'flex',background:'var(--bg-primary)',padding:'0 16px',borderBottom:'1px solid var(--border-color)',flexShrink:0}}>
             {[{k:'calendar',l:'Calendar'},{k:'logs',l:'Meeting Logs'}].map(({k,l})=>(
               <button key={k} onClick={()=>setView(k)}
                 className="relative"
-                style={{padding:'12px 18px',border:'none',background:'none',cursor:'pointer',color:view===k?'#ffca22':'var(--text-sidebar)',fontWeight:view===k?600:500,fontSize:14,transition:'all 0.15s',opacity:view===k?1:0.7}}
+                style={{padding:'12px 18px',border:'none',background:'none',cursor:'pointer',color:view===k?T_PRIMARY:'var(--text-secondary)',fontWeight:view===k?600:500,fontSize:14,transition:'all 0.15s',opacity:view===k?1:0.7}}
               >
                 {l}
                 {view===k && (
-                  <div style={{position:'absolute',bottom:-1,left:0,width:'100%',height:3,backgroundColor:'#ffca22',borderRadius:'3px 3px 0 0'}} />
+                  <div style={{position:'absolute',bottom:-1,left:0,width:'100%',height:3,backgroundColor:T_PRIMARY,borderRadius:'3px 3px 0 0'}} />
                 )}
               </button>
             ))}

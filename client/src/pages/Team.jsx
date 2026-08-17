@@ -204,7 +204,7 @@ const Team = () => {
         )}
         {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && activeTab === 'teams' && (
           <button 
-            onClick={() => { setEditTeamItem(null); setIsTeamModalOpen(true); }}
+            onClick={() => { setEditTeamItem(null); setSelectedTeamMembers([]); setIsTeamModalOpen(true); }}
             className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
           >
             <Plus size={16} />
@@ -340,7 +340,11 @@ const Team = () => {
                   {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
                       <button 
-                        onClick={() => { setEditTeamItem(team); setIsTeamModalOpen(true); }}
+                        onClick={() => { 
+                          setEditTeamItem(team); 
+                          setSelectedTeamMembers(team.members?.map(m => m._id) || []);
+                          setIsTeamModalOpen(true); 
+                        }}
                         className="p-1.5 bg-bg-secondary hover:bg-accent-blue hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
                         title="Edit Team"
                       >
@@ -526,12 +530,14 @@ const Team = () => {
                    await axios.put(`/workspaces/${workspace._id}/teams/${editTeamItem._id}`, {
                       name: e.target.teamName.value,
                       leader: e.target.teamLeader.value,
+                      members: selectedTeamMembers
                    });
                    showToast('Team updated successfully!', 'success');
                  } else {
                    await axios.post(`/workspaces/${workspace._id}/teams`, {
                       name: e.target.teamName.value,
                       leader: e.target.teamLeader.value,
+                      members: selectedTeamMembers
                    });
                    showToast('Team created successfully!', 'success');
                  }
@@ -566,6 +572,30 @@ const Team = () => {
                     <option key={m.user._id} value={m.user._id}>{m.user.name} ({m.role.replace('_', ' ')})</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Team Members</label>
+                <div className="bg-bg-primary border border-border rounded-lg max-h-48 overflow-y-auto p-2 space-y-1">
+                  {members.map(m => (
+                    <label key={m.user._id} className="flex items-center space-x-3 p-2 hover:bg-bg-secondary rounded-lg cursor-pointer transition-colors">
+                      <input 
+                        type="checkbox"
+                        checked={selectedTeamMembers.includes(m.user._id)}
+                        onChange={(e) => {
+                          if (e.target.checked) setSelectedTeamMembers([...selectedTeamMembers, m.user._id]);
+                          else setSelectedTeamMembers(selectedTeamMembers.filter(id => id !== m.user._id));
+                        }}
+                        className="w-4 h-4 text-accent-blue border-border rounded focus:ring-accent-blue"
+                      />
+                      <Avatar user={m.user} size="h-6 w-6" textClass="text-[10px]" showStatus={false} />
+                      <span className="text-sm font-medium text-text-primary">{m.user.name}</span>
+                    </label>
+                  ))}
+                  {members.length === 0 && (
+                    <div className="text-sm text-text-secondary text-center p-2">No members available</div>
+                  )}
+                </div>
               </div>
               
               <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
