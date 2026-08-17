@@ -320,9 +320,9 @@ const AttendanceLeave = () => {
     });
 
     return (
-      <div className="flex-1 bg-bg-secondary rounded-2xl border border-border/60 p-6 shadow-sm">
+      <div className="flex-1 flex flex-col h-full">
         {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 shrink-0">
           <h2 className="text-xl font-bold text-text-primary font-outfit">
             {new Date(currentYear, currentMonth).toLocaleDateString('default', { month: 'long', year: 'numeric' })}
           </h2>
