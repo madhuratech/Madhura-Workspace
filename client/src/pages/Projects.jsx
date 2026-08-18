@@ -27,7 +27,9 @@ const Projects = () => {
     participantType: 'all', 
     selectedTeam: '', 
     selectedRole: 'employee', 
-    members: [] 
+    members: [],
+    coordinator: '',
+    workflowTeams: { uiux: '', tech: '', test: '', devops: '' }
   });
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -73,7 +75,14 @@ const Projects = () => {
         participantType: 'specific',
         selectedTeam: '',
         selectedRole: 'employee',
-        members: item.members.map(m => m._id) 
+        members: item.members.map(m => m._id),
+        coordinator: item.coordinator?._id || item.coordinator || '',
+        workflowTeams: {
+          uiux: item.workflowTeams?.uiux?._id || item.workflowTeams?.uiux || '',
+          tech: item.workflowTeams?.tech?._id || item.workflowTeams?.tech || '',
+          test: item.workflowTeams?.test?._id || item.workflowTeams?.test || '',
+          devops: item.workflowTeams?.devops?._id || item.workflowTeams?.devops || ''
+        }
       });
     } else {
       setEditItem(null);
@@ -83,7 +92,9 @@ const Projects = () => {
         participantType: 'all', 
         selectedTeam: '', 
         selectedRole: 'employee', 
-        members: [] 
+        members: [],
+        coordinator: '',
+        workflowTeams: { uiux: '', tech: '', test: '', devops: '' }
       });
     }
     setIsModalOpen(true);
@@ -114,7 +125,9 @@ const Projects = () => {
     const payload = {
       title: formData.title,
       description: formData.description,
-      members: participantsIds
+      members: participantsIds,
+      coordinator: formData.coordinator || undefined,
+      workflowTeams: formData.workflowTeams
     };
 
     try {
@@ -394,6 +407,54 @@ const Projects = () => {
                   placeholder="Brief project overview..."
                 />
               </div>
+
+              {['super_admin', 'hr'].includes(user?.role) && (
+                <div className="bg-bg-primary/50 p-5 rounded-2xl border border-border mt-6">
+                  <label className="block text-sm font-bold text-text-primary mb-4 font-outfit">Workflow Setup</label>
+                  
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Project Coordinator</label>
+                    <select 
+                      value={formData.coordinator} onChange={e => setFormData({...formData, coordinator: e.target.value})}
+                      className="premium-input mb-2"
+                    >
+                      <option value="">-- Select Coordinator --</option>
+                      {workspaceMembers.map(m => <option key={m.user._id} value={m.user._id}>{m.user.name}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">UI/UX Team</label>
+                      <select value={formData.workflowTeams.uiux} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, uiux: e.target.value}})} className="premium-input">
+                        <option value="">-- None --</option>
+                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Tech Team</label>
+                      <select value={formData.workflowTeams.tech} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, tech: e.target.value}})} className="premium-input">
+                        <option value="">-- None --</option>
+                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Test Team</label>
+                      <select value={formData.workflowTeams.test} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, test: e.target.value}})} className="premium-input">
+                        <option value="">-- None --</option>
+                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">DevOps Team</label>
+                      <select value={formData.workflowTeams.devops} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, devops: e.target.value}})} className="premium-input">
+                        <option value="">-- None --</option>
+                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Member Assignment */}
               <div className="bg-bg-primary/50 p-5 rounded-2xl border border-border mt-6">

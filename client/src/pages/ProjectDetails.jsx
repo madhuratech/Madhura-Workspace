@@ -138,9 +138,10 @@ const ProjectDetails = () => {
         ];
         if (user?.role !== 'employee') {
           reqs.push(axios.get(`/workspaces/${ws._id}/projects/members`).catch(e => ({ error: true, data: e })));
+          reqs.push(axios.get(`/workspaces/${ws._id}/teams`).catch(e => ({ error: true, data: e })));
         }
 
-        const [tasksRes, membersRes] = await Promise.all(reqs);
+        const [tasksRes, membersRes, teamsRes] = await Promise.all(reqs);
 
         if (!tasksRes.error) {
           const cols = {
@@ -155,13 +156,32 @@ const ProjectDetails = () => {
         }
 
         if (user?.role !== 'employee' && membersRes && !membersRes.error) {
-          setWorkspaceMembers((membersRes.data || []).filter(m => m.user));
+          let members = (membersRes.data || []).filter(m => m.user);
+          if (user?.role === 'team_leader' && teamsRes && !teamsRes.error) {
+            const tlTeam = teamsRes.data.find(t => String(t.leader?._id || t.leader) === String(user._id));
+            if (tlTeam) {
+              const teamMemberIds = tlTeam.members.map(m => String(m._id || m));
+              members = members.filter(m => teamMemberIds.includes(String(m.user._id)) || String(m.user._id) === String(user._id));
+            }
+          }
+          setWorkspaceMembers(members);
         }
       }
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAdvanceStage = async () => {
+    try {
+      const res = await axios.put(`/workspaces/${workspaceId}/projects/${projectId}/advance`);
+      setProject(res.data);
+      alert('Project stage advanced successfully!');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to advance stage');
     }
   };
 
@@ -276,20 +296,39 @@ const ProjectDetails = () => {
               {project ? project.title : 'Project'} 
               <span className="text-text-secondary font-medium text-lg ml-3 pl-3 border-l-2 border-border">Kanban Board</span>
             </h1>
-            <p className="text-text-secondary text-sm mt-1">
-              {user?.role === 'employee' ? 'Your assigned tasks' : 'Drag tasks between columns to update status'}
-            </p>
+            <div className="flex items-center space-x-3 mt-1">
+              <span className="text-text-secondary text-sm">Stage:</span>
+              {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i) => (
+                <div key={s} className="flex items-center">
+                  <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full ${project?.stage === s ? 'bg-accent-blue text-white' : 'bg-bg-secondary text-text-secondary border border-border'}`}>
+                    {s}
+                  </span>
+                  {i < 4 && <span className="text-border mx-1">-</span>}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        {user?.role !== 'employee' && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-accent-blue text-accent-text px-5 py-2.5 rounded-xl hover:bg-accent-indigo shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
-          >
-            <Plus size={18} />
-            <span>Add Task</span>
-          </button>
-        )}
+        <div className="flex items-center space-x-3">
+          {project?.stage !== 'Completed' && (['super_admin', 'hr', 'team_leader'].includes(user?.role) || String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) && (
+            <button
+              onClick={handleAdvanceStage}
+              className="bg-success/10 text-success border border-success/30 px-4 py-2 rounded-xl hover:bg-success hover:text-white shadow-soft transition-all text-sm font-semibold flex items-center space-x-2"
+            >
+              <Flag size={16} />
+              <span>Mark Stage Complete</span>
+            </button>
+          )}
+          {user?.role !== 'employee' && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-accent-blue text-accent-text px-5 py-2.5 rounded-xl hover:bg-accent-indigo shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
+            >
+              <Plus size={18} />
+              <span>Add Task</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Kanban Board */}

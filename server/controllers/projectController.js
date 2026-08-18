@@ -18,8 +18,13 @@ const getProjects = async (req, res) => {
     }
 
     const projects = await Project.find(query)
-      .select('title description status members workspace totalTasks doneTasks')
+      .select('title description status stage coordinator workflowTeams members workspace totalTasks doneTasks')
       .populate('members', 'name email avatar')
+      .populate('coordinator', 'name email avatar')
+      .populate('workflowTeams.uiux')
+      .populate('workflowTeams.tech')
+      .populate('workflowTeams.test')
+      .populate('workflowTeams.devops')
       .lean();
 
     res.status(200).json(projects);
@@ -35,6 +40,11 @@ const getProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId)
       .populate('members', 'name email avatar')
+      .populate('coordinator', 'name email avatar')
+      .populate('workflowTeams.uiux')
+      .populate('workflowTeams.tech')
+      .populate('workflowTeams.test')
+      .populate('workflowTeams.devops')
       .lean();
     if (!project) return res.status(404).json({ message: 'Project not found' });
     res.status(200).json(project);
@@ -48,7 +58,7 @@ const getProject = async (req, res) => {
 // @access  Private (super_admin, hr)
 const createProject = async (req, res) => {
   try {
-    const { title, description, members } = req.body;
+    const { title, description, members, coordinator, workflowTeams } = req.body;
 
     if (!title) {
       return res.status(400).json({ message: 'Please add a project title' });
@@ -63,10 +73,15 @@ const createProject = async (req, res) => {
       title,
       description,
       workspace: req.params.workspaceId,
+      coordinator: coordinator || req.user._id,
+      workflowTeams,
       members: members && members.length > 0 ? members : [req.user._id]
     });
 
-    const populated = await project.populate('members', 'name email avatar');
+    const populated = await project
+      .populate('members', 'name email avatar')
+      .then(p => p.populate('coordinator', 'name email avatar'))
+      .then(p => p.populate('workflowTeams.uiux workflowTeams.tech workflowTeams.test workflowTeams.devops'));
 
     if (req.io) {
       req.io.emit('projectCreated', populated);
@@ -185,11 +200,67 @@ const getWorkspaceMembers = async (req, res) => {
   }
 };
 
+// @desc    Advance project stage
+// @route   PUT /api/workspaces/:workspaceId/projects/:projectId/advance
+// @access  Private
+const advanceStage = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    // In a real app we'd verify the user is Coordinator or TL of the current stage's team
+    // For now we allow non-employees and Coordinators
+    if (req.user.role === 'employee' && String(project.coordinator) !== String(req.user._id)) {
+       return res.status(401).json({ message: 'Not authorized to advance project stage.' });
+    }
+
+    const stages = ['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'];
+    const currentIndex = stages.indexOf(project.stage);
+    
+    if (currentIndex === -1 || currentIndex >= stages.length - 1) {
+      return res.status(400).json({ message: 'Project is already at the final stage.' });
+    }
+
+    project.stage = stages[currentIndex + 1];
+    if (project.stage === 'Completed') {
+       project.status = 'Completed';
+    }
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate('members', 'name email avatar')
+      .populate('coordinator', 'name email avatar')
+      .populate('workflowTeams.uiux')
+      .populate('workflowTeams.tech')
+      .populate('workflowTeams.test')
+      .populate('workflowTeams.devops')
+      .lean();
+
+    if (req.io) {
+      req.io.emit('projectUpdated', populated);
+    }
+
+    await logActivity({
+      workspace: req.params.workspaceId,
+      user: req.user._id,
+      action: 'UPDATE_PROJECT_STAGE',
+      entityType: 'Project',
+      entityId: project._id,
+      details: `Advanced project "${project.title}" to stage ${project.stage}`
+    });
+
+    res.status(200).json(populated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getProjects,
   getProject,
   createProject,
   updateProject,
   deleteProject,
-  getWorkspaceMembers
+  getWorkspaceMembers,
+  advanceStage
 };

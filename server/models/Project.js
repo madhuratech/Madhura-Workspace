@@ -20,6 +20,21 @@ const ProjectSchema = new mongoose.Schema({
     enum: ['Active', 'Completed'],
     default: 'Active'
   },
+  coordinator: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  stage: {
+    type: String,
+    enum: ['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'],
+    default: 'UI/UX'
+  },
+  workflowTeams: {
+    uiux: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+    tech: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+    test: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+    devops: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' }
+  },
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,
