@@ -557,6 +557,7 @@ const Team = () => {
                   required
                 >
                   <option value="" disabled>-- Select a Team Name --</option>
+                  <option value="UI/UX Design">UI/UX Design</option>
                   <option value="Technical">Technical</option>
                   <option value="BDM">BDM</option>
                   <option value="Digital Marketing">Digital Marketing</option>

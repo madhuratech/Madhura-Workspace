@@ -106,14 +106,14 @@ const Projects = () => {
 
     let participantsIds = [];
     if (formData.participantType === 'all') {
-      participantsIds = workspaceMembers.map(m => m.user._id);
+      participantsIds = workspaceMembers.filter(m => m.role !== 'super_admin').map(m => m.user._id);
     } else if (formData.participantType === 'team' && formData.selectedTeam) {
       const team = teams.find(t => t._id === formData.selectedTeam);
       if (team) {
         participantsIds = [...team.members.map(m => m._id || m), team.leader._id || team.leader];
       }
     } else if (formData.participantType === 'role') {
-      participantsIds = workspaceMembers.filter(m => m.role === formData.selectedRole).map(m => m.user._id);
+      participantsIds = workspaceMembers.filter(m => m.role === formData.selectedRole && m.role !== 'super_admin').map(m => m.user._id);
     } else if (formData.participantType === 'specific') {
       participantsIds = formData.members;
     }
@@ -419,7 +419,9 @@ const Projects = () => {
                       className="premium-input mb-2"
                     >
                       <option value="">-- Select Coordinator --</option>
-                      {workspaceMembers.map(m => <option key={m.user._id} value={m.user._id}>{m.user.name}</option>)}
+                      {workspaceMembers
+                        .filter(m => (m.user.designation || '').toLowerCase().includes('coordinator'))
+                        .map(m => <option key={m.user._id} value={m.user._id}>{m.user.name}</option>)}
                     </select>
                   </div>
 
@@ -494,7 +496,7 @@ const Projects = () => {
 
                 {formData.participantType === 'specific' && (
                   <div className="max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-secondary space-y-1.5 custom-scrollbar">
-                    {workspaceMembers.filter(m => m.user._id !== user._id).map(m => (
+                    {workspaceMembers.filter(m => m.user._id !== user._id && m.role !== 'super_admin').map(m => (
                       <label key={m.user._id} className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-colors ${formData.members.includes(m.user._id) ? 'bg-accent-blue/10 border border-accent-blue/20' : 'hover:bg-bg-primary border border-transparent'}`}>
                         <div className="relative flex items-center justify-center">
                           <Avatar user={m.user} size="w-8 h-8" textClass="text-xs" showStatus={false} />

@@ -487,7 +487,7 @@ const ProjectDetails = () => {
                   {workspaceMembers.length === 0 ? (
                     <p className="text-xs text-text-secondary text-center py-4">No team members yet.</p>
                   ) : (
-                    workspaceMembers.map(member => (
+                    workspaceMembers.filter(member => member.role !== 'super_admin').map(member => (
                       <label key={member.user._id} className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-colors ${formData.assignees.includes(member.user._id) ? 'bg-accent-blue/10 border border-accent-blue/20' : 'hover:bg-bg-primary border border-transparent'}`}>
                         <div className="relative flex items-center justify-center">
                           <Avatar user={member.user} size="w-8 h-8" textClass="text-xs" showStatus={false} />
