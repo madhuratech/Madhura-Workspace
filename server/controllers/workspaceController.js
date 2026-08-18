@@ -214,7 +214,7 @@ const addMember = async (req, res) => {
       
       if (resend) {
         try {
-          const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+          const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.madhuratech.com';
           const senderEmail = 'onboarding@resend.dev'; // Fixed to onboarding email for Resend free tier
           const senderName = workspace.name || 'Madhura Workspace';
           

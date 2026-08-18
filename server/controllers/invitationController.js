@@ -60,7 +60,7 @@ exports.inviteUser = async (req, res) => {
     });
 
     // Send email
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.madhuratech.com';
     const inviteLink = `${frontendUrl}/register?token=${token}`;
 
     const senderEmail = 'onboarding@resend.dev'; // Fixed to onboarding email for Resend free tier

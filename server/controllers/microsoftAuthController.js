@@ -90,7 +90,7 @@ exports.microsoftAuthCallback = async (req, res) => {
     await user.save();
 
     // Redirect back to frontend Email module
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.madhuratech.com';
     res.redirect(`${frontendUrl}/email`);
   } catch (err) {
     console.error('Error in Microsoft Auth Callback:', err.response?.data || err.message);

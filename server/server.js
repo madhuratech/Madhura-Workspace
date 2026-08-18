@@ -19,7 +19,7 @@ const server = http.createServer(app);
 // Setup CORS allowed origins
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://madhura-workspace-ruddy.vercel.app'
+  'https://workspace.madhuratech.com'
 ];
 
 const corsOptions = {

@@ -72,7 +72,7 @@ exports.googleAuthCallback = async (req, res) => {
     await user.save();
 
     // Redirect back to frontend Email module
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.madhuratech.com';
     res.redirect(`${frontendUrl}/email`);
   } catch (error) {
     console.error('Error in Google Auth Callback:', error);
