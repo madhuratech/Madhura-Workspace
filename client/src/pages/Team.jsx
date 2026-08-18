@@ -550,14 +550,23 @@ const Team = () => {
             }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Team Name</label>
-                <input 
-                  type="text" 
+                <select 
                   name="teamName"
                   defaultValue={editTeamItem ? editTeamItem.name : ''}
-                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
-                  placeholder="e.g. Frontend Team"
+                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
                   required
-                />
+                >
+                  <option value="" disabled>-- Select a Team Name --</option>
+                  <option value="Technical">Technical</option>
+                  <option value="BDM">BDM</option>
+                  <option value="Digital Marketing">Digital Marketing</option>
+                  <option value="Media">Media</option>
+                  <option value="HR">HR</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Sales">Sales</option>
+                  <option value="Support">Support</option>
+                  <option value="Management">Management</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Select Team Leader</label>
