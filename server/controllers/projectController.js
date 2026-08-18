@@ -192,7 +192,7 @@ const deleteProject = async (req, res) => {
 const getWorkspaceMembers = async (req, res) => {
   try {
     const workspace = await Workspace.findById(req.params.workspaceId)
-      .populate('members.user', 'name email avatar role');
+      .populate('members.user', 'name email avatar role designation');
     if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
     res.status(200).json(workspace.members);
   } catch (error) {
