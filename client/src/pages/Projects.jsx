@@ -127,7 +127,12 @@ const Projects = () => {
       description: formData.description,
       members: participantsIds,
       coordinator: formData.coordinator || undefined,
-      workflowTeams: formData.workflowTeams
+      workflowTeams: {
+        uiux: formData.workflowTeams.uiux || undefined,
+        tech: formData.workflowTeams.tech || undefined,
+        test: formData.workflowTeams.test || undefined,
+        devops: formData.workflowTeams.devops || undefined
+      }
     };
 
     try {
@@ -487,8 +492,6 @@ const Projects = () => {
                     className="premium-input mb-2"
                     required
                   >
-                    <option value="super_admin">MD (Managing Director)</option>
-                    <option value="hr">HR</option>
                     <option value="team_leader">Team Leaders</option>
                     <option value="employee">Employees</option>
                   </select>
