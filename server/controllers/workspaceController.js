@@ -248,6 +248,9 @@ const addMember = async (req, res) => {
               </div>
             `
           });
+          if (resendResponse.error) {
+            throw new Error(resendResponse.error.message);
+          }
           console.log('[ADD_MEMBER DEBUG] Resend API responded with Success:', resendResponse);
         } catch (emailError) {
           console.error('[ADD_MEMBER DEBUG] Failed to send registration email. Resend Error:', emailError);

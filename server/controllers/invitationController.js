@@ -100,6 +100,9 @@ exports.inviteUser = async (req, res) => {
             </div>
           `
         });
+        if (resendResponse.error) {
+          throw new Error(resendResponse.error.message);
+        }
         console.log('[INVITE DEBUG] Resend API responded with Success:', resendResponse);
       }
     } catch (emailError) {
