@@ -52,7 +52,8 @@ exports.getDMMessages = async (req, res) => {
 
     const messages = await DMMessage.find({ dm: dmId })
       .populate('sender', 'name email')
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1 })
+      .lean();
 
     res.status(200).json(messages);
   } catch (error) {

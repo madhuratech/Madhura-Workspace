@@ -12,7 +12,8 @@ const ProjectSchema = new mongoose.Schema({
   workspace: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Workspace',
-    required: true
+    required: true,
+    index: true
   },
   status: {
     type: String,
@@ -22,7 +23,8 @@ const ProjectSchema = new mongoose.Schema({
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      index: true
     }
   ]
 }, { timestamps: true });

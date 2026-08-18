@@ -21,7 +21,8 @@ const getTickets = async (req, res) => {
       .populate('createdBy', 'name email avatar role')
       .populate('assignedTo', 'name email avatar role')
       .populate('comments.author', 'name email avatar')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json(tickets);
   } catch (error) {
@@ -37,7 +38,8 @@ const getTicket = async (req, res) => {
     const ticket = await Ticket.findById(req.params.id)
       .populate('createdBy', 'name email avatar role')
       .populate('assignedTo', 'name email avatar role')
-      .populate('comments.author', 'name email avatar');
+      .populate('comments.author', 'name email avatar')
+      .lean();
       
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
     

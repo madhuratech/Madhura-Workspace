@@ -8,7 +8,8 @@ const getTeams = async (req, res) => {
   try {
     const teams = await Team.find({ workspace: req.params.workspaceId })
       .populate('leader', 'name email avatar')
-      .populate('members', 'name email avatar');
+      .populate('members', 'name email avatar')
+      .lean();
 
     res.status(200).json(teams);
   } catch (error) {

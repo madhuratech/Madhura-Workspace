@@ -13,12 +13,14 @@ const MessageSchema = new mongoose.Schema({
   channel: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Channel',
-    required: true
+    required: true,
+    index: true
   },
   sender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    index: true
   },
   isEdited: {
     type: Boolean,

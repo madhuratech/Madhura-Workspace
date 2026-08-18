@@ -20,13 +20,13 @@ exports.globalSearch = async (req, res) => {
         { name: searchQuery },
         { description: searchQuery }
       ]
-    }).limit(5).select('name description status');
+    }).limit(5).select('name description status').lean();
 
     // 2. Search Tasks
     const tasks = await Task.find({
       workspace: workspaceId,
       title: searchQuery
-    }).limit(5).select('title status priority');
+    }).limit(5).select('title status priority').lean();
 
     // 3. Search Members (We need to populate from Workspace to filter by Name/Email)
     // Since Workspace stores member user refs, it's more efficient to search Users directly who are in the workspace
@@ -39,7 +39,7 @@ exports.globalSearch = async (req, res) => {
           { email: searchQuery }
         ]
       }
-    });
+    }).lean();
 
     let members = [];
     if (workspace && workspace.members) {

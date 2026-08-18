@@ -10,7 +10,7 @@ exports.getChannels = async (req, res) => {
         { isPrivate: false },
         { members: req.user._id }
       ]
-    });
+    }).lean();
     res.status(200).json(channels);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -62,7 +62,8 @@ exports.getMessages = async (req, res) => {
     const messages = await Message.find({ channel: req.params.channelId })
       .populate('sender', 'name email avatar')
       .populate('mentions', 'name')
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1 })
+      .lean();
     res.status(200).json(messages);
   } catch (error) {
     res.status(500).json({ message: error.message });

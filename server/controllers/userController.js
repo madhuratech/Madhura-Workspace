@@ -11,7 +11,7 @@ const getUsers = async (req, res) => {
     }
     
     // Don't return passwords
-    const users = await User.find({}).select('-password');
+    const users = await User.find({}).select('-password').lean();
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -144,7 +144,7 @@ const resetUserPassword = async (req, res) => {
 // @access  Private
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select('-password').lean();
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

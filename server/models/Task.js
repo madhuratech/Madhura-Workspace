@@ -12,12 +12,14 @@ const TaskSchema = new mongoose.Schema({
   project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
-    required: true
+    required: true,
+    index: true
   },
   workspace: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Workspace',
-    required: true
+    required: true,
+    index: true
   },
   status: {
     type: String,
@@ -32,7 +34,8 @@ const TaskSchema = new mongoose.Schema({
   assignees: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: 'User',
+      index: true
     }
   ],
   dueDate: {
