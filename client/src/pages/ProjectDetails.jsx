@@ -4,7 +4,7 @@ import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2 } from 'lucide-react';
+import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2, Check } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 // Extract the 24-char MongoDB ObjectId that was appended as the last segment of the slug
@@ -285,35 +285,25 @@ const ProjectDetails = () => {
 
   return (
     <div className="h-full flex flex-col font-sans">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      {/* Premium Header */}
+      <div className="flex justify-between items-start mb-6">
         <div className="flex items-center space-x-4">
-          <Link to="/projects" className="bg-bg-secondary p-2 rounded-full border border-border shadow-sm text-text-secondary hover:text-accent-blue hover:border-accent-blue/30 transition-all">
-            <ArrowLeft size={18} />
+          <Link to="/projects" className="bg-bg-secondary p-2.5 rounded-xl border border-border shadow-sm text-text-secondary hover:text-accent-blue hover:border-accent-blue/30 hover:shadow-hover transition-all mt-1">
+            <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-text-primary tracking-wide font-outfit flex items-center">
+            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-wide font-outfit flex items-center">
               {project ? project.title : 'Project'} 
               <span className="text-text-secondary font-medium text-lg ml-3 pl-3 border-l-2 border-border">Kanban Board</span>
             </h1>
-            <div className="flex items-center space-x-3 mt-1">
-              <span className="text-text-secondary text-sm">Stage:</span>
-              {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i) => (
-                <div key={s} className="flex items-center">
-                  <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full ${project?.stage === s ? 'bg-accent-blue text-white' : 'bg-bg-secondary text-text-secondary border border-border'}`}>
-                    {s}
-                  </span>
-                  {i < 4 && <span className="text-border mx-1">-</span>}
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-text-secondary mt-1">{project?.description || 'Manage tasks and track progress for this project.'}</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
           {project?.stage !== 'Completed' && (['super_admin', 'hr', 'team_leader'].includes(user?.role) || String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) && (
             <button
               onClick={handleAdvanceStage}
-              className="bg-success/10 text-success border border-success/30 px-4 py-2 rounded-xl hover:bg-success hover:text-white shadow-soft transition-all text-sm font-semibold flex items-center space-x-2"
+              className="bg-gradient-to-r from-success to-emerald-500 text-white shadow-lg shadow-success/20 px-5 py-2.5 rounded-xl hover:opacity-90 transition-all text-sm font-semibold flex items-center space-x-2"
             >
               <Flag size={16} />
               <span>Mark Stage Complete</span>
@@ -322,13 +312,37 @@ const ProjectDetails = () => {
           {user?.role !== 'employee' && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-accent-blue text-accent-text px-5 py-2.5 rounded-xl hover:bg-accent-indigo shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
+              className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2.5 rounded-xl hover:opacity-90 shadow-lg shadow-accent-blue/20 transition-all text-sm font-semibold flex items-center space-x-2"
             >
               <Plus size={18} />
               <span>Add Task</span>
             </button>
           )}
         </div>
+      </div>
+
+      {/* Pipeline Stage Tracker */}
+      <div className="bg-bg-primary/50 border border-border/60 rounded-2xl p-5 mb-8 shadow-sm flex items-center justify-between overflow-x-auto custom-scrollbar">
+        {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i, arr) => {
+          const isActive = project?.stage === s;
+          const isPast = arr.indexOf(project?.stage) > i;
+          return (
+            <div key={s} className="flex items-center flex-1 min-w-[120px]">
+              <div className={`flex flex-col items-center flex-1 relative z-10 ${isActive ? 'scale-110 transition-transform' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs mb-2 shadow-md ${
+                  isActive ? 'bg-accent-blue text-white ring-4 ring-accent-blue/20' : 
+                  isPast ? 'bg-success text-white' : 'bg-bg-secondary text-text-secondary border border-border'
+                }`}>
+                  {isPast ? <Check size={14} /> : i + 1}
+                </div>
+                <span className={`text-[11px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
+              </div>
+              {i < arr.length - 1 && (
+                <div className={`h-1 flex-1 mx-2 rounded-full ${isPast ? 'bg-success' : 'bg-border/50'}`}></div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Kanban Board */}
@@ -350,15 +364,15 @@ const ProjectDetails = () => {
 
                 <Droppable droppableId={columnId}>
                   {(provided, snapshot) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className={`flex-1 rounded-3xl p-4 transition-all min-h-[500px] border ${
-                        snapshot.isDraggingOver
-                          ? 'bg-accent-blue/5 border-accent-blue/30 shadow-inner'
-                          : 'bg-bg-primary/80 border-border/60'
-                      }`}
-                    >
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className={`flex-1 rounded-3xl p-4 transition-all min-h-[500px] border shadow-sm ${
+                          snapshot.isDraggingOver
+                            ? 'bg-accent-blue/10 border-accent-blue/40 shadow-inner backdrop-blur-md'
+                            : 'bg-bg-primary/60 border-border/60 backdrop-blur-sm'
+                        }`}
+                      >
                       {column.items.map((item, index) => (
                         <Draggable key={item._id} draggableId={String(item._id)} index={index} isDragDisabled={user?.role === 'employee' && (!item.assignees || !item.assignees.some(a => a._id === user._id))}>
                           {(provided, snapshot) => (
@@ -369,8 +383,8 @@ const ProjectDetails = () => {
                               style={provided.draggableProps.style}
                               className={`p-5 mb-4 rounded-2xl border ${
                                 snapshot.isDragging
-                                  ? 'bg-bg-secondary border-accent-blue shadow-2xl z-50 opacity-90'
-                                  : 'bg-bg-secondary border-border shadow-sm hover:shadow-hover hover:border-accent-blue/30 transition-colors'
+                                  ? 'bg-bg-secondary border-accent-blue shadow-2xl z-50 opacity-95 scale-105'
+                                  : 'bg-bg-secondary border-border shadow-md hover:shadow-lg hover:border-accent-blue/40 transition-all duration-300'
                               }`}
                             >
                               <div className="flex justify-between items-start mb-2">

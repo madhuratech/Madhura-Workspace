@@ -240,6 +240,40 @@ const advanceStage = async (req, res) => {
       req.io.emit('projectUpdated', populated);
     }
 
+    // Send notifications to the incoming team
+    const nextStage = project.stage;
+    let targetTeam = null;
+    if (nextStage === 'Tech' && populated.workflowTeams?.tech) targetTeam = populated.workflowTeams.tech;
+    else if (nextStage === 'Test' && populated.workflowTeams?.test) targetTeam = populated.workflowTeams.test;
+    else if (nextStage === 'DevOps' && populated.workflowTeams?.devops) targetTeam = populated.workflowTeams.devops;
+
+    if (targetTeam && targetTeam.members) {
+      const allTeamMembers = [...targetTeam.members];
+      if (targetTeam.leader && !allTeamMembers.includes(targetTeam.leader)) {
+        allTeamMembers.push(targetTeam.leader);
+      }
+      
+      allTeamMembers.forEach(memberId => {
+        sendNotification(
+          req,
+          memberId,
+          'project_update',
+          `Project Handoff: ${project.title}`,
+          `The project has advanced to the ${nextStage} stage. Your team is now up!`,
+          `/projects`
+        );
+      });
+    } else if (nextStage === 'Completed' && populated.coordinator) {
+      sendNotification(
+        req, 
+        populated.coordinator._id, 
+        'success', 
+        'Project Completed', 
+        `The project ${project.title} has reached the final stage!`, 
+        `/projects`
+      );
+    }
+
     await logActivity({
       workspace: req.params.workspaceId,
       user: req.user._id,
