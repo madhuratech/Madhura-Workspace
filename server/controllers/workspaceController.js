@@ -215,7 +215,7 @@ const addMember = async (req, res) => {
       if (resend) {
         try {
           const frontendUrl = process.env.FRONTEND_URL || 'https://workspace.madhuratech.com';
-          const senderEmail = 'onboarding@resend.dev'; // Fixed to onboarding email for Resend free tier
+          const senderEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
           const senderName = workspace.name || 'Madhura Workspace';
           
           console.log(`[ADD_MEMBER DEBUG] Attempting to send password email to: ${email}`);

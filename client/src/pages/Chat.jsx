@@ -833,15 +833,15 @@ const Chat = () => {
                               </div>
                             )}
 
-                            {/* Text or Deleted state */}
-                            {(msg.text || msg.isDeleted) && (
-                              <div className="px-3 py-2">
+                            {/* Text, Deleted state, or File-only attachment */}
+                            {(msg.text || msg.isDeleted || (msg.attachment && !msg.text && !msg.attachment.fileType?.startsWith('image/') && !msg.attachment.fileType?.startsWith('video/'))) && (
+                              <div className="px-3 py-2 pt-0">
                                 {msg.isDeleted ? (
                                   <div className={`italic text-[13.5px] flex items-center space-x-1.5 ${isMine ? 'text-accent-text/80' : 'text-text-secondary/80'}`}>
                                     <Ban size={13} />
                                     <span>This message was deleted</span>
                                   </div>
-                                ) : (
+                                ) : msg.text ? (
                                   <div className="whitespace-pre-wrap break-words text-[13.5px] leading-relaxed">
                                     {msg.text.split(/(@\w+|https?:\/\/[^\s]+)/g).map((part, i) => {
                                       if (!part) return null;
@@ -854,7 +854,7 @@ const Chat = () => {
                                       return <span key={i}>{part}</span>;
                                     })}
                                   </div>
-                                )}
+                                ) : null}
                                 {/* Time + read receipt */}
                                 <div className={`flex items-center justify-end space-x-1 mt-1 ${isMine ? 'text-accent-text/60' : 'text-text-secondary'}`}>
                                   {msg.isEdited && !msg.isDeleted && <span className="text-[10px] italic mr-1">edited</span>}
@@ -872,8 +872,8 @@ const Chat = () => {
                               </div>
                             )}
 
-                            {/* Time on image-only messages */}
-                            {msg.attachment && !msg.text && (
+                            {/* Time on image-only or video-only messages */}
+                            {msg.attachment && !msg.text && (msg.attachment.fileType?.startsWith('image/') || msg.attachment.fileType?.startsWith('video/')) && (
                               <div className="absolute bottom-2 right-2 flex items-center space-x-1 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
                                 <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 {isMine && (isRead

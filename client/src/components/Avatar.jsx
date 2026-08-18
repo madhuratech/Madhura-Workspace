@@ -47,7 +47,7 @@ const Avatar = ({ user, size = 'w-10 h-10', textClass = 'text-sm', showStatus = 
           className={`${size} rounded-full object-cover border border-border/50`}
         />
       ) : (
-        <div className={`${size} rounded-full bg-gradient-to-br from-accent-blue/20 to-accent-indigo/20 flex items-center justify-center text-accent-blue font-bold ${textClass} border border-accent-blue/10`}>
+        <div className={`${size} rounded-full bg-accent-blue flex items-center justify-center text-white font-bold ${textClass} shadow-sm`}>
           {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
         </div>
       )}
