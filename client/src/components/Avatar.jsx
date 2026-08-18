@@ -44,7 +44,7 @@ const Avatar = ({ user, size = 'w-10 h-10', textClass = 'text-sm', showStatus = 
     >
       {user.avatar ? (
         <img 
-          src={user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`} 
+          src={user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${API_URL}${user.avatar}`} 
           alt={user.name} 
           className={`${size} rounded-full object-cover border border-border/50`}
         />
