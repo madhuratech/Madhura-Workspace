@@ -193,7 +193,7 @@ const Dashboard = () => {
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
             <h1 className="text-4xl font-black text-text-primary tracking-tight font-outfit drop-shadow-sm">
-              {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-indigo dark:from-blue-400 dark:to-purple-500">{user?.name?.split(' ')[0]}</span>.
+              {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-blue to-accent-indigo dark:from-blue-400 dark:to-purple-500">{user?.name ? user.name.split(' ')[0] : 'User'}</span>.
             </h1>
           </div>
 
