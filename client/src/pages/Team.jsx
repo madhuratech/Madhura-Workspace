@@ -577,7 +577,7 @@ const Team = () => {
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-2">Team Members</label>
                 <div className="bg-bg-primary border border-border rounded-lg max-h-48 overflow-y-auto p-2 space-y-1">
-                  {members.map(m => (
+                  {members.filter(m => m.role === 'employee').map(m => (
                     <label key={m.user._id} className="flex items-center space-x-3 p-2 hover:bg-bg-secondary rounded-lg cursor-pointer transition-colors">
                       <input 
                         type="checkbox"

@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Avatar = ({ user, size = 'w-10 h-10', textClass = 'text-sm', showStatus = true, className = '', onClick }) => {
   const navigate = useNavigate();
 
@@ -42,7 +44,7 @@ const Avatar = ({ user, size = 'w-10 h-10', textClass = 'text-sm', showStatus = 
     >
       {user.avatar ? (
         <img 
-          src={user.avatar} 
+          src={user.avatar.startsWith('http') ? user.avatar : `${API_URL}${user.avatar}`} 
           alt={user.name} 
           className={`${size} rounded-full object-cover border border-border/50`}
         />

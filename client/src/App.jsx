@@ -87,6 +87,7 @@ function App() {
               <Route path="/tickets" element={<Tickets />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/notes" element={<Notes />} />
+              <Route path="/profile" element={<UserProfile />} />
               <Route path="/profile/:id" element={<UserProfile />} />
             </Route>
         </Routes>

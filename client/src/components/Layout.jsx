@@ -526,7 +526,7 @@ const Layout = () => {
                 {/* ── User Info Card ── */}
                 <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '14px' }}>
                   <div style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}
-                    onClick={() => { setShowProfileMenu(false); navigate(`/profile/${user?._id || user?.id}`); }}
+                    onClick={() => { setShowProfileMenu(false); navigate(`/profile`); }}
                   >
                     <Avatar
                       user={user}
@@ -541,7 +541,7 @@ const Layout = () => {
                     <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: '3px 0 5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email}</p>
                     <button
                       id="profile-myaccount-btn"
-                      onClick={() => { setShowProfileMenu(false); navigate(`/profile/${user?._id || user?.id}`); }}
+                      onClick={() => { setShowProfileMenu(false); navigate(`/profile`); }}
                       style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '11px', color: 'rgba(255,255,255,0.45)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     >
                       My account

@@ -85,8 +85,15 @@ exports.sendDMMessage = async (req, res) => {
 
     message = await message.populate('sender', 'name email');
 
-    if (req.io) {
-      req.io.emit('new_message', message);
+    if (req.io && req.onlineUsers) {
+      dm.participants.forEach(pId => {
+        const pIdStr = pId.toString();
+        if (req.onlineUsers.has(pIdStr)) {
+          req.onlineUsers.get(pIdStr).forEach(socketId => {
+            req.io.to(socketId).emit('new_message', message);
+          });
+        }
+      });
     }
 
     res.status(201).json(message);
@@ -99,6 +106,7 @@ exports.sendDMMessage = async (req, res) => {
 exports.markDMMessagesRead = async (req, res) => {
   try {
     const { dmId } = req.params;
+    const dm = await DM.findById(dmId);
     
     const result = await DMMessage.updateMany(
       { 
@@ -111,8 +119,15 @@ exports.markDMMessagesRead = async (req, res) => {
       }
     );
     
-    if (result.modifiedCount > 0 && req.io) {
-      req.io.emit('dm_messages_read', { dmId, userId: req.user._id });
+    if (result.modifiedCount > 0 && req.io && req.onlineUsers && dm) {
+      dm.participants.forEach(pId => {
+        const pIdStr = pId.toString();
+        if (req.onlineUsers.has(pIdStr)) {
+          req.onlineUsers.get(pIdStr).forEach(socketId => {
+            req.io.to(socketId).emit('dm_messages_read', { dmId, userId: req.user._id });
+          });
+        }
+      });
     }
     
     res.status(200).json({ message: 'DM Messages marked as read' });
@@ -139,8 +154,18 @@ exports.updateDMMessage = async (req, res) => {
     
     const populatedMessage = await message.populate('sender', 'name email avatar');
     
-    if (req.io) {
-      req.io.emit('message_updated', populatedMessage);
+    if (req.io && req.onlineUsers) {
+      const dm = await DM.findById(message.dm);
+      if (dm) {
+        dm.participants.forEach(pId => {
+          const pIdStr = pId.toString();
+          if (req.onlineUsers.has(pIdStr)) {
+            req.onlineUsers.get(pIdStr).forEach(socketId => {
+              req.io.to(socketId).emit('message_updated', populatedMessage);
+            });
+          }
+        });
+      }
     }
     
     res.status(200).json(populatedMessage);
@@ -168,8 +193,18 @@ exports.deleteDMMessage = async (req, res) => {
     
     const populatedMessage = await message.populate('sender', 'name email avatar');
     
-    if (req.io) {
-      req.io.emit('message_updated', Object.assign(populatedMessage.toObject(), { dm: req.params.dmId }));
+    if (req.io && req.onlineUsers) {
+      const dm = await DM.findById(message.dm);
+      if (dm) {
+        dm.participants.forEach(pId => {
+          const pIdStr = pId.toString();
+          if (req.onlineUsers.has(pIdStr)) {
+            req.onlineUsers.get(pIdStr).forEach(socketId => {
+              req.io.to(socketId).emit('message_updated', Object.assign(populatedMessage.toObject(), { dm: req.params.dmId }));
+            });
+          }
+        });
+      }
     }
     
     res.status(200).json({ message: 'Message deleted' });

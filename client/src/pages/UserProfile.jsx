@@ -102,14 +102,27 @@ const UserProfile = () => {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    fetchProfileUser();
-  }, [id]);
+  const profileId = id || currentUser?._id;
 
-  const fetchProfileUser = async () => {
+  useEffect(() => {
+    if (profileId) {
+      fetchProfileUser(profileId);
+    }
+  }, [profileId]);
+
+  useEffect(() => {
+    if (profileUser) {
+      document.title = `${profileUser.name} | Profile`;
+    }
+    return () => {
+      document.title = 'Madhura Workspace';
+    };
+  }, [profileUser]);
+
+  const fetchProfileUser = async (targetId) => {
     try {
       setLoading(true);
-      const res = await axios.get(`/users/${id}`);
+      const res = await axios.get(`/users/${targetId}`);
       setProfileUser(res.data);
     } catch (error) {
       console.error(error);
@@ -120,7 +133,7 @@ const UserProfile = () => {
     }
   };
 
-  const isOwnProfile = currentUser?._id === id;
+  const isOwnProfile = currentUser?._id === profileId;
 
   const onFileChange = async (e) => {
     if (e.target.files && e.target.files.length > 0) {
