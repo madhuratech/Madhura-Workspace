@@ -321,24 +321,24 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      {/* Pipeline Stage Tracker */}
-      <div className="bg-bg-primary/50 border border-border/60 rounded-2xl p-5 mb-8 shadow-sm flex items-center justify-between overflow-x-auto custom-scrollbar">
+      {/* Minimal Pipeline Stage Tracker */}
+      <div className="bg-bg-primary border border-border/50 rounded-xl px-4 py-2.5 mb-5 flex items-center w-full overflow-x-auto custom-scrollbar shadow-sm">
         {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i, arr) => {
           const isActive = project?.stage === s;
           const isPast = arr.indexOf(project?.stage) > i;
           return (
-            <div key={s} className="flex items-center flex-1 min-w-[120px]">
-              <div className={`flex flex-col items-center flex-1 relative z-10 ${isActive ? 'scale-110 transition-transform' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs mb-2 shadow-md ${
-                  isActive ? 'bg-accent-blue text-white ring-4 ring-accent-blue/20' : 
+            <div key={s} className="flex items-center shrink-0 flex-1 min-w-[80px]">
+              <div className={`flex items-center space-x-2 ${isActive ? 'scale-105 transition-transform' : 'opacity-80'}`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                  isActive ? 'bg-accent-blue text-white ring-2 ring-accent-blue/30' : 
                   isPast ? 'bg-success text-white' : 'bg-bg-secondary text-text-secondary border border-border'
                 }`}>
-                  {isPast ? <Check size={14} /> : i + 1}
+                  {isPast ? <Check size={10} /> : i + 1}
                 </div>
-                <span className={`text-[11px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
+                <span className={`text-[10px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
               </div>
               {i < arr.length - 1 && (
-                <div className={`h-1 flex-1 mx-2 rounded-full ${isPast ? 'bg-success' : 'bg-border/50'}`}></div>
+                <div className={`h-px flex-1 mx-3 rounded-full ${isPast ? 'bg-success' : 'bg-border/60'}`}></div>
               )}
             </div>
           );
