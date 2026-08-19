@@ -205,6 +205,17 @@ const ProjectDetails = () => {
     return false;
   };
 
+  const isUserActiveTL = () => {
+    if (!project || !workspaceTeams.length) return false;
+    const activeTeamId = getActiveTeamId();
+    if (!activeTeamId) return false;
+
+    const team = workspaceTeams.find(t => String(t._id) === String(activeTeamId));
+    if (!team) return false;
+
+    return String(team.leader?._id || team.leader) === String(user._id);
+  };
+
   const canManageStage = () => {
     if (['super_admin', 'hr'].includes(user?.role)) return true;
     if (String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) return true;
@@ -345,7 +356,7 @@ const ProjectDetails = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          {project?.stage !== 'Completed' && canManageStage() && (
+          {project?.stage !== 'Completed' && isUserActiveTL() && (
             <button
               onClick={handleAdvanceStage}
               className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
@@ -354,7 +365,7 @@ const ProjectDetails = () => {
               <span>{project?.stage === 'DevOps' ? 'Mark Project Complete' : 'Mark Stage Complete'}</span>
             </button>
           )}
-          {canManageStage() && (
+          {isUserActiveTL() && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-text-primary text-bg-primary px-4 py-2 rounded-lg hover:opacity-90 shadow-sm transition-all text-sm font-medium flex items-center space-x-2"

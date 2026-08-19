@@ -75,5 +75,63 @@ The central hub for workflow execution. Displays the status of all projects and 
 - **Backend:** Node.js, Express, MongoDB, Mongoose.
 - **Real-time:** Socket.io for live updates (task creation, stage advancement, chat).
 
-## 6. Conclusion
-Madhura Workspace elegantly solves the chaotic nature of multi-disciplinary software development by enforcing a strict, stage-gated pipeline. By combining robust RBAC with isolated Kanban boards, it ensures that every team is laser-focused on their specific responsibilities without being overwhelmed by the noise of other stages.
+## 6. Frontend Routes Map
+The React application follows a structured routing system wrapped in an authentication guard (`PrivateRoute`).
+
+### 6.1 Authentication & Onboarding
+- `/login` - User Authentication.
+- `/register` - User Registration.
+- `/` - Workspace Overview (Select or Create Workspace).
+
+### 6.2 Main Application Routes (Inside Workspace)
+All internal routes are scoped to a specific workspace and wrapped in an App Layout with a Sidebar.
+- `/dashboard` - Overview metrics, recent activity, and quick actions.
+- `/projects` - Grid/List view of all accessible projects.
+- `/projects/:id` - The Stage-Locked Kanban Board for a specific project.
+- `/my-tasks` - Consolidated list of all tasks assigned to the logged-in user.
+- `/team` - Hierarchy and team management (Restricted to HR/Admins).
+- `/settings` - Role synchronization, profile updates, and theme toggling.
+- `/chat` - Global & team-based real-time communication.
+- `/meetings` - Scheduling module.
+- `/documents` - File repository.
+- `/email` - Integrated email client.
+- `/tickets` - IT/Support ticketing.
+- `/notes` - Personal digital notepad.
+- `/attendance` - HR module for PTO and check-ins.
+- `/analytics` - Data visualization and reports.
+- `/activity` - Immutable audit log of all system actions.
+
+---
+
+## 7. Backend API Architecture
+The Node.js/Express backend provides RESTful endpoints, secured via JWT middleware. 
+
+### 7.1 Authentication & User Routes
+- `POST /api/auth/register` - Create user.
+- `POST /api/auth/login` - Authenticate & generate JWT.
+- `GET /api/users/me` - Fetch logged-in profile.
+
+### 7.2 Workspace & Team Routes
+- `POST /api/workspaces` - Create a new workspace.
+- `GET /api/workspaces` - List accessible workspaces.
+- `POST /api/workspaces/:wsId/teams` - Create a new discipline team (e.g., UI/UX, Tech).
+- `PUT /api/workspaces/:wsId/members/:userId` - Critical route for role sync (e.g., promoting Employee to TL).
+
+### 7.3 Core Pipeline (Projects) Routes
+- `POST /api/workspaces/:wsId/projects` - Create project and establish the Workflow Setup (UI/UX -> Tech -> Test -> DevOps).
+- `GET /api/workspaces/:wsId/projects` - Fetch projects (filtered by user role and assignments).
+- `PUT /api/workspaces/:wsId/projects/:projectId/advance` - Triggers stage advancement. Updates `project.stage`, emits `projectUpdated` via Socket.io, logs to Activity, and sends notifications to the next team.
+
+### 7.4 Kanban (Tasks) Routes
+- `POST /api/workspaces/:wsId/projects/:projectId/tasks` - Create a task. The backend automatically enforces `stage: project.stage` to lock it to the active pipeline stage.
+- `GET /api/workspaces/:wsId/projects/:projectId/tasks` - Fetch tasks. The frontend then strictly filters this list by `task.stage === project.stage` to enforce stage locking.
+- `PUT /api/tasks/:id` - Update task status (Drag & Drop). Triggers `taskUpdated` socket event.
+
+### 7.5 Real-Time Events (Socket.io)
+- `connection` - Authenticate socket.
+- `joinWorkspace` - Subscribe to workspace events.
+- `taskCreated` / `taskUpdated` / `taskDeleted` - Syncs the Kanban board across all active clients in the stage.
+- `projectUpdated` - Notifies clients when the stage advances, forcing the UI to lock out the previous team.
+
+## 8. Conclusion
+Madhura Workspace elegantly solves the chaotic nature of multi-disciplinary software development by enforcing a strict, stage-gated pipeline. By combining robust REST APIs, Socket.io real-time sync, and hard-coded stage isolation on both the backend models and frontend routing, it ensures that every team is laser-focused on their specific responsibilities.
