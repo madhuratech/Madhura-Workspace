@@ -74,6 +74,8 @@ const Team = () => {
   const [editTeamItem, setEditTeamItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [viewMember, setViewMember] = useState(null); // New state for details modal
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [resetPasswordState, setResetPasswordState] = useState({ step: 1, otp: '', newPassword: '' });
   
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee', designation: '' });
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
@@ -670,6 +672,108 @@ const Team = () => {
                   )}
                 </div>
               </div>
+              
+              {currentUserRole === 'super_admin' && (
+                <div className="pt-4 mt-2 border-t border-border/50">
+                   <button 
+                     onClick={() => { setIsResetPasswordModalOpen(true); setResetPasswordState({ step: 1, otp: '', newPassword: '' }); }}
+                     className="w-full bg-orange-500/10 text-orange-500 hover:bg-orange-500 hover:text-white border border-orange-500/20 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors"
+                   >
+                     Reset User Password
+                   </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADMIN RESET PASSWORD MODAL */}
+      {isResetPasswordModalOpen && viewMember && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[60] p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-sm shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden relative">
+             <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-text-primary flex items-center mb-1">
+                   <Shield className="text-orange-500 mr-2" size={20}/>
+                   Reset Password
+                </h3>
+                <p className="text-[10px] text-text-secondary uppercase tracking-wider">For {viewMember.user.name}</p>
+              </div>
+              <button onClick={() => setIsResetPasswordModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {resetPasswordState.step === 1 ? (
+                <div className="text-center">
+                  <p className="text-sm text-text-secondary mb-6">
+                    This will generate a 6-digit OTP and send it to <strong>{viewMember.user.email}</strong>. The user must provide you with this OTP to set a new password.
+                  </p>
+                  <button 
+                    onClick={async () => {
+                      try {
+                        await axios.post(`/users/${viewMember.user._id}/reset-password-otp`);
+                        showToast('OTP sent to user successfully', 'success');
+                        setResetPasswordState({ ...resetPasswordState, step: 2 });
+                      } catch (err) {
+                        showToast(err.response?.data?.message || 'Failed to send OTP', 'error');
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-2.5 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-orange-500/20"
+                  >
+                    Generate & Send OTP
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  try {
+                    await axios.put(`/users/${viewMember.user._id}/reset-password`, {
+                       otp: resetPasswordState.otp,
+                       newPassword: resetPasswordState.newPassword
+                    });
+                    showToast('Password reset successfully', 'success');
+                    setIsResetPasswordModalOpen(false);
+                  } catch (err) {
+                    showToast(err.response?.data?.message || 'Failed to reset password', 'error');
+                  }
+                }} className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold text-text-secondary mb-1 uppercase tracking-wider">User's OTP</label>
+                    <input 
+                      type="text" 
+                      maxLength="6"
+                      required
+                      value={resetPasswordState.otp} 
+                      onChange={e => setResetPasswordState({...resetPasswordState, otp: e.target.value})}
+                      className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-orange-500 text-center tracking-[0.5em] font-bold text-lg"
+                      placeholder="------"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-text-secondary mb-1 uppercase tracking-wider">New Password</label>
+                    <input 
+                      type="password" 
+                      required
+                      minLength="6"
+                      value={resetPasswordState.newPassword} 
+                      onChange={e => setResetPasswordState({...resetPasswordState, newPassword: e.target.value})}
+                      className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-orange-500"
+                      placeholder="Min. 6 characters"
+                    />
+                  </div>
+                  <div className="pt-4 border-t border-border/50">
+                    <button 
+                      type="submit" 
+                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-2.5 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-orange-500/20"
+                    >
+                      Update Password
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

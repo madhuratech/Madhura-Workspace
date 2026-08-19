@@ -266,9 +266,11 @@ const Layout = () => {
     { icon: <LayoutDashboard size={22} />, label: 'Home', path: '/', hoverAnim: 'group-hover:animate-pulse' },
     { icon: <MessageSquare size={22} />, label: 'Chat', path: '/chat', hoverAnim: 'group-hover:scale-125 group-hover:-translate-y-1 transition-all duration-300' },
     { icon: <FolderKanban size={22} />, label: 'Projects', path: '/projects', hoverAnim: 'group-hover:rotate-12 group-hover:scale-110 transition-all duration-300' },
-    { icon: <CheckSquare size={22} />, label: 'Tasks', path: '/my-tasks', hoverAnim: 'group-hover:translate-x-1 group-hover:-rotate-6 transition-all duration-300' },
-    { icon: <CalendarDays size={22} />, label: 'Calendar', path: '/meetings', hoverAnim: 'group-hover:animate-bounce' },
-  ].filter(item => !(item.label === 'Tasks' && ['super_admin', 'hr'].includes(user?.role)));
+    ['super_admin', 'hr'].includes(user?.role)
+      ? { icon: <Users size={22} />, label: 'Team', path: '/team', hoverAnim: 'group-hover:translate-x-1 transition-all duration-300' }
+      : { icon: <CheckSquare size={22} />, label: 'Tasks', path: '/my-tasks', hoverAnim: 'group-hover:translate-x-1 group-hover:-rotate-6 transition-all duration-300' },
+    { icon: <CalendarDays size={22} />, label: 'Meetings', path: '/meetings', hoverAnim: 'group-hover:animate-bounce' },
+  ];
 
   return (
     <div className="flex flex-col h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">

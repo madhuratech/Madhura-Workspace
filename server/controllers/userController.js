@@ -111,6 +111,45 @@ const changePassword = async (req, res) => {
   }
 };
 
+// @desc    Request Admin password reset OTP
+// @route   POST /api/users/:id/reset-password-otp
+// @access  Private/SuperAdmin
+const requestPasswordResetOTP = async (req, res) => {
+  try {
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+    user.resetPasswordOTP = otp;
+    user.resetPasswordOTPExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+    await user.save();
+    
+    // Send email using Resend
+    const { Resend } = require('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL || 'Madhura Workspace <onboarding@resend.dev>',
+      to: user.email,
+      subject: 'Password Reset Request OTP',
+      html: `<p>Your administrator has requested a password reset for your account.</p>
+             <p>Your OTP is: <strong>${otp}</strong></p>
+             <p>This OTP will expire in 10 minutes.</p>`
+    });
+    
+    res.status(200).json({ message: 'OTP sent successfully to the user' });
+  } catch (error) {
+    console.error('Error sending OTP:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Admin reset user password
 // @route   PUT /api/users/:id/reset-password
 // @access  Private/SuperAdmin
@@ -120,17 +159,23 @@ const resetUserPassword = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
-    const { newPassword } = req.body;
-    if (!newPassword || newPassword.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    const { otp, newPassword } = req.body;
+    if (!otp || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'OTP and a new password (min 6 characters) are required' });
     }
     
-    const user = await User.findById(req.params.id).select('+password');
+    const user = await User.findById(req.params.id).select('+password +resetPasswordOTP +resetPasswordOTPExpiry');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    if (user.resetPasswordOTP !== otp || user.resetPasswordOTPExpiry < Date.now()) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+    
     user.password = newPassword;
+    user.resetPasswordOTP = undefined;
+    user.resetPasswordOTPExpiry = undefined;
     await user.save();
     
     res.status(200).json({ message: 'Password reset successfully' });
@@ -182,7 +227,9 @@ module.exports = {
   updatePresence,
   updateNotificationSettings,
   updateUserRole,
+  updateUserRole,
   changePassword,
+  requestPasswordResetOTP,
   resetUserPassword,
   getUserById,
   updateAvatar
