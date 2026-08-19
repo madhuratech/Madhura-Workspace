@@ -174,11 +174,15 @@ const ProjectDetails = () => {
     }
   };
 
+  const [stagePopupVisible, setStagePopupVisible] = useState(false);
+  const [advancedStageName, setAdvancedStageName] = useState('');
+
   const handleAdvanceStage = async () => {
     try {
       const res = await axios.put(`/workspaces/${workspaceId}/projects/${projectId}/advance`);
       setProject(res.data);
-      alert('Project stage advanced successfully!');
+      setAdvancedStageName(res.data.stage);
+      setStagePopupVisible(true);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || 'Failed to advance stage');
@@ -348,6 +352,7 @@ const ProjectDetails = () => {
       )}
 
       {/* Kanban Board */}
+      {!['super_admin', 'hr'].includes(user?.role) && (
       <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
         {isReady && (
           <div className="flex gap-5 h-full min-w-max">
@@ -437,6 +442,7 @@ const ProjectDetails = () => {
         </div>
         )}
       </div>
+      )}
 
       {/* Premium Add Task Modal */}
       {isModalOpen && (
@@ -542,6 +548,27 @@ const ProjectDetails = () => {
               </div>
             </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Stage Completion Popup */}
+      {stagePopupVisible && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-sm p-6 flex flex-col items-center text-center shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="h-16 w-16 bg-success/10 text-success rounded-full flex items-center justify-center mb-4">
+              <Check size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-text-primary mb-2">Stage Completed!</h3>
+            <p className="text-sm text-text-secondary mb-6">
+              The project has successfully advanced to the <span className="font-bold text-accent-blue">{advancedStageName}</span> stage.
+            </p>
+            <button
+              onClick={() => setStagePopupVisible(false)}
+              className="w-full bg-gradient-to-r from-success to-emerald-500 text-white font-bold py-2.5 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-success/20"
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}

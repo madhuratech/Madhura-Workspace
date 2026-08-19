@@ -11,14 +11,14 @@ const getProjects = async (req, res) => {
   try {
     let query = { workspace: req.params.workspaceId };
 
-    // Employees only see projects they are assigned to
-    // team_leader, hr, super_admin see all
-    if (req.user.role === 'employee') {
+    // Employees and team leaders only see projects they are assigned to
+    // hr, super_admin see all
+    if (!['super_admin', 'hr'].includes(req.user.role)) {
       query.members = req.user._id;
     }
 
     const projects = await Project.find(query)
-      .select('title description status stage coordinator workflowTeams members workspace totalTasks doneTasks')
+      .select('title description status stage coordinator workflowTeams members workspace createdAt updatedAt')
       .populate('members', 'name email avatar')
       .populate('coordinator', 'name email avatar')
       .populate('workflowTeams.uiux')

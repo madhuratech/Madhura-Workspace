@@ -268,7 +268,7 @@ const Layout = () => {
     { icon: <FolderKanban size={22} />, label: 'Projects', path: '/projects', hoverAnim: 'group-hover:rotate-12 group-hover:scale-110 transition-all duration-300' },
     { icon: <CheckSquare size={22} />, label: 'Tasks', path: '/my-tasks', hoverAnim: 'group-hover:translate-x-1 group-hover:-rotate-6 transition-all duration-300' },
     { icon: <CalendarDays size={22} />, label: 'Calendar', path: '/meetings', hoverAnim: 'group-hover:animate-bounce' },
-  ];
+  ].filter(item => !(item.label === 'Tasks' && ['super_admin', 'hr'].includes(user?.role)));
 
   return (
     <div className="flex flex-col h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
@@ -758,10 +758,12 @@ const Layout = () => {
               <FolderKanban size={16} />
               <span>Projects</span>
             </Link>
-            <Link to="/my-tasks" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/my-tasks') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
-              <CheckSquare size={16} />
-              <span>My Tasks</span>
-            </Link>
+            {!['super_admin', 'hr'].includes(user?.role) && (
+              <Link to="/my-tasks" className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all text-sm ${location.pathname.startsWith('/my-tasks') ? 'bg-[#ffca22] text-[#1b2b4c] font-bold shadow-sm' : 'text-text-primary/80 hover:bg-bg-primary hover:text-text-primary'}`}>
+                <CheckSquare size={16} />
+                <span>My Tasks</span>
+              </Link>
+            )}
 
             <div className="h-px bg-border my-3 mx-2"></div>
             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-3">Apps & Comms</p>

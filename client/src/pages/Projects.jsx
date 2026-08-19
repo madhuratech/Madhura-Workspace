@@ -356,12 +356,14 @@ const Projects = () => {
                     </div>
                   </div>
                   
-                  <Link 
-                    to={`/projects/${toSlug(project.title, project._id)}`} 
-                    className="text-[11px] font-bold text-accent-blue hover:text-white hover:bg-accent-blue px-2.5 py-1 rounded-md transition-colors border border-accent-blue/20 bg-accent-blue/5"
-                  >
-                    Open Board
-                  </Link>
+                  {['super_admin', 'hr'].includes(user?.role) && (
+                    <Link 
+                      to={`/projects/${toSlug(project.title, project._id)}`} 
+                      className="text-[11px] font-bold text-accent-blue hover:text-white hover:bg-accent-blue px-2.5 py-1 rounded-md transition-colors border border-accent-blue/20 bg-accent-blue/5"
+                    >
+                      View Pipeline
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}
