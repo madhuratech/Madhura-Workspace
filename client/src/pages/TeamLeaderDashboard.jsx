@@ -171,7 +171,7 @@ const TeamLeaderDashboard = () => {
                     <span className="text-xs text-text-secondary">{project.members?.length || 0} member{project.members?.length !== 1 ? 's' : ''}</span>
                   </div>
                   <Link
-                    to={`/project/${project._id}`}
+                    to={`/projects/${project._id}`}
                     className="flex items-center space-x-1 text-accent-blue text-sm font-medium hover:underline"
                   >
                     <span>Open Board</span>

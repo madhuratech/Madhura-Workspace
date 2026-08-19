@@ -196,7 +196,7 @@ const MyTasks = () => {
                       <p className={task.status === 'Done' ? 'line-through text-text-secondary' : ''}>{task.title}</p>
                     </td>
                     <td>
-                      <Link to={`/project/${task.project?._id}`} className="text-accent-blue hover:underline text-sm font-medium">
+                      <Link to={`/projects/${task.project?._id}`} className="text-accent-blue hover:underline text-sm font-medium">
                         {task.project?.title || 'Unknown Project'}
                       </Link>
                     </td>
@@ -290,7 +290,7 @@ const MyTasks = () => {
                                   <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${priorityColor(item.priority)}`}>
                                     {item.priority}
                                   </span>
-                                  <Link to={`/project/${item.project?._id}`} className="text-[10px] text-text-secondary hover:text-accent-blue bg-bg-primary px-1.5 py-0.5 rounded transition-colors font-medium border border-border/50">
+                                  <Link to={`/projects/${item.project?._id}`} className="text-[10px] text-text-secondary hover:text-accent-blue bg-bg-primary px-1.5 py-0.5 rounded transition-colors font-medium border border-border/50">
                                     {item.project?.title || 'Unknown'}
                                   </Link>
                                 </div>
