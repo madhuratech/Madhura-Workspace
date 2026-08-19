@@ -32,6 +32,7 @@ const Projects = () => {
     workflowTeams: { uiux: '', tech: '', test: '', devops: '' }
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('All');
 
   useEffect(() => {
     fetchData();
@@ -179,9 +180,11 @@ const Projects = () => {
     }));
   };
 
-  const filtered = projects.filter(p =>
-    p.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = projects.filter(p => {
+    const matchesSearch = p.title?.toLowerCase().includes(searchQuery.toLowerCase());
+    if (filterType === 'All') return matchesSearch;
+    return matchesSearch && p.projectType && p.projectType.includes(filterType);
+  });
 
   if (loading) return (
     <div className="h-full flex flex-col font-sans p-6 md:p-8 bg-bg-primary overflow-hidden">
@@ -266,9 +269,25 @@ const Projects = () => {
       </div>
 
       <div className="bg-bg-secondary border border-border rounded-2xl flex-1 flex flex-col overflow-hidden shadow-soft">
-        {/* Search */}
-        <div className="p-5 border-b border-border flex items-center gap-4 bg-bg-primary/50">
-          <div className="relative flex-1 max-w-sm">
+        {/* Search & Filters */}
+        <div className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bg-primary/50">
+          <div className="flex items-center space-x-2 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+            {['All', 'Software', 'Website', 'SaaS', 'PaaS', 'Digital Marketing', 'SEO'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setFilterType(tab)}
+                className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-sm border ${
+                  filterType === tab 
+                    ? 'bg-accent-blue text-white border-accent-blue' 
+                    : 'bg-bg-secondary text-text-secondary border-border hover:bg-border/50 hover:text-text-primary'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full md:max-w-xs shrink-0">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
             <input
               type="text"
