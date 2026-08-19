@@ -13,8 +13,7 @@ const TeamSchema = new mongoose.Schema({
   },
   leader: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'User'
   },
   members: [
     {

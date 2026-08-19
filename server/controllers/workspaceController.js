@@ -304,12 +304,27 @@ const updateMember = async (req, res) => {
 
     if (action === 'remove') {
       workspace.members.splice(memberIndex, 1);
+      // Remove as team leader
+      const Team = require('../models/Team');
+      await Team.updateMany(
+        { workspace: req.params.id, leader: req.params.userId },
+        { $unset: { leader: 1 } }
+      );
     } else {
       workspace.members[memberIndex].role = role;
       // Sync global User role so backend filters (tasks, projects) work correctly
       const updateData = { role };
       if (designation !== undefined) updateData.designation = designation;
       await User.findByIdAndUpdate(req.params.userId, updateData);
+
+      if (role === 'employee') {
+        // Remove as team leader if downgraded to employee
+        const Team = require('../models/Team');
+        await Team.updateMany(
+          { workspace: req.params.id, leader: req.params.userId },
+          { $unset: { leader: 1 } }
+        );
+      }
 
       sendNotification(
         req,

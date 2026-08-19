@@ -35,8 +35,8 @@ const createTeam = async (req, res) => {
 
     const { name, leader, members } = req.body;
 
-    if (!name || !leader) {
-      return res.status(400).json({ message: 'Please provide team name and a leader' });
+    if (!name) {
+      return res.status(400).json({ message: 'Please provide a team name' });
     }
 
     const team = await Team.create({

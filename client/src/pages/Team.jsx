@@ -529,14 +529,14 @@ const Team = () => {
                  if (editTeamItem) {
                    await axios.put(`/workspaces/${workspace._id}/teams/${editTeamItem._id}`, {
                       name: e.target.teamName.value,
-                      leader: e.target.teamLeader.value,
+                      leader: e.target.teamLeader.value || null,
                       members: selectedTeamMembers
                    });
                    showToast('Team updated successfully!', 'success');
                  } else {
                    await axios.post(`/workspaces/${workspace._id}/teams`, {
                       name: e.target.teamName.value,
-                      leader: e.target.teamLeader.value,
+                      leader: e.target.teamLeader.value || null,
                       members: selectedTeamMembers
                    });
                    showToast('Team created successfully!', 'success');
@@ -575,7 +575,6 @@ const Team = () => {
                   name="teamLeader"
                   defaultValue={editTeamItem ? (editTeamItem.leader?._id || editTeamItem.leader) : ''}
                   className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
-                  required
                 >
                   <option value="">-- Select a Team Leader --</option>
                   {members.filter(m => m.role === 'team_leader' || m.role === 'super_admin' || m.role === 'hr').map(m => (
