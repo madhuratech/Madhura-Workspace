@@ -313,7 +313,7 @@ const ProjectDetails = () => {
               <span>Mark Stage Complete</span>
             </button>
           )}
-          {!['super_admin', 'hr', 'employee'].includes(user?.role) && (
+          {!['super_admin', 'hr'].includes(user?.role) && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-text-primary text-bg-primary px-4 py-2 rounded-lg hover:opacity-90 shadow-sm transition-all text-sm font-medium flex items-center space-x-2"
@@ -326,7 +326,7 @@ const ProjectDetails = () => {
       </div>
 
       {/* Minimal Pipeline Stage Tracker */}
-      {['super_admin', 'hr'].includes(user?.role) && (
+      {['super_admin', 'hr', 'team_leader'].includes(user?.role) && (
         <div className="bg-bg-primary border border-border/50 rounded-xl px-4 py-2.5 mb-5 flex items-center w-full overflow-x-auto custom-scrollbar shadow-sm">
           {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i, arr) => {
             const isActive = project?.stage === s;
