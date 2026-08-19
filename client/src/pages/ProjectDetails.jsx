@@ -31,29 +31,29 @@ const KanbanSkeleton = () => (
     {/* Kanban columns skeleton */}
     <div className="flex gap-5 flex-1 overflow-hidden">
       {['To Do', 'In Progress', 'Done'].map((col) => (
-        <div key={col} className="flex flex-col w-72 shrink-0">
+        <div key={col} className="flex flex-col w-[300px] shrink-0">
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center space-x-2">
-              <div className="h-2.5 w-2.5 rounded-full bg-border animate-pulse"></div>
-              <div className="h-4 w-20 bg-border rounded animate-pulse"></div>
+              <div className="h-2 w-2 rounded-full bg-border animate-pulse"></div>
+              <div className="h-3 w-20 bg-border rounded animate-pulse"></div>
             </div>
-            <div className="h-5 w-6 bg-border/60 rounded-full animate-pulse"></div>
+            <div className="h-4 w-6 bg-border/60 rounded animate-pulse"></div>
           </div>
-          <div className="flex-1 rounded-3xl p-4 bg-bg-primary/80 border border-border/60 min-h-[500px]">
+          <div className="flex-1 rounded-xl p-3 bg-bg-secondary/40 border border-transparent min-h-[500px]">
             {[1, 2, col === 'To Do' ? 3 : null].filter(Boolean).map((i) => (
-              <div key={i} className="p-5 mb-4 rounded-2xl border border-border bg-bg-secondary shadow-sm">
+              <div key={i} className="p-4 mb-3 rounded-lg border border-border bg-bg-primary shadow-sm">
                 <div className="flex justify-between items-center mb-3">
-                  <div className="h-4 w-14 bg-border/60 rounded animate-pulse"></div>
-                  <div className="h-4 w-4 bg-border/40 rounded animate-pulse"></div>
+                  <div className="h-3 w-12 bg-border/60 rounded animate-pulse"></div>
+                  <div className="h-3 w-3 bg-border/40 rounded animate-pulse"></div>
                 </div>
-                <div className="h-5 w-4/5 bg-border rounded-lg animate-pulse mb-2"></div>
-                <div className="h-3 w-full bg-border/50 rounded animate-pulse mb-1"></div>
-                <div className="h-3 w-3/4 bg-border/50 rounded animate-pulse mb-5"></div>
+                <div className="h-4 w-4/5 bg-border rounded animate-pulse mb-2"></div>
+                <div className="h-2.5 w-full bg-border/50 rounded animate-pulse mb-1"></div>
+                <div className="h-2.5 w-3/4 bg-border/50 rounded animate-pulse mb-4"></div>
                 <div className="flex justify-between items-center pt-3 border-t border-border/50">
                   <div className="flex -space-x-2">
-                    {[1,2].map(j => <div key={j} className="h-7 w-7 rounded-full bg-border animate-pulse border-2 border-bg-secondary"></div>)}
+                    {[1,2].map(j => <div key={j} className="h-6 w-6 rounded-full bg-border animate-pulse border-2 border-bg-primary"></div>)}
                   </div>
-                  <div className="h-3 w-16 bg-border/50 rounded animate-pulse"></div>
+                  <div className="h-2.5 w-16 bg-border/50 rounded animate-pulse"></div>
                 </div>
               </div>
             ))}
@@ -292,29 +292,29 @@ const ProjectDetails = () => {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-text-primary to-text-secondary tracking-wide font-outfit flex items-center">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight flex items-center">
               {project ? project.title : 'Project'} 
-              <span className="text-text-secondary font-medium text-lg ml-3 pl-3 border-l-2 border-border">Kanban Board</span>
+              <span className="text-text-secondary font-normal text-lg ml-3 pl-3 border-l border-border">Kanban</span>
             </h1>
-            <p className="text-sm text-text-secondary mt-1">{project?.description || 'Manage tasks and track progress for this project.'}</p>
+            <p className="text-sm text-text-secondary mt-1">{project?.description || 'Manage tasks and track progress.'}</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          {project?.stage !== 'Completed' && (['super_admin', 'hr', 'team_leader'].includes(user?.role) || String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) && (
+          {project?.stage !== 'Completed' && !['super_admin', 'hr'].includes(user?.role) && (['team_leader'].includes(user?.role) || String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) && (
             <button
               onClick={handleAdvanceStage}
-              className="bg-gradient-to-r from-success to-emerald-500 text-white shadow-lg shadow-success/20 px-5 py-2.5 rounded-xl hover:opacity-90 transition-all text-sm font-semibold flex items-center space-x-2"
+              className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
             >
-              <Flag size={16} />
+              <Flag size={14} className="text-success" />
               <span>Mark Stage Complete</span>
             </button>
           )}
-          {user?.role !== 'employee' && (
+          {!['super_admin', 'hr', 'employee'].includes(user?.role) && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2.5 rounded-xl hover:opacity-90 shadow-lg shadow-accent-blue/20 transition-all text-sm font-semibold flex items-center space-x-2"
+              className="bg-text-primary text-bg-primary px-4 py-2 rounded-lg hover:opacity-90 shadow-sm transition-all text-sm font-medium flex items-center space-x-2"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               <span>Add Task</span>
             </button>
           )}
@@ -322,28 +322,30 @@ const ProjectDetails = () => {
       </div>
 
       {/* Minimal Pipeline Stage Tracker */}
-      <div className="bg-bg-primary border border-border/50 rounded-xl px-4 py-2.5 mb-5 flex items-center w-full overflow-x-auto custom-scrollbar shadow-sm">
-        {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i, arr) => {
-          const isActive = project?.stage === s;
-          const isPast = arr.indexOf(project?.stage) > i;
-          return (
-            <div key={s} className="flex items-center shrink-0 flex-1 min-w-[80px]">
-              <div className={`flex items-center space-x-2 ${isActive ? 'scale-105 transition-transform' : 'opacity-80'}`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                  isActive ? 'bg-accent-blue text-white ring-2 ring-accent-blue/30' : 
-                  isPast ? 'bg-success text-white' : 'bg-bg-secondary text-text-secondary border border-border'
-                }`}>
-                  {isPast ? <Check size={10} /> : i + 1}
+      {['super_admin', 'hr'].includes(user?.role) && (
+        <div className="bg-bg-primary border border-border/50 rounded-xl px-4 py-2.5 mb-5 flex items-center w-full overflow-x-auto custom-scrollbar shadow-sm">
+          {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i, arr) => {
+            const isActive = project?.stage === s;
+            const isPast = arr.indexOf(project?.stage) > i;
+            return (
+              <div key={s} className="flex items-center shrink-0 flex-1 min-w-[80px]">
+                <div className={`flex items-center space-x-2 ${isActive ? 'scale-105 transition-transform' : 'opacity-80'}`}>
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                    isActive ? 'bg-accent-blue text-white ring-2 ring-accent-blue/30' : 
+                    isPast ? 'bg-success text-white' : 'bg-bg-secondary text-text-secondary border border-border'
+                  }`}>
+                    {isPast ? <Check size={10} /> : i + 1}
+                  </div>
+                  <span className={`text-[10px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
                 </div>
-                <span className={`text-[10px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
+                {i < arr.length - 1 && (
+                  <div className={`h-px flex-1 mx-3 rounded-full ${isPast ? 'bg-success' : 'bg-border/60'}`}></div>
+                )}
               </div>
-              {i < arr.length - 1 && (
-                <div className={`h-px flex-1 mx-3 rounded-full ${isPast ? 'bg-success' : 'bg-border/60'}`}></div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Kanban Board */}
       <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
@@ -351,13 +353,13 @@ const ProjectDetails = () => {
           <div className="flex gap-5 h-full min-w-max">
             <DragDropContext onDragEnd={onDragEnd}>
               {Object.entries(columns).map(([columnId, column]) => (
-              <div className="flex flex-col w-72 shrink-0" key={columnId}>
+              <div className="flex flex-col w-[300px] shrink-0" key={columnId}>
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center space-x-2">
-                    <div className={`h-2.5 w-2.5 rounded-full ${colHeaderColor[columnId]}`}></div>
-                    <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">{column.name}</h2>
+                    <div className={`h-2 w-2 rounded-full ${colHeaderColor[columnId]}`}></div>
+                    <h2 className="text-xs font-semibold text-text-primary uppercase tracking-wider">{column.name}</h2>
                   </div>
-                  <span className="bg-bg-secondary border border-border text-text-secondary text-xs px-2 py-0.5 rounded-full font-medium">
+                  <span className="bg-bg-primary border border-border text-text-secondary text-[10px] px-2 py-0.5 rounded-md font-medium">
                     {column.items.length}
                   </span>
                 </div>
@@ -367,10 +369,10 @@ const ProjectDetails = () => {
                       <div
                         {...provided.droppableProps}
                         ref={provided.innerRef}
-                        className={`flex-1 rounded-3xl p-4 transition-all min-h-[500px] border shadow-sm ${
+                        className={`flex-1 rounded-xl p-3 transition-colors min-h-[500px] ${
                           snapshot.isDraggingOver
-                            ? 'bg-accent-blue/10 border-accent-blue/40 shadow-inner backdrop-blur-md'
-                            : 'bg-bg-primary/60 border-border/60 backdrop-blur-sm'
+                            ? 'bg-bg-secondary/80 border-dashed border-2 border-accent-blue/50'
+                            : 'bg-bg-secondary/40 border border-transparent'
                         }`}
                       >
                       {column.items.map((item, index) => (
@@ -381,31 +383,31 @@ const ProjectDetails = () => {
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
                               style={provided.draggableProps.style}
-                              className={`p-5 mb-4 rounded-2xl border ${
+                              className={`group p-4 mb-3 rounded-lg border bg-bg-primary ${
                                 snapshot.isDragging
-                                  ? 'bg-bg-secondary border-accent-blue shadow-2xl z-50 opacity-95 scale-105'
-                                  : 'bg-bg-secondary border-border shadow-md hover:shadow-lg hover:border-accent-blue/40 transition-all duration-300'
+                                  ? 'border-accent-blue shadow-lg z-50 opacity-100 scale-[1.02]'
+                                  : 'border-border shadow-sm hover:shadow hover:border-text-secondary/30 transition-all'
                               }`}
                             >
                               <div className="flex justify-between items-start mb-2">
-                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${priorityColor(item.priority)}`}>
+                                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priorityColor(item.priority)}`}>
                                   {item.priority}
                                 </span>
-                                {user?.role !== 'employee' && (
-                                  <button onClick={() => handleDeleteTask(item._id)} className="text-text-secondary hover:text-danger transition-colors p-1 rounded-full hover:bg-danger/10">
-                                    <Trash2 size={12} />
+                                {!['super_admin', 'hr', 'employee'].includes(user?.role) && (
+                                  <button onClick={() => handleDeleteTask(item._id)} className="text-text-secondary hover:text-danger transition-colors p-1 rounded hover:bg-danger/10 opacity-0 group-hover:opacity-100">
+                                    <Trash2 size={14} />
                                   </button>
                                 )}
                               </div>
-                              <h3 className="text-base font-bold text-text-primary mb-1.5 font-outfit leading-tight">{item.title}</h3>
+                              <h3 className="text-sm font-semibold text-text-primary mb-1.5 leading-snug">{item.title}</h3>
                               {item.description && (
-                                <p className="text-xs text-text-secondary line-clamp-2 mb-4 leading-relaxed">{item.description}</p>
+                                <p className="text-xs text-text-secondary line-clamp-2 mb-3 leading-relaxed">{item.description}</p>
                               )}
-                              <div className="flex justify-between items-center mt-4 pt-3 border-t border-border/50">
+                              <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
                                 <div className="avatar-stack">
                                   {item.assignees?.map((a) => (
                                     <div key={a._id} title={a.name} className="-ml-2 first:ml-0 hover:z-10 transition-transform">
-                                      <Avatar user={a} size="w-7 h-7" textClass="text-[10px]" showStatus={false} className="border-2 border-bg-secondary shadow-sm" />
+                                      <Avatar user={a} size="w-6 h-6" textClass="text-[9px]" showStatus={false} className="border-2 border-bg-primary shadow-sm" />
                                     </div>
                                   ))}
                                 </div>
