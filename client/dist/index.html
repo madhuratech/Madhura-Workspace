@@ -4,12 +4,89 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo-round.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Madhura Workspace - Team Collaboration Platform" />
     <title>Madhura Workspace</title>
-    <script type="module" crossorigin src="/assets/index-B9IwpP1b.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/createLucideIcon-CZ8v1l1p.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-45ibywku.css">
+
+    <!-- Preconnect to Google Fonts (non-render-blocking) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" /></noscript>
+
+    <!-- Instant theme + loading skeleton to prevent blank screen flash -->
+    <script>
+      // Apply saved theme immediately before React loads (prevents white flash)
+      try {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch(e) {}
+    </script>
+
+    <style>
+      /* Critical inline CSS — shown before any JS loads */
+      *, *::before, *::after { box-sizing: border-box; }
+      html { font-size: 14px; }
+      body {
+        margin: 0; padding: 0;
+        font-family: Inter, system-ui, -apple-system, sans-serif;
+        background-color: #f8fafc;
+        color: #0f172a;
+      }
+      html.dark body {
+        background-color: #0a0e17;
+        color: #f8fafc;
+      }
+
+      /* Instant loading spinner shown before React mounts */
+      #app-loader {
+        position: fixed; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: inherit;
+        z-index: 9999;
+        transition: opacity 0.2s ease;
+      }
+      #app-loader.hidden { opacity: 0; pointer-events: none; }
+
+      .loader-ring {
+        width: 36px; height: 36px;
+        border: 3px solid rgba(27, 43, 76, 0.15);
+        border-top-color: #1b2b4c;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      html.dark .loader-ring {
+        border-color: rgba(255, 202, 34, 0.15);
+        border-top-color: #ffca22;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <script type="module" crossorigin src="/assets/index-C9sk0gSu.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-QTnfLwEv.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-dnd-BPKpuIgt.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-B__FW8pL.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-socket-CbQsWyoH.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DMT8uzfh.css">
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Instant loading indicator visible before React renders -->
+    <div id="app-loader" aria-label="Loading application">
+      <div class="loader-ring"></div>
+    </div>
+
+    <div id="root"></div>
+
+    <script>
+      // Hide the loader as soon as React takes over
+      window.__hideAppLoader = function() {
+        var el = document.getElementById('app-loader');
+        if (el) {
+          el.classList.add('hidden');
+          setTimeout(function() { el.remove(); }, 250);
+        }
+      };
+    </script>
+
   </body>
 </html>
