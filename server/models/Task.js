@@ -40,6 +40,11 @@ const TaskSchema = new mongoose.Schema({
   ],
   dueDate: {
     type: Date
+  },
+  stage: {
+    type: String,
+    enum: ['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'],
+    default: 'UI/UX'
   }
 }, { timestamps: true });
 

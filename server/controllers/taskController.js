@@ -63,6 +63,12 @@ const createTask = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Team Leaders can create tasks.' });
     }
 
+    const Project = require('../models/Project');
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
     const task = await Task.create({
       title,
       description,
@@ -70,6 +76,7 @@ const createTask = async (req, res) => {
       dueDate,
       project: req.params.projectId,
       workspace,
+      stage: project.stage,
       assignees: assignees && assignees.length > 0 ? assignees : [req.user._id]
     });
 

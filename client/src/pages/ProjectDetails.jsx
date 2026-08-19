@@ -155,7 +155,10 @@ const ProjectDetails = () => {
             'Done': { name: 'Done', color: 'text-success', items: [] }
           };
           tasksRes.data.forEach(t => {
-            if (cols[t.status]) cols[t.status].items.push(t);
+            const taskStage = t.stage || 'UI/UX'; // Fallback for old tasks
+            if (cols[t.status] && taskStage === matched.stage) {
+              cols[t.status].items.push(t);
+            }
           });
           setColumns(cols);
         }
@@ -225,13 +228,20 @@ const ProjectDetails = () => {
     if (!wsId || !resolvedId) return;
     try {
       const res = await axios.get(`/workspaces/${wsId}/projects/${resolvedId}/tasks`);
+      // Re-fetch project to get latest stage in case it advanced, or just use project state
+      const projRes = await axios.get(`/workspaces/${wsId}/projects`);
+      const updatedProj = projRes.data.find(p => p._id === resolvedId) || project;
+
       const cols = {
         'To Do': { name: 'To Do', color: 'text-slate-400', items: [] },
         'In Progress': { name: 'In Progress', color: 'text-accent-blue', items: [] },
         'Done': { name: 'Done', color: 'text-success', items: [] }
       };
       res.data.forEach(task => {
-        if (cols[task.status]) cols[task.status].items.push(task);
+        const taskStage = task.stage || 'UI/UX';
+        if (cols[task.status] && taskStage === updatedProj.stage) {
+          cols[task.status].items.push(task);
+        }
       });
       setColumns(cols);
     } catch (error) {
