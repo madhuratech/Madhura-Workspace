@@ -714,9 +714,18 @@ const Team = () => {
                   <button 
                     onClick={async () => {
                       try {
-                        await axios.post(`/users/${viewMember.user._id}/reset-password-otp`);
-                        showToast('OTP sent to user successfully', 'success');
-                        setResetPasswordState({ ...resetPasswordState, step: 2 });
+                        const res = await axios.post(`/users/${viewMember.user._id}/reset-password-otp`);
+                        if (res.data.emailFailed) {
+                          showToast('Email failed (unverified domain), but OTP was generated', 'warning');
+                        } else {
+                          showToast('OTP sent to user successfully', 'success');
+                        }
+                        // For testing/development when email fails, pre-fill or show the OTP
+                        if (res.data.otp) {
+                           setResetPasswordState({ ...resetPasswordState, step: 2, otp: res.data.otp });
+                        } else {
+                           setResetPasswordState({ ...resetPasswordState, step: 2 });
+                        }
                       } catch (err) {
                         showToast(err.response?.data?.message || 'Failed to send OTP', 'error');
                       }
@@ -751,6 +760,9 @@ const Team = () => {
                       className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-orange-500 text-center tracking-[0.5em] font-bold text-lg"
                       placeholder="------"
                     />
+                    {resetPasswordState.otp && resetPasswordState.otp.length === 6 && (
+                      <p className="text-[10px] text-orange-500 mt-1 italic text-center">OTP auto-filled for testing</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-text-secondary mb-1 uppercase tracking-wider">New Password</label>

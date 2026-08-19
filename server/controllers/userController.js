@@ -134,7 +134,7 @@ const requestPasswordResetOTP = async (req, res) => {
     const { Resend } = require('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
     
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'Madhura Workspace <onboarding@resend.dev>',
       to: user.email,
       subject: 'Password Reset Request OTP',
@@ -143,7 +143,16 @@ const requestPasswordResetOTP = async (req, res) => {
              <p>This OTP will expire in 10 minutes.</p>`
     });
     
-    res.status(200).json({ message: 'OTP sent successfully to the user' });
+    if (result.error) {
+      console.log('Resend Error:', result.error);
+      return res.status(200).json({ 
+        message: `OTP generated, but email failed (unverified domain). OTP is: ${otp}`, 
+        otp: otp,
+        emailFailed: true
+      });
+    }
+    
+    res.status(200).json({ message: 'OTP sent successfully to the user', otp: otp });
   } catch (error) {
     console.error('Error sending OTP:', error);
     res.status(500).json({ message: error.message });
