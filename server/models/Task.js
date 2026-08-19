@@ -43,7 +43,6 @@ const TaskSchema = new mongoose.Schema({
   },
   stage: {
     type: String,
-    enum: ['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'],
     default: 'UI/UX'
   }
 }, { timestamps: true });

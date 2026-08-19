@@ -215,7 +215,17 @@ const advanceStage = async (req, res) => {
        return res.status(401).json({ message: 'Not authorized to advance project stage.' });
     }
 
-    const stages = ['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'];
+    const hasSoftware = project.projectType.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
+    let stages = [];
+    if (hasSoftware) {
+      stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
+    }
+    if (project.projectType.includes('Digital Marketing')) stages.push('Digital Marketing');
+    if (project.projectType.includes('SEO')) stages.push('SEO');
+    stages.push('Completed');
+
+    if (stages.length === 1) stages.unshift('UI/UX'); // Fallback if somehow empty
+
     const currentIndex = stages.indexOf(project.stage);
     
     if (currentIndex === -1 || currentIndex >= stages.length - 1) {
@@ -235,6 +245,8 @@ const advanceStage = async (req, res) => {
       .populate('workflowTeams.tech')
       .populate('workflowTeams.test')
       .populate('workflowTeams.devops')
+      .populate('workflowTeams.digitalMarketing')
+      .populate('workflowTeams.seo')
       .lean();
 
     if (req.io) {
@@ -247,6 +259,8 @@ const advanceStage = async (req, res) => {
     if (nextStage === 'Tech' && populated.workflowTeams?.tech) targetTeam = populated.workflowTeams.tech;
     else if (nextStage === 'Test' && populated.workflowTeams?.test) targetTeam = populated.workflowTeams.test;
     else if (nextStage === 'DevOps' && populated.workflowTeams?.devops) targetTeam = populated.workflowTeams.devops;
+    else if (nextStage === 'Digital Marketing' && populated.workflowTeams?.digitalMarketing) targetTeam = populated.workflowTeams.digitalMarketing;
+    else if (nextStage === 'SEO' && populated.workflowTeams?.seo) targetTeam = populated.workflowTeams.seo;
 
     if (targetTeam && targetTeam.members) {
       const allTeamMembers = [...targetTeam.members];

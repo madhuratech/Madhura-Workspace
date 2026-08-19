@@ -10,9 +10,8 @@ const ProjectSchema = new mongoose.Schema({
     type: String,
   },
   projectType: {
-    type: String,
-    enum: ['Software', 'Website', 'SaaS', 'PaaS', 'Digital Marketing', 'SEO'],
-    default: 'Software'
+    type: [String],
+    default: ['Software']
   },
   workspace: {
     type: mongoose.Schema.Types.ObjectId,
@@ -31,14 +30,15 @@ const ProjectSchema = new mongoose.Schema({
   },
   stage: {
     type: String,
-    enum: ['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'],
     default: 'UI/UX'
   },
   workflowTeams: {
     uiux: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
     tech: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
     test: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
-    devops: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' }
+    devops: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+    digitalMarketing: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
+    seo: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' }
   },
   members: [
     {

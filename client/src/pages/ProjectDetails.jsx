@@ -380,26 +380,40 @@ const ProjectDetails = () => {
       {/* Minimal Pipeline Stage Tracker */}
       {['super_admin', 'hr', 'team_leader'].includes(user?.role) && (
         <div className="bg-bg-primary border border-border/50 rounded-xl px-4 py-2.5 mb-5 flex items-center w-full overflow-x-auto custom-scrollbar shadow-sm">
-          {['UI/UX', 'Tech', 'Test', 'DevOps', 'Completed'].map((s, i, arr) => {
-            const isActive = project?.stage === s;
-            const isPast = arr.indexOf(project?.stage) > i;
-            return (
-              <div key={s} className="flex items-center shrink-0 flex-1 min-w-[80px]">
-                <div className={`flex items-center space-x-2 ${isActive ? 'scale-105 transition-transform' : 'opacity-80'}`}>
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                    isActive ? 'bg-accent-blue text-white ring-2 ring-accent-blue/30' : 
-                    isPast ? 'bg-success text-white' : 'bg-bg-secondary text-text-secondary border border-border'
-                  }`}>
-                    {isPast ? <Check size={10} /> : i + 1}
+          {(() => {
+            const types = project?.projectType || ['Software'];
+            const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
+            let stages = [];
+            if (hasSoftware) {
+              stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
+            }
+            if (types.includes('Digital Marketing')) stages.push('Digital Marketing');
+            if (types.includes('SEO')) stages.push('SEO');
+            stages.push('Completed');
+            
+            if (stages.length === 1) stages.unshift('UI/UX');
+
+            return stages.map((s, i, arr) => {
+              const isActive = project?.stage === s;
+              const isPast = arr.indexOf(project?.stage) > i;
+              return (
+                <div key={s} className="flex items-center shrink-0 flex-1 min-w-[80px]">
+                  <div className={`flex items-center space-x-2 ${isActive ? 'scale-105 transition-transform' : 'opacity-80'}`}>
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
+                      isActive ? 'bg-accent-blue text-white ring-2 ring-accent-blue/30' : 
+                      isPast ? 'bg-success text-white' : 'bg-bg-secondary text-text-secondary border border-border'
+                    }`}>
+                      {isPast ? <Check size={10} /> : i + 1}
+                    </div>
+                    <span className={`text-[10px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
                   </div>
-                  <span className={`text-[10px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
+                  {i < arr.length - 1 && (
+                    <div className={`h-px flex-1 mx-3 rounded-full ${isPast ? 'bg-success' : 'bg-border/60'}`}></div>
+                  )}
                 </div>
-                {i < arr.length - 1 && (
-                  <div className={`h-px flex-1 mx-3 rounded-full ${isPast ? 'bg-success' : 'bg-border/60'}`}></div>
-                )}
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       )}
 
