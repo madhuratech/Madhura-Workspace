@@ -16,7 +16,7 @@ const idFromSlug = (slug = '') => {
 
 // Kanban skeleton loader
 const KanbanSkeleton = () => (
-  <div className="h-full flex flex-col font-sans">
+  <div className="h-full flex flex-col font-sans p-6 pt-8">
     {/* Header skeleton */}
     <div className="flex justify-between items-center mb-8">
       <div className="flex items-center space-x-4">
@@ -329,7 +329,7 @@ const ProjectDetails = () => {
   if (loading) return <KanbanSkeleton />;
 
   return (
-    <div className="h-full flex flex-col font-sans">
+    <div className="h-full flex flex-col font-sans p-6 pt-8">
       {/* Premium Header */}
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center space-x-4">
@@ -351,7 +351,7 @@ const ProjectDetails = () => {
               className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
             >
               <Flag size={14} className="text-success" />
-              <span>Mark Stage Complete</span>
+              <span>{project?.stage === 'DevOps' ? 'Mark Project Complete' : 'Mark Stage Complete'}</span>
             </button>
           )}
           {canManageStage() && (

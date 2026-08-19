@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import { Search, Calendar, Plus, FolderKanban, X, Users, CheckCircle2, Clock } from 'lucide-react';
+import { Search, Calendar, Plus, FolderKanban, X, Users, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Avatar from '../components/Avatar';
 
@@ -430,35 +430,38 @@ const Projects = () => {
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">UI/UX Team</label>
-                      <select value={formData.workflowTeams.uiux} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, uiux: e.target.value}})} className="premium-input">
-                        <option value="">-- None --</option>
-                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Tech Team</label>
-                      <select value={formData.workflowTeams.tech} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, tech: e.target.value}})} className="premium-input">
-                        <option value="">-- None --</option>
-                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Test Team</label>
-                      <select value={formData.workflowTeams.test} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, test: e.target.value}})} className="premium-input">
-                        <option value="">-- None --</option>
-                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">DevOps Team</label>
-                      <select value={formData.workflowTeams.devops} onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, devops: e.target.value}})} className="premium-input">
-                        <option value="">-- None --</option>
-                        {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                      </select>
-                    </div>
+                  <div className="flex items-center space-x-3 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar w-full">
+                    {[
+                      { key: 'uiux', label: 'UI/UX', num: 1 },
+                      { key: 'tech', label: 'Tech', num: 2 },
+                      { key: 'test', label: 'Test', num: 3 },
+                      { key: 'devops', label: 'DevOps', num: 4 }
+                    ].map((stage, idx, arr) => (
+                      <React.Fragment key={stage.key}>
+                        <div className="flex-1 min-w-[150px] bg-bg-secondary p-3.5 rounded-2xl border border-border shrink-0 shadow-sm relative group hover:border-accent-blue/50 transition-colors">
+                          <div className="flex items-center space-x-2.5 mb-3">
+                            <div className="w-5 h-5 rounded-full bg-accent-blue text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
+                              {stage.num}
+                            </div>
+                            <label className="text-xs font-bold text-text-primary uppercase tracking-wide">{stage.label}</label>
+                          </div>
+                          <select 
+                            value={formData.workflowTeams[stage.key]} 
+                            onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, [stage.key]: e.target.value}})} 
+                            className="w-full bg-bg-primary border border-border rounded-xl px-3 py-2 text-[11px] text-text-primary focus:outline-none focus:border-accent-blue transition-all"
+                          >
+                            <option value="">-- Assign Team --</option>
+                            {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                          </select>
+                        </div>
+                        
+                        {idx < arr.length - 1 && (
+                          <div className="shrink-0 text-text-secondary/50">
+                            <ArrowRight size={20} strokeWidth={2.5} />
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </div>
               )}
