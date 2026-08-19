@@ -83,6 +83,22 @@ const updateUserRole = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     
+    // Sync role across all workspaces this user belongs to
+    const Workspace = require('../models/Workspace');
+    await Workspace.updateMany(
+      { 'members.user': req.params.id },
+      { $set: { 'members.$.role': role } }
+    );
+
+    // If downgraded to employee, unset as team leader in any teams
+    if (role === 'employee') {
+      const Team = require('../models/Team');
+      await Team.updateMany(
+        { leader: req.params.id },
+        { $unset: { leader: 1 } }
+      );
+    }
+    
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
