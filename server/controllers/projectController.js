@@ -18,13 +18,15 @@ const getProjects = async (req, res) => {
     }
 
     const projects = await Project.find(query)
-      .select('title description status stage coordinator workflowTeams members workspace createdAt updatedAt')
+      .select('title description projectType status stage coordinator workflowTeams members workspace createdAt updatedAt')
       .populate('members', 'name email avatar')
       .populate('coordinator', 'name email avatar')
       .populate('workflowTeams.uiux')
       .populate('workflowTeams.tech')
       .populate('workflowTeams.test')
       .populate('workflowTeams.devops')
+      .populate('workflowTeams.digitalMarketing')
+      .populate('workflowTeams.seo')
       .lean();
 
     res.status(200).json(projects);
@@ -122,7 +124,7 @@ const getProject = async (req, res) => {
 // @access  Private
 const updateProject = async (req, res) => {
   try {
-    const { title, description, projectType, members, status } = req.body;
+    const { title, description, projectType, members, status, workflowTeams, coordinator } = req.body;
 
     if (req.user.role === 'employee') {
       return res.status(401).json({ message: 'Not authorized to update projects.' });
@@ -130,7 +132,7 @@ const updateProject = async (req, res) => {
 
     const project = await Project.findByIdAndUpdate(
       req.params.projectId, 
-      { title, description, projectType, members, status }, 
+      { title, description, projectType, members, status, workflowTeams, coordinator }, 
       { new: true }
     ).populate('members', 'name email avatar');
 

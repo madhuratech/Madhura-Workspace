@@ -73,7 +73,7 @@ const Projects = () => {
       setFormData({ 
         title: item.title, 
         description: item.description || '', 
-        projectType: item.projectType || ['Software'],
+        projectType: item.projectType ? (Array.isArray(item.projectType) ? item.projectType : [item.projectType]) : ['Software'],
         participantType: 'specific',
         selectedTeam: '',
         selectedRole: 'employee',
