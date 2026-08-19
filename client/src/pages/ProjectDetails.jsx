@@ -76,6 +76,7 @@ const ProjectDetails = () => {
   });
   const [workspaceId, setWorkspaceId] = useState(null);
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [workspaceTeams, setWorkspaceTeams] = useState([]);
   const [project, setProject] = useState(null);
   const [projectId, setProjectId] = useState(null); // real MongoDB _id resolved from slug
   const [loading, setLoading] = useState(true);
@@ -134,14 +135,18 @@ const ProjectDetails = () => {
         setProject(matched);
 
         let reqs = [
-          axios.get(`/workspaces/${ws._id}/projects/${resolvedId}/tasks`).catch(e => ({ error: true, data: e }))
+          axios.get(`/workspaces/${ws._id}/projects/${resolvedId}/tasks`).catch(e => ({ error: true, data: e })),
+          axios.get(`/workspaces/${ws._id}/teams`).catch(e => ({ error: true, data: e }))
         ];
         if (user?.role !== 'employee') {
           reqs.push(axios.get(`/workspaces/${ws._id}/projects/members`).catch(e => ({ error: true, data: e })));
-          reqs.push(axios.get(`/workspaces/${ws._id}/teams`).catch(e => ({ error: true, data: e })));
         }
 
-        const [tasksRes, membersRes, teamsRes] = await Promise.all(reqs);
+        const [tasksRes, teamsRes, membersRes] = await Promise.all(reqs);
+
+        if (teamsRes && !teamsRes.error) {
+          setWorkspaceTeams(teamsRes.data);
+        }
 
         if (!tasksRes.error) {
           const cols = {
@@ -176,6 +181,32 @@ const ProjectDetails = () => {
 
   const [stagePopupVisible, setStagePopupVisible] = useState(false);
   const [advancedStageName, setAdvancedStageName] = useState('');
+
+  const getActiveTeamId = () => {
+    if (!project || !project.workflowTeams) return null;
+    const stageKey = project.stage.toLowerCase().replace('/', '');
+    return project.workflowTeams[stageKey]?._id || project.workflowTeams[stageKey];
+  };
+
+  const isUserInActiveTeam = () => {
+    if (!project || !workspaceTeams.length) return false;
+    const activeTeamId = getActiveTeamId();
+    if (!activeTeamId) return false;
+
+    const team = workspaceTeams.find(t => String(t._id) === String(activeTeamId));
+    if (!team) return false;
+
+    if (String(team.leader?._id || team.leader) === String(user._id)) return true;
+    if (team.members.some(m => String(m._id || m) === String(user._id))) return true;
+    
+    return false;
+  };
+
+  const canManageStage = () => {
+    if (['super_admin', 'hr'].includes(user?.role)) return true;
+    if (String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) return true;
+    return isUserInActiveTeam();
+  };
 
   const handleAdvanceStage = async () => {
     try {
@@ -304,7 +335,7 @@ const ProjectDetails = () => {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          {project?.stage !== 'Completed' && !['super_admin', 'hr'].includes(user?.role) && (['team_leader'].includes(user?.role) || String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) && (
+          {project?.stage !== 'Completed' && canManageStage() && (
             <button
               onClick={handleAdvanceStage}
               className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
@@ -313,7 +344,7 @@ const ProjectDetails = () => {
               <span>Mark Stage Complete</span>
             </button>
           )}
-          {!['super_admin', 'hr'].includes(user?.role) && (
+          {canManageStage() && (
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-text-primary text-bg-primary px-4 py-2 rounded-lg hover:opacity-90 shadow-sm transition-all text-sm font-medium flex items-center space-x-2"
