@@ -295,9 +295,24 @@ const Projects = () => {
 
                 {/* Header & Actions */}
                 <div className="flex justify-between items-start mb-3 mt-1">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-1.5 bg-accent-blue/10 rounded-lg text-accent-blue shadow-sm border border-accent-blue/10">
-                      <FolderKanban size={16} />
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="p-1.5 bg-accent-blue/10 rounded-lg text-accent-blue shadow-sm border border-accent-blue/10">
+                        <FolderKanban size={16} />
+                      </div>
+                      <h3 className="font-bold text-text-primary text-base font-outfit leading-tight group-hover:text-accent-blue transition-colors">{project.title}</h3>
+                    </div>
+                    {/* Project Type Tags */}
+                    {project.projectType && project.projectType.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {project.projectType.map(type => (
+                          <span key={type} className="bg-bg-primary border border-border text-[9px] font-bold uppercase tracking-wider text-text-secondary px-2 py-0.5 rounded-full">
+                            {type}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                     </div>
                   </div>
                   
@@ -387,7 +402,7 @@ const Projects = () => {
       {/* Premium CRUD Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-lg shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-3xl shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
               <div>
                 <h3 className="text-xl font-bold text-text-primary mb-1">{editItem ? 'Edit Project' : 'Create New Project'}</h3>
@@ -478,32 +493,24 @@ const Projects = () => {
                     return (
                       <div className="mt-4">
                         <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Pipeline Setup (Required)</label>
-                        <div className="flex items-center space-x-3 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar w-full">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2 w-full">
                           {stages.map((stage, idx, arr) => (
-                            <React.Fragment key={stage.key}>
-                              <div className="flex-1 min-w-[150px] bg-bg-secondary p-3.5 rounded-2xl border border-border shrink-0 shadow-sm relative group hover:border-accent-blue/50 transition-colors">
-                                <div className="flex items-center space-x-2.5 mb-3">
-                                  <div className="w-5 h-5 rounded-full bg-accent-blue text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
-                                    {idx + 1}
-                                  </div>
-                                  <label className="text-xs font-bold text-text-primary uppercase tracking-wide">{stage.label}</label>
+                            <div key={stage.key} className="bg-bg-secondary p-3.5 rounded-2xl border border-border shadow-sm relative group hover:border-accent-blue/50 transition-colors">
+                              <div className="flex items-center space-x-2.5 mb-3">
+                                <div className="w-5 h-5 rounded-full bg-accent-blue text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
+                                  {idx + 1}
                                 </div>
-                                <select 
-                                  value={formData.workflowTeams[stage.key]} 
-                                  onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, [stage.key]: e.target.value}})} 
-                                  className="w-full bg-bg-primary border border-border rounded-xl px-3 py-2 text-[11px] text-text-primary focus:outline-none focus:border-accent-blue transition-all"
-                                >
-                                  <option value="">-- Assign Team --</option>
-                                  {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                                </select>
+                                <label className="text-xs font-bold text-text-primary uppercase tracking-wide">{stage.label}</label>
                               </div>
-                              
-                              {idx < arr.length - 1 && (
-                                <div className="shrink-0 text-text-secondary/50">
-                                  <ArrowRight size={20} strokeWidth={2.5} />
-                                </div>
-                              )}
-                            </React.Fragment>
+                              <select 
+                                value={formData.workflowTeams[stage.key]} 
+                                onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, [stage.key]: e.target.value}})} 
+                                className="w-full bg-bg-primary border border-border rounded-xl px-3 py-2 text-[11px] text-text-primary focus:outline-none focus:border-accent-blue transition-all"
+                              >
+                                <option value="">-- Assign Team --</option>
+                                {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                              </select>
+                            </div>
                           ))}
                         </div>
                       </div>
