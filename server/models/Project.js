@@ -9,6 +9,11 @@ const ProjectSchema = new mongoose.Schema({
   description: {
     type: String,
   },
+  projectType: {
+    type: String,
+    enum: ['Software', 'Website', 'SaaS', 'PaaS', 'Digital Marketing', 'SEO'],
+    default: 'Software'
+  },
   workspace: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Workspace',

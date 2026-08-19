@@ -72,6 +72,7 @@ const Projects = () => {
       setFormData({ 
         title: item.title, 
         description: item.description || '', 
+        projectType: item.projectType || 'Software',
         participantType: 'specific',
         selectedTeam: '',
         selectedRole: 'employee',
@@ -89,6 +90,7 @@ const Projects = () => {
       setFormData({ 
         title: '', 
         description: '', 
+        projectType: 'Software',
         participantType: 'all', 
         selectedTeam: '', 
         selectedRole: 'employee', 
@@ -125,6 +127,7 @@ const Projects = () => {
     const payload = {
       title: formData.title,
       description: formData.description,
+      projectType: formData.projectType,
       members: participantsIds,
       coordinator: formData.coordinator || undefined,
       workflowTeams: {
@@ -394,14 +397,31 @@ const Projects = () => {
             <div className="p-6 overflow-y-auto custom-scrollbar">
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Project Title</label>
-                <input
-                  type="text" required
-                  value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="premium-input"
-                  placeholder="e.g. Website Redesign"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Project Title</label>
+                  <input
+                    type="text" required
+                    value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
+                    className="premium-input"
+                    placeholder="e.g. Website Redesign"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Project Type</label>
+                  <select 
+                    value={formData.projectType} onChange={e => setFormData({...formData, projectType: e.target.value})}
+                    className="premium-input"
+                    required
+                  >
+                    <option value="Software">Software</option>
+                    <option value="Website">Website</option>
+                    <option value="SaaS">SaaS</option>
+                    <option value="PaaS">PaaS</option>
+                    <option value="Digital Marketing">Digital Marketing</option>
+                    <option value="SEO">SEO</option>
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Description (optional)</label>
@@ -430,39 +450,44 @@ const Projects = () => {
                     </select>
                   </div>
 
-                  <div className="flex items-center space-x-3 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar w-full">
-                    {[
-                      { key: 'uiux', label: 'UI/UX', num: 1 },
-                      { key: 'tech', label: 'Tech', num: 2 },
-                      { key: 'test', label: 'Test', num: 3 },
-                      { key: 'devops', label: 'DevOps', num: 4 }
-                    ].map((stage, idx, arr) => (
-                      <React.Fragment key={stage.key}>
-                        <div className="flex-1 min-w-[150px] bg-bg-secondary p-3.5 rounded-2xl border border-border shrink-0 shadow-sm relative group hover:border-accent-blue/50 transition-colors">
-                          <div className="flex items-center space-x-2.5 mb-3">
-                            <div className="w-5 h-5 rounded-full bg-accent-blue text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
-                              {stage.num}
+                  {!['Digital Marketing', 'SEO'].includes(formData.projectType) && (
+                    <div className="mt-4">
+                      <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Pipeline Setup (Required)</label>
+                      <div className="flex items-center space-x-3 overflow-x-auto pb-4 pt-2 px-1 custom-scrollbar w-full">
+                        {[
+                          { key: 'uiux', label: 'UI/UX', num: 1 },
+                          { key: 'tech', label: 'Tech', num: 2 },
+                          { key: 'test', label: 'Test', num: 3 },
+                          { key: 'devops', label: 'DevOps', num: 4 }
+                        ].map((stage, idx, arr) => (
+                          <React.Fragment key={stage.key}>
+                            <div className="flex-1 min-w-[150px] bg-bg-secondary p-3.5 rounded-2xl border border-border shrink-0 shadow-sm relative group hover:border-accent-blue/50 transition-colors">
+                              <div className="flex items-center space-x-2.5 mb-3">
+                                <div className="w-5 h-5 rounded-full bg-accent-blue text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
+                                  {stage.num}
+                                </div>
+                                <label className="text-xs font-bold text-text-primary uppercase tracking-wide">{stage.label}</label>
+                              </div>
+                              <select 
+                                value={formData.workflowTeams[stage.key]} 
+                                onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, [stage.key]: e.target.value}})} 
+                                className="w-full bg-bg-primary border border-border rounded-xl px-3 py-2 text-[11px] text-text-primary focus:outline-none focus:border-accent-blue transition-all"
+                              >
+                                <option value="">-- Assign Team --</option>
+                                {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
+                              </select>
                             </div>
-                            <label className="text-xs font-bold text-text-primary uppercase tracking-wide">{stage.label}</label>
-                          </div>
-                          <select 
-                            value={formData.workflowTeams[stage.key]} 
-                            onChange={e => setFormData({...formData, workflowTeams: {...formData.workflowTeams, [stage.key]: e.target.value}})} 
-                            className="w-full bg-bg-primary border border-border rounded-xl px-3 py-2 text-[11px] text-text-primary focus:outline-none focus:border-accent-blue transition-all"
-                          >
-                            <option value="">-- Assign Team --</option>
-                            {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                          </select>
-                        </div>
-                        
-                        {idx < arr.length - 1 && (
-                          <div className="shrink-0 text-text-secondary/50">
-                            <ArrowRight size={20} strokeWidth={2.5} />
-                          </div>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </div>
+                            
+                            {idx < arr.length - 1 && (
+                              <div className="shrink-0 text-text-secondary/50">
+                                <ArrowRight size={20} strokeWidth={2.5} />
+                              </div>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

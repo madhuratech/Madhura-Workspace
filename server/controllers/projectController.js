@@ -56,27 +56,28 @@ const getProject = async (req, res) => {
 // @desc    Create new project
 // @route   POST /api/workspaces/:workspaceId/projects
 // @access  Private (super_admin, hr)
-const createProject = async (req, res) => {
-  try {
-    const { title, description, members, coordinator, workflowTeams } = req.body;
+  const createProject = async (req, res) => {
+    try {
+      const { title, description, projectType, members, coordinator, workflowTeams } = req.body;
 
-    if (!title) {
-      return res.status(400).json({ message: 'Please add a project title' });
-    }
+      if (!title) {
+        return res.status(400).json({ message: 'Please add a project title' });
+      }
 
-    // Only super_admin, hr, team_leader can create projects
-    if (req.user.role === 'employee') {
-      return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Team Leaders can create projects.' });
-    }
+      // Only super_admin, hr, team_leader can create projects
+      if (req.user.role === 'employee') {
+        return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Team Leaders can create projects.' });
+      }
 
-    const project = await Project.create({
-      title,
-      description,
-      workspace: req.params.workspaceId,
-      coordinator: coordinator || req.user._id,
-      workflowTeams,
-      members: members && members.length > 0 ? members : [req.user._id]
-    });
+      const project = await Project.create({
+        title,
+        description,
+        projectType,
+        workspace: req.params.workspaceId,
+        coordinator: coordinator || req.user._id,
+        workflowTeams,
+        members: members && members.length > 0 ? members : [req.user._id]
+      });
 
     const populated = await project
       .populate('members', 'name email avatar')
@@ -121,7 +122,7 @@ const createProject = async (req, res) => {
 // @access  Private
 const updateProject = async (req, res) => {
   try {
-    const { title, description, members, status } = req.body;
+    const { title, description, projectType, members, status } = req.body;
 
     if (req.user.role === 'employee') {
       return res.status(401).json({ message: 'Not authorized to update projects.' });
@@ -129,7 +130,7 @@ const updateProject = async (req, res) => {
 
     const project = await Project.findByIdAndUpdate(
       req.params.projectId, 
-      { title, description, members, status }, 
+      { title, description, projectType, members, status }, 
       { new: true }
     ).populate('members', 'name email avatar');
 
