@@ -8,6 +8,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [syncingRoles, setSyncingRoles] = useState(false);
   
   // Workspace ID tracking for General Tab
   const [workspaceId, setWorkspaceId] = useState(null);
@@ -92,6 +93,26 @@ const Settings = () => {
     try {
       const res = await axios.get('/users');
       setUsersList(res.data);
+      
+      // Auto-sync roles if there's a mismatch
+      if (workspaceId && user?.role === 'super_admin') {
+        const wsRes = await axios.get(`/workspaces/${workspaceId}`);
+        const wsMembers = wsRes.data.members || [];
+        
+        let needsSync = false;
+        for (const globalUser of res.data) {
+          const wsMember = wsMembers.find(m => m.user && m.user._id === globalUser._id);
+          if (wsMember && wsMember.role !== globalUser.role) {
+            console.log(`Auto-syncing role for ${globalUser.name} from ${wsMember.role} to ${globalUser.role}`);
+            await axios.put(`/workspaces/${workspaceId}/members/${globalUser._id}`, { role: globalUser.role, action: 'update' });
+            needsSync = true;
+          }
+        }
+        
+        if (needsSync) {
+          showToast('Roles have been auto-synchronized!', 'success');
+        }
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
     }
