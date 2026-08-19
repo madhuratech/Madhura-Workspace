@@ -393,97 +393,111 @@ const ProjectDetails = () => {
       )}
 
       {/* Kanban Board */}
-      {!['super_admin', 'hr'].includes(user?.role) && (
-      <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
-        {isReady && (
-          <div className="flex gap-5 h-full min-w-max">
-            <DragDropContext onDragEnd={onDragEnd}>
-              {Object.entries(columns).map(([columnId, column]) => (
-              <div className="flex flex-col w-[300px] shrink-0" key={columnId}>
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center space-x-2">
-                    <div className={`h-2 w-2 rounded-full ${colHeaderColor[columnId]}`}></div>
-                    <h2 className="text-xs font-semibold text-text-primary uppercase tracking-wider">{column.name}</h2>
-                  </div>
-                  <span className="bg-bg-primary border border-border text-text-secondary text-[10px] px-2 py-0.5 rounded-md font-medium">
-                    {column.items.length}
-                  </span>
-                </div>
+      {(() => {
+        const hasAccess = ['super_admin', 'hr'].includes(user?.role) || canManageStage();
+        if (!hasAccess) {
+          return (
+            <div className="flex-1 flex flex-col items-center justify-center text-text-secondary opacity-80 bg-bg-secondary/30 rounded-2xl border border-dashed border-border m-2 pb-10">
+              <FolderKanban size={48} className="mb-4 opacity-50 text-accent-blue" />
+              <h3 className="text-lg font-bold text-text-primary mb-1 font-outfit">Stage Locked</h3>
+              <p className="text-sm font-medium">This project is currently in the <span className="text-accent-blue font-bold">{project?.stage}</span> stage.</p>
+              <p className="text-xs mt-1 max-w-sm text-center">You will be granted access to view and manage tasks on this board once the project advances to your team's stage.</p>
+            </div>
+          );
+        }
 
-                <Droppable droppableId={columnId}>
-                  {(provided, snapshot) => (
-                      <div
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        className={`flex-1 rounded-xl p-3 transition-colors min-h-[500px] ${
-                          snapshot.isDraggingOver
-                            ? 'bg-bg-secondary/80 border-dashed border-2 border-accent-blue/50'
-                            : 'bg-bg-secondary/40 border border-transparent'
-                        }`}
-                      >
-                      {column.items.map((item, index) => (
-                        <Draggable key={item._id} draggableId={String(item._id)} index={index} isDragDisabled={user?.role === 'employee' && (!item.assignees || !item.assignees.some(a => a._id === user._id))}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              style={provided.draggableProps.style}
-                              className={`group p-4 mb-3 rounded-lg border bg-bg-primary ${
-                                snapshot.isDragging
-                                  ? 'border-accent-blue shadow-lg z-50 opacity-100 scale-[1.02]'
-                                  : 'border-border shadow-sm hover:shadow hover:border-text-secondary/30 transition-all'
-                              }`}
-                            >
-                              <div className="flex justify-between items-start mb-2">
-                                <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priorityColor(item.priority)}`}>
-                                  {item.priority}
-                                </span>
-                                {!['super_admin', 'hr', 'employee'].includes(user?.role) && (
-                                  <button onClick={() => handleDeleteTask(item._id)} className="text-text-secondary hover:text-danger transition-colors p-1 rounded hover:bg-danger/10 opacity-0 group-hover:opacity-100">
-                                    <Trash2 size={14} />
-                                  </button>
-                                )}
-                              </div>
-                              <h3 className="text-sm font-semibold text-text-primary mb-1.5 leading-snug">{item.title}</h3>
-                              {item.description && (
-                                <p className="text-xs text-text-secondary line-clamp-2 mb-3 leading-relaxed">{item.description}</p>
-                              )}
-                              <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
-                                <div className="avatar-stack">
-                                  {item.assignees?.map((a) => (
-                                    <div key={a._id} title={a.name} className="-ml-2 first:ml-0 hover:z-10 transition-transform">
-                                      <Avatar user={a} size="w-6 h-6" textClass="text-[9px]" showStatus={false} className="border-2 border-bg-primary shadow-sm" />
+        return (
+          <div className="flex-1 overflow-x-auto pb-4 custom-scrollbar">
+            {isReady && (
+              <div className="flex gap-5 h-full min-w-max">
+                <DragDropContext onDragEnd={onDragEnd}>
+                  {Object.entries(columns).map(([columnId, column]) => (
+                  <div className="flex flex-col w-[300px] shrink-0" key={columnId}>
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div className="flex items-center space-x-2">
+                        <div className={`h-2 w-2 rounded-full ${colHeaderColor[columnId]}`}></div>
+                        <h2 className="text-xs font-semibold text-text-primary uppercase tracking-wider">{column.name}</h2>
+                      </div>
+                      <span className="bg-bg-primary border border-border text-text-secondary text-[10px] px-2 py-0.5 rounded-md font-medium">
+                        {column.items.length}
+                      </span>
+                    </div>
+
+                    <Droppable droppableId={columnId}>
+                      {(provided, snapshot) => (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className={`flex-1 rounded-xl p-3 transition-colors min-h-[500px] ${
+                              snapshot.isDraggingOver
+                                ? 'bg-bg-secondary/80 border-dashed border-2 border-accent-blue/50'
+                                : 'bg-bg-secondary/40 border border-transparent'
+                            }`}
+                          >
+                          {column.items.map((item, index) => (
+                            <Draggable key={item._id} draggableId={String(item._id)} index={index} isDragDisabled={user?.role === 'employee' && (!item.assignees || !item.assignees.some(a => a._id === user._id))}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={provided.draggableProps.style}
+                                  className={`group p-4 mb-3 rounded-lg border bg-bg-primary ${
+                                    snapshot.isDragging
+                                      ? 'border-accent-blue shadow-lg z-50 opacity-100 scale-[1.02]'
+                                      : 'border-border shadow-sm hover:shadow hover:border-text-secondary/30 transition-all'
+                                  }`}
+                                >
+                                  <div className="flex justify-between items-start mb-2">
+                                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priorityColor(item.priority)}`}>
+                                      {item.priority}
+                                    </span>
+                                    {!['super_admin', 'hr', 'employee'].includes(user?.role) && (
+                                      <button onClick={() => handleDeleteTask(item._id)} className="text-text-secondary hover:text-danger transition-colors p-1 rounded hover:bg-danger/10 opacity-0 group-hover:opacity-100">
+                                        <Trash2 size={14} />
+                                      </button>
+                                    )}
+                                  </div>
+                                  <h3 className="text-sm font-semibold text-text-primary mb-1.5 leading-snug">{item.title}</h3>
+                                  {item.description && (
+                                    <p className="text-xs text-text-secondary line-clamp-2 mb-3 leading-relaxed">{item.description}</p>
+                                  )}
+                                  <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
+                                    <div className="avatar-stack">
+                                      {item.assignees?.map((a) => (
+                                        <div key={a._id} title={a.name} className="-ml-2 first:ml-0 hover:z-10 transition-transform">
+                                          <Avatar user={a} size="w-6 h-6" textClass="text-[9px]" showStatus={false} className="border-2 border-bg-primary shadow-sm" />
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
+                                    {item.dueDate && (
+                                      <span className="text-[10px] text-text-secondary flex items-center">
+                                        <Calendar size={10} className="mr-1" />
+                                        {new Date(item.dueDate).toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                {item.dueDate && (
-                                  <span className="text-[10px] text-text-secondary flex items-center">
-                                    <Calendar size={10} className="mr-1" />
-                                    {new Date(item.dueDate).toLocaleDateString()}
-                                  </span>
-                                )}
-                              </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                          {column.items.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-32 text-text-secondary opacity-50">
+                              <p className="text-xs">Drop tasks here</p>
                             </div>
                           )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                      {column.items.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-32 text-text-secondary opacity-50">
-                          <p className="text-xs">Drop tasks here</p>
                         </div>
                       )}
-                    </div>
-                  )}
-                </Droppable>
-              </div>
-            ))}
-          </DragDropContext>
-        </div>
-        )}
-      </div>
-      )}
+                    </Droppable>
+                  </div>
+                ))}
+              </DragDropContext>
+            </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Premium Add Task Modal */}
       {isModalOpen && (
