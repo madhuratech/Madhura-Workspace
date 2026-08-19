@@ -270,21 +270,25 @@ const Projects = () => {
 
       <div className="bg-bg-secondary border border-border rounded-2xl flex-1 flex flex-col overflow-hidden shadow-soft">
         {/* Search & Filters */}
-        <div className="p-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bg-primary/50">
-          <div className="flex items-center space-x-2 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
-            {['All', 'Software', 'Website', 'SaaS', 'PaaS', 'Digital Marketing', 'SEO'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setFilterType(tab)}
-                className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all shadow-sm border ${
-                  filterType === tab 
-                    ? 'bg-accent-blue text-white border-accent-blue' 
-                    : 'bg-bg-secondary text-text-secondary border-border hover:bg-border/50 hover:text-text-primary'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+        <div className="p-5 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-bg-primary/50">
+          <div className="flex-1">
+            {['super_admin', 'hr'].includes(user?.role) && (
+              <div className="flex flex-wrap items-center gap-2 pt-1 pb-2 px-1">
+                {['All', 'Software', 'Website', 'SaaS', 'PaaS', 'Digital Marketing', 'SEO'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setFilterType(tab)}
+                    className={`shrink-0 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all shadow-sm border ${
+                      filterType === tab 
+                        ? 'bg-accent-blue text-white border-accent-blue' 
+                        : 'bg-bg-secondary text-text-secondary border-border hover:bg-border/50 hover:text-text-primary'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="relative w-full md:max-w-xs shrink-0">
