@@ -99,7 +99,11 @@ const Settings = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await axios.put(`/users/${userId}/role`, { role: newRole });
+      if (workspaceId) {
+        await axios.put(`/workspaces/${workspaceId}/members/${userId}`, { role: newRole, action: 'update' });
+      } else {
+        await axios.put(`/users/${userId}/role`, { role: newRole });
+      }
       setUsersList(usersList.map(u => u._id === userId ? { ...u, role: newRole } : u));
       showToast('Role updated successfully', 'success');
     } catch (error) {
