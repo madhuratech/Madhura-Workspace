@@ -86,17 +86,19 @@ router.get('/', async (req, res) => {
     let filteredLeaves = leaves;
 
     if (member.role === 'employee') {
-      filteredLeaves = leaves.filter(l => l.user._id.toString() === req.user._id.toString());
+      filteredLeaves = leaves.filter(l => l.user && l.user._id.toString() === req.user._id.toString());
     } else if (member.role === 'team_leader') {
       filteredLeaves = leaves.filter(l => {
+        if (!l.user) return false;
         if (l.user._id.toString() === req.user._id.toString()) return true; // Own leaves
-        const lMember = workspace.members.find(m => m.user._id.toString() === l.user._id.toString());
+        const lMember = workspace.members.find(m => m.user && m.user._id.toString() === l.user._id.toString());
         return lMember && lMember.role === 'employee'; // Leaves of employees
       });
     } else if (member.role === 'hr') {
       filteredLeaves = leaves.filter(l => {
+        if (!l.user) return false;
         if (l.user._id.toString() === req.user._id.toString()) return true; // Own leaves
-        const lMember = workspace.members.find(m => m.user._id.toString() === l.user._id.toString());
+        const lMember = workspace.members.find(m => m.user && m.user._id.toString() === l.user._id.toString());
         return lMember && (lMember.role === 'employee' || lMember.role === 'team_leader'); // Leaves of employees & TLs
       });
     }
