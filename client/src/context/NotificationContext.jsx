@@ -219,12 +219,32 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  const deleteNotification = async (id) => {
+    try {
+      await axios.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n._id !== id));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await axios.delete('/notifications/delete-all');
+      setNotifications([]);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <NotificationContext.Provider value={{
       notifications,
       unreadCount,
       markAsRead,
       markAllAsRead,
+      deleteNotification,
+      clearAllNotifications,
       requestNotificationPermission
     }}>
       {children}

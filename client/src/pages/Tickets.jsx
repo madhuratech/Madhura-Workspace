@@ -373,7 +373,6 @@ const Tickets = () => {
                   >
                     <option value="super_admin">Super Admin</option>
                     <option value="hr">HR</option>
-                    <option value="team_leader">Team Leader</option>
                   </select>
                 </div>
                 <div>

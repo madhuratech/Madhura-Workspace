@@ -26,7 +26,7 @@ const formatTimeAgo = (dateStr) => {
 };
 
 const NotificationCenter = () => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useContext(NotificationContext);
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useContext(NotificationContext);
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all'); // all, unread, mentions, tasks
   const dropdownRef = useRef(null);
@@ -65,7 +65,7 @@ const NotificationCenter = () => {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-secondary transition-colors"
+        className="relative p-2 rounded-full text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20 transition-colors shadow-sm"
       >
         <Bell size={20} />
         {unreadCount > 0 && (
@@ -89,14 +89,24 @@ const NotificationCenter = () => {
             <div className="px-5 pt-5 pb-3 flex flex-col gap-3 bg-gradient-to-b from-bg-primary/80 to-transparent">
               <div className="flex items-center justify-between">
                 <h3 className="font-extrabold text-text-primary text-[19px] tracking-tight">Notifications</h3>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="text-[12px] font-bold text-accent-blue hover:text-accent-indigo hover:bg-accent-blue/10 px-2.5 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
-                  >
-                    <Check size={14} strokeWidth={3} /> Mark all read
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={clearAllNotifications}
+                      className="text-[12px] font-bold text-danger hover:text-white hover:bg-danger px-2.5 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+                    >
+                      <Trash2 size={14} strokeWidth={3} /> Clear all
+                    </button>
+                  )}
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-[12px] font-bold text-accent-blue hover:text-accent-indigo hover:bg-accent-blue/10 px-2.5 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+                    >
+                      <Check size={14} strokeWidth={3} /> Mark all read
+                    </button>
+                  )}
+                </div>
               </div>
               
               {/* iOS style Segmented Control Tabs */}
@@ -133,7 +143,7 @@ const NotificationCenter = () => {
                     <div
                       key={notif._id}
                       onClick={() => handleNotificationClick(notif)}
-                      className={`relative p-3.5 flex items-start gap-3.5 cursor-pointer transition-all duration-200 hover:bg-bg-primary/60 rounded-xl group ${!notif.read ? 'bg-accent-blue/[0.04]' : ''}`}
+                      className={`relative p-3.5 flex items-start gap-3.5 cursor-pointer transition-all duration-200 hover:bg-bg-primary/60 rounded-xl group pr-10 ${!notif.read ? 'bg-accent-blue/[0.04]' : ''}`}
                     >
                       {/* Avatar / Icon */}
                       <div className="shrink-0 relative">
@@ -160,15 +170,19 @@ const NotificationCenter = () => {
                             {formatTimeAgo(notif.createdAt)}
                           </span>
                         </div>
-                        <span className="text-[13px] text-text-secondary leading-snug line-clamp-2 pr-4 font-medium">
+                        <p className="text-[13.5px] font-medium text-text-secondary/90 leading-[1.3] mt-0.5 line-clamp-2 pr-2">
                           {notif.message}
-                        </span>
+                        </p>
                       </div>
 
-                      {/* Hover action */}
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-text-secondary/50 bg-bg-secondary w-8 h-8 rounded-full border border-border/50 shadow-sm">
-                        <ChevronRight size={16} strokeWidth={2.5} />
-                      </div>
+                      {/* Delete Button (visible on hover) */}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); deleteNotification(notif._id); }}
+                        className="opacity-0 group-hover:opacity-100 absolute top-1/2 -translate-y-1/2 right-3 p-1.5 rounded-full text-text-secondary hover:text-danger hover:bg-danger/10 transition-all z-10"
+                        title="Delete notification"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   ))}
                 </div>

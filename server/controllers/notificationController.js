@@ -54,6 +54,25 @@ const markAllAsRead = async (req, res) => {
   }
 };
 
+// @desc    Delete single notification
+// @route   DELETE /api/notifications/:id
+// @access  Private
+const deleteNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    if (notification.recipient.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+    await Notification.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Notification deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Delete all notifications
 // @route   DELETE /api/notifications/delete-all
 // @access  Private
@@ -106,5 +125,6 @@ module.exports = {
   markAsRead,
   markAllAsRead,
   deleteAllNotifications,
+  deleteNotification,
   sendNotification
 };
