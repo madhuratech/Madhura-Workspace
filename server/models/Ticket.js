@@ -37,6 +37,11 @@ const TicketSchema = new mongoose.Schema({
     enum: ['HR', 'IT', 'General'],
     default: 'General'
   },
+  assignedRole: {
+    type: String,
+    enum: ['super_admin', 'hr', 'team_leader'],
+    default: 'super_admin'
+  },
   assignedTo: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

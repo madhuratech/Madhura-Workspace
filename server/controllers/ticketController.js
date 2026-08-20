@@ -8,19 +8,28 @@ const { sendNotification } = require('./notificationController');
 const getTickets = async (req, res) => {
   try {
     let query = {};
-    if (req.user.role === 'employee') {
-      // Employees only see tickets they created
-      query.createdBy = req.user._id;
-    }
-    // HR and Super Admin see all tickets. 
-    // TLs might see all tickets, or just their department? We'll let HR/Admin/TL see all for now as per "internal support" concept.
-    
+    const userId = req.user._id.toString();
+    const userRole = req.user.role;
+
     if (req.query.workspaceId) query.workspace = req.query.workspaceId;
+
+    if (userRole === 'super_admin') {
+      // Super admins see all tickets (as per the open question fallback, super admins maintain oversight)
+    } else if (userRole === 'employee') {
+      // Employees only see their own tickets
+      query.createdBy = userId;
+    } else {
+      // HR and Team Leaders see tickets they created OR tickets assigned to their role
+      query.$or = [
+        { createdBy: userId },
+        { assignedRole: userRole }
+      ];
+    }
 
     const tickets = await Ticket.find(query)
       .populate('createdBy', 'name email avatar role')
       .populate('assignedTo', 'name email avatar role')
-      .populate('comments.author', 'name email avatar')
+      .populate('comments.author', 'name email avatar role')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -38,13 +47,17 @@ const getTicket = async (req, res) => {
     const ticket = await Ticket.findById(req.params.id)
       .populate('createdBy', 'name email avatar role')
       .populate('assignedTo', 'name email avatar role')
-      .populate('comments.author', 'name email avatar')
+      .populate('comments.author', 'name email avatar role')
       .lean();
       
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
     
     // Auth check
-    if (req.user.role === 'employee' && ticket.createdBy._id.toString() !== req.user._id.toString()) {
+    const isCreator = ticket.createdBy._id.toString() === req.user._id.toString();
+    const isAssignedRole = req.user.role === ticket.assignedRole;
+    const isSuperAdmin = req.user.role === 'super_admin';
+
+    if (!isCreator && !isAssignedRole && !isSuperAdmin) {
       return res.status(403).json({ message: 'Not authorized to view this ticket' });
     }
 
@@ -59,7 +72,11 @@ const getTicket = async (req, res) => {
 // @access  Private
 const createTicket = async (req, res) => {
   try {
-    const { title, description, priority, department, workspace } = req.body;
+    if (req.user.role === 'super_admin') {
+      return res.status(403).json({ message: 'Super admins cannot create support tickets.' });
+    }
+
+    const { title, description, priority, department, workspace, assignedRole } = req.body;
     
     if (!title || !description) {
       return res.status(400).json({ message: 'Please provide title and description' });
@@ -71,6 +88,7 @@ const createTicket = async (req, res) => {
       priority: priority || 'Medium',
       department: department || 'General',
       workspace,
+      assignedRole: assignedRole || 'super_admin',
       createdBy: req.user._id
     });
     
@@ -137,7 +155,7 @@ const updateTicket = async (req, res) => {
     const updatedTicket = await Ticket.findById(ticket._id)
       .populate('createdBy', 'name email avatar role')
       .populate('assignedTo', 'name email avatar role')
-      .populate('comments.author', 'name email avatar');
+      .populate('comments.author', 'name email avatar role');
 
     if (req.io) {
       req.io.emit('ticketUpdated', updatedTicket);
@@ -162,9 +180,10 @@ const addTicketComment = async (req, res) => {
     if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
     
     const isCreator = ticket.createdBy.toString() === req.user._id.toString();
-    const isResolver = req.user.role === 'hr' || req.user.role === 'super_admin' || req.user.role === 'team_leader';
+    const isAssignedRole = req.user.role === ticket.assignedRole;
+    const isSuperAdmin = req.user.role === 'super_admin';
 
-    if (!isCreator && !isResolver) {
+    if (!isCreator && !isAssignedRole && !isSuperAdmin) {
       return res.status(403).json({ message: 'Not authorized to comment on this ticket' });
     }
 
@@ -179,7 +198,7 @@ const addTicketComment = async (req, res) => {
     const updatedTicket = await Ticket.findById(ticket._id)
       .populate('createdBy', 'name email avatar role')
       .populate('assignedTo', 'name email avatar role')
-      .populate('comments.author', 'name email avatar');
+      .populate('comments.author', 'name email avatar role');
 
     if (req.io) {
       req.io.emit('ticketUpdated', updatedTicket);

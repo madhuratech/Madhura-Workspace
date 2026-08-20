@@ -71,6 +71,17 @@ const getProject = async (req, res) => {
         return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Team Leaders can create projects.' });
       }
 
+      // Determine initial stage based on project type
+      const types = projectType || ['Software'];
+      const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
+      
+      let initialStage = 'UI/UX'; // default for software
+      if (!hasSoftware) {
+        if (types.includes('Digital Marketing')) initialStage = 'Digital Marketing';
+        else if (types.includes('SEO')) initialStage = 'SEO';
+        else initialStage = 'Completed';
+      }
+
       const project = await Project.create({
         title,
         description,
@@ -78,6 +89,7 @@ const getProject = async (req, res) => {
         workspace: req.params.workspaceId,
         coordinator: coordinator || req.user._id,
         workflowTeams,
+        stage: initialStage,
         members: members && members.length > 0 ? members : [req.user._id]
       });
 

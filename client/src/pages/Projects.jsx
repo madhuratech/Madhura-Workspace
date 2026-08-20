@@ -540,64 +540,7 @@ const Projects = () => {
                 </div>
               )}
 
-              {/* Member Assignment */}
-              <div className="bg-bg-primary/50 p-5 rounded-2xl border border-border mt-6">
-                <label className="block text-sm font-bold text-text-primary mb-4 font-outfit">Add Participants</label>
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {['all', 'team', 'role', 'specific'].map(type => (
-                    <label key={type} className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors ${formData.participantType === type ? 'bg-accent-blue text-accent-text shadow-soft' : 'bg-bg-secondary text-text-secondary border border-border hover:bg-border/50'}`}>
-                      <input type="radio" name="pType" value={type} checked={formData.participantType === type} onChange={() => setFormData({...formData, participantType: type, members: type === 'specific' ? formData.members : []})} className="hidden" />
-                      <span className="capitalize">{type.replace('specific', 'select individuals').replace('all', 'workspace')}</span>
-                    </label>
-                  ))}
-                </div>
 
-                {formData.participantType === 'team' && (
-                  <select 
-                    value={formData.selectedTeam} onChange={e => setFormData({...formData, selectedTeam: e.target.value})}
-                    className="premium-input mb-2"
-                    required
-                  >
-                    <option value="">-- Choose Team --</option>
-                    {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
-                  </select>
-                )}
-
-                {formData.participantType === 'role' && (
-                  <select 
-                    value={formData.selectedRole} onChange={e => setFormData({...formData, selectedRole: e.target.value})}
-                    className="premium-input mb-2"
-                    required
-                  >
-                    <option value="team_leader">Team Leaders</option>
-                    <option value="employee">Employees</option>
-                  </select>
-                )}
-
-                {formData.participantType === 'specific' && (
-                  <div className="max-h-48 overflow-y-auto border border-border rounded-xl p-2 bg-bg-secondary space-y-1.5 custom-scrollbar">
-                    {workspaceMembers.filter(m => m.user._id !== user._id && m.role !== 'super_admin').map(m => (
-                      <label key={m.user._id} className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer transition-colors ${formData.members.includes(m.user._id) ? 'bg-accent-blue/10 border border-accent-blue/20' : 'hover:bg-bg-primary border border-transparent'}`}>
-                        <div className="relative flex items-center justify-center">
-                          <Avatar user={m.user} size="w-8 h-8" textClass="text-xs" showStatus={false} />
-                          {formData.members.includes(m.user._id) && <div className="absolute -bottom-1 -right-1 bg-success h-3.5 w-3.5 rounded-full border-2 border-bg-secondary"></div>}
-                        </div>
-                        <div className="flex flex-col flex-1">
-                          <span className={`text-sm font-semibold ${formData.members.includes(m.user._id) ? 'text-accent-blue' : 'text-text-primary'}`}>{m.user?.name || 'Unknown'}</span>
-                          <span className="text-[10px] text-text-secondary uppercase tracking-wider">{(m.role || m.user?.role || 'employee').replace('_', ' ')}</span>
-                        </div>
-                        <input 
-                          type="checkbox" 
-                          className="hidden"
-                          checked={formData.members.includes(m.user._id)}
-                          onChange={() => toggleMember(m.user._id)}
-                        />
-                      </label>
-                    ))}
-                    {workspaceMembers.length <= 1 && <p className="text-xs text-text-secondary p-3 text-center">No other members available.</p>}
-                  </div>
-                )}
-              </div>
 
               <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
                 <button 

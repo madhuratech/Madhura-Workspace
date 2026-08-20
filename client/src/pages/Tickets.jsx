@@ -17,7 +17,8 @@ const Tickets = () => {
     title: '',
     description: '',
     priority: 'Medium',
-    department: 'General'
+    department: 'General',
+    assignedRole: 'super_admin'
   });
 
   // Comment state
@@ -57,7 +58,7 @@ const Tickets = () => {
       setTickets([res.data, ...tickets]);
       setSelectedTicket(res.data);
       setShowModal(false);
-      setFormData({ title: '', description: '', priority: 'Medium', department: 'General' });
+      setFormData({ title: '', description: '', priority: 'Medium', department: 'General', assignedRole: 'super_admin' });
     } catch (error) {
       console.error('Error creating ticket', error);
     }
@@ -124,13 +125,15 @@ const Tickets = () => {
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">Manage and track your support requests</p>
         </div>
-        <button 
-          onClick={() => setShowModal(true)}
-          className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center gap-2 shadow-sm"
-        >
-          <Plus size={16} />
-          New Ticket
-        </button>
+        {user?.role !== 'super_admin' && (
+          <button 
+            onClick={() => setShowModal(true)}
+            className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center gap-2 shadow-sm"
+          >
+            <Plus size={16} />
+            New Ticket
+          </button>
+        )}
       </div>
 
       {/* Main Slack-like layout */}
@@ -279,8 +282,32 @@ const Tickets = () => {
               </div>
 
               {/* Chat Input */}
-              {selectedTicket.status !== 'Closed' ? (
-                <div className="p-4 bg-white border-t border-gray-200 z-10">
+              {(() => {
+                const canComment = user?.role === 'super_admin' || 
+                  selectedTicket.createdBy?._id === user?._id || 
+                  selectedTicket.createdBy === user?._id || 
+                  selectedTicket.assignedRole === user?.role;
+                  
+                if (selectedTicket.status === 'Closed') {
+                  return (
+                    <div className="p-6 bg-gray-50 border-t border-gray-200 text-center text-gray-500 flex flex-col items-center gap-2">
+                      <CheckCircle size={24} className="text-gray-400" />
+                      <p className="text-sm font-medium">This ticket is closed and cannot receive new comments.</p>
+                    </div>
+                  );
+                }
+                
+                if (!canComment) {
+                  return (
+                    <div className="p-6 bg-gray-50 border-t border-gray-200 text-center text-gray-500 flex flex-col items-center gap-2">
+                      <AlertCircle size={24} className="text-gray-400" />
+                      <p className="text-sm font-medium">You are not authorized to reply to this ticket.</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="p-4 bg-white border-t border-gray-200 z-10">
                   <form onSubmit={handleAddComment} className="relative">
                     <input 
                       type="text" 
@@ -299,12 +326,8 @@ const Tickets = () => {
                   </form>
                   <p className="text-[10px] text-gray-400 mt-2 text-center">Press Enter to send. Use polite and professional language.</p>
                 </div>
-              ) : (
-                <div className="p-6 bg-gray-50 border-t border-gray-200 text-center text-gray-500 flex flex-col items-center gap-2">
-                  <CheckCircle size={24} className="text-gray-400" />
-                  <p className="text-sm font-medium">This ticket is closed and cannot receive new comments.</p>
-                </div>
-              )}
+                );
+              })()}
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
@@ -342,6 +365,17 @@ const Tickets = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Assign To Role</label>
+                  <select 
+                    value={formData.assignedRole} onChange={e => setFormData({...formData, assignedRole: e.target.value})}
+                    className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm cursor-pointer"
+                  >
+                    <option value="super_admin">Super Admin</option>
+                    <option value="hr">HR</option>
+                    <option value="team_leader">Team Leader</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Department</label>
                   <select 

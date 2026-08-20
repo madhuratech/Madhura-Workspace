@@ -187,7 +187,34 @@ const ProjectDetails = () => {
 
   const getActiveTeamId = () => {
     if (!project || !project.workflowTeams) return null;
-    const stageKey = project.stage.toLowerCase().replace('/', '');
+    
+    // Compute current valid stages
+    const types = project.projectType || ['Software'];
+    const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
+    let validStages = [];
+    if (hasSoftware) validStages.push('UI/UX', 'Tech', 'Test', 'DevOps');
+    if (types.includes('Digital Marketing')) validStages.push('Digital Marketing');
+    if (types.includes('SEO')) validStages.push('SEO');
+    validStages.push('Completed');
+    
+    // If the database stage isn't valid for this project type (e.g., legacy UI/UX on a Marketing project), assume the first valid stage.
+    let currentStage = project.stage;
+    if (!validStages.includes(currentStage)) {
+       currentStage = validStages[0];
+    }
+
+    const stageToKey = {
+      'UI/UX': 'uiux',
+      'Tech': 'tech',
+      'Test': 'test',
+      'DevOps': 'devops',
+      'Digital Marketing': 'digitalMarketing',
+      'SEO': 'seo'
+    };
+    
+    const stageKey = stageToKey[currentStage];
+    if (!stageKey) return null;
+    
     return project.workflowTeams[stageKey]?._id || project.workflowTeams[stageKey];
   };
 
@@ -391,11 +418,16 @@ const ProjectDetails = () => {
             if (types.includes('SEO')) stages.push('SEO');
             stages.push('Completed');
             
-            if (stages.length === 1) stages.unshift('UI/UX');
+            if (stages.length === 0) stages.push('Completed');
+
+            let currentStage = project?.stage;
+            if (!stages.includes(currentStage)) {
+              currentStage = stages[0];
+            }
 
             return stages.map((s, i, arr) => {
-              const isActive = project?.stage === s;
-              const isPast = arr.indexOf(project?.stage) > i;
+              const isActive = currentStage === s;
+              const isPast = arr.indexOf(currentStage) > i;
               return (
                 <div key={s} className="flex items-center shrink-0 flex-1 min-w-[80px]">
                   <div className={`flex items-center space-x-2 ${isActive ? 'scale-105 transition-transform' : 'opacity-80'}`}>
@@ -420,12 +452,24 @@ const ProjectDetails = () => {
       {/* Kanban Board */}
       {(() => {
         const hasAccess = ['super_admin', 'hr'].includes(user?.role) || canManageStage();
+        
+        // Calculate effective stage
+        const types = project?.projectType || ['Software'];
+        const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
+        let validStages = [];
+        if (hasSoftware) validStages.push('UI/UX', 'Tech', 'Test', 'DevOps');
+        if (types.includes('Digital Marketing')) validStages.push('Digital Marketing');
+        if (types.includes('SEO')) validStages.push('SEO');
+        validStages.push('Completed');
+        let effectiveStage = project?.stage;
+        if (!validStages.includes(effectiveStage)) effectiveStage = validStages[0];
+
         if (!hasAccess) {
           return (
             <div className="flex-1 flex flex-col items-center justify-center text-text-secondary opacity-80 bg-bg-secondary/30 rounded-2xl border border-dashed border-border m-2 pb-10">
               <FolderKanban size={48} className="mb-4 opacity-50 text-accent-blue" />
               <h3 className="text-lg font-bold text-text-primary mb-1 font-outfit">Stage Locked</h3>
-              <p className="text-sm font-medium">This project is currently in the <span className="text-accent-blue font-bold">{project?.stage}</span> stage.</p>
+              <p className="text-sm font-medium">This project is currently in the <span className="text-accent-blue font-bold">{effectiveStage}</span> stage.</p>
               <p className="text-xs mt-1 max-w-sm text-center">You will be granted access to view and manage tasks on this board once the project advances to your team's stage.</p>
             </div>
           );
