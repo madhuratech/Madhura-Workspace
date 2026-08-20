@@ -30,6 +30,8 @@ const Tickets = lazy(() => import('./pages/Tickets'));
 const Announcements = lazy(() => import('./pages/Announcements'));
 const Notes = lazy(() => import('./pages/Notes'));
 const UserProfile = lazy(() => import('./pages/UserProfile'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
@@ -79,6 +81,8 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
           
           {/* Protected Routes wrapped in Layout (Sidebar + Navbar) */}
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
