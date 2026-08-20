@@ -623,12 +623,11 @@ const Chat = () => {
               <div className="flex items-center space-x-2.5 min-w-0">
                 <div className="relative shrink-0">
                   <Avatar user={activeDM.user} size="w-7 h-7" textClass="text-xs" showStatus={false} />
-                  <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-bg-secondary ${onlineUsers.has(activeDM.user._id) ? 'bg-green-400' : 'bg-text-secondary/30'}`}></span>
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-text-primary text-[15px] truncate leading-none">{activeDM.user.name}</p>
                   <p className="text-[11px] text-text-secondary mt-0.5">
-                    {onlineUsers.has(activeDM.user._id) ? '🟢 Active now' : 'Offline'}
+                    {onlineUsers.has(activeDM.user._id) ? '🟢 Online' : 'Offline'}
                   </p>
                 </div>
               </div>
