@@ -444,7 +444,7 @@ const AttendanceLeave = () => {
             <p className="text-text-secondary text-sm mt-1">Manage your attendance and leave requests.</p>
           </div>
           <div className="flex space-x-4 items-center">
-            {activeTab === 'leave' && (
+            {activeTab === 'leave' && currentUserRole !== 'super_admin' && (
               <button onClick={() => setIsLeaveModalOpen(true)} className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all text-sm font-semibold flex items-center shadow-md">
                 <span>Apply Leave</span>
               </button>
@@ -618,46 +618,48 @@ const AttendanceLeave = () => {
           /* Keep Leave Requests section unchanged structurally, but add better wrappers if needed. For now keeping it visually similar but inside the flex-1 area */
           <div className="overflow-x-auto flex-1 bg-bg-secondary border border-border rounded-2xl shadow-sm p-6 custom-scrollbar">
             <div className="space-y-8">
-              <div>
-                <h3 className="text-lg font-bold text-text-primary mb-4 font-outfit">My Leaves</h3>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th className="text-left w-32">TYPE</th>
-                      <th className="text-left">DURATION</th>
-                      <th className="text-left w-32">STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leaveRecords.filter(l => l.user?._id === user._id).map(leave => (
-                      <tr key={leave._id}>
-                        <td className="font-medium text-text-primary">{leave.type}</td>
-                        <td className="text-text-secondary">
-                          {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
-                          <br />
-                          <span className="text-xs opacity-70">{leave.reason}</span>
-                        </td>
-                        <td>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            leave.status === 'Approved' ? 'text-success bg-success/10' :
-                            leave.status === 'Rejected' ? 'text-danger bg-danger/10' :
-                            'text-orange-500 bg-orange-500/10'
-                          }`}>
-                            {leave.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {leaveRecords.filter(l => l.user?._id === user._id).length === 0 && (
+              {currentUserRole !== 'super_admin' && (
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary mb-4 font-outfit">My Leaves</h3>
+                  <table className="data-table">
+                    <thead>
                       <tr>
-                        <td colSpan="3" className="text-center py-8 text-text-secondary">No leave requests found.</td>
+                        <th className="text-left w-32">TYPE</th>
+                        <th className="text-left">DURATION</th>
+                        <th className="text-left w-32">STATUS</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {leaveRecords.filter(l => l.user?._id === user._id).map(leave => (
+                        <tr key={leave._id}>
+                          <td className="font-medium text-text-primary">{leave.type}</td>
+                          <td className="text-text-secondary">
+                            {new Date(leave.startDate).toLocaleDateString()} to {new Date(leave.endDate).toLocaleDateString()}
+                            <br />
+                            <span className="text-xs opacity-70">{leave.reason}</span>
+                          </td>
+                          <td>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              leave.status === 'Approved' ? 'text-success bg-success/10' :
+                              leave.status === 'Rejected' ? 'text-danger bg-danger/10' :
+                              'text-orange-500 bg-orange-500/10'
+                            }`}>
+                              {leave.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {leaveRecords.filter(l => l.user?._id === user._id).length === 0 && (
+                        <tr>
+                          <td colSpan="3" className="text-center py-8 text-text-secondary">No leave requests found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-              {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && (
+              {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
                 <div>
                   <h3 className="text-lg font-bold text-text-primary mb-4 font-outfit">Team Leave Requests</h3>
                   <table className="data-table">
@@ -720,42 +722,44 @@ const AttendanceLeave = () => {
         ) : activeTab === 'early-leave' ? (
           <div className="overflow-x-auto flex-1 bg-bg-secondary border border-border rounded-2xl shadow-sm p-6 custom-scrollbar">
             <div className="space-y-8">
-              <div>
-                <h3 className="text-lg font-bold text-text-primary mb-4 font-outfit">My Early Leaves</h3>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th className="text-left w-32">DATE</th>
-                      <th className="text-left w-32">TIME</th>
-                      <th className="text-left">REASON</th>
-                      <th className="text-left w-48">STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {earlyLeaves.filter(l => l.employee?._id === user._id).map(leave => (
-                      <tr key={leave._id}>
-                        <td className="font-medium text-text-primary">{leave.date}</td>
-                        <td className="text-text-secondary">{leave.requestedLeaveTime}</td>
-                        <td className="text-text-secondary">{leave.reason}</td>
-                        <td>
-                          <span className={`px-2 py-1 rounded text-[10px] font-medium uppercase tracking-wider ${
-                            leave.status === 'approved' ? 'text-success bg-success/10' :
-                            leave.status === 'rejected' ? 'text-danger bg-danger/10' :
-                            'text-orange-500 bg-orange-500/10'
-                          }`}>
-                            {leave.status.replace('_', ' ')}
-                          </span>
-                        </td>
+              {currentUserRole !== 'super_admin' && (
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary mb-4 font-outfit">My Early Leaves</h3>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th className="text-left w-32">DATE</th>
+                        <th className="text-left w-32">TIME</th>
+                        <th className="text-left">REASON</th>
+                        <th className="text-left w-48">STATUS</th>
                       </tr>
-                    ))}
-                    {earlyLeaves.filter(l => l.employee?._id === user._id).length === 0 && (
-                      <tr><td colSpan="4" className="text-center py-8 text-text-secondary">No early leave requests found.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {earlyLeaves.filter(l => l.employee?._id === user._id).map(leave => (
+                        <tr key={leave._id}>
+                          <td className="font-medium text-text-primary">{leave.date}</td>
+                          <td className="text-text-secondary">{leave.requestedLeaveTime}</td>
+                          <td className="text-text-secondary">{leave.reason}</td>
+                          <td>
+                            <span className={`px-2 py-1 rounded text-[10px] font-medium uppercase tracking-wider ${
+                              leave.status === 'approved' ? 'text-success bg-success/10' :
+                              leave.status === 'rejected' ? 'text-danger bg-danger/10' :
+                              'text-orange-500 bg-orange-500/10'
+                            }`}>
+                              {leave.status.replace('_', ' ')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {earlyLeaves.filter(l => l.employee?._id === user._id).length === 0 && (
+                        <tr><td colSpan="4" className="text-center py-8 text-text-secondary">No early leave requests found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
-              {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && (
+              {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
                 <div>
                   <h3 className="text-lg font-bold text-text-primary mb-4 font-outfit">Team Early Leave Requests</h3>
                   <table className="data-table">
@@ -792,7 +796,6 @@ const AttendanceLeave = () => {
                           </td>
                           <td className="text-right space-x-2 whitespace-nowrap">
                             {(
-                              (currentUserRole === 'team_leader' && leave.status === 'pending_tl') ||
                               (currentUserRole === 'hr' && ['pending_tl', 'pending_hr'].includes(leave.status)) ||
                               (currentUserRole === 'super_admin' && ['pending_tl', 'pending_hr', 'pending_md'].includes(leave.status))
                             ) ? (
