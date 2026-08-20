@@ -4,7 +4,7 @@ import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2, Check } from 'lucide-react';
+import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2, Check, FolderKanban } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 // Extract the 24-char MongoDB ObjectId that was appended as the last segment of the slug
