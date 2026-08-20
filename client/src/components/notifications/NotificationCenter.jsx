@@ -65,7 +65,7 @@ const NotificationCenter = () => {
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-full text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20 transition-colors shadow-sm"
+        className={`relative p-2 rounded-full transition-colors ${unreadCount > 0 ? 'text-white bg-white/10 hover:bg-white/20' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
       >
         <Bell size={20} />
         {unreadCount > 0 && (
