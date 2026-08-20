@@ -7,6 +7,7 @@ const getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.user._id })
       .sort({ createdAt: -1 })
+      .populate('sender', 'name email avatar')
       .limit(50); // Keep it reasonable
     res.status(200).json(notifications);
   } catch (error) {
@@ -82,13 +83,16 @@ const sendNotification = async (req, recipientId, type, title, message, link) =>
     if (req.io && req.onlineUsers) {
       const socketIds = req.onlineUsers.get(recipientId.toString());
       if (socketIds) {
+        // Populate sender so the frontend can display their avatar
+        const populatedNotification = await Notification.findById(notification._id).populate('sender', 'name email avatar');
+        
         if (socketIds instanceof Set || Array.isArray(socketIds)) {
           socketIds.forEach(socketId => {
-            req.io.to(socketId).emit('new_notification', notification);
+            req.io.to(socketId).emit('new_notification', populatedNotification || notification);
           });
         } else if (typeof socketIds === 'string') {
           // Fallback if server.js hasn't been restarted and still uses string map
-          req.io.to(socketIds).emit('new_notification', notification);
+          req.io.to(socketIds).emit('new_notification', populatedNotification || notification);
         }
       }
     }

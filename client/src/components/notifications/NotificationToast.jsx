@@ -65,57 +65,55 @@ const NotificationToast = () => {
         {toasts.map((toast) => (
           <motion.div
             key={toast._id}
-            initial={{ opacity: 0, x: 50, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
+            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
             whileHover={{ scale: 1.02 }}
             layout
             onClick={() => handleToastClick(toast)}
-            className="pointer-events-auto cursor-pointer flex flex-col bg-bg-secondary/90 backdrop-blur-xl border border-border/60 shadow-xl rounded-2xl p-4 overflow-hidden group"
+            className="pointer-events-auto cursor-pointer relative flex items-start gap-3.5 bg-bg-secondary/95 backdrop-blur-2xl border border-border/40 shadow-2xl rounded-[20px] p-4 overflow-hidden group"
           >
-            <div className="flex items-start gap-3">
-              {/* Icon / Avatar */}
-              <div className="shrink-0 w-10 h-10 rounded-full bg-bg-primary border border-border flex items-center justify-center overflow-hidden shadow-sm">
+            {/* Glossy Avatar / Icon */}
+            <div className="shrink-0 relative">
+              <div className="w-11 h-11 rounded-full overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.15)] border border-border/30 flex items-center justify-center bg-gradient-to-tr from-bg-primary to-bg-secondary">
                 {toast.sender?.avatar ? (
                   <img src={toast.sender.avatar} alt="Sender" className="w-full h-full object-cover" />
                 ) : (
                   getIconForType(toast.type)
                 )}
               </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex justify-between items-start mb-0.5">
-                  <h4 className="text-sm font-bold text-text-primary truncate pr-2">
-                    {toast.title}
-                  </h4>
-                  <button 
-                    onClick={(e) => removeToast(toast._id, e)}
-                    className="shrink-0 p-1 rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-                <p className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
-                  {toast.message}
-                </p>
-                
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-accent-blue flex items-center gap-1">
-                    {getIconForType(toast.type)}
-                    {toast.type}
-                  </span>
-                  <span className="text-text-secondary/30">•</span>
-                  <span className="text-[10px] font-semibold text-text-secondary">
-                    {formatTimeAgo(toast.createdAt)}
-                  </span>
-                </div>
+              {/* Type indicator badge */}
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-bg-secondary bg-bg-primary flex items-center justify-center shadow-sm">
+                {getIconForType(toast.type)}
               </div>
             </div>
+
+            {/* Content Body */}
+            <div className="flex-1 min-w-0 pt-0.5 flex flex-col justify-center">
+              <div className="flex justify-between items-baseline mb-1">
+                <span className="text-[14px] font-bold text-text-primary tracking-tight truncate pr-4">
+                  {toast.title}
+                </span>
+                <span className="text-[11px] font-semibold text-text-secondary/70 shrink-0">
+                  {formatTimeAgo(toast.createdAt)}
+                </span>
+              </div>
+              <span className="text-[13px] text-text-secondary leading-snug line-clamp-2 pr-2 font-medium">
+                {toast.message}
+              </span>
+            </div>
+
+            {/* Hover Close Button */}
+            <button 
+              onClick={(e) => removeToast(toast._id, e)}
+              className="absolute top-3 right-3 shrink-0 p-1.5 rounded-full bg-border/20 text-text-secondary hover:text-text-primary hover:bg-border/50 transition-all opacity-0 group-hover:opacity-100 backdrop-blur-md"
+            >
+              <X size={12} strokeWidth={3} />
+            </button>
             
-            {/* Unread Indicator Bar */}
+            {/* Subtle Unread Dot instead of large bar */}
             {!toast.read && (
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent-blue rounded-l-2xl"></div>
+              <div className="absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
             )}
           </motion.div>
         ))}

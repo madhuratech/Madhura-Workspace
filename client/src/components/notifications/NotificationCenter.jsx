@@ -79,92 +79,95 @@ const NotificationCenter = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: 15, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-[400px] bg-bg-secondary/95 backdrop-blur-xl border border-border/60 shadow-2xl rounded-2xl overflow-hidden z-50 flex flex-col max-h-[85vh]"
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute right-0 mt-3 w-[420px] bg-bg-secondary/95 backdrop-blur-2xl border border-border/40 shadow-[0_12px_48px_rgba(0,0,0,0.25)] rounded-[24px] overflow-hidden z-50 flex flex-col max-h-[85vh] origin-top-right"
           >
             {/* Header */}
-            <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between bg-bg-primary/50">
-              <h3 className="font-bold text-text-primary text-base">Notifications</h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs font-semibold text-accent-blue hover:text-accent-indigo transition-colors flex items-center gap-1"
-                >
-                  <Check size={14} /> Mark all as read
-                </button>
-              )}
-            </div>
-
-            {/* Tabs */}
-            <div className="flex px-2 border-b border-border/50 bg-bg-primary/20">
-              {['all', 'unread', 'mentions', 'tasks'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-colors border-b-2 ${
-                    activeTab === tab 
-                      ? 'border-accent-blue text-accent-blue' 
-                      : 'border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-secondary/50'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+            <div className="px-5 pt-5 pb-3 flex flex-col gap-3 bg-gradient-to-b from-bg-primary/80 to-transparent">
+              <div className="flex items-center justify-between">
+                <h3 className="font-extrabold text-text-primary text-[19px] tracking-tight">Notifications</h3>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[12px] font-bold text-accent-blue hover:text-accent-indigo hover:bg-accent-blue/10 px-2.5 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+                  >
+                    <Check size={14} strokeWidth={3} /> Mark all read
+                  </button>
+                )}
+              </div>
+              
+              {/* iOS style Segmented Control Tabs */}
+              <div className="flex p-1 bg-border/20 rounded-xl">
+                {['all', 'unread', 'mentions', 'tasks'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 py-1.5 text-[12px] font-bold tracking-wide rounded-lg transition-all duration-200 ${
+                      activeTab === tab 
+                        ? 'bg-bg-secondary text-text-primary shadow-sm' 
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    <span className="capitalize">{tab}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar bg-bg-secondary">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-2">
               {filteredNotifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                  <div className="w-16 h-16 bg-bg-primary rounded-full flex items-center justify-center mb-4 border border-border">
-                    <Bell size={24} className="text-text-secondary/50" />
+                <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+                  <div className="w-16 h-16 bg-bg-primary/50 rounded-full flex items-center justify-center mb-5 border border-border/50 shadow-inner">
+                    <Bell size={24} className="text-text-secondary/40" />
                   </div>
-                  <p className="text-sm font-bold text-text-primary mb-1">You're all caught up!</p>
-                  <p className="text-xs text-text-secondary">No {activeTab !== 'all' ? activeTab : ''} notifications to show.</p>
+                  <p className="text-[15px] font-bold text-text-primary mb-1 tracking-tight">You're all caught up!</p>
+                  <p className="text-[13px] text-text-secondary font-medium">No {activeTab !== 'all' ? activeTab : ''} notifications to show.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-border/30">
+                <div className="flex flex-col gap-1 mt-2">
                   {filteredNotifications.map((notif) => (
                     <div
                       key={notif._id}
                       onClick={() => handleNotificationClick(notif)}
-                      className={`relative p-4 flex gap-4 cursor-pointer transition-colors hover:bg-bg-primary/50 group ${!notif.read ? 'bg-accent-blue/5' : ''}`}
+                      className={`relative p-3.5 flex items-start gap-3.5 cursor-pointer transition-all duration-200 hover:bg-bg-primary/60 rounded-xl group ${!notif.read ? 'bg-accent-blue/[0.04]' : ''}`}
                     >
-                      {/* Unread Indicator */}
-                      {!notif.read && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent-blue"></div>
-                      )}
-
                       {/* Avatar / Icon */}
-                      <div className="shrink-0 w-10 h-10 rounded-full bg-bg-primary border border-border flex items-center justify-center overflow-hidden shadow-sm self-start">
-                        {notif.sender?.avatar ? (
-                          <img src={notif.sender.avatar} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          getIconForType(notif.type)
+                      <div className="shrink-0 relative">
+                        <div className="w-11 h-11 rounded-full overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.1)] border border-border/40 flex items-center justify-center bg-gradient-to-tr from-bg-primary to-bg-secondary">
+                          {notif.sender?.avatar ? (
+                            <img src={notif.sender.avatar} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            getIconForType(notif.type)
+                          )}
+                        </div>
+                        {/* Unread subtle dot instead of left bar */}
+                        {!notif.read && (
+                          <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-bg-secondary bg-accent-blue"></div>
                         )}
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-text-primary mb-1 leading-snug">
-                          <span className="font-bold mr-1">{notif.title}</span>
-                          <span className="text-text-secondary">{notif.message}</span>
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-accent-blue uppercase tracking-wider flex items-center gap-1">
-                            {getIconForType(notif.type)} {notif.type}
+                      <div className="flex-1 min-w-0 pt-0.5 flex flex-col justify-center">
+                        <div className="flex justify-between items-baseline mb-0.5">
+                          <span className="text-[14px] font-bold text-text-primary tracking-tight truncate pr-3">
+                            {notif.title}
                           </span>
-                          <span className="text-text-secondary/30">•</span>
-                          <span className="text-[11px] font-medium text-text-secondary">{formatTimeAgo(notif.createdAt)}</span>
+                          <span className="text-[11px] font-semibold text-text-secondary/70 shrink-0">
+                            {formatTimeAgo(notif.createdAt)}
+                          </span>
                         </div>
+                        <span className="text-[13px] text-text-secondary leading-snug line-clamp-2 pr-4 font-medium">
+                          {notif.message}
+                        </span>
                       </div>
 
-                      {/* Hover action (optional) */}
-                      <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-text-secondary self-center">
-                        <ChevronRight size={16} />
+                      {/* Hover action */}
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-text-secondary/50 bg-bg-secondary w-8 h-8 rounded-full border border-border/50 shadow-sm">
+                        <ChevronRight size={16} strokeWidth={2.5} />
                       </div>
                     </div>
                   ))}
@@ -173,10 +176,10 @@ const NotificationCenter = () => {
             </div>
             
             {/* Footer */}
-            <div className="p-3 border-t border-border/50 bg-bg-primary/80 text-center">
+            <div className="p-3 border-t border-border/30 bg-bg-primary/40 text-center">
               <button 
                 onClick={() => { navigate('/activity-logs'); setIsOpen(false); }}
-                className="text-xs font-bold text-text-secondary hover:text-text-primary transition-colors"
+                className="text-[12px] font-bold text-text-secondary hover:text-text-primary transition-colors py-1 px-4 rounded-full hover:bg-bg-secondary"
               >
                 View Activity Logs →
               </button>

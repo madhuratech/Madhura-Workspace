@@ -88,7 +88,7 @@ export const NotificationProvider = ({ children }) => {
         }
       }
 
-      if (document.visibilityState === 'visible') {
+      if (document.hasFocus() && document.visibilityState === 'visible') {
         // In-app toast will be rendered via a global toast component listening to this context or state
         // We can dispatch a custom event for the Framer Motion toast manager to pick up
         window.dispatchEvent(new CustomEvent('in_app_notification', { detail: notification }));
@@ -100,8 +100,64 @@ export const NotificationProvider = ({ children }) => {
 
     socket.on('new_notification', handleNewNotification);
 
+    const handleNewMessage = (msg) => {
+      // Don't notify if we sent it
+      if (msg.sender && (msg.sender._id === user._id || msg.sender === user._id)) return;
+      
+      const settings = user.notificationSettings || {};
+      if (settings.messages === false || settings.muteAll === true) return;
+      
+      const shouldPlaySound = settings.notificationSounds !== false && settings.muteAll !== true;
+      const shouldShowDesktop = settings.desktopNotifications !== false && settings.muteAll !== true;
+      
+      const storageKey = `notif_processed_msg_${msg._id}`;
+      if (localStorage.getItem(storageKey)) return;
+      localStorage.setItem(storageKey, Date.now().toString());
+      setTimeout(() => localStorage.removeItem(storageKey), 10000);
+      
+      if (channelRef.current) {
+         channelRef.current.postMessage({ type: 'HANDLED', id: `msg_${msg._id}` });
+      }
+      
+      if (shouldPlaySound) {
+        try {
+          const audio = new Audio('/notification-sound.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(e => console.warn('Audio play blocked:', e));
+        } catch (e) {}
+      }
+
+      const isDM = !!msg.dm;
+      
+      // If it's a channel message, we already get 'new_notification' from the backend.
+      // So we only want to trigger the ephemeral toast for DMs to avoid double notifications.
+      if (!isDM) return;
+
+      const title = `New message from ${msg.sender?.name || 'User'}`;
+      const messageStr = msg.text || 'Sent an attachment';
+
+      const ephemeralNotif = {
+        _id: `msg_${msg._id}`,
+        title: title,
+        message: messageStr,
+        type: 'message',
+        link: '/chat',
+        sender: msg.sender, 
+        createdAt: new Date().toISOString()
+      };
+
+      if (document.hasFocus() && document.visibilityState === 'visible') {
+        window.dispatchEvent(new CustomEvent('in_app_notification', { detail: ephemeralNotif }));
+      } else if (shouldShowDesktop) {
+        triggerServiceWorkerNotification(ephemeralNotif);
+      }
+    };
+
+    socket.on('new_message', handleNewMessage);
+
     return () => {
       socket.off('new_notification', handleNewNotification);
+      socket.off('new_message', handleNewMessage);
     };
   }, [socket, user]);
 
