@@ -36,9 +36,18 @@ const Settings = () => {
   // Notifications Tab
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
-    pushNotifications: true,
-    taskReminders: true
+    desktopNotifications: true,
+    notificationSounds: true,
+    muteAll: false,
+    mentions: true,
+    messages: true,
+    taskAssignments: true,
+    taskReminders: true,
+    leaveUpdates: true,
+    announcements: true,
+    meetings: true
   });
+  const [browserPermission, setBrowserPermission] = useState(Notification.permission);
 
   // Custom UI States
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -135,6 +144,22 @@ const Settings = () => {
 
   const handleNotificationChange = (key) => {
     setNotificationSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleRequestPermission = async () => {
+    if (!('Notification' in window)) {
+      showToast('Browser does not support notifications.', 'error');
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setBrowserPermission(permission);
+    if (permission === 'granted') {
+      showToast('Desktop notifications enabled!', 'success');
+      setNotificationSettings(prev => ({ ...prev, desktopNotifications: true }));
+    } else {
+      showToast('Desktop notifications denied.', 'error');
+      setNotificationSettings(prev => ({ ...prev, desktopNotifications: false }));
+    }
   };
 
   const handleResetPassword = (userId) => {
@@ -443,45 +468,95 @@ const Settings = () => {
               <h2 className="text-xl font-bold text-text-primary mb-2">Notification Settings</h2>
               <p className="text-sm text-text-secondary mb-6">Choose how you want to be notified about activity.</p>
               
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-bg-primary border border-border rounded-lg">
+              {browserPermission !== 'granted' && (
+                <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-xl p-5 mb-8 flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-text-primary text-sm">Email Notifications</h4>
-                    <p className="text-xs text-text-secondary mt-0.5">Receive daily digests and urgent alerts via email.</p>
+                    <h3 className="font-bold text-accent-blue text-sm">Enable desktop notifications</h3>
+                    <p className="text-xs text-accent-blue/80 mt-1">Stay updated with messages and important activity even when you're working in another tab.</p>
                   </div>
                   <button 
-                    onClick={() => handleNotificationChange('emailNotifications')}
-                    className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${notificationSettings.emailNotifications ? 'bg-accent-blue' : 'bg-border'}`}
+                    onClick={handleRequestPermission}
+                    className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-xs font-bold shrink-0"
                   >
-                    <div className={`w-4 h-4 rounded-full bg-white absolute transition-transform ${notificationSettings.emailNotifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                    Enable Notifications
                   </button>
+                </div>
+              )}
+
+              <div className="space-y-6">
+                
+                {/* Global Settings */}
+                <div>
+                  <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Global</h3>
+                  <div className="bg-bg-primary border border-border rounded-xl divide-y divide-border/50">
+                    <div className="flex items-center justify-between p-4">
+                      <div>
+                        <h4 className="font-medium text-text-primary text-sm">Desktop Notifications</h4>
+                        <p className="text-xs text-text-secondary mt-0.5">Show notifications via your operating system.</p>
+                      </div>
+                      <button 
+                        onClick={() => handleNotificationChange('desktopNotifications')}
+                        className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${notificationSettings.desktopNotifications ? 'bg-accent-blue' : 'bg-border'}`}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white absolute transition-transform ${notificationSettings.desktopNotifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between p-4">
+                      <div>
+                        <h4 className="font-medium text-text-primary text-sm">Notification Sounds</h4>
+                        <p className="text-xs text-text-secondary mt-0.5">Play a subtle sound for incoming notifications.</p>
+                      </div>
+                      <button 
+                        onClick={() => handleNotificationChange('notificationSounds')}
+                        className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${notificationSettings.notificationSounds ? 'bg-accent-blue' : 'bg-border'}`}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white absolute transition-transform ${notificationSettings.notificationSounds ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between p-4">
+                      <div>
+                        <h4 className="font-medium text-danger text-sm">Mute All Notifications (Do Not Disturb)</h4>
+                        <p className="text-xs text-text-secondary mt-0.5">Temporarily silence all alerts and sounds.</p>
+                      </div>
+                      <button 
+                        onClick={() => handleNotificationChange('muteAll')}
+                        className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${notificationSettings.muteAll ? 'bg-danger' : 'bg-border'}`}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white absolute transition-transform ${notificationSettings.muteAll ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-bg-primary border border-border rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-text-primary text-sm">Push Notifications</h4>
-                    <p className="text-xs text-text-secondary mt-0.5">Receive real-time toast alerts while active in the app.</p>
+                {/* Event Types */}
+                <div>
+                  <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Notify me about</h3>
+                  <div className="bg-bg-primary border border-border rounded-xl divide-y divide-border/50">
+                    {[
+                      { key: 'mentions', label: 'Mentions', desc: 'When someone @mentions you in a chat or task.' },
+                      { key: 'messages', label: 'Messages', desc: 'Direct messages and group chats.' },
+                      { key: 'taskAssignments', label: 'Task Assignments', desc: 'When you are assigned a new task.' },
+                      { key: 'taskReminders', label: 'Task Reminders', desc: 'Approaching deadlines and overdue tasks.' },
+                      { key: 'leaveUpdates', label: 'Leave Updates', desc: 'Leave request approvals and rejections.' },
+                      { key: 'announcements', label: 'Announcements', desc: 'New posts on the notice board.' },
+                      { key: 'meetings', label: 'Meeting Reminders', desc: 'Approaching scheduled meetings.' }
+                    ].map(item => (
+                      <div key={item.key} className="flex items-center justify-between p-4">
+                        <div>
+                          <h4 className="font-medium text-text-primary text-sm">{item.label}</h4>
+                          <p className="text-xs text-text-secondary mt-0.5">{item.desc}</p>
+                        </div>
+                        <button 
+                          onClick={() => handleNotificationChange(item.key)}
+                          className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${notificationSettings[item.key] ? 'bg-accent-blue' : 'bg-border'}`}
+                        >
+                          <div className={`w-4 h-4 rounded-full bg-white absolute transition-transform ${notificationSettings[item.key] ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <button 
-                    onClick={() => handleNotificationChange('pushNotifications')}
-                    className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${notificationSettings.pushNotifications ? 'bg-accent-blue' : 'bg-border'}`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white absolute transition-transform ${notificationSettings.pushNotifications ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                  </button>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-bg-primary border border-border rounded-lg">
-                  <div>
-                    <h4 className="font-medium text-text-primary text-sm">Task Reminders</h4>
-                    <p className="text-xs text-text-secondary mt-0.5">Get reminded about approaching deadlines.</p>
-                  </div>
-                  <button 
-                    onClick={() => handleNotificationChange('taskReminders')}
-                    className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${notificationSettings.taskReminders ? 'bg-accent-blue' : 'bg-border'}`}
-                  >
-                    <div className={`w-4 h-4 rounded-full bg-white absolute transition-transform ${notificationSettings.taskReminders ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                  </button>
-                </div>
               </div>
             </div>
           )}

@@ -64,8 +64,16 @@ const UserSchema = new mongoose.Schema({
   },
   notificationSettings: {
     emailNotifications: { type: Boolean, default: true },
-    pushNotifications: { type: Boolean, default: true },
-    taskReminders: { type: Boolean, default: true }
+    desktopNotifications: { type: Boolean, default: true },
+    notificationSounds: { type: Boolean, default: true },
+    muteAll: { type: Boolean, default: false },
+    mentions: { type: Boolean, default: true },
+    messages: { type: Boolean, default: true },
+    taskAssignments: { type: Boolean, default: true },
+    taskReminders: { type: Boolean, default: true },
+    leaveUpdates: { type: Boolean, default: true },
+    announcements: { type: Boolean, default: true },
+    meetings: { type: Boolean, default: true }
   }
 }, { timestamps: true });
 

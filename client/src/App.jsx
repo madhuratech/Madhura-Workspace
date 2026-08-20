@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useContext, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { NotificationProvider } from './context/NotificationContext';
 import SplashScreen from './components/AnimatedLoader';
 
 // Layout
@@ -56,12 +57,25 @@ function App() {
     return false;
   });
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+  }, []);
+
   return (
     <ToastProvider>
-      {/* Splash screen sits on top; removed after fade completes */}
-      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+      <NotificationProvider>
+        {/* Splash screen sits on top; removed after fade completes */}
+        {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
 
-      <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -92,6 +106,7 @@ function App() {
             </Route>
         </Routes>
       </Suspense>
+      </NotificationProvider>
     </ToastProvider>
   );
 }

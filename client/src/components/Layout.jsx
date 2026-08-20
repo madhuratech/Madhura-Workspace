@@ -6,9 +6,11 @@ import { ThemeContext } from '../context/ThemeContext';
 import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2 } from 'lucide-react';
 import GlobalQuickNotes from './GlobalQuickNotes';
 import Avatar from './Avatar';
+import NotificationCenter from './notifications/NotificationCenter';
+import NotificationToast from './notifications/NotificationToast';
 
 const Layout = () => {
-  const { user, logout, notifications, unreadCount, markAsRead, markAllAsRead, deleteAllNotifications, socket, updateUserStatus } = useContext(AuthContext);
+  const { user, logout, socket, updateUserStatus } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -108,8 +110,6 @@ const Layout = () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToastNotif(null), 4000);
   };
-
-
 
   React.useEffect(() => {
     if (socket && user) {
@@ -274,6 +274,9 @@ const Layout = () => {
   return (
     <div className="flex flex-col h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
       
+      {/* Render the Framer Motion notification toasts globally */}
+      <NotificationToast />
+
       {/* Global Top Bar */}
       <header className="h-14 bg-bg-sidebar border-b border-border flex items-center justify-between px-4 z-40 shrink-0 text-white shadow-md relative">
         {/* Mobile Hamburger */}
@@ -392,80 +395,7 @@ const Layout = () => {
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           
-          <div className="relative" ref={notificationRef}>
-            <button 
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white relative"
-            >
-              <Bell size={18} />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 h-2 w-2 bg-danger rounded-full border-2 border-bg-sidebar"></span>
-              )}
-            </button>
-
-            {/* Notification Dropdown */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-3 w-80 bg-bg-secondary border border-border rounded-xl shadow-2xl z-50 flex flex-col max-h-[400px]">
-                <div className="p-3 border-b border-border flex justify-between items-center bg-bg-secondary rounded-t-xl shrink-0">
-                  <h3 className="font-bold text-text-primary text-sm">Notifications</h3>
-                  <div className="flex space-x-3">
-                    {unreadCount > 0 && (
-                      <button 
-                        onClick={markAllAsRead}
-                        className="text-[10px] text-accent-blue font-semibold hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                    {notifications.length > 0 && (
-                      <button 
-                        onClick={deleteAllNotifications}
-                        className="text-[10px] text-danger font-semibold hover:underline"
-                      >
-                        Clear all
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar bg-bg-secondary rounded-b-xl">
-                  {notifications.length === 0 ? (
-                    <div className="p-4 text-center text-text-secondary text-sm">
-                      No notifications yet.
-                    </div>
-                  ) : (
-                    notifications.map(notif => (
-                      <div 
-                        key={notif._id} 
-                        className={`p-3 rounded-lg text-left transition-colors flex items-start space-x-3 relative group ${
-                          notif.read ? 'bg-transparent hover:bg-bg-primary' : 'bg-accent-blue/5 border border-accent-blue/10 hover:bg-accent-blue/10'
-                        }`}
-                      >
-                        <div className={`mt-0.5 h-2 w-2 rounded-full shrink-0 ${notif.read ? 'bg-transparent' : 'bg-accent-blue'}`}></div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${notif.read ? 'text-text-primary' : 'text-text-primary font-bold'}`}>{notif.title}</p>
-                          <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{notif.message}</p>
-                          <p className="text-[10px] text-text-secondary mt-1 opacity-70">
-                            {new Date(notif.createdAt).toLocaleDateString()} {new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </p>
-                        </div>
-                        {!notif.read && (
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              markAsRead(notif._id);
-                            }}
-                            className="text-xs text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity hover:text-accent-blue absolute right-2 top-2 bg-bg-secondary px-2 rounded-md shadow-sm"
-                          >
-                            Read
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          <NotificationCenter />
 
           <div className="relative" ref={profileRef}>
             {/* Avatar trigger button */}

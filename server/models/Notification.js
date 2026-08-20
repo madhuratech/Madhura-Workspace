@@ -29,6 +29,18 @@ const NotificationSchema = new mongoose.Schema({
   read: {
     type: Boolean,
     default: false
+  },
+  readAt: {
+    type: Date
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'normal', 'high', 'urgent'],
+    default: 'normal'
+  },
+  target: {
+    type: { type: String }, // e.g. 'chat', 'task', 'leave'
+    id: { type: String }    // corresponding ID
   }
 }, { timestamps: true });
 
