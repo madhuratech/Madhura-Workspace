@@ -32,6 +32,7 @@ const Notes = lazy(() => import('./pages/Notes'));
 const UserProfile = lazy(() => import('./pages/UserProfile'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
@@ -79,6 +80,7 @@ function App() {
 
         <Suspense fallback={<PageLoader />}>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -86,7 +88,6 @@ function App() {
           
           {/* Protected Routes wrapped in Layout (Sidebar + Navbar) */}
             <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tl-dashboard" element={<TeamLeaderDashboard />} />
               <Route path="/projects" element={<Projects />} />
