@@ -272,7 +272,7 @@ const Layout = () => {
   ].filter(item => !(item.hideFor && item.hideFor.includes(user?.role)));
 
   return (
-    <div className="flex flex-col h-screen bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
+    <div className="flex flex-col h-[100dvh] bg-bg-primary overflow-hidden font-sans text-text-primary transition-colors duration-300">
       
       {/* Render the Framer Motion notification toasts globally */}
       <NotificationToast />
@@ -735,7 +735,7 @@ const Layout = () => {
         </aside>
 
         {/* Page Content — All pages full screen flush */}
-        <main className={`flex-1 overflow-hidden relative flex flex-col transition-all pb-[env(safe-area-inset-bottom)] md:pb-0 mb-14 md:mb-0 ${
+        <main className={`flex-1 overflow-hidden relative flex flex-col transition-all pb-[env(safe-area-inset-bottom)] md:pb-0 mb-[calc(3.5rem+env(safe-area-inset-bottom))] md:mb-0 ${
           ['/chat', '/attendance', '/meetings', '/tickets', '/projects', '/my-tasks'].some(p => location.pathname.startsWith(p))
             ? 'bg-bg-secondary'
             : 'bg-bg-primary'

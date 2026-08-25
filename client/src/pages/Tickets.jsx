@@ -140,7 +140,7 @@ const Tickets = () => {
       <div className="flex-1 flex overflow-hidden">
         
         {/* Left Sidebar - Ticket List */}
-        <div className="w-80 flex-shrink-0 border-r border-gray-200 bg-gray-50/30 flex flex-col">
+        <div className={`${selectedTicket ? 'hidden md:flex' : 'flex'} w-full md:w-80 flex-shrink-0 border-r border-gray-200 bg-gray-50/30 flex-col`}>
           <div className="p-4 border-b border-gray-200">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -188,17 +188,22 @@ const Tickets = () => {
         </div>
 
         {/* Right Area - Chat/Details View */}
-        <div className="flex-1 flex flex-col bg-white overflow-hidden relative">
+        <div className={`${!selectedTicket ? 'hidden md:flex' : 'flex'} flex-1 flex-col bg-white overflow-hidden relative`}>
           {selectedTicket ? (
             <>
               {/* Chat Header */}
-              <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white shadow-sm z-10">
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900 leading-tight">{selectedTicket.title}</h2>
-                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                    <span className="flex items-center gap-1"><Info size={14}/> {selectedTicket.department}</span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">Created by <span className="font-semibold text-gray-700">{selectedTicket.createdBy?.name || 'Unknown'}</span></span>
+              <div className="flex-shrink-0 px-4 md:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:justify-between sm:items-start sm:items-center bg-white shadow-sm z-10 gap-3">
+                <div className="flex items-start sm:items-center gap-3">
+                  <button className="md:hidden mt-0.5 sm:mt-0 p-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition-colors shrink-0" onClick={() => setSelectedTicket(null)}>
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 leading-tight pr-4">{selectedTicket.title}</h2>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mt-1">
+                      <span className="flex items-center gap-1 shrink-0"><Info size={14}/> {selectedTicket.department}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="flex items-center gap-1 shrink-0">Created by <span className="font-semibold text-gray-700">{selectedTicket.createdBy?.name || 'Unknown'}</span></span>
+                    </div>
                   </div>
                 </div>
                 

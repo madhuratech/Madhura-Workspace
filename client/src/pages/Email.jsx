@@ -174,9 +174,9 @@ const Email = () => {
         <h1 className="text-2xl font-bold text-text-primary">Email</h1>
       </div>
 
-      <div className="flex-1 flex gap-6 overflow-hidden">
+      <div className="flex-1 flex gap-0 md:gap-6 overflow-hidden">
         {/* Sidebar */}
-        <div className="w-64 flex flex-col shrink-0">
+        <div className={`${viewingEmail || isComposing ? 'hidden md:flex' : 'flex'} w-full md:w-64 flex-col shrink-0`}>
           <button 
             onClick={() => setIsComposing(true)}
             className="w-full bg-accent-blue hover:bg-green-600 text-white py-3 rounded-lg flex items-center justify-center font-medium transition-colors mb-6 shadow-sm"
@@ -254,11 +254,16 @@ const Email = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 bg-bg-secondary border border-border rounded-xl flex flex-col overflow-hidden shadow-sm">
+        <div className={`${!viewingEmail && !isComposing ? 'hidden md:flex' : 'flex'} flex-1 bg-bg-secondary border border-border rounded-xl flex-col overflow-hidden shadow-sm`}>
           {isComposing ? (
             // Compose View
             <div className="flex-1 flex flex-col p-6 overflow-y-auto custom-scrollbar">
-              <h2 className="text-lg font-bold text-text-primary mb-6">New Message</h2>
+              <div className="flex items-center gap-3 mb-6">
+                <button className="md:hidden p-1.5 bg-bg-primary hover:bg-black/5 rounded-lg text-text-primary border border-border" onClick={() => setIsComposing(false)}>
+                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </button>
+                <h2 className="text-lg font-bold text-text-primary">New Message</h2>
+              </div>
               
               <div className="flex gap-4 mb-4">
                 <div className="flex-1">
