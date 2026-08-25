@@ -270,7 +270,7 @@ const Projects = () => {
 
       <div className="bg-bg-secondary border border-border rounded-2xl flex-1 flex flex-col overflow-hidden shadow-soft">
         {/* Search & Filters */}
-        <div className="p-5 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-bg-primary/50">
+        <div className="p-4 md:p-5 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-bg-secondary z-10 shadow-sm shrink-0">
           <div className="flex-1">
             {['super_admin', 'hr'].includes(user?.role) && (
               <div className="flex items-center gap-2 pt-1 pb-2 px-1 overflow-x-auto no-scrollbar whitespace-nowrap">

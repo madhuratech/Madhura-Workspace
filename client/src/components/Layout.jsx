@@ -740,7 +740,7 @@ const Layout = () => {
             ? 'bg-bg-secondary'
             : 'bg-bg-primary'
         }`}>
-          {['/chat', '/attendance', '/meetings', '/tickets', '/projects', '/my-tasks'].some(p => location.pathname.startsWith(p)) ? (
+          {['/chat', '/attendance', '/meetings', '/tickets', '/projects', '/my-tasks', '/email'].some(p => location.pathname.startsWith(p)) ? (
             <div className="flex-1 overflow-hidden h-full flex flex-col">
               <Outlet />
             </div>

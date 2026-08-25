@@ -15,6 +15,7 @@ const Email = () => {
   const [selectedEmails, setSelectedEmails] = useState([]);
   const [authRequired, setAuthRequired] = useState(false);
   const [viewingEmail, setViewingEmail] = useState(null);
+  const [showMobileFolders, setShowMobileFolders] = useState(false);
 
   useEffect(() => {
     fetchWorkspace();
@@ -169,14 +170,14 @@ const Email = () => {
   if (!workspace) return <div className="p-8">Loading workspace...</div>;
 
   return (
-    <div className="absolute inset-6 flex flex-col font-sans bg-bg-primary">
-      <div className="mb-6 flex justify-between items-center shrink-0">
+    <div className="h-full flex flex-col font-sans bg-bg-primary p-4 md:p-6">
+      <div className="mb-4 md:mb-6 flex justify-between items-center shrink-0">
         <h1 className="text-2xl font-bold text-text-primary">Email</h1>
       </div>
 
       <div className="flex-1 flex gap-0 md:gap-6 overflow-hidden">
         {/* Sidebar */}
-        <div className={`${viewingEmail || isComposing ? 'hidden md:flex' : 'flex'} w-full md:w-64 flex-col shrink-0`}>
+        <div className={`${!showMobileFolders ? 'hidden md:flex' : 'flex'} w-full md:w-64 flex-col shrink-0`}>
           <button 
             onClick={() => setIsComposing(true)}
             className="w-full bg-accent-blue hover:bg-green-600 text-white py-3 rounded-lg flex items-center justify-center font-medium transition-colors mb-6 shadow-sm"
@@ -194,7 +195,7 @@ const Email = () => {
                 {folders.map(folder => (
                   <li key={folder.id}>
                     <button 
-                      onClick={() => { setActiveFolder(folder.id); setIsComposing(false); setViewingEmail(null); }}
+                      onClick={() => { setActiveFolder(folder.id); setIsComposing(false); setViewingEmail(null); setShowMobileFolders(false); }}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing && !viewingEmail ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
                     >
                       <div className="flex items-center">
@@ -219,7 +220,7 @@ const Email = () => {
                 {others.map(folder => (
                   <li key={folder.id}>
                     <button 
-                      onClick={() => { setActiveFolder(folder.id); setIsComposing(false); }}
+                      onClick={() => { setActiveFolder(folder.id); setIsComposing(false); setViewingEmail(null); setShowMobileFolders(false); }}
                       className={`w-full flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${activeFolder === folder.id && !isComposing ? 'bg-accent-blue/10 text-accent-blue font-medium' : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'}`}
                     >
                       <span className="mr-3 opacity-80">{folder.icon}</span>
@@ -254,15 +255,17 @@ const Email = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className={`${!viewingEmail && !isComposing ? 'hidden md:flex' : 'flex'} flex-1 bg-bg-secondary border border-border rounded-xl flex-col overflow-hidden shadow-sm`}>
+        <div className={`${showMobileFolders ? 'hidden md:flex' : 'flex'} flex-1 bg-bg-secondary border border-border rounded-xl flex-col overflow-hidden shadow-sm`}>
           {isComposing ? (
             // Compose View
             <div className="flex-1 flex flex-col p-6 overflow-y-auto custom-scrollbar">
-              <div className="flex items-center gap-3 mb-6">
-                <button className="md:hidden p-1.5 bg-bg-primary hover:bg-black/5 rounded-lg text-text-primary border border-border" onClick={() => setIsComposing(false)}>
-                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
+              <div className="p-4 border-b border-border flex items-center justify-between bg-bg-secondary shrink-0">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => setIsComposing(false)} className="p-1.5 hover:bg-bg-primary rounded-lg transition-colors text-text-primary border border-border">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
                 <h2 className="text-lg font-bold text-text-primary">New Message</h2>
+              </div>
               </div>
               
               <div className="flex gap-4 mb-4">
@@ -348,9 +351,10 @@ const Email = () => {
             // Email List View
             <div className="flex-1 flex flex-col min-h-0">
               {/* Toolbar */}
-              <div className="p-4 border-b border-border flex items-center justify-between bg-bg-secondary">
+              <div className="p-3 md:p-4 border-b border-border flex items-center justify-between bg-bg-secondary shrink-0">
                 <div className="flex items-center gap-2 text-text-secondary">
-                  <div className="w-10 flex justify-center">
+                  <button onClick={() => setShowMobileFolders(true)} className="md:hidden p-1.5 hover:bg-bg-primary hover:text-text-primary rounded-lg transition-colors border border-border mr-1"><Menu size={16} /></button>
+                  <div className="w-8 flex justify-center">
                     <input 
                       type="checkbox" 
                       className="accent-accent-blue"
@@ -366,12 +370,12 @@ const Email = () => {
                   <button className="p-1.5 hover:bg-bg-primary hover:text-text-primary rounded-lg transition-colors border border-transparent hover:border-border"><MoreVertical size={16} /></button>
                 </div>
                 
-                <div className="relative">
+                <div className="relative flex-1 md:flex-none max-w-[200px] md:max-w-xs ml-2">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
                   <input 
                     type="text" 
                     placeholder="Search" 
-                    className="pl-9 pr-4 py-1.5 bg-bg-primary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent-blue w-64"
+                    className="pl-9 pr-4 py-1.5 bg-bg-primary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-accent-blue w-full"
                   />
                 </div>
               </div>

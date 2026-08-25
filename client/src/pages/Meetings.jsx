@@ -499,44 +499,46 @@ const Meetings = () => {
 
           {/* MEETING LOGS */}
           {view==='logs'&&(
-            <div style={{flex:1,overflow:'auto',padding:24,background:'var(--bg-primary)'}}>
-              <div style={{background:'var(--bg-secondary)',border:'1px solid var(--border-color)',borderRadius:12,overflow:'hidden'}}>
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead>
-                    <tr style={{background:'var(--bg-primary)'}}>
-                      {['Date & Time','Title','Type','Participants'].map(h=>(
-                        <th key={h} style={{padding:'12px 16px',textAlign:'left',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--text-secondary)',borderBottom:'1px solid var(--border-color)'}}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {meetings.length===0
-                      ?<tr><td colSpan={4} style={{padding:'40px',textAlign:'center',color:'var(--text-secondary)'}}>No meetings scheduled yet.</td></tr>
-                      :[...meetings].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m=>(
-                        <tr key={m._id} style={{borderBottom:'1px solid var(--border-color)',transition:'background 0.1s'}}
-                          onMouseEnter={e=>e.currentTarget.style.background='var(--bg-primary)'}
-                          onMouseLeave={e=>e.currentTarget.style.background='transparent'}
-                        >
-                          <td style={{padding:'12px 16px',fontSize:13,color:'var(--text-secondary)'}}>
-                            {new Date(m.date).toLocaleDateString()}
-                            {m.time&&<span style={{color:'var(--text-primary)',marginLeft:8,fontWeight:600}}>{m.time}</span>}
-                          </td>
-                          <td style={{padding:'12px 16px',fontWeight:600,fontSize:14,color:'var(--text-primary)'}}>{m.title}</td>
-                          <td style={{padding:'12px 16px'}}>
-                            {m.type==='google_meet'
-                              ?<div style={{display:'flex',alignItems:'center',gap:6,color:'#4770C6',fontSize:13}}>
-                                  <Video size={13}/> Online
-                                  {m.link&&<a href={m.link} target="_blank" rel="noopener noreferrer" style={{marginLeft:8,fontSize:11,padding:'3px 10px',borderRadius:4,background:T_PRIMARY,color:'var(--accent-text)',textDecoration:'none'}}>Join</a>}
-                                </div>
-                              :<div style={{display:'flex',alignItems:'center',gap:6,color:'var(--text-secondary)',fontSize:13}}><UsersIcon size={13}/> In Person</div>
-                            }
-                          </td>
-                          <td style={{padding:'12px 16px',fontSize:13,color:'var(--text-secondary)'}}>{m.participants?.length||0} members</td>
-                        </tr>
-                      ))
-                    }
-                  </tbody>
-                </table>
+            <div className="flex-1 overflow-auto p-4 md:p-6 bg-bg-primary">
+              <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table style={{width:'100%',borderCollapse:'collapse',minWidth:'600px'}}>
+                    <thead>
+                      <tr style={{background:'var(--bg-primary)'}}>
+                        {['Date & Time','Title','Type','Participants'].map(h=>(
+                          <th key={h} style={{padding:'12px 16px',textAlign:'left',fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.05em',color:'var(--text-secondary)',borderBottom:'1px solid var(--border-color)'}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {meetings.length===0
+                        ?<tr><td colSpan={4} style={{padding:'40px',textAlign:'center',color:'var(--text-secondary)'}}>No meetings scheduled yet.</td></tr>
+                        :[...meetings].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(m=>(
+                          <tr key={m._id} style={{borderBottom:'1px solid var(--border-color)',transition:'background 0.1s'}}
+                            onMouseEnter={e=>e.currentTarget.style.background='var(--bg-primary)'}
+                            onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                          >
+                            <td style={{padding:'12px 16px',fontSize:13,color:'var(--text-secondary)'}}>
+                              {new Date(m.date).toLocaleDateString()}
+                              {m.time&&<span style={{color:'var(--text-primary)',marginLeft:8,fontWeight:600}}>{m.time}</span>}
+                            </td>
+                            <td style={{padding:'12px 16px',fontWeight:600,fontSize:14,color:'var(--text-primary)'}}>{m.title}</td>
+                            <td style={{padding:'12px 16px'}}>
+                              {m.type==='google_meet'
+                                ?<div style={{display:'flex',alignItems:'center',gap:6,color:'#4770C6',fontSize:13}}>
+                                    <Video size={13}/> Online
+                                    {m.link&&<a href={m.link} target="_blank" rel="noopener noreferrer" style={{marginLeft:8,fontSize:11,padding:'3px 10px',borderRadius:4,background:T_PRIMARY,color:'var(--accent-text)',textDecoration:'none'}}>Join</a>}
+                                  </div>
+                                :<div style={{display:'flex',alignItems:'center',gap:6,color:'var(--text-secondary)',fontSize:13}}><UsersIcon size={13}/> In Person</div>
+                              }
+                            </td>
+                            <td style={{padding:'12px 16px',fontSize:13,color:'var(--text-secondary)'}}>{m.participants?.length||0} members</td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
