@@ -273,7 +273,7 @@ const Projects = () => {
         <div className="p-5 border-b border-border flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-bg-primary/50">
           <div className="flex-1">
             {['super_admin', 'hr'].includes(user?.role) && (
-              <div className="flex flex-wrap items-center gap-2 pt-1 pb-2 px-1">
+              <div className="flex items-center gap-2 pt-1 pb-2 px-1 overflow-x-auto no-scrollbar whitespace-nowrap">
                 {['All', 'Software', 'Website', 'SaaS', 'PaaS', 'Digital Marketing', 'SEO'].map(tab => (
                   <button
                     key={tab}

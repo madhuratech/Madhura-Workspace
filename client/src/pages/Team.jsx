@@ -214,7 +214,7 @@ const Team = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border mb-6">
+      <div className="flex border-b border-border mb-6 overflow-x-auto no-scrollbar whitespace-nowrap">
         <button 
           onClick={() => setActiveTab('members')}
           className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'members' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}

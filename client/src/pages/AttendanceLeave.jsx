@@ -452,7 +452,7 @@ const AttendanceLeave = () => {
           </div>
         </div>
 
-        <div className="flex border-b border-border/60">
+        <div className="flex border-b border-border/60 overflow-x-auto no-scrollbar whitespace-nowrap">
           <button 
             onClick={() => setActiveTab('attendance')}
             className={`px-5 py-2.5 font-bold text-sm transition-colors border-b-2 ${activeTab === 'attendance' ? 'border-accent-blue text-accent-blue bg-accent-blue/5' : 'border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-secondary'}`}

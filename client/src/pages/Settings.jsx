@@ -247,12 +247,12 @@ const Settings = () => {
         </button>
       </div>
 
-      <div className="bg-bg-secondary border border-border rounded-xl flex-1 flex overflow-hidden shadow-sm">
+      <div className="bg-bg-secondary border border-border rounded-xl flex-1 flex flex-col md:flex-row overflow-hidden shadow-sm">
         {/* Settings Sidebar */}
-        <div className="w-64 border-r border-border p-4 space-y-1 bg-bg-primary/30 shrink-0">
+        <div className="w-full md:w-64 border-b md:border-b-0 md:border-r border-border p-2 md:p-4 flex md:flex-col space-x-2 md:space-x-0 space-y-0 md:space-y-1 bg-bg-primary/30 shrink-0 overflow-x-auto no-scrollbar whitespace-nowrap">
           <button 
             onClick={() => setActiveTab('general')}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+            className={`shrink-0 md:w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'general' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
             }`}
           >
@@ -261,7 +261,7 @@ const Settings = () => {
           </button>
           <button 
             onClick={() => setActiveTab('members')}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+            className={`shrink-0 md:w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'members' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
             }`}
           >
@@ -270,7 +270,7 @@ const Settings = () => {
           </button>
           <button 
             onClick={() => setActiveTab('notifications')}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+            className={`shrink-0 md:w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'notifications' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
             }`}
           >
@@ -279,7 +279,7 @@ const Settings = () => {
           </button>
           <button 
             onClick={() => setActiveTab('security')}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+            className={`shrink-0 md:w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'security' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
             }`}
           >
@@ -291,7 +291,7 @@ const Settings = () => {
 
           <button 
             onClick={() => setActiveTab('help')}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+            className={`shrink-0 md:w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'help' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
             }`}
           >
@@ -300,7 +300,7 @@ const Settings = () => {
           </button>
           <button 
             onClick={() => setActiveTab('about')}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
+            className={`shrink-0 md:w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
               activeTab === 'about' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
             }`}
           >
