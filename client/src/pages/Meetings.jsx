@@ -266,23 +266,19 @@ const Meetings = () => {
       {view==='new-meeting'&&(
         <div style={{height:'100%',width:'100%',display:'flex',flexDirection:'column',background:'var(--bg-primary)',overflow:'hidden'}}>
           {/* Header */}
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 20px',background:'var(--bg-secondary)',borderBottom:'1px solid var(--border-color)',flexShrink:0}}>
-            <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:px-5 sm:py-3 bg-bg-secondary border-b border-border shrink-0 gap-3 sm:gap-0">
+            <div className="flex items-center gap-3">
               <div style={{background:T_PRIMARY,borderRadius:6,padding:'5px 6px',display:'flex'}}><CalendarIcon size={17} color="var(--accent-text)"/></div>
-              <span style={{fontWeight:700,fontSize:17,color:'var(--text-primary)'}}>New meeting</span>
-              <div style={{width:1,height:20,background:'var(--border-color)',margin:'0 4px'}}/>
-              <button style={{background:'none',border:'none',color:T_PRIMARY,fontWeight:600,fontSize:14,cursor:'default',borderBottom:`2px solid ${T_PRIMARY}`,paddingBottom:2}}>Details</button>
+              <span className="font-bold text-[17px] text-text-primary">New meeting</span>
+              <div className="w-px h-5 bg-border mx-1 hidden sm:block"/>
+              <button className="bg-transparent border-none text-[var(--accent-color)] font-semibold text-sm cursor-default border-b-2 border-[var(--accent-color)] pb-[2px] hidden sm:block">Details</button>
             </div>
-            <div style={{display:'flex',gap:10}}>
+            <div className="flex gap-2.5 w-full sm:w-auto">
               <button onClick={()=>setView('calendar')}
-                style={{padding:'7px 18px',borderRadius:4,border:'1px solid var(--border-color)',background:'transparent',color:'var(--text-primary)',cursor:'pointer',fontSize:13}}
-                onMouseEnter={e=>e.currentTarget.style.background='var(--bg-secondary)'}
-                onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+                className="flex-1 sm:flex-none py-1.5 px-4 rounded border border-border bg-transparent text-text-primary text-[13px] hover:bg-bg-secondary transition-colors"
               >Discard</button>
               <button onClick={saveMeeting}
-                style={{padding:'7px 24px',borderRadius:4,border:'none',background:T_PRIMARY,color:'var(--accent-text)',cursor:'pointer',fontSize:13,fontWeight:600}}
-                onMouseEnter={e=>e.currentTarget.style.opacity='0.9'}
-                onMouseLeave={e=>e.currentTarget.style.opacity='1'}
+                className="flex-1 sm:flex-none py-1.5 px-6 rounded border-none bg-[var(--accent-color)] text-[var(--accent-text)] text-[13px] font-semibold hover:opacity-90 transition-opacity"
               >Save</button>
             </div>
           </div>
@@ -290,12 +286,12 @@ const Meetings = () => {
           {/* Form body */}
           <div style={{flex:1,overflowY:'auto',background:'var(--bg-primary)'}}>
             {/* Info banner */}
-            <div style={{display:'flex',alignItems:'center',gap:10,margin:'12px 60px',padding:'10px 14px',background:'var(--bg-secondary)',border:'1px solid var(--border-color)',borderRadius:6}}>
-              <Info size={15} color="var(--text-tertiary)"/>
+            <div className="mx-4 md:mx-[60px] my-3 p-3 flex items-center gap-2.5 bg-bg-secondary border border-border rounded-md">
+              <Info size={15} color="var(--text-tertiary)" className="shrink-0" />
               <span style={{fontSize:13,color:'var(--text-secondary)'}}>Meetings are shared in real time with all invited participants across the workspace.</span>
             </div>
 
-            <div style={{padding:'0 60px 40px'}}>
+            <div className="px-4 md:px-[60px] pb-10">
 
               {/* ── Title ── */}
               <div style={{...fieldRow,alignItems:'center',marginBottom:0}}>

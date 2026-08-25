@@ -783,9 +783,9 @@ const Layout = () => {
                 }`}
               >
                 {isActive && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-accent-blue rounded-b-full"></div>
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-white rounded-b-full shadow-[0_0_8px_rgba(255,255,255,0.6)]"></div>
                 )}
-                <div className={`mb-0.5 ${isActive ? 'text-accent-blue scale-110' : ''} transition-transform`}>
+                <div className={`mb-0.5 ${isActive ? 'text-white scale-110 drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]' : ''} transition-transform`}>
                   {React.cloneElement(item.icon, { size: 20 })}
                 </div>
                 <span className="text-[9px] font-medium tracking-wide">{item.label}</span>

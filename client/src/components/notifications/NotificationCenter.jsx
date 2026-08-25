@@ -83,7 +83,7 @@ const NotificationCenter = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.96 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute right-0 mt-3 w-[420px] bg-bg-secondary/95 backdrop-blur-2xl border border-border/40 shadow-[0_12px_48px_rgba(0,0,0,0.25)] rounded-[24px] overflow-hidden z-50 flex flex-col max-h-[85vh] origin-top-right"
+            className="absolute right-[-1rem] sm:right-0 mt-3 w-[calc(100vw-2rem)] sm:w-[420px] bg-bg-secondary/95 backdrop-blur-2xl border border-border/40 shadow-[0_12px_48px_rgba(0,0,0,0.25)] rounded-[24px] overflow-hidden z-50 flex flex-col max-h-[85vh] origin-top-right"
           >
             {/* Header */}
             <div className="px-5 pt-5 pb-3 flex flex-col gap-3 bg-gradient-to-b from-bg-primary/80 to-transparent">

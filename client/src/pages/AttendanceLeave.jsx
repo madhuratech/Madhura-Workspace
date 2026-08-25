@@ -299,14 +299,14 @@ const AttendanceLeave = () => {
         <div 
           key={dateStr} 
           onClick={() => setSelectedDateRecord({ date: dateStr, record, day })}
-          className={`relative h-24 p-2 flex flex-col border ${borderClass} rounded-xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-sm ${isToday ? 'ring-2 ring-accent-blue/50' : ''}`}
+          className={`relative h-12 md:h-24 p-1 md:p-2 flex flex-col border ${borderClass} rounded-lg md:rounded-xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-sm ${isToday ? 'ring-2 ring-accent-blue/50' : ''}`}
         >
           <div className="flex justify-between items-start">
             <span className={`text-sm font-bold ${isToday ? 'text-accent-blue' : 'text-text-primary'}`}>{day}</span>
             {dot}
           </div>
           {record && (
-            <div className="mt-auto space-y-1">
+            <div className="mt-auto space-y-1 hidden md:block">
               <p className="text-[10px] font-medium text-text-secondary truncate bg-bg-secondary px-1.5 py-0.5 rounded shadow-sm border border-border/40">
                 In: {record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
               </p>
@@ -340,14 +340,14 @@ const AttendanceLeave = () => {
         </div>
         
         {/* Days of week */}
-        <div className="grid grid-cols-7 gap-3 mb-3">
+        <div className="grid grid-cols-7 gap-1 md:gap-3 mb-1 md:mb-3">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <div key={d} className="text-center text-xs font-bold text-text-secondary uppercase tracking-widest">{d}</div>
+            <div key={d} className="text-center text-[9px] md:text-xs font-bold text-text-secondary uppercase tracking-widest">{d.substring(0,3)}</div>
           ))}
         </div>
         
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-3">
+        <div className="grid grid-cols-7 gap-1 md:gap-3">
           {blanks}
           {days}
         </div>
