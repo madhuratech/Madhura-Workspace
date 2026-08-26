@@ -341,8 +341,13 @@ const Team = () => {
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
                       <button 
                         onClick={() => { 
-                          setEditTeamItem(team); 
-                          setSelectedTeamMembers(team.members?.map(m => m._id) || []);
+                          setEditTeamItem(team);
+                          const validMemberIds = members.map(m => String(m.user._id));
+                          setSelectedTeamMembers(
+                            (team.members || [])
+                              .filter(m => validMemberIds.includes(String(m._id)))
+                              .map(m => m._id)
+                          );
                           setIsTeamModalOpen(true); 
                         }}
                         className="p-1.5 bg-bg-secondary hover:bg-accent-blue hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
