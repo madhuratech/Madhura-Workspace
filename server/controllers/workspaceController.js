@@ -304,11 +304,33 @@ const updateMember = async (req, res) => {
 
     if (action === 'remove') {
       workspace.members.splice(memberIndex, 1);
-      // Remove as team leader
+      
       const Team = require('../models/Team');
+      const Task = require('../models/Task');
+      const Project = require('../models/Project');
+
+      // Remove as team leader
       await Team.updateMany(
         { workspace: req.params.id, leader: req.params.userId },
         { $unset: { leader: 1 } }
+      );
+      
+      // Remove from team members array
+      await Team.updateMany(
+        { workspace: req.params.id, members: req.params.userId },
+        { $pull: { members: req.params.userId } }
+      );
+
+      // Remove from tasks assignees array
+      await Task.updateMany(
+        { workspace: req.params.id, assignees: req.params.userId },
+        { $pull: { assignees: req.params.userId } }
+      );
+
+      // Remove as project coordinator
+      await Project.updateMany(
+        { workspace: req.params.id, coordinator: req.params.userId },
+        { $unset: { coordinator: 1 } }
       );
     } else {
       workspace.members[memberIndex].role = role;
