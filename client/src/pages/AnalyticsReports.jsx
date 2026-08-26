@@ -36,7 +36,7 @@ const StatusDot = ({ status }) => {
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-gray-100 p-3 rounded-lg shadow-lg">
+      <div className="bg-bg-secondary border border-border/50 p-3 rounded-lg shadow-lg">
         <p className="text-xs font-semibold text-gray-500 mb-1">{payload[0].payload.name || payload[0].payload.date}</p>
         {payload.map((entry, index) => (
           <p key={index} className="text-sm font-medium text-gray-900">
@@ -112,7 +112,7 @@ const AnalyticsReports = () => {
   if (loading && !analyticsData) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[500px] bg-bg-primary">
-        <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-2 border-border border-t-gray-800 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -166,7 +166,7 @@ const AnalyticsReports = () => {
             {workspaces.length > 1 && (
               <div className="relative">
                 <select
-                  className="appearance-none bg-white border border-gray-200 text-text-primary text-sm font-medium px-4 py-2 pr-10 rounded-lg outline-none hover:border-gray-300 transition-colors shadow-sm cursor-pointer"
+                  className="appearance-none bg-bg-secondary border border-border text-text-primary text-sm font-medium px-4 py-2 pr-10 rounded-lg outline-none hover:border-gray-300 transition-colors shadow-sm cursor-pointer"
                   value={selectedWorkspace._id}
                   onChange={(e) => {
                     const ws = workspaces.find(w => w._id === e.target.value);
@@ -183,7 +183,7 @@ const AnalyticsReports = () => {
             <button
               onClick={() => fetchAnalytics(selectedWorkspace._id, true)}
               disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-text-primary rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-bg-secondary hover:bg-gray-50 border border-border text-text-primary rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
             >
               <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
               Refresh
@@ -192,7 +192,7 @@ const AnalyticsReports = () => {
         </div>
 
         {/* Minimalist Tabs */}
-        <div className="flex items-center gap-1 border-b border-gray-200 pb-px">
+        <div className="flex items-center gap-1 border-b border-border pb-px">
           {['overview', 'employees', 'projects'].map((tab) => (
             <button
               key={tab}
@@ -217,7 +217,7 @@ const AnalyticsReports = () => {
             
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <div className="bg-bg-secondary border border-border rounded-xl p-5 shadow-sm">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Completion</span>
                   <CheckCircle2 size={16} className="text-green-500" />
@@ -226,7 +226,7 @@ const AnalyticsReports = () => {
                 <p className="text-sm text-text-secondary mt-1">{summary.totalTasks} total tasks</p>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <div className="bg-bg-secondary border border-border rounded-xl p-5 shadow-sm">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Attendance</span>
                   <Calendar size={16} className="text-blue-500" />
@@ -235,7 +235,7 @@ const AnalyticsReports = () => {
                 <p className="text-sm text-text-secondary mt-1">Average presence</p>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <div className="bg-bg-secondary border border-border rounded-xl p-5 shadow-sm">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Overdue</span>
                   <AlertCircle size={16} className="text-red-500" />
@@ -244,7 +244,7 @@ const AnalyticsReports = () => {
                 <p className="text-sm text-text-secondary mt-1">Past deadline</p>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <div className="bg-bg-secondary border border-border rounded-xl p-5 shadow-sm">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Headcount</span>
                   <Users size={16} className="text-purple-500" />
@@ -258,7 +258,7 @@ const AnalyticsReports = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
               {/* Chart 1: Donut */}
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col">
+              <div className="bg-bg-secondary border border-border rounded-xl p-6 shadow-sm flex flex-col">
                 <h3 className="text-sm font-semibold text-text-primary mb-6">Task Distribution</h3>
                 <div className="flex-1 min-h-[250px] relative">
                   {!hasTaskData ? (
@@ -299,7 +299,7 @@ const AnalyticsReports = () => {
               </div>
 
               {/* Chart 2: Area */}
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex flex-col">
+              <div className="bg-bg-secondary border border-border rounded-xl p-6 shadow-sm flex flex-col">
                 <h3 className="text-sm font-semibold text-text-primary mb-6">Attendance Trends</h3>
                 <div className="flex-1 min-h-[250px]">
                   {attendanceChartData.length === 0 ? (
@@ -338,16 +338,16 @@ const AnalyticsReports = () => {
                   placeholder="Search personnel..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white border border-gray-200 text-text-primary text-sm pl-9 pr-4 py-2 rounded-lg outline-none focus:border-gray-300 transition-colors shadow-sm"
+                  className="w-full bg-bg-secondary border border-border text-text-primary text-sm pl-9 pr-4 py-2 rounded-lg outline-none focus:border-gray-300 transition-colors shadow-sm"
                 />
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                    <tr className="border-b border-border/50 bg-gray-50/50">
                       <th className="py-3 px-5 text-xs font-semibold text-text-secondary">Name</th>
                       <th className="py-3 px-5 text-xs font-semibold text-text-secondary">Role & Status</th>
                       <th className="py-3 px-5 text-xs font-semibold text-text-secondary">Tasks</th>
@@ -415,7 +415,7 @@ const AnalyticsReports = () => {
         {activeTab === 'projects' && (
           <div className="space-y-4 animate-in fade-in duration-300">
             {(!projectsPerformance || projectsPerformance.length === 0) ? (
-              <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
+              <div className="bg-bg-secondary border border-border rounded-xl p-12 text-center shadow-sm">
                 <FolderKanban size={24} className="text-gray-400 mx-auto mb-3" />
                 <h4 className="text-base font-medium text-text-primary">No Active Projects</h4>
                 <p className="text-sm text-text-secondary mt-1">Project metrics will appear here.</p>
@@ -423,7 +423,7 @@ const AnalyticsReports = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {projectsPerformance.map((proj) => (
-                  <div key={proj._id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between hover:border-gray-300 transition-colors">
+                  <div key={proj._id} className="bg-bg-secondary border border-border rounded-xl p-5 shadow-sm flex flex-col justify-between hover:border-gray-300 transition-colors">
                     <div>
                       <div className="flex justify-between items-start mb-3">
                         <FolderKanban size={18} className="text-text-secondary" />
@@ -448,7 +448,7 @@ const AnalyticsReports = () => {
                           className={`h-full rounded-full ${proj.progress === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-xs text-text-secondary border-t border-gray-100 pt-3">
+                      <div className="flex items-center justify-between text-xs text-text-secondary border-t border-border/50 pt-3">
                         <span>{proj.tasksDone} / {proj.tasksCount} Tasks</span>
                         {proj.overdue > 0 ? (
                           <span className="text-red-600 font-medium">{proj.overdue} Overdue</span>
