@@ -7,7 +7,9 @@ const {
   updateProject,
   deleteProject,
   getWorkspaceMembers,
-  advanceStage
+  advanceStage,
+  requestRollback,
+  approveRollback
 } = require('../controllers/projectController');
 const { protect } = require('../middleware/auth');
 const taskRouter = require('./taskRoutes');
@@ -20,5 +22,7 @@ router.route('/').get(protect, getProjects).post(protect, createProject);
 router.route('/members').get(protect, getWorkspaceMembers);
 router.route('/:projectId').get(protect, getProject).put(protect, updateProject).delete(protect, deleteProject);
 router.route('/:projectId/advance').put(protect, advanceStage);
+router.route('/:projectId/rollback').post(protect, requestRollback);
+router.route('/:projectId/rollback/approve').post(protect, approveRollback);
 
 module.exports = router;

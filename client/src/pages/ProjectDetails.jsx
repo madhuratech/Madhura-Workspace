@@ -9,9 +9,19 @@ import Avatar from '../components/Avatar';
 
 // Extract the 24-char MongoDB ObjectId that was appended as the last segment of the slug
 const idFromSlug = (slug = '') => {
-  // Slug format: "project-name-title-XXXXXX" where XXXXXX is the last 6 chars of the _id
-  // We need to find the full _id by matching against projects, so we just pass the suffix
-  return slug.split('-').pop(); // returns the 6-char suffix for lookup
+  return slug.split('-').pop(); 
+};
+
+// Valid stages logic
+const getValidStages = (project) => {
+  const types = project?.projectType || ['Software'];
+  const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
+  let validStages = [];
+  if (hasSoftware) validStages.push('Proposal', 'UI/UX', 'Tech', 'Test', 'DevOps');
+  if (types.includes('Digital Marketing')) validStages.push('Proposal', 'Digital Marketing');
+  if (types.includes('SEO')) validStages.push('Proposal', 'SEO');
+  validStages.push('Completed');
+  return validStages;
 };
 
 // Kanban skeleton loader
@@ -82,6 +92,10 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', priority: 'Medium', dueDate: '', assignees: [] });
+  const [handoffData, setHandoffData] = useState({ link: '', notes: '' });
+  const [isHandoffModalOpen, setIsHandoffModalOpen] = useState(false);
+  const [rollbackData, setRollbackData] = useState({ reason: '', targetStage: '' });
+  const [isRollbackModalOpen, setIsRollbackModalOpen] = useState(false);
   const [socket, setSocket] = useState(null);
   const [isReady, setIsReady] = useState(false);
 
@@ -189,15 +203,9 @@ const ProjectDetails = () => {
     if (!project || !project.workflowTeams) return null;
     
     // Compute current valid stages
-    const types = project.projectType || ['Software'];
-    const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-    let validStages = [];
-    if (hasSoftware) validStages.push('UI/UX', 'Tech', 'Test', 'DevOps');
-    if (types.includes('Digital Marketing')) validStages.push('Digital Marketing');
-    if (types.includes('SEO')) validStages.push('SEO');
-    validStages.push('Completed');
+    const validStages = getValidStages(project);
     
-    // If the database stage isn't valid for this project type (e.g., legacy UI/UX on a Marketing project), assume the first valid stage.
+    // If the database stage isn't valid for this project type, assume the first valid stage.
     let currentStage = project.stage;
     if (!validStages.includes(currentStage)) {
        currentStage = validStages[0];
@@ -249,15 +257,53 @@ const ProjectDetails = () => {
     return isUserInActiveTeam();
   };
 
-  const handleAdvanceStage = async () => {
+  const handleAdvanceStageClick = () => {
+    setIsHandoffModalOpen(true);
+  };
+
+  const handleAdvanceStageSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const res = await axios.put(`/workspaces/${workspaceId}/projects/${projectId}/advance`);
+      const res = await axios.put(`/workspaces/${workspaceId}/projects/${projectId}/advance`, {
+        deliverableLink: handoffData.link,
+        deliverableNotes: handoffData.notes
+      });
       setProject(res.data);
       setAdvancedStageName(res.data.stage);
+      setIsHandoffModalOpen(false);
+      setHandoffData({ link: '', notes: '' });
       setStagePopupVisible(true);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || 'Failed to advance stage');
+    }
+  };
+
+  const handleRollbackRequest = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`/workspaces/${workspaceId}/projects/${projectId}/rollback`, rollbackData);
+      setProject(res.data);
+      setIsRollbackModalOpen(false);
+      setRollbackData({ reason: '', targetStage: '' });
+      alert('Rollback requested successfully');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to request rollback');
+    }
+  };
+
+  const handleRollbackApprove = async (approved) => {
+    try {
+      const res = await axios.post(`/workspaces/${workspaceId}/projects/${projectId}/rollback/approve`, { approved });
+      setProject(res.data);
+      alert(`Rollback ${approved ? 'approved' : 'rejected'}`);
+      if (approved) {
+        fetchTasks(workspaceId);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to process rollback');
     }
   };
 
@@ -382,15 +428,23 @@ const ProjectDetails = () => {
             <p className="text-sm text-text-secondary mt-1">{project?.description || 'Manage tasks and track progress.'}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
-          {project?.stage !== 'Completed' && isUserActiveTL() && (
-            <button
-              onClick={handleAdvanceStage}
-              className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
-            >
-              <Flag size={14} className="text-success" />
-              <span>{project?.stage === 'DevOps' ? 'Mark Project Complete' : 'Mark Stage Complete'}</span>
-            </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {project?.stage !== 'Completed' && (isUserActiveTL() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) && (
+            <>
+              <button
+                onClick={() => setIsRollbackModalOpen(true)}
+                className="bg-bg-primary border border-danger/50 text-danger shadow-sm px-4 py-2 rounded-lg hover:bg-danger hover:text-white transition-all text-sm font-medium flex items-center space-x-2"
+              >
+                <span>Request Block / Rollback</span>
+              </button>
+              <button
+                onClick={handleAdvanceStageClick}
+                className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
+              >
+                <Flag size={14} className="text-success" />
+                <span>Mark Stage Complete</span>
+              </button>
+            </>
           )}
           {isUserActiveTL() && (
             <button
@@ -410,15 +464,7 @@ const ProjectDetails = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-accent-blue/5 via-transparent to-success/5 rounded-2xl pointer-events-none"></div>
           <div className="flex items-center w-full min-w-max relative z-10 px-2 gap-4">
             {(() => {
-              const types = project?.projectType || ['Software'];
-              const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-              let stages = [];
-              if (hasSoftware) {
-                stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
-              }
-              if (types.includes('Digital Marketing')) stages.push('Digital Marketing');
-              if (types.includes('SEO')) stages.push('SEO');
-              stages.push('Completed');
+              let stages = getValidStages(project);
               
               if (stages.length === 0) stages.push('Completed');
 
@@ -470,18 +516,56 @@ const ProjectDetails = () => {
         </div>
       )}
 
+      {/* Rollback Request Banner */}
+      {project?.rollbackRequest?.isRequested && (
+        <div className="bg-danger/10 border border-danger/30 rounded-2xl p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm animate-in fade-in">
+          <div>
+            <h4 className="text-danger font-bold text-sm flex items-center"><X size={16} className="mr-1" /> Project Blocked (Rollback Requested)</h4>
+            <p className="text-text-primary text-xs mt-1"><span className="font-semibold text-text-secondary">Reason:</span> {project.rollbackRequest.reason}</p>
+            <p className="text-text-primary text-xs"><span className="font-semibold text-text-secondary">Target Stage:</span> {project.rollbackRequest.targetStage}</p>
+          </div>
+          {(['super_admin', 'hr', 'team_leader'].includes(user?.role) || (user?.designation || '').toLowerCase().includes('coordinator')) && (
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => handleRollbackApprove(false)} className="px-4 py-2 rounded-lg bg-bg-primary border border-border text-text-secondary hover:bg-bg-secondary text-xs font-bold transition-colors">
+                Reject
+              </button>
+              <button onClick={() => handleRollbackApprove(true)} className="px-4 py-2 rounded-lg bg-danger text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity">
+                Approve Rollback
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Deliverables Display */}
+      {project?.deliverables && project.deliverables.length > 0 && (
+        <div className="bg-bg-secondary/40 border border-border/60 rounded-2xl p-4 mb-6 shadow-sm">
+          <h4 className="text-sm font-bold text-text-primary mb-3">Handoff Deliverables</h4>
+          <div className="flex gap-4 overflow-x-auto custom-scrollbar pb-2">
+            {project.deliverables.map((del, i) => (
+              <div key={i} className="bg-bg-primary border border-border rounded-xl p-3 min-w-[250px] shrink-0">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[10px] font-bold text-accent-blue bg-accent-blue/10 px-2 py-0.5 rounded-md uppercase tracking-wider">{del.stage}</span>
+                  <span className="text-[10px] text-text-secondary">{new Date(del.submittedAt).toLocaleDateString()}</span>
+                </div>
+                {del.link && (
+                  <a href={del.link} target="_blank" rel="noopener noreferrer" className="text-xs text-accent-blue hover:underline mb-1 block truncate">
+                    {del.link}
+                  </a>
+                )}
+                {del.notes && <p className="text-xs text-text-secondary line-clamp-2 mt-1">{del.notes}</p>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Kanban Board */}
       {(() => {
         const hasAccess = ['super_admin', 'hr'].includes(user?.role) || canManageStage();
         
         // Calculate effective stage
-        const types = project?.projectType || ['Software'];
-        const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-        let validStages = [];
-        if (hasSoftware) validStages.push('UI/UX', 'Tech', 'Test', 'DevOps');
-        if (types.includes('Digital Marketing')) validStages.push('Digital Marketing');
-        if (types.includes('SEO')) validStages.push('SEO');
-        validStages.push('Completed');
+        let validStages = getValidStages(project);
         let effectiveStage = project?.stage;
         if (!validStages.includes(effectiveStage)) effectiveStage = validStages[0];
 
@@ -714,6 +798,97 @@ const ProjectDetails = () => {
             >
               Continue
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Handoff Modal */}
+      {isHandoffModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-text-primary">Stage Handoff</h3>
+                <p className="text-xs text-text-secondary">Provide any necessary links or notes for the next team.</p>
+              </div>
+              <button onClick={() => setIsHandoffModalOpen(false)} className="text-text-secondary hover:text-danger p-1 rounded-full hover:bg-bg-primary transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleAdvanceStageSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-text-secondary mb-2">Deliverable Link (Figma, GitHub, etc.)</label>
+                <input
+                  type="url"
+                  value={handoffData.link}
+                  onChange={(e) => setHandoffData({ ...handoffData, link: e.target.value })}
+                  className="premium-input"
+                  placeholder="https://..."
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-secondary mb-2">Notes</label>
+                <textarea
+                  rows="3"
+                  value={handoffData.notes}
+                  onChange={(e) => setHandoffData({ ...handoffData, notes: e.target.value })}
+                  className="premium-input resize-none"
+                  placeholder="Additional instructions..."
+                ></textarea>
+              </div>
+              <div className="flex justify-end space-x-3 pt-2">
+                <button type="button" onClick={() => setIsHandoffModalOpen(false)} className="px-4 py-2 text-sm text-text-secondary hover:bg-bg-primary rounded-lg transition-colors font-medium">Cancel</button>
+                <button type="submit" className="px-5 py-2 text-sm bg-accent-blue text-white rounded-lg hover:opacity-90 font-bold shadow-md shadow-accent-blue/20">Complete Stage</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Rollback Request Modal */}
+      {isRollbackModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-danger">Request Block / Rollback</h3>
+                <p className="text-xs text-text-secondary">Explain why this project cannot proceed.</p>
+              </div>
+              <button onClick={() => setIsRollbackModalOpen(false)} className="text-text-secondary hover:text-danger p-1 rounded-full hover:bg-bg-primary transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleRollbackRequest} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-text-secondary mb-2">Reason for Rollback</label>
+                <textarea
+                  required
+                  rows="3"
+                  value={rollbackData.reason}
+                  onChange={(e) => setRollbackData({ ...rollbackData, reason: e.target.value })}
+                  className="premium-input resize-none"
+                  placeholder="e.g. Client requested design changes..."
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-text-secondary mb-2">Target Stage</label>
+                <select
+                  required
+                  value={rollbackData.targetStage}
+                  onChange={(e) => setRollbackData({ ...rollbackData, targetStage: e.target.value })}
+                  className="premium-input"
+                >
+                  <option value="">Select Stage to revert to</option>
+                  {getValidStages(project)
+                    .filter(s => s !== 'Completed' && s !== project?.stage)
+                    .map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3 pt-2">
+                <button type="button" onClick={() => setIsRollbackModalOpen(false)} className="px-4 py-2 text-sm text-text-secondary hover:bg-bg-primary rounded-lg transition-colors font-medium">Cancel</button>
+                <button type="submit" className="px-5 py-2 text-sm bg-danger text-white rounded-lg hover:opacity-90 font-bold shadow-md shadow-danger/20">Submit Request</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

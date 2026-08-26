@@ -75,7 +75,7 @@ const getProject = async (req, res) => {
       const types = projectType || ['Software'];
       const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
       
-      let initialStage = 'UI/UX'; // default for software
+      let initialStage = 'Proposal'; // default for software
       if (!hasSoftware) {
         if (types.includes('Digital Marketing')) initialStage = 'Digital Marketing';
         else if (types.includes('SEO')) initialStage = 'SEO';
@@ -232,18 +232,29 @@ const advanceStage = async (req, res) => {
     const hasSoftware = project.projectType.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
     let stages = [];
     if (hasSoftware) {
-      stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
+      stages.push('Proposal', 'UI/UX', 'Tech', 'Test', 'DevOps');
     }
-    if (project.projectType.includes('Digital Marketing')) stages.push('Digital Marketing');
-    if (project.projectType.includes('SEO')) stages.push('SEO');
+    if (project.projectType.includes('Digital Marketing')) stages.push('Proposal', 'Digital Marketing');
+    if (project.projectType.includes('SEO')) stages.push('Proposal', 'SEO');
     stages.push('Completed');
 
-    if (stages.length === 1) stages.unshift('UI/UX'); // Fallback if somehow empty
+    if (stages.length === 1) stages.unshift('Proposal'); // Fallback if somehow empty
 
     const currentIndex = stages.indexOf(project.stage);
     
     if (currentIndex === -1 || currentIndex >= stages.length - 1) {
       return res.status(400).json({ message: 'Project is already at the final stage.' });
+    }
+
+    // Save deliverable if provided
+    const { deliverableLink, deliverableNotes } = req.body;
+    if (deliverableLink || deliverableNotes) {
+      project.deliverables.push({
+        stage: project.stage,
+        link: deliverableLink,
+        notes: deliverableNotes,
+        submittedBy: req.user._id
+      });
     }
 
     project.stage = stages[currentIndex + 1];
@@ -318,6 +329,87 @@ const advanceStage = async (req, res) => {
   }
 };
 
+// @desc    Request a rollback to a previous stage
+// @route   POST /api/workspaces/:workspaceId/projects/:projectId/rollback
+// @access  Private
+const requestRollback = async (req, res) => {
+  try {
+    const { reason, targetStage } = req.body;
+    const project = await Project.findById(req.params.projectId);
+    
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+    
+    project.rollbackRequest = {
+      isRequested: true,
+      requestedBy: req.user._id,
+      reason,
+      targetStage
+    };
+    
+    await project.save();
+
+    if (req.io) {
+      req.io.emit('projectUpdated', project);
+    }
+    
+    res.status(200).json(project);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Approve or reject a rollback request
+// @route   POST /api/workspaces/:workspaceId/projects/:projectId/rollback/approve
+// @access  Private (Team Leaders, HR, Super Admin)
+const approveRollback = async (req, res) => {
+  try {
+    const { approved } = req.body;
+    
+    // Authorization check
+    if (!['super_admin', 'hr', 'team_leader'].includes(req.user.role) && !(req.user.designation || '').toLowerCase().includes('coordinator')) {
+      return res.status(401).json({ message: 'Not authorized to approve rollbacks.' });
+    }
+
+    const project = await Project.findById(req.params.projectId);
+    if (!project || !project.rollbackRequest?.isRequested) {
+      return res.status(400).json({ message: 'No active rollback request found' });
+    }
+    
+    if (approved) {
+      project.stage = project.rollbackRequest.targetStage;
+    }
+    
+    // Clear the request regardless of approval
+    project.rollbackRequest = {
+      isRequested: false,
+      requestedBy: null,
+      reason: '',
+      targetStage: ''
+    };
+    
+    await project.save();
+
+    const populated = await Project.findById(project._id)
+      .populate('members', 'name email avatar')
+      .populate('coordinator', 'name email avatar')
+      .populate('workflowTeams.uiux')
+      .populate('workflowTeams.tech')
+      .populate('workflowTeams.test')
+      .populate('workflowTeams.devops')
+      .populate('workflowTeams.digitalMarketing')
+      .populate('workflowTeams.seo')
+      .lean();
+
+    if (req.io) {
+      req.io.emit('projectUpdated', populated);
+    }
+    
+    res.status(200).json(populated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getProjects,
   getProject,
@@ -325,5 +417,7 @@ module.exports = {
   updateProject,
   deleteProject,
   getWorkspaceMembers,
-  advanceStage
+  advanceStage,
+  requestRollback,
+  approveRollback
 };

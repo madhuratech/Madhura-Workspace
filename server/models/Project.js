@@ -30,7 +30,20 @@ const ProjectSchema = new mongoose.Schema({
   },
   stage: {
     type: String,
-    default: 'UI/UX'
+    default: 'Proposal'
+  },
+  deliverables: [{
+    stage: String,
+    link: String,
+    notes: String,
+    submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    submittedAt: { type: Date, default: Date.now }
+  }],
+  rollbackRequest: {
+    isRequested: { type: Boolean, default: false },
+    requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reason: String,
+    targetStage: String
   },
   workflowTeams: {
     uiux: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },
