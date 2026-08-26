@@ -215,7 +215,7 @@ const Documents = () => {
             <div className="flex flex-col items-center justify-center text-text-secondary py-20">
                <UploadCloud size={56} className="mb-4 text-gray-300" />
                <p className="text-lg font-medium text-gray-800">No documents found</p>
-               <p className="text-sm mt-1 text-gray-500">{searchTerm ? 'Try adjusting your search' : `Upload a document to ${activeFolder || 'get started'}.`}</p>
+               <p className="text-sm mt-1 text-gray-500">{searchTerm ? 'Try adjusting your search' : 'Upload a document to get started.'}</p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse min-w-max">
