@@ -35,6 +35,8 @@ const ProjectSchema = new mongoose.Schema({
   deliverables: [{
     stage: String,
     link: String,
+    fileUrl: String,
+    fileName: String,
     notes: String,
     submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     submittedAt: { type: Date, default: Date.now }

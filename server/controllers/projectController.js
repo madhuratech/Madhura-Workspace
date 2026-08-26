@@ -247,11 +247,13 @@ const advanceStage = async (req, res) => {
     }
 
     // Save deliverable if provided
-    const { deliverableLink, deliverableNotes } = req.body;
-    if (deliverableLink || deliverableNotes) {
+    const { deliverableLink, deliverableNotes, deliverableFileUrl, deliverableFileName } = req.body;
+    if (deliverableLink || deliverableNotes || deliverableFileUrl) {
       project.deliverables.push({
         stage: project.stage,
         link: deliverableLink,
+        fileUrl: deliverableFileUrl,
+        fileName: deliverableFileName,
         notes: deliverableNotes,
         submittedBy: req.user._id
       });

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2, Check, FolderKanban } from 'lucide-react';
+import { Plus, X, ArrowLeft, Users, Calendar, Flag, Trash2, Check, FolderKanban, Paperclip, Download } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 // Extract the 24-char MongoDB ObjectId that was appended as the last segment of the slug
@@ -92,12 +92,14 @@ const ProjectDetails = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ title: '', description: '', priority: 'Medium', dueDate: '', assignees: [] });
-  const [handoffData, setHandoffData] = useState({ link: '', notes: '' });
+  const [handoffData, setHandoffData] = useState({ link: '', notes: '', file: null });
   const [isHandoffModalOpen, setIsHandoffModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [rollbackData, setRollbackData] = useState({ reason: '', targetStage: '' });
   const [isRollbackModalOpen, setIsRollbackModalOpen] = useState(false);
   const [socket, setSocket] = useState(null);
   const [isReady, setIsReady] = useState(false);
+  const [activeTab, setActiveTab] = useState('pipeline');
 
   useEffect(() => {
     const animation = requestAnimationFrame(() => setIsReady(true));
@@ -263,19 +265,37 @@ const ProjectDetails = () => {
 
   const handleAdvanceStageSubmit = async (e) => {
     e.preventDefault();
+    setIsUploading(true);
     try {
+      let fileUrl = null;
+      let fileName = null;
+
+      if (handoffData.file) {
+        const formData = new FormData();
+        formData.append('file', handoffData.file);
+        const uploadRes = await axios.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        fileUrl = uploadRes.data.url;
+        fileName = uploadRes.data.fileName;
+      }
+
       const res = await axios.put(`/workspaces/${workspaceId}/projects/${projectId}/advance`, {
         deliverableLink: handoffData.link,
-        deliverableNotes: handoffData.notes
+        deliverableNotes: handoffData.notes,
+        deliverableFileUrl: fileUrl,
+        deliverableFileName: fileName
       });
       setProject(res.data);
       setAdvancedStageName(res.data.stage);
       setIsHandoffModalOpen(false);
-      setHandoffData({ link: '', notes: '' });
+      setHandoffData({ link: '', notes: '', file: null });
       setStagePopupVisible(true);
     } catch (err) {
       console.error(err);
       alert(err.response?.data?.message || 'Failed to advance stage');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -458,7 +478,34 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      {/* Premium Pipeline Stage Tracker */}
+      {/* Tabs */}
+      <div className="flex space-x-1 bg-bg-secondary/50 p-1 rounded-xl mb-6 border border-border w-max mx-auto md:mx-0">
+        <button
+          onClick={() => setActiveTab('pipeline')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeTab === 'pipeline' 
+              ? 'bg-bg-primary text-accent-blue shadow-sm ring-1 ring-accent-blue/20' 
+              : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary/50'
+          }`}
+        >
+          Pipeline & Handoffs
+        </button>
+        <button
+          onClick={() => setActiveTab('kanban')}
+          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+            activeTab === 'kanban' 
+              ? 'bg-bg-primary text-accent-blue shadow-sm ring-1 ring-accent-blue/20' 
+              : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary/50'
+          }`}
+        >
+          Task Board (Kanban)
+        </button>
+      </div>
+
+      {/* Pipeline Tab Content */}
+      {activeTab === 'pipeline' && (
+        <div className="animate-in fade-in duration-300">
+          {/* Premium Pipeline Stage Tracker */}
       {['super_admin', 'hr', 'team_leader'].includes(user?.role) && (
         <div className="bg-bg-secondary/40 backdrop-blur-md border border-border/60 rounded-2xl p-4 mb-6 flex items-center justify-between w-full overflow-x-auto custom-scrollbar shadow-lg shadow-bg-secondary/20 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-accent-blue/5 via-transparent to-success/5 rounded-2xl pointer-events-none"></div>
@@ -548,6 +595,12 @@ const ProjectDetails = () => {
                   <span className="text-[10px] font-bold text-accent-blue bg-accent-blue/10 px-2 py-0.5 rounded-md uppercase tracking-wider">{del.stage}</span>
                   <span className="text-[10px] text-text-secondary">{new Date(del.submittedAt).toLocaleDateString()}</span>
                 </div>
+                {del.fileUrl && (
+                  <a href={del.fileUrl} download={del.fileName} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-white bg-accent-blue/90 hover:bg-accent-blue px-3 py-1.5 rounded-lg transition-colors mb-2 w-max shadow-sm group/btn">
+                    <Download size={14} className="mr-1.5 opacity-80 group-hover/btn:opacity-100" />
+                    <span className="truncate max-w-[150px]">{del.fileName || 'Download File'}</span>
+                  </a>
+                )}
                 {del.link && (
                   <a href={del.link} target="_blank" rel="noopener noreferrer" className="text-xs text-accent-blue hover:underline mb-1 block truncate">
                     {del.link}
@@ -559,9 +612,11 @@ const ProjectDetails = () => {
           </div>
         </div>
       )}
+      </div>
+      )}
 
-      {/* Kanban Board */}
-      {(() => {
+      {/* Kanban Board Tab Content */}
+      {activeTab === 'kanban' && (() => {
         const hasAccess = ['super_admin', 'hr'].includes(user?.role) || canManageStage();
         
         // Calculate effective stage
@@ -817,6 +872,20 @@ const ProjectDetails = () => {
             </div>
             <form onSubmit={handleAdvanceStageSubmit} className="space-y-4">
               <div>
+                <label className="block text-xs font-bold text-text-secondary mb-2">Upload File (ZIP, PDF, DOC, Figma file)</label>
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-border border-dashed rounded-xl cursor-pointer bg-bg-primary/50 hover:bg-bg-primary transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Paperclip size={24} className="text-text-secondary/50 mb-2" />
+                      <p className="text-xs text-text-secondary">
+                        {handoffData.file ? <span className="font-bold text-accent-blue">{handoffData.file.name}</span> : 'Click to upload or drag and drop'}
+                      </p>
+                    </div>
+                    <input type="file" className="hidden" onChange={(e) => setHandoffData({ ...handoffData, file: e.target.files[0] })} />
+                  </label>
+                </div>
+              </div>
+              <div>
                 <label className="block text-xs font-bold text-text-secondary mb-2">Deliverable Link (Figma, GitHub, etc.)</label>
                 <input
                   type="url"
@@ -837,8 +906,12 @@ const ProjectDetails = () => {
                 ></textarea>
               </div>
               <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={() => setIsHandoffModalOpen(false)} className="px-4 py-2 text-sm text-text-secondary hover:bg-bg-primary rounded-lg transition-colors font-medium">Cancel</button>
-                <button type="submit" className="px-5 py-2 text-sm bg-accent-blue text-white rounded-lg hover:opacity-90 font-bold shadow-md shadow-accent-blue/20">Complete Stage</button>
+                <button type="button" disabled={isUploading} onClick={() => setIsHandoffModalOpen(false)} className="px-4 py-2 text-sm text-text-secondary hover:bg-bg-primary rounded-lg transition-colors font-medium">Cancel</button>
+                <button type="submit" disabled={isUploading} className="px-5 py-2 text-sm bg-accent-blue text-white rounded-lg hover:opacity-90 font-bold shadow-md shadow-accent-blue/20 flex items-center">
+                  {isUploading ? (
+                    <><span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin mr-2"></span> Uploading...</>
+                  ) : 'Complete Stage'}
+                </button>
               </div>
             </form>
           </div>
