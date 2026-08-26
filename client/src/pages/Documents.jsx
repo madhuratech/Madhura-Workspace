@@ -4,11 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import Avatar from '../components/Avatar';
 
-const FOLDER_COLORS = {
-  'Employee Docs': 'bg-pink-100 text-pink-600 border-pink-200',
-  'Project Files': 'bg-indigo-100 text-indigo-600 border-indigo-200',
-  'General': 'bg-blue-100 text-blue-600 border-blue-200'
-};
+
 
 const Documents = () => {
   const { user } = useContext(AuthContext);
@@ -21,7 +17,6 @@ const Documents = () => {
   const [formData, setFormData] = useState({ title: '', content: '', folderType: 'General' });
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activeFolder, setActiveFolder] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Pagination states
@@ -46,15 +41,7 @@ const Documents = () => {
     }
   };
 
-  const availableFolders = Array.from(new Set(documents.map(d => d.folderType || 'General')));
-  if (availableFolders.length === 0) {
-    if (user?.role === 'hr' || user?.role === 'super_admin') availableFolders.push('Employee Docs');
-    if (user?.role === 'team_leader' || user?.role === 'super_admin') availableFolders.push('Project Files');
-    availableFolders.push('General');
-  }
-
-  // Filter and Paginate
-  let filteredDocs = activeFolder ? documents.filter(d => (d.folderType || 'General') === activeFolder) : documents;
+  let filteredDocs = [...documents];
   
   if (searchTerm) {
     filteredDocs = filteredDocs.filter(d => 
@@ -74,10 +61,10 @@ const Documents = () => {
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditItem(item);
-      setFormData({ title: item.title, content: item.content || '', folderType: item.folderType || 'General' });
+      setFormData({ title: item.title, content: item.content || '' });
     } else {
       setEditItem(null);
-      setFormData({ title: '', content: '', folderType: activeFolder || 'General' });
+      setFormData({ title: '', content: '' });
       setFile(null);
     }
     setIsModalOpen(true);
@@ -201,45 +188,12 @@ const Documents = () => {
         </div>
       </div>
 
-      {/* Folders Section - Horizontal Pills */}
-      <div className="mb-6 flex flex-wrap gap-3">
-        {availableFolders.map((folder) => {
-          const docCount = documents.filter(d => (d.folderType || 'General') === folder).length;
-          const colorClass = FOLDER_COLORS[folder] || FOLDER_COLORS['General'];
-          const isActive = activeFolder === folder;
-          
-          return (
-            <div 
-              key={folder}
-              onClick={() => { setActiveFolder(isActive ? null : folder); setCurrentPage(1); }}
-              className={`flex items-center gap-3 p-2 pr-4 rounded-xl border cursor-pointer transition-all duration-200 select-none ${isActive ? 'bg-blue-50/80 border-accent-blue shadow-sm' : 'bg-white border-border hover:bg-gray-50'}`}
-            >
-              <div className={`p-2 rounded-lg ${colorClass} ${isActive ? 'bg-white border-accent-blue/30 shadow-sm' : 'border'}`}>
-                {isActive ? <FolderOpen size={18} /> : <Folder size={18} />}
-              </div>
-              <div>
-                <h3 className={`font-semibold text-sm leading-tight ${isActive ? 'text-accent-blue' : 'text-gray-700'}`}>{folder}</h3>
-                <p className="text-xs text-gray-500 font-medium">{docCount} files</p>
-              </div>
-            </div>
-          );
-        })}
-        {activeFolder && (
-          <button 
-            onClick={() => { setActiveFolder(null); setCurrentPage(1); }} 
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors ml-auto"
-          >
-            Clear Filter
-          </button>
-        )}
-      </div>
-
       {/* Files Section - Table */}
-      <div className="bg-white border border-border rounded-xl flex-1 flex flex-col shadow-sm overflow-hidden">
+      <div className="bg-white border border-border rounded-xl flex-1 flex flex-col shadow-sm overflow-hidden mt-6">
         <div className="px-5 py-4 flex justify-between items-center border-b border-border">
           <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
-            {activeFolder ? <FolderOpen size={20} className="text-accent-blue"/> : <FileText size={20} className="text-accent-blue"/>}
-            {activeFolder ? `${activeFolder} Files` : 'All Files'}
+            <FileText size={20} className="text-accent-blue"/>
+            All Files
           </h2>
           
           <div className="relative">
@@ -301,7 +255,7 @@ const Documents = () => {
                       {( doc.createdAt ? new Date(doc.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "N/A" )}
                     </td>
                     <td className="py-4 px-5 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2 transition-opacity">
                         {doc.fileUrl && (
                           <a href={`${API_URL}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md" title="Download">
                             <Download size={18} />
@@ -382,22 +336,6 @@ const Documents = () => {
                     className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm"
                     placeholder="e.g., Q3 Marketing Strategy"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Folder</label>
-                  <select 
-                    className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-colors shadow-sm cursor-pointer"
-                    value={formData.folderType}
-                    onChange={e => setFormData({...formData, folderType: e.target.value})}
-                  >
-                    {(isSuperAdminOrHR || user?.role === 'hr') && <option value="Employee Docs">Employee Docs</option>}
-                    {(isSuperAdminOrHR || user?.role === 'team_leader') && <option value="Project Files">Project Files</option>}
-                    <option value="General">General</option>
-                  </select>
-                  {(!isSuperAdminOrHR && user?.role !== 'team_leader') && (
-                    <p className="text-xs text-gray-500 mt-1">You only have permission to upload to General.</p>
-                  )}
                 </div>
               </div>
 

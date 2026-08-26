@@ -7,24 +7,10 @@ const getDocuments = async (req, res) => {
   try {
     let query = {};
     
-    // Role-based access control for folders
-    const userRole = req.user.role;
-    
-    if (userRole === 'super_admin' || userRole === 'hr') {
-      // HR and Super Admin can see everything
-    } else if (userRole === 'team_leader') {
-      // TL can see Project Files and General
-      query.folderType = { $in: ['Project Files', 'General'] };
-    } else if (userRole === 'employee') {
-      // Employee sees General, and only their own files if they uploaded them
-      query.$or = [
-        { folderType: 'General' },
-        { author: req.user._id }
-      ];
-    }
-    
     if (req.query.projectId) query.project = req.query.projectId;
     if (req.query.workspaceId) query.workspace = req.query.workspaceId;
+    
+    const userRole = req.user.role;
 
     const documents = await Document.find(query)
       .populate('author', 'name email avatar role')
