@@ -176,6 +176,21 @@ const ProjectDetails = () => {
     return String(team.leader?._id || team.leader) === String(user._id);
   };
 
+  const isUserAnyTL = () => {
+    if (!project || !workspaceTeams.length) return false;
+    
+    for (const key in project.workflowTeams) {
+      const teamId = project.workflowTeams[key]?._id || project.workflowTeams[key];
+      if (teamId) {
+        const team = workspaceTeams.find(t => String(t._id) === String(teamId));
+        if (team && String(team.leader?._id || team.leader) === String(user._id)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
   const handleAdvanceStageClick = () => {
     setIsHandoffModalOpen(true);
   };
@@ -257,21 +272,25 @@ const ProjectDetails = () => {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {project?.stage !== 'Completed' && (isUserActiveTL() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id)) && (
+          {project?.stage !== 'Completed' && (
             <>
-              <button
-                onClick={() => setIsRollbackModalOpen(true)}
-                className="bg-bg-primary border border-danger/50 text-danger shadow-sm px-4 py-2 rounded-lg hover:bg-danger hover:text-white transition-all text-sm font-medium flex items-center space-x-2"
-              >
-                <span>Request Block / Rollback</span>
-              </button>
-              <button
-                onClick={handleAdvanceStageClick}
-                className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
-              >
-                <Flag size={14} className="text-success" />
-                <span>Mark Stage Complete</span>
-              </button>
+              {(isUserAnyTL() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role)) && (
+                <button
+                  onClick={() => setIsRollbackModalOpen(true)}
+                  className="bg-bg-primary border border-danger/50 text-danger shadow-sm px-4 py-2 rounded-lg hover:bg-danger hover:text-white transition-all text-sm font-medium flex items-center space-x-2"
+                >
+                  <span>Request Block / Rollback</span>
+                </button>
+              )}
+              {(isUserActiveTL() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role)) && (
+                <button
+                  onClick={handleAdvanceStageClick}
+                  className="bg-bg-primary border border-border text-text-primary shadow-sm px-4 py-2 rounded-lg hover:bg-bg-secondary transition-all text-sm font-medium flex items-center space-x-2"
+                >
+                  <Flag size={14} className="text-success" />
+                  <span>Mark Stage Complete</span>
+                </button>
+              )}
             </>
           )}
         </div>
