@@ -127,7 +127,7 @@ const AnalyticsReports = () => {
     );
   }
 
-  const { summary, taskProgress, attendanceTrends, employeePerformance, projectsPerformance } = analyticsData;
+  const { summary, taskProgress, attendanceTrends, employeePerformance, teamPerformance, projectsPerformance } = analyticsData;
   const filteredEmployees = (employeePerformance || []).filter(emp =>
     emp.role !== 'super_admin' && (
       emp.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -193,7 +193,7 @@ const AnalyticsReports = () => {
 
         {/* Minimalist Tabs */}
         <div className="flex items-center gap-1 border-b border-border pb-px">
-          {['overview', 'employees', 'projects'].map((tab) => (
+          {['overview', 'employees', 'teams', 'projects'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -387,8 +387,18 @@ const AnalyticsReports = () => {
                             <p className="text-xs text-green-600 mt-0.5">{emp.tasks.completionRate}% Done</p>
                           </td>
                           <td className="py-3 px-5">
-                            <p className="text-sm text-text-primary">{emp.attendance.rate}%</p>
-                            <p className="text-xs text-text-secondary mt-0.5">{emp.attendance.present} Present</p>
+                            <p className="text-sm text-text-primary font-medium">{emp.attendance.rate}% <span className="text-xs text-text-secondary font-normal ml-1">({emp.attendance.present} Days)</span></p>
+                            <div className="flex items-center gap-1 mt-1">
+                               {emp.attendance.onTime > 0 && (
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-100">On Time: {emp.attendance.onTime}</span>
+                               )}
+                               {emp.attendance.late > 0 && (
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 bg-red-50 text-red-700 rounded border border-red-100">Late: {emp.attendance.late}</span>
+                               )}
+                               {emp.attendance.earlyLeave > 0 && (
+                                  <span className="text-[10px] font-medium px-1.5 py-0.5 bg-yellow-50 text-yellow-700 rounded border border-yellow-100">Left Early: {emp.attendance.earlyLeave}</span>
+                               )}
+                            </div>
                           </td>
                           <td className="py-3 px-5 text-right">
                             <div className="flex items-center justify-end gap-3">
@@ -408,6 +418,63 @@ const AnalyticsReports = () => {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* TAB 2.5: TEAMS */}
+        {activeTab === 'teams' && (
+          <div className="space-y-4 animate-in fade-in duration-300">
+            {(!teamPerformance || teamPerformance.length === 0) ? (
+              <div className="bg-bg-secondary border border-border rounded-xl p-12 text-center shadow-sm">
+                <Users size={24} className="text-gray-400 mx-auto mb-3" />
+                <h4 className="text-base font-medium text-text-primary">No Teams Found</h4>
+                <p className="text-sm text-text-secondary mt-1">Team metrics will appear here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {teamPerformance.map((team, idx) => (
+                  <div key={idx} className="bg-bg-secondary border border-border rounded-xl p-5 shadow-sm flex flex-col justify-between hover:border-gray-300 transition-colors">
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <Users size={18} className="text-text-secondary" />
+                        <span className="text-xs font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                          {team.members} {team.members === 1 ? 'Member' : 'Members'}
+                        </span>
+                      </div>
+                      <h4 className="text-lg font-semibold text-text-primary mb-1 capitalize">{team.name}</h4>
+                      
+                      <div className="mt-4 space-y-3">
+                         <div>
+                            <div className="flex justify-between text-xs mb-1">
+                               <span className="text-text-secondary">Task Completion</span>
+                               <span className="font-medium text-text-primary">{team.taskCompletionRate}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                              <div style={{ width: `${team.taskCompletionRate}%` }} className="h-full rounded-full bg-blue-500" />
+                            </div>
+                         </div>
+                         <div>
+                            <div className="flex justify-between text-xs mb-1">
+                               <span className="text-text-secondary">Tardiness (Late Rate)</span>
+                               <span className="font-medium text-text-primary">{team.lateRate}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                              <div style={{ width: `${team.lateRate}%` }} className={`h-full rounded-full ${team.lateRate > 10 ? 'bg-red-500' : 'bg-green-500'}`} />
+                            </div>
+                         </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-5 pt-4 border-t border-border flex justify-between items-center">
+                       <span className="text-xs text-text-secondary font-medium uppercase tracking-wider">Avg Productivity</span>
+                       <span className={`text-xl font-bold ${team.avgScore >= 75 ? 'text-green-600' : team.avgScore >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          {team.avgScore}
+                       </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

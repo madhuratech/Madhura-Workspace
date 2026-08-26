@@ -105,14 +105,19 @@ const getWorkspaceAnalytics = async (req, res) => {
       const attRate = userAttendances.length > 0
         ? Math.round(((presentDays + halfDays * 0.5) / userAttendances.length) * 100)
         : 100;
+        
+      // Punctuality stats
+      const lateDays = userAttendances.filter(a => a.isLate).length;
+      const earlyLeaveDays = userAttendances.filter(a => a.isEarlyLeave).length;
+      const onTimeDays = presentDays + halfDays - lateDays; // simplified on-time logic
 
       // Productivity Score computation (weighted mix of task completion rate & attendance punctuality)
       let productivityScore = 100;
       if (assignedCount > 0 || userAttendances.length > 0) {
         const taskWeight = assignedCount > 0 ? taskSuccessRate : 100;
         const attWeight = attRate;
-        const penalty = overdueCount * 5; // deduct 5% per overdue task
-        productivityScore = Math.max(0, Math.min(100, Math.round(taskWeight * 0.7 + attWeight * 0.3 - penalty)));
+        const penalty = (overdueCount * 5) + (lateDays * 2) + (earlyLeaveDays * 2); // penalize overdue and tardiness
+        productivityScore = Math.max(0, Math.min(100, Math.round(taskWeight * 0.6 + attWeight * 0.4 - penalty)));
       }
 
       return {
@@ -134,7 +139,10 @@ const getWorkspaceAnalytics = async (req, res) => {
           present: presentDays,
           absent: absentDays,
           halfDay: halfDays,
-          rate: attRate
+          rate: attRate,
+          late: lateDays,
+          onTime: onTimeDays > 0 ? onTimeDays : 0,
+          earlyLeave: earlyLeaveDays
         },
         productivityScore
       };
@@ -142,6 +150,42 @@ const getWorkspaceAnalytics = async (req, res) => {
 
     // Sort employees by productivity score high to low
     employeePerformance.sort((a, b) => b.productivityScore - a.productivityScore);
+
+    // ---------------------------------------------------------
+    // C2. TEAM / DEPARTMENT REPORTS
+    // ---------------------------------------------------------
+    const teamMap = {};
+    employeePerformance.forEach(emp => {
+      const team = emp.designation || 'General';
+      if (!teamMap[team]) {
+        teamMap[team] = {
+          name: team,
+          members: 0,
+          totalScore: 0,
+          tasksAssigned: 0,
+          tasksCompleted: 0,
+          tasksOverdue: 0,
+          attendancePresent: 0,
+          attendanceLate: 0,
+          attendanceTotalDays: 0,
+        };
+      }
+      teamMap[team].members++;
+      teamMap[team].totalScore += emp.productivityScore;
+      teamMap[team].tasksAssigned += emp.tasks.assigned;
+      teamMap[team].tasksCompleted += emp.tasks.completed;
+      teamMap[team].tasksOverdue += emp.tasks.overdue;
+      teamMap[team].attendancePresent += emp.attendance.present;
+      teamMap[team].attendanceLate += emp.attendance.late;
+      teamMap[team].attendanceTotalDays += (emp.attendance.present + emp.attendance.absent + emp.attendance.halfDay);
+    });
+
+    const teamPerformance = Object.values(teamMap).map(t => ({
+      ...t,
+      avgScore: Math.round(t.totalScore / t.members),
+      taskCompletionRate: t.tasksAssigned > 0 ? Math.round((t.tasksCompleted / t.tasksAssigned) * 100) : 0,
+      lateRate: t.attendanceTotalDays > 0 ? Math.round((t.attendanceLate / t.attendanceTotalDays) * 100) : 0
+    })).sort((a, b) => b.avgScore - a.avgScore);
 
     // ---------------------------------------------------------
     // D. PROJECTS PERFORMANCE
@@ -193,6 +237,7 @@ const getWorkspaceAnalytics = async (req, res) => {
         dailyTrend: attendanceTrend
       },
       employeePerformance,
+      teamPerformance,
       projectsPerformance
     });
   } catch (error) {
