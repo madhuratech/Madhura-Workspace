@@ -10,32 +10,48 @@ const getDocuments = async (req, res) => {
     // Role-based access control for folders
     const userRole = req.user.role;
     
-    if (userRole === 'hr') {
-      // HR can see Employee Docs and General
-      query.folderType = { $in: ['Employee Docs', 'General'] };
+    if (userRole === 'super_admin' || userRole === 'hr') {
+      // HR and Super Admin can see everything
     } else if (userRole === 'team_leader') {
       // TL can see Project Files and General
       query.folderType = { $in: ['Project Files', 'General'] };
     } else if (userRole === 'employee') {
       // Employee sees General, and only their own files if they uploaded them
-      // Alternatively, Employee can just see 'General' files. Let's make it General and any file they created.
       query.$or = [
         { folderType: 'General' },
         { author: req.user._id }
       ];
     }
-    // super_admin sees everything (no folderType filter)
     
     if (req.query.projectId) query.project = req.query.projectId;
     if (req.query.workspaceId) query.workspace = req.query.workspaceId;
 
     const documents = await Document.find(query)
-      .populate('author', 'name email avatar')
+      .populate('author', 'name email avatar role')
       .populate('lastUpdatedBy', 'name email avatar')
       .populate('versionHistory.updatedBy', 'name email avatar')
       .sort({ createdAt: -1 });
 
-    res.status(200).json(documents);
+    // Enforce privacy: Documents uploaded by TLs or Employees are only visible to MD, HR, and the author themselves.
+    // Documents uploaded by MD or HR are visible to everyone (subject to folder permissions above).
+    let filteredDocuments = documents;
+    
+    if (userRole !== 'super_admin' && userRole !== 'hr') {
+      filteredDocuments = documents.filter(doc => {
+        // Allow if the user is the author
+        if (doc.author && doc.author._id.toString() === req.user._id.toString()) {
+          return true;
+        }
+        // Allow if the author is Management (super_admin or hr)
+        if (doc.author && (doc.author.role === 'super_admin' || doc.author.role === 'hr')) {
+          return true;
+        }
+        // If author is missing (legacy), hide it just to be safe
+        return false;
+      });
+    }
+
+    res.status(200).json(filteredDocuments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
