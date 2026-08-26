@@ -3,6 +3,7 @@ const Project = require('../models/Project');
 const Attendance = require('../models/Attendance');
 const Workspace = require('../models/Workspace');
 const User = require('../models/User');
+const Team = require('../models/Team');
 
 // @desc    Get comprehensive analytics and performance reports for a workspace
 // @route   GET /api/workspaces/:workspaceId/analytics
@@ -20,11 +21,12 @@ const getWorkspaceAnalytics = async (req, res) => {
       return res.status(404).json({ message: 'Workspace not found' });
     }
 
-    // 2. Fetch all Tasks, Projects, and Attendance records in parallel
-    const [tasks, projects, attendances] = await Promise.all([
+    // 2. Fetch all Tasks, Projects, Attendances, and Teams in parallel
+    const [tasks, projects, attendances, dbTeams] = await Promise.all([
       Task.find({ workspace: workspaceId }).lean(),
       Project.find({ workspace: workspaceId }).populate('members', 'name email').lean(),
-      Attendance.find({ workspace: workspaceId }).lean()
+      Attendance.find({ workspace: workspaceId }).lean(),
+      Team.find({ workspace: workspaceId }).lean()
     ]);
 
     const now = new Date();
@@ -154,38 +156,42 @@ const getWorkspaceAnalytics = async (req, res) => {
     // ---------------------------------------------------------
     // C2. TEAM / DEPARTMENT REPORTS
     // ---------------------------------------------------------
-    const teamMap = {};
-    employeePerformance.forEach(emp => {
-      const team = emp.designation || 'General';
-      if (!teamMap[team]) {
-        teamMap[team] = {
-          name: team,
-          members: 0,
-          totalScore: 0,
-          tasksAssigned: 0,
-          tasksCompleted: 0,
-          tasksOverdue: 0,
-          attendancePresent: 0,
-          attendanceLate: 0,
-          attendanceTotalDays: 0,
-        };
-      }
-      teamMap[team].members++;
-      teamMap[team].totalScore += emp.productivityScore;
-      teamMap[team].tasksAssigned += emp.tasks.assigned;
-      teamMap[team].tasksCompleted += emp.tasks.completed;
-      teamMap[team].tasksOverdue += emp.tasks.overdue;
-      teamMap[team].attendancePresent += emp.attendance.present;
-      teamMap[team].attendanceLate += emp.attendance.late;
-      teamMap[team].attendanceTotalDays += (emp.attendance.present + emp.attendance.absent + emp.attendance.halfDay);
+    const teamPerformanceMap = dbTeams.map(team => {
+      // Collect all team members including leader
+      const memberIds = [
+        ...(team.leader ? [String(team.leader)] : []),
+        ...(team.members || []).map(m => String(m))
+      ];
+
+      // Filter employeePerformance to only include users in this team
+      const teamEmployees = employeePerformance.filter(emp => memberIds.includes(String(emp._id)));
+
+      let totalScore = 0;
+      let tasksAssigned = 0;
+      let tasksCompleted = 0;
+      let attendanceLate = 0;
+      let attendanceTotalDays = 0;
+      
+      teamEmployees.forEach(emp => {
+        totalScore += emp.productivityScore;
+        tasksAssigned += emp.tasks.assigned;
+        tasksCompleted += emp.tasks.completed;
+        attendanceLate += emp.attendance.late;
+        attendanceTotalDays += (emp.attendance.present + emp.attendance.absent + emp.attendance.halfDay);
+      });
+
+      const membersCount = teamEmployees.length;
+
+      return {
+        name: team.name,
+        members: membersCount,
+        avgScore: membersCount > 0 ? Math.round(totalScore / membersCount) : 0,
+        taskCompletionRate: tasksAssigned > 0 ? Math.round((tasksCompleted / tasksAssigned) * 100) : 0,
+        lateRate: attendanceTotalDays > 0 ? Math.round((attendanceLate / attendanceTotalDays) * 100) : 0
+      };
     });
 
-    const teamPerformance = Object.values(teamMap).map(t => ({
-      ...t,
-      avgScore: Math.round(t.totalScore / t.members),
-      taskCompletionRate: t.tasksAssigned > 0 ? Math.round((t.tasksCompleted / t.tasksAssigned) * 100) : 0,
-      lateRate: t.attendanceTotalDays > 0 ? Math.round((t.attendanceLate / t.attendanceTotalDays) * 100) : 0
-    })).sort((a, b) => b.avgScore - a.avgScore);
+    const teamPerformance = teamPerformanceMap.sort((a, b) => b.avgScore - a.avgScore);
 
     // ---------------------------------------------------------
     // D. PROJECTS PERFORMANCE
