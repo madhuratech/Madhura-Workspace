@@ -241,7 +241,7 @@ const Projects = () => {
             {user?.role === 'employee' ? 'Your assigned projects' : 'Manage your workspace projects seamlessly'}
           </p>
         </div>
-        {user?.role !== 'employee' && (
+        {(['super_admin', 'hr'].includes(user?.role) || (user?.designation || '').toLowerCase().includes('coordinator')) && (
           <button
             onClick={() => handleOpenModal()}
             className="bg-accent-blue text-accent-text px-5 py-2.5 rounded-xl hover:bg-accent-indigo shadow-soft hover:shadow-hover transition-all text-sm font-semibold flex items-center space-x-2"
@@ -339,7 +339,7 @@ const Projects = () => {
                   
                   {/* Actions Dropdown / Icons */}
                   <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {user?.role !== 'employee' && (
+                    {(['super_admin', 'hr'].includes(user?.role) || (user?.designation || '').toLowerCase().includes('coordinator')) && (
                       <>
                         <button 
                           onClick={() => handleOpenModal(project)} 

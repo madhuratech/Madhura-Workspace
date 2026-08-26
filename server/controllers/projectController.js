@@ -66,9 +66,9 @@ const getProject = async (req, res) => {
         return res.status(400).json({ message: 'Please add a project title' });
       }
 
-      // Only super_admin, hr, team_leader can create projects
-      if (req.user.role === 'employee') {
-        return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Team Leaders can create projects.' });
+      // Only super_admin, hr, and Project Coordinators can create projects
+      if (!['super_admin', 'hr'].includes(req.user.role) && !(req.user.designation || '').toLowerCase().includes('coordinator')) {
+        return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Project Coordinators can create projects.' });
       }
 
       // Determine initial stage based on project type
@@ -138,7 +138,7 @@ const updateProject = async (req, res) => {
   try {
     const { title, description, projectType, members, status, workflowTeams, coordinator } = req.body;
 
-    if (req.user.role === 'employee') {
+    if (!['super_admin', 'hr'].includes(req.user.role) && !(req.user.designation || '').toLowerCase().includes('coordinator')) {
       return res.status(401).json({ message: 'Not authorized to update projects.' });
     }
 
@@ -174,7 +174,7 @@ const updateProject = async (req, res) => {
 // @access  Private
 const deleteProject = async (req, res) => {
   try {
-    if (req.user.role === 'employee') {
+    if (!['super_admin', 'hr'].includes(req.user.role) && !(req.user.designation || '').toLowerCase().includes('coordinator')) {
       return res.status(401).json({ message: 'Not authorized to delete projects.' });
     }
 

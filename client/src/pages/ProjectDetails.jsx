@@ -404,48 +404,69 @@ const ProjectDetails = () => {
         </div>
       </div>
 
-      {/* Minimal Pipeline Stage Tracker */}
+      {/* Premium Pipeline Stage Tracker */}
       {['super_admin', 'hr', 'team_leader'].includes(user?.role) && (
-        <div className="bg-bg-primary border border-border/50 rounded-xl px-4 py-2.5 mb-5 flex items-center w-full overflow-x-auto custom-scrollbar shadow-sm">
-          {(() => {
-            const types = project?.projectType || ['Software'];
-            const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-            let stages = [];
-            if (hasSoftware) {
-              stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
-            }
-            if (types.includes('Digital Marketing')) stages.push('Digital Marketing');
-            if (types.includes('SEO')) stages.push('SEO');
-            stages.push('Completed');
-            
-            if (stages.length === 0) stages.push('Completed');
+        <div className="bg-bg-secondary/40 backdrop-blur-md border border-border/60 rounded-2xl p-4 mb-6 flex items-center justify-between w-full overflow-x-auto custom-scrollbar shadow-lg shadow-bg-secondary/20 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-accent-blue/5 via-transparent to-success/5 rounded-2xl pointer-events-none"></div>
+          <div className="flex items-center w-full min-w-max relative z-10 px-2 gap-4">
+            {(() => {
+              const types = project?.projectType || ['Software'];
+              const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
+              let stages = [];
+              if (hasSoftware) {
+                stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
+              }
+              if (types.includes('Digital Marketing')) stages.push('Digital Marketing');
+              if (types.includes('SEO')) stages.push('SEO');
+              stages.push('Completed');
+              
+              if (stages.length === 0) stages.push('Completed');
 
-            let currentStage = project?.stage;
-            if (!stages.includes(currentStage)) {
-              currentStage = stages[0];
-            }
+              let currentStage = project?.stage;
+              if (!stages.includes(currentStage)) {
+                currentStage = stages[0];
+              }
 
-            return stages.map((s, i, arr) => {
-              const isActive = currentStage === s;
-              const isPast = arr.indexOf(currentStage) > i;
-              return (
-                <div key={s} className="flex items-center shrink-0 flex-1 min-w-[80px]">
-                  <div className={`flex items-center space-x-2 ${isActive ? 'scale-105 transition-transform' : 'opacity-80'}`}>
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                      isActive ? 'bg-accent-blue text-white ring-2 ring-accent-blue/30' : 
-                      isPast ? 'bg-success text-white' : 'bg-bg-secondary text-text-secondary border border-border'
-                    }`}>
-                      {isPast ? <Check size={10} /> : i + 1}
+              return stages.map((s, i, arr) => {
+                const isActive = currentStage === s;
+                const isPast = arr.indexOf(currentStage) > i;
+                const isLast = i === arr.length - 1;
+                
+                return (
+                  <div key={s} className="flex items-center flex-1 shrink-0 relative group">
+                    <div className={`flex flex-col items-center justify-center space-y-2 relative z-10 w-24 transition-all duration-300 ${isActive ? 'scale-110' : 'hover:scale-105'}`}>
+                      {/* Step Indicator */}
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shadow-md transition-all duration-300 relative ${
+                        isActive ? 'bg-gradient-to-br from-accent-blue to-accent-indigo text-white ring-4 ring-accent-blue/20 shadow-accent-blue/40' : 
+                        isPast ? 'bg-gradient-to-br from-success to-emerald-500 text-white shadow-success/30' : 
+                        'bg-bg-primary text-text-secondary border-2 border-border group-hover:border-accent-blue/30'
+                      }`}>
+                        {isActive && <div className="absolute -inset-1 rounded-xl bg-accent-blue/20 animate-ping opacity-75"></div>}
+                        {isPast ? <Check size={14} className="stroke-[3px]" /> : i + 1}
+                      </div>
+                      {/* Stage Label */}
+                      <span className={`text-[11px] uppercase tracking-widest font-extrabold whitespace-nowrap transition-colors duration-300 ${
+                        isActive ? 'text-accent-blue' : 
+                        isPast ? 'text-text-primary' : 
+                        'text-text-secondary/60'
+                      }`}>
+                        {s}
+                      </span>
                     </div>
-                    <span className={`text-[10px] uppercase tracking-wider font-bold ${isActive ? 'text-accent-blue' : isPast ? 'text-text-primary' : 'text-text-secondary'}`}>{s}</span>
+
+                    {/* Connecting Line */}
+                    {!isLast && (
+                      <div className="absolute left-1/2 right-[-50%] top-4 -translate-y-1/2 flex items-center px-4 pointer-events-none">
+                         <div className={`h-[3px] w-full rounded-full transition-all duration-500 overflow-hidden bg-border/40 relative`}>
+                            {isPast && <div className="absolute inset-0 bg-gradient-to-r from-success to-emerald-400 w-full animate-pulse"></div>}
+                         </div>
+                      </div>
+                    )}
                   </div>
-                  {i < arr.length - 1 && (
-                    <div className={`h-px flex-1 mx-3 rounded-full ${isPast ? 'bg-success' : 'bg-border/60'}`}></div>
-                  )}
-                </div>
-              );
-            });
-          })()}
+                );
+              });
+            })()}
+          </div>
         </div>
       )}
 
