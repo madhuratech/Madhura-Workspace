@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Save, Building, Users, Bell, Shield, Key, Lock, HelpCircle, Info, Mail, MessageSquare, Eye, EyeOff } from 'lucide-react';
+import { Save, Building, Users, Bell, Shield, Key, Lock, HelpCircle, Info, Mail, MessageSquare, Eye, EyeOff, Book, ArrowRight, FileText, Heart } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -626,65 +626,129 @@ const Settings = () => {
           )}
 
           {activeTab === 'help' && (
-            <div className="max-w-2xl animate-in fade-in duration-300">
-              <h2 className="text-xl font-bold text-text-primary mb-2">Help & Support</h2>
-              <p className="text-sm text-text-secondary mb-8">We're here to help you get the most out of Madhura Workspace.</p>
+            <div className="max-w-4xl animate-in fade-in duration-300">
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold text-text-primary tracking-tight">Help & Support</h2>
+                <p className="text-sm text-text-secondary mt-2">Everything you need to manage your workspace, projects, and team.</p>
+              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-bg-primary border border-border rounded-xl p-5 hover:border-accent-blue transition-colors cursor-pointer group">
-                  <div className="w-10 h-10 rounded-lg bg-accent-blue/10 flex items-center justify-center text-accent-blue mb-4 group-hover:scale-110 transition-transform">
-                    <Mail size={20} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                {/* Documentation Card */}
+                <div className="group relative bg-bg-secondary/20 hover:bg-bg-secondary/40 border border-border rounded-2xl p-6 transition-all duration-300 overflow-hidden">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <HelpCircle size={80} />
                   </div>
-                  <h3 className="font-bold text-text-primary mb-1">Email Support</h3>
-                  <p className="text-xs text-text-secondary mb-3">Get in touch with our team directly.</p>
-                  <a href="mailto:support@madhuratech.com" className="text-sm font-medium text-accent-blue hover:underline">support@madhuratech.com</a>
+                  <div className="w-12 h-12 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue mb-5 group-hover:scale-110 transition-transform duration-300">
+                    <Book size={24} />
+                  </div>
+                  <h3 className="text-lg font-bold text-text-primary mb-2">Documentation</h3>
+                  <p className="text-sm text-text-secondary mb-4">Detailed guides on setting up your workspace, managing roles, and workflows.</p>
+                  <a href="#" className="inline-flex items-center text-sm font-bold text-accent-blue hover:text-accent-indigo transition-colors">
+                    Read the docs <ArrowRight size={14} className="ml-1" />
+                  </a>
                 </div>
-                
-                <div className="bg-bg-primary border border-border rounded-xl p-5 hover:border-accent-blue transition-colors cursor-pointer group">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 mb-4 group-hover:scale-110 transition-transform">
-                    <MessageSquare size={20} />
+
+                {/* Contact Support Card */}
+                <div className="group relative bg-bg-secondary/20 hover:bg-bg-secondary/40 border border-border rounded-2xl p-6 transition-all duration-300 overflow-hidden">
+                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <Mail size={80} />
                   </div>
-                  <h3 className="font-bold text-text-primary mb-1">Live Chat</h3>
-                  <p className="text-xs text-text-secondary mb-3">Chat with our support agents instantly.</p>
-                  <span className="text-sm font-medium text-purple-500">Available 9 AM - 6 PM</span>
+                  <div className="w-12 h-12 rounded-xl bg-accent-indigo/10 flex items-center justify-center text-accent-indigo mb-5 group-hover:scale-110 transition-transform duration-300">
+                    <MessageSquare size={24} />
+                  </div>
+                  <h3 className="text-lg font-bold text-text-primary mb-2">Contact Support</h3>
+                  <p className="text-sm text-text-secondary mb-4">Email our dedicated support team. Average response time is under 2 hours.</p>
+                  <a href="mailto:support@madhuratech.com" className="inline-flex items-center text-sm font-bold text-accent-indigo hover:opacity-80 transition-opacity">
+                    support@madhuratech.com <ArrowRight size={14} className="ml-1" />
+                  </a>
                 </div>
               </div>
 
-              <div className="bg-accent-blue/5 border border-accent-blue/20 rounded-xl p-6 flex items-start space-x-4">
-                <HelpCircle size={24} className="text-accent-blue shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-bold text-text-primary mb-1">Frequently Asked Questions</h3>
-                  <p className="text-sm text-text-secondary mb-3">Find quick answers to common questions about workspace setup, roles, and integrations.</p>
-                  <button className="text-sm font-medium text-accent-blue hover:underline">Visit Help Center →</button>
-                </div>
+              {/* Quick Links / FAQs */}
+              <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-4">Popular Resources</h3>
+              <div className="bg-bg-primary border border-border rounded-xl divide-y divide-border/50">
+                <a href="#" className="flex items-center justify-between p-4 hover:bg-bg-secondary/30 transition-colors group">
+                  <div className="flex items-center space-x-3">
+                    <FileText size={18} className="text-text-secondary group-hover:text-accent-blue transition-colors" />
+                    <span className="text-sm font-medium text-text-primary">How to create and manage projects</span>
+                  </div>
+                  <ArrowRight size={16} className="text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transform" />
+                </a>
+                <a href="#" className="flex items-center justify-between p-4 hover:bg-bg-secondary/30 transition-colors group">
+                  <div className="flex items-center space-x-3">
+                    <Users size={18} className="text-text-secondary group-hover:text-accent-blue transition-colors" />
+                    <span className="text-sm font-medium text-text-primary">Understanding User Roles & Permissions</span>
+                  </div>
+                  <ArrowRight size={16} className="text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transform" />
+                </a>
+                <a href="#" className="flex items-center justify-between p-4 hover:bg-bg-secondary/30 transition-colors group">
+                  <div className="flex items-center space-x-3">
+                    <Shield size={18} className="text-text-secondary group-hover:text-accent-blue transition-colors" />
+                    <span className="text-sm font-medium text-text-primary">Configuring Security & Notification Settings</span>
+                  </div>
+                  <ArrowRight size={16} className="text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transform" />
+                </a>
               </div>
             </div>
           )}
 
           {activeTab === 'about' && (
-            <div className="max-w-2xl animate-in fade-in duration-300 flex flex-col items-center text-center mt-10">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent-blue to-accent-indigo flex items-center justify-center text-white text-4xl font-bold shadow-lg mb-6">
-                M
-              </div>
-              <h2 className="text-3xl font-bold text-text-primary mb-2 font-outfit tracking-wide">Madhura Workspace</h2>
-              <p className="text-sm font-medium text-accent-blue mb-8 bg-accent-blue/10 px-4 py-1 rounded-full">Version 1.0.0 (Build 42)</p>
-              
-              <div className="max-w-lg">
-                <p className="text-text-secondary leading-relaxed mb-8">
-                  A premium workspace management solution designed for seamless collaboration, robust team tracking, and efficient workflow execution. Built with modern web technologies for uncompromising performance and aesthetics.
-                </p>
+            <div className="max-w-3xl animate-in fade-in duration-300">
+              <div className="flex flex-col md:flex-row gap-10 items-start mt-6">
                 
-                <div className="flex items-center justify-center space-x-6 text-sm font-medium text-text-secondary border-t border-border pt-8">
-                  <a href="#" className="hover:text-accent-blue transition-colors">Terms of Service</a>
-                  <span className="w-1 h-1 rounded-full bg-border"></span>
-                  <a href="#" className="hover:text-accent-blue transition-colors">Privacy Policy</a>
-                  <span className="w-1 h-1 rounded-full bg-border"></span>
-                  <a href="#" className="hover:text-accent-blue transition-colors">Licenses</a>
+                {/* Brand / Logo Section */}
+                <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
+                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-bg-secondary to-bg-primary border border-border flex items-center justify-center text-text-primary text-5xl font-bold shadow-xl mb-6 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-accent-blue/10"></div>
+                    <span className="relative z-10 font-outfit">M</span>
+                  </div>
+                  
+                  <h2 className="text-3xl font-bold text-text-primary tracking-tight font-outfit mb-2">Madhura Workspace</h2>
+                  <p className="text-sm text-text-secondary max-w-sm leading-relaxed mb-6">
+                    A premium, minimalist workspace management solution engineered for modern teams. Built with a focus on speed, aesthetics, and flawless collaboration.
+                  </p>
+
+                  <div className="flex items-center space-x-4 text-xs font-bold text-text-secondary uppercase tracking-wider">
+                    <a href="#" className="hover:text-accent-blue transition-colors">Terms</a>
+                    <span className="w-1 h-1 rounded-full bg-border"></span>
+                    <a href="#" className="hover:text-accent-blue transition-colors">Privacy</a>
+                    <span className="w-1 h-1 rounded-full bg-border"></span>
+                    <a href="#" className="hover:text-accent-blue transition-colors">Licenses</a>
+                  </div>
                 </div>
-                
-                <p className="text-xs text-text-secondary/60 mt-8">
-                  © 2026 Madhura Tech. All rights reserved.
-                </p>
+
+                {/* System Info Section */}
+                <div className="flex-1 w-full bg-bg-secondary/20 border border-border rounded-2xl p-6">
+                  <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-5">System Information</h3>
+                  
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-4 border-b border-border/50">
+                      <span className="text-sm text-text-secondary">Version</span>
+                      <span className="text-sm font-bold text-text-primary bg-bg-primary px-3 py-1 rounded-md border border-border">2.0.0</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-4 border-b border-border/50">
+                      <span className="text-sm text-text-secondary">Build Channel</span>
+                      <span className="text-sm font-bold text-accent-blue">Stable Release</span>
+                    </div>
+                    <div className="flex justify-between items-center pb-4 border-b border-border/50">
+                      <span className="text-sm text-text-secondary">Environment</span>
+                      <span className="text-sm font-bold text-success flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-success mr-2 animate-pulse"></div>
+                        Production
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2">
+                      <span className="text-sm text-text-secondary">Developer</span>
+                      <span className="text-sm font-bold text-text-primary">Madhura Tech Team</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              
+              <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-text-secondary">
+                <p>© {new Date().getFullYear()} Madhura Tech. All rights reserved.</p>
+                <p className="flex items-center">Made with <Heart size={12} className="mx-1 text-danger fill-danger" /> for seamless collaboration.</p>
               </div>
             </div>
           )}
