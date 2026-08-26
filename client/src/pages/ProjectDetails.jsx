@@ -79,7 +79,15 @@ const ProjectDetails = () => {
 
         const resolvedId = matched._id;
         setProjectId(resolvedId);
-        setProject(matched);
+        
+        // Fetch full project details (including deliverables)
+        try {
+          const singleProjRes = await axios.get(`/workspaces/${ws._id}/projects/${resolvedId}`);
+          setProject(singleProjRes.data);
+        } catch (e) {
+          console.error('Failed to fetch full project details', e);
+          setProject(matched);
+        }
 
         let reqs = [
           axios.get(`/workspaces/${ws._id}/teams`).catch(e => ({ error: true, data: e }))
