@@ -43,13 +43,13 @@ const ProjectDetails = () => {
   const [rollbackData, setRollbackData] = useState({ reason: '', targetStage: '' });
   const [isRollbackModalOpen, setIsRollbackModalOpen] = useState(false);
   const [socket, setSocket] = useState(null);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const newSocket = io(API_URL);
     setSocket(newSocket);
     return () => newSocket.close();
-  }, []);
+  }, [API_URL]);
 
   useEffect(() => {
     if (!slugSuffix) return;
@@ -369,7 +369,7 @@ const ProjectDetails = () => {
                   <span className="text-[10px] text-text-secondary">{new Date(del.submittedAt).toLocaleDateString()}</span>
                 </div>
                 {del.fileUrl && (
-                  <a href={`http://localhost:5000${del.fileUrl}`} download={del.fileName} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-white bg-accent-blue/90 hover:bg-accent-blue px-3 py-1.5 rounded-lg transition-colors mb-2 w-max shadow-sm group/btn">
+                  <a href={`${API_URL}${del.fileUrl}`} download={del.fileName} target="_blank" rel="noopener noreferrer" className="flex items-center text-xs text-white bg-accent-blue/90 hover:bg-accent-blue px-3 py-1.5 rounded-lg transition-colors mb-2 w-max shadow-sm group/btn">
                     <Download size={14} className="mr-1.5 opacity-80 group-hover/btn:opacity-100" />
                     <span className="truncate max-w-[150px]">{del.fileName || 'Download File'}</span>
                   </a>
