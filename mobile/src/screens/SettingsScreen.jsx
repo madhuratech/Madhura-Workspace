@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ScrollView, Animated, Alert, Modal, TextInput, ActivityIndicator, Switch
@@ -11,14 +11,15 @@ import {
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
+const PRIMARY = '#1b2b4c';
+const ACCENT = '#ffca22';
+
 const ROLE_CONFIG = {
   super_admin: { bg: '#F5F3FF', border: '#DDD6FE', text: '#7C3AED', label: 'MD' },
   hr:          { bg: '#EFF6FF', border: '#BFDBFE', text: '#2563EB', label: 'HR'          },
   team_leader: { bg: '#FFF7ED', border: '#FED7AA', text: '#C2410C', label: 'Team Leader' },
   employee:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', label: 'Employee'    },
 };
-
-// Remove global SETTING_GROUPS
 
 const SettingItem = ({ item, delay }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -43,7 +44,7 @@ const SettingItem = ({ item, delay }) => {
           <Text style={styles.settingLabel}>{item.label}</Text>
           {item.sub && <Text style={styles.settingSub}>{item.sub}</Text>}
         </View>
-        <ChevronRight color="#CBD5E1" size={18} />
+        <ChevronRight color="#64748B" size={18} />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -52,19 +53,19 @@ const SettingItem = ({ item, delay }) => {
 export default function SettingsScreen({ navigation }) {
   const { logout, user, updateUserStatus } = useContext(AuthContext);
 
-  const [isPasswordModalVisible, setPasswordModalVisible] = React.useState(false);
-  const [passwordData, setPasswordData] = React.useState({ currentPassword: '', newPassword: '' });
-  const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+  const [isPasswordModalVisible, setPasswordModalVisible] = useState(false);
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   
-  const [isHelpModalVisible, setHelpModalVisible] = React.useState(false);
-  const [isAboutModalVisible, setAboutModalVisible] = React.useState(false);
+  const [isHelpModalVisible, setHelpModalVisible] = useState(false);
+  const [isAboutModalVisible, setAboutModalVisible] = useState(false);
   
-  const [isPersonalInfoModalVisible, setPersonalInfoModalVisible] = React.useState(false);
-  const [isNotificationsModalVisible, setNotificationsModalVisible] = React.useState(false);
-  const [notificationSettings, setNotificationSettings] = React.useState(
+  const [isPersonalInfoModalVisible, setPersonalInfoModalVisible] = useState(false);
+  const [isNotificationsModalVisible, setNotificationsModalVisible] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState(
     user?.notificationSettings || { emailNotifications: true, pushNotifications: true, taskReminders: true }
   );
-  const [isSavingNotifications, setIsSavingNotifications] = React.useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
   const profileFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -79,7 +80,7 @@ export default function SettingsScreen({ navigation }) {
     {
       title: 'Account',
       items: [
-        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#1b2b4c', onPress: () => setPersonalInfoModalVisible(true) },
+        { icon: User,        label: 'Personal Information', sub: 'Update your name and profile', iconBg: '#EFF6FF', iconColor: '#2563EB', onPress: () => setPersonalInfoModalVisible(true) },
         { icon: Bell,        label: 'Notifications',        sub: 'Push and email alert settings', iconBg: '#F5F3FF', iconColor: '#8B5CF6', onPress: () => setNotificationsModalVisible(true) },
         { icon: Shield,      label: 'Security',             sub: 'Password and 2FA settings',     iconBg: '#FFF7ED', iconColor: '#F97316', onPress: () => setPasswordModalVisible(true) },
       ],
@@ -87,8 +88,8 @@ export default function SettingsScreen({ navigation }) {
     {
       title: 'Support',
       items: [
-        { icon: HelpCircle,  label: 'Help & Support',       sub: 'FAQs and contact us',           iconBg: '#F0FDF4', iconColor: '#10B981', onPress: () => setHelpModalVisible(true) },
-        { icon: Info,        label: 'About',                sub: 'App version and licenses',       iconBg: '#F8FAFC', iconColor: '#64748B', onPress: () => setAboutModalVisible(true) },
+        { icon: HelpCircle,  label: 'Help & Support',       sub: 'FAQs and contact us',           iconBg: '#F8FAFC', iconColor: '#64748B', onPress: () => setHelpModalVisible(true) },
+        { icon: Info,        label: 'About',                sub: 'App version and licenses',       iconBg: '#F1F5F9', iconColor: '#475569', onPress: () => setAboutModalVisible(true) },
       ],
     },
   ];
@@ -162,7 +163,7 @@ export default function SettingsScreen({ navigation }) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft color="#1b2b4c" size={22} />
+          <ArrowLeft color="#111827" size={22} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={{ width: 38 }} />
@@ -202,7 +203,7 @@ export default function SettingsScreen({ navigation }) {
                   onPress={() => updateUserStatus(status)}
                   style={[
                     styles.statusBtn,
-                    isActive ? { backgroundColor: statusColor + '15', borderColor: statusColor + '40' } : { backgroundColor: '#fff', borderColor: '#F1F5F9' }
+                    { backgroundColor: isActive ? statusColor + '15' : '#ffffff', borderColor: isActive ? statusColor + '40' : '#E2E8F0' }
                   ]}
                 >
                   <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
@@ -229,7 +230,7 @@ export default function SettingsScreen({ navigation }) {
         <Animated.View style={[{ marginTop: 16 }, { opacity: profileFade }]}>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
             <View style={styles.logoutIcon}>
-              <LogOut color="#E11D48" size={20} strokeWidth={2} />
+              <LogOut color="#EF4444" size={20} strokeWidth={2} />
             </View>
             <Text style={styles.logoutLabel}>Log Out</Text>
           </TouchableOpacity>
@@ -239,7 +240,7 @@ export default function SettingsScreen({ navigation }) {
         <View style={{ height: 80 }} />
       </ScrollView>
 
-      {/* Change Password Modal */}
+      {/* Password Modal */}
       <Modal visible={isPasswordModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -249,122 +250,22 @@ export default function SettingsScreen({ navigation }) {
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
-
             <View style={styles.inputContainer}>
-              <Lock size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Current Password"
-                secureTextEntry
-                value={passwordData.currentPassword}
-                onChangeText={(text) => setPasswordData(prev => ({ ...prev, currentPassword: text }))}
-              />
+              <Lock size={18} color="#64748B" style={styles.inputIcon} />
+              <TextInput style={styles.input} placeholder="Current Password" placeholderTextColor="#94A3B8" secureTextEntry value={passwordData.currentPassword} onChangeText={(text) => setPasswordData(prev => ({ ...prev, currentPassword: text }))} />
             </View>
-
             <View style={styles.inputContainer}>
-              <Key size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="New Password (min 6 chars)"
-                secureTextEntry
-                value={passwordData.newPassword}
-                onChangeText={(text) => setPasswordData(prev => ({ ...prev, newPassword: text }))}
-              />
+              <Key size={18} color="#64748B" style={styles.inputIcon} />
+              <TextInput style={styles.input} placeholder="New Password (min 6 chars)" placeholderTextColor="#94A3B8" secureTextEntry value={passwordData.newPassword} onChangeText={(text) => setPasswordData(prev => ({ ...prev, newPassword: text }))} />
             </View>
-
-            <TouchableOpacity 
-              style={[styles.saveBtn, isChangingPassword && { opacity: 0.7 }]} 
-              activeOpacity={0.8}
-              onPress={handleChangePassword}
-              disabled={isChangingPassword}
-            >
-              {isChangingPassword ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.saveBtnText}>Update Password</Text>
-              )}
+            <TouchableOpacity style={[styles.saveBtn, isChangingPassword && { opacity: 0.7 }]} onPress={handleChangePassword} disabled={isChangingPassword}>
+              {isChangingPassword ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Update Password</Text>}
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Help & Support Modal */}
-      <Modal visible={isHelpModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Help & Support</Text>
-              <TouchableOpacity onPress={() => setHelpModalVisible(false)} style={styles.modalCloseBtn}>
-                <Text style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ alignItems: 'center', marginBottom: 20 }}>
-              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#F0FDF4', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
-                <HelpCircle color="#10B981" size={32} />
-              </View>
-              <Text style={{ fontSize: 15, textAlign: 'center', color: '#64748B', paddingHorizontal: 10 }}>
-                We're here to help! Reach out to our support team for any issues or questions.
-              </Text>
-            </View>
-
-            <TouchableOpacity style={styles.supportOptionBtn} activeOpacity={0.8}>
-              <Mail color="#1b2b4c" size={20} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Email Support</Text>
-                <Text style={{ fontSize: 12, color: '#94A3B8' }}>support@madhuratech.com</Text>
-              </View>
-              <ChevronRight color="#CBD5E1" size={18} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.supportOptionBtn} activeOpacity={0.8}>
-              <MessageSquare color="#8B5CF6" size={20} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Live Chat</Text>
-                <Text style={{ fontSize: 12, color: '#94A3B8' }}>Available 9 AM - 6 PM</Text>
-              </View>
-              <ChevronRight color="#CBD5E1" size={18} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={[styles.saveBtn, { marginTop: 10 }]} onPress={() => setHelpModalVisible(false)}>
-              <Text style={styles.saveBtnText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* About Modal */}
-      <Modal visible={isAboutModalVisible} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>About</Text>
-              <TouchableOpacity onPress={() => setAboutModalVisible(false)} style={styles.modalCloseBtn}>
-                <Text style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ alignItems: 'center', marginVertical: 20 }}>
-              <View style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#1b2b4c' }}>M</Text>
-              </View>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1b2b4c', marginBottom: 4 }}>Madhura Workspace</Text>
-              <Text style={{ fontSize: 14, color: '#64748B', marginBottom: 24 }}>Version 1.0.0 (Build 42)</Text>
-              
-              <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 20 }}>
-                A premium workspace management solution designed for seamless collaboration, robust team tracking, and efficient workflow execution.
-              </Text>
-            </View>
-            
-            
-            <Text style={{ fontSize: 11, color: '#CBD5E1', textAlign: 'center', marginTop: 10 }}>
-              © 2026 Madhura Tech. All rights reserved.
-            </Text>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Personal Information Modal */}
+      {/* Personal Info Modal */}
       <Modal visible={isPersonalInfoModalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -374,24 +275,17 @@ export default function SettingsScreen({ navigation }) {
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
-
-            <View style={styles.inputContainer}>
-              <User size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput style={[styles.input, { color: '#64748B' }]} value={user?.name || ''} editable={false} />
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+              <View style={[styles.profileAvatar, { backgroundColor: roleCfg.bg, width: 80, height: 80, marginRight: 0, marginBottom: 12 }]}>
+                <Text style={[styles.profileAvatarText, { color: roleCfg.text, fontSize: 32 }]}>{initial}</Text>
+              </View>
+              <Text style={styles.profileName}>{user?.name}</Text>
+              <Text style={styles.profileEmail}>{user?.email}</Text>
             </View>
-            <View style={styles.inputContainer}>
-              <Mail size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput style={[styles.input, { color: '#64748B' }]} value={user?.email || ''} editable={false} />
+            <View style={{ backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}>
+               <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}>Role</Text>
+               <Text style={{ fontSize: 15, fontWeight: '600', color: '#111827', textTransform: 'capitalize' }}>{roleCfg.label}</Text>
             </View>
-            <View style={styles.inputContainer}>
-              <Shield size={18} color="#94A3B8" style={styles.inputIcon} />
-              <TextInput style={[styles.input, { color: '#64748B' }]} value={roleCfg.label} editable={false} />
-            </View>
-
-            <Text style={{ fontSize: 12, color: '#94A3B8', textAlign: 'center', marginVertical: 10 }}>
-              Profile details are currently managed by your workspace administrator.
-            </Text>
-
             <TouchableOpacity style={styles.saveBtn} onPress={() => setPersonalInfoModalVisible(false)}>
               <Text style={styles.saveBtnText}>Close</Text>
             </TouchableOpacity>
@@ -409,52 +303,75 @@ export default function SettingsScreen({ navigation }) {
                 <Text style={styles.modalCloseText}>✕</Text>
               </TouchableOpacity>
             </View>
-
-            <View style={{ marginBottom: 20 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <View>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Email Notifications</Text>
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Receive daily summaries</Text>
-                </View>
-                <Switch 
-                  value={notificationSettings.emailNotifications} 
-                  onValueChange={(val) => setNotificationSettings(p => ({ ...p, emailNotifications: val }))} 
-                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
-                />
-              </View>
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <View>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Push Notifications</Text>
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Instant alerts on your device</Text>
-                </View>
-                <Switch 
-                  value={notificationSettings.pushNotifications} 
-                  onValueChange={(val) => setNotificationSettings(p => ({ ...p, pushNotifications: val }))} 
-                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
-                />
-              </View>
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#1b2b4c' }}>Task Reminders</Text>
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Alerts for upcoming deadlines</Text>
-                </View>
-                <Switch 
-                  value={notificationSettings.taskReminders} 
-                  onValueChange={(val) => setNotificationSettings(p => ({ ...p, taskReminders: val }))} 
-                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
-                />
-              </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>Email Notifications</Text>
+              <Switch value={notificationSettings.emailNotifications} onValueChange={(val) => setNotificationSettings(p => ({...p, emailNotifications: val}))} />
             </View>
-
-            <TouchableOpacity 
-              style={[styles.saveBtn, isSavingNotifications && { opacity: 0.7 }]} 
-              activeOpacity={0.8}
-              onPress={handleSaveNotifications}
-              disabled={isSavingNotifications}
-            >
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>Push Notifications</Text>
+              <Switch value={notificationSettings.pushNotifications} onValueChange={(val) => setNotificationSettings(p => ({...p, pushNotifications: val}))} />
+            </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>Task Reminders</Text>
+              <Switch value={notificationSettings.taskReminders} onValueChange={(val) => setNotificationSettings(p => ({...p, taskReminders: val}))} />
+            </View>
+            <TouchableOpacity style={[styles.saveBtn, isSavingNotifications && { opacity: 0.7 }]} onPress={handleSaveNotifications} disabled={isSavingNotifications}>
               {isSavingNotifications ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Preferences</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Help Modal */}
+      <Modal visible={isHelpModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Help & Support</Text>
+              <TouchableOpacity onPress={() => setHelpModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={{ fontSize: 15, color: '#475569', lineHeight: 22, marginBottom: 20 }}>
+              Need assistance? Our support team is available 24/7. 
+            </Text>
+            <View style={styles.contactRow}>
+              <Mail color={PRIMARY} size={20} />
+              <Text style={styles.contactText}>support@madhura.com</Text>
+            </View>
+            <View style={styles.contactRow}>
+              <Phone color={PRIMARY} size={20} />
+              <Text style={styles.contactText}>+1 (800) 123-4567</Text>
+            </View>
+            <TouchableOpacity style={styles.saveBtn} onPress={() => setHelpModalVisible(false)}>
+              <Text style={styles.saveBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* About Modal */}
+      <Modal visible={isAboutModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>About</Text>
+              <TouchableOpacity onPress={() => setAboutModalVisible(false)} style={styles.modalCloseBtn}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+              <View style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: PRIMARY, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>M</Text>
+              </View>
+              <Text style={{ fontSize: 20, fontWeight: '700', color: '#111827' }}>Madhura Workspace</Text>
+              <Text style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Version 1.0.0 (Build 42)</Text>
+            </View>
+            <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 20 }}>
+              © 2026 Madhura Technologies. All rights reserved.
+            </Text>
+            <TouchableOpacity style={[styles.saveBtn, { marginTop: 24 }]} onPress={() => setAboutModalVisible(false)}>
+              <Text style={styles.saveBtnText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -469,22 +386,21 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   backBtn: {
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#1b2b4c' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#111827' },
   scrollContent: { padding: 16 },
 
-  // Profile card
   profileCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    flexDirection: 'row', alignItems: 'center',
     borderRadius: 20, padding: 20, marginBottom: 24,
-    borderWidth: 1, borderColor: '#F1F5F9',
+    backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#F1F5F9',
     shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06, shadowRadius: 16, elevation: 3,
+    shadowOpacity: 0.04, shadowRadius: 16, elevation: 2,
   },
   profileAvatar: {
     width: 60, height: 60, borderRadius: 20,
@@ -492,8 +408,8 @@ const styles = StyleSheet.create({
   },
   profileAvatarText: { fontSize: 26, fontWeight: '700' },
   profileInfo: { flex: 1 },
-  profileName: { fontSize: 18, fontWeight: '700', color: '#1b2b4c', marginBottom: 2 },
-  profileEmail: { fontSize: 12, color: '#94A3B8', marginBottom: 8 },
+  profileName: { fontSize: 18, fontWeight: '700', marginBottom: 2, color: '#111827' },
+  profileEmail: { fontSize: 12, marginBottom: 8, color: '#64748B' },
   roleBadge: {
     alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 20, borderWidth: 1,
@@ -501,14 +417,11 @@ const styles = StyleSheet.create({
   roleText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
 
   sectionTitle: {
-    fontSize: 11, fontWeight: '700', color: '#94A3B8', letterSpacing: 1.2,
-    marginBottom: 10, marginTop: 8,
+    fontSize: 11, fontWeight: '700', letterSpacing: 1.2,
+    marginBottom: 10, marginTop: 8, color: '#64748B'
   },
 
-  // Status
-  statusContainer: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: 10,
-  },
+  statusContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statusBtn: {
     flexDirection: 'row', alignItems: 'center',
     paddingVertical: 10, paddingHorizontal: 14,
@@ -518,10 +431,9 @@ const styles = StyleSheet.create({
   statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
   statusText: { fontSize: 13, fontWeight: '600' },
 
-  // Setting items
   settingItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
-    borderRadius: 16, padding: 14, marginBottom: 8,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#ffffff', borderRadius: 16, padding: 14, marginBottom: 8,
     borderWidth: 1, borderColor: '#F1F5F9',
     shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03, shadowRadius: 6, elevation: 1,
@@ -531,32 +443,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginRight: 14,
   },
   settingText: { flex: 1 },
-  settingLabel: { fontSize: 15, fontWeight: '600', color: '#1b2b4c', marginBottom: 1 },
-  settingSub: { fontSize: 12, color: '#94A3B8' },
+  settingLabel: { fontSize: 15, fontWeight: '600', marginBottom: 1, color: '#111827' },
+  settingSub: { fontSize: 12, color: '#64748B' },
 
-  // Logout
   logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF1F2',
-    borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#FECDD3',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FEF2F2', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#FECACA'
   },
   logoutIcon: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: '#FFE4E6',
-    justifyContent: 'center', alignItems: 'center', marginRight: 14,
+    width: 44, height: 44, borderRadius: 14,
+    backgroundColor: '#FEE2E2', justifyContent: 'center', alignItems: 'center', marginRight: 14,
   },
-  logoutLabel: { fontSize: 15, fontWeight: '700', color: '#E11D48' },
+  logoutLabel: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
 
-  version: {
-    textAlign: 'center', color: '#CBD5E1', fontSize: 12,
-    fontWeight: '500', marginTop: 28,
-  },
+  version: { textAlign: 'center', fontSize: 12, fontWeight: '500', marginTop: 28, color: '#94A3B8' },
 
-  // Modal styles
   modalOverlay: {
     flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'center', alignItems: 'center', padding: 20
   },
   modalContent: {
-    backgroundColor: '#fff', borderRadius: 20, width: '100%',
+    backgroundColor: '#ffffff', borderRadius: 20, width: '100%',
     padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1, shadowRadius: 20, elevation: 10
   },
@@ -564,27 +471,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     marginBottom: 20
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1b2b4c' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
   modalCloseBtn: {
     width: 30, height: 30, borderRadius: 15, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center'
   },
   modalCloseText: { fontSize: 16, color: '#64748B', fontWeight: 'bold' },
+  
   inputContainer: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
-    borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
     marginBottom: 16, paddingHorizontal: 14, height: 50
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, color: '#1b2b4c' },
+  input: { flex: 1, fontSize: 15, color: '#111827' },
   saveBtn: {
-    backgroundColor: '#1b2b4c', borderRadius: 12, height: 50,
+    backgroundColor: PRIMARY, borderRadius: 12, height: 50,
     justifyContent: 'center', alignItems: 'center', marginTop: 8
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  supportOptionBtn: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
-    borderRadius: 16, padding: 14, marginBottom: 10,
-    borderWidth: 1, borderColor: '#F1F5F9',
-  }
+  switchRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9'
+  },
+  switchLabel: { fontSize: 15, color: '#111827', fontWeight: '500' },
+  contactRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9'
+  },
+  contactText: { fontSize: 15, color: '#111827', marginLeft: 12, fontWeight: '500' },
 });

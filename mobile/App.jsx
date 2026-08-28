@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
-import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet } from 'react-native';
+import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet, Image, Easing } from 'react-native';
 import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react-native';
 import { SocketProvider } from './src/context/SocketContext';
 import Toast from 'react-native-toast-message';
@@ -34,7 +34,6 @@ import NotesScreen from './src/screens/NotesScreen';
 const Stack = createNativeStackNavigator();
 const Tab = createMaterialTopTabNavigator();
 
-const PRIMARY = '#ffca22';
 // ─── Stacks ────────────────────────────────────────────────────────────────
 const ProjectsStack = createNativeStackNavigator();
 function ProjectsNavigator() {
@@ -90,17 +89,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const focusedOptions = descriptors[state.routes[state.index].key].options;
+  
   if (focusedOptions.tabBarStyle?.display === 'none') {
     return null;
   }
 
   return (
-    <View style={[tabStyles.wrapper, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-      <View style={tabStyles.container}>
+    <View style={[tabStyles.wrapper, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: '#ffffff', borderTopColor: '#E2E8F0' }]}>
+      <View style={[tabStyles.container, { backgroundColor: '#ffffff' }]}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const cfg = TAB_CONFIG.find(t => t.name === route.name) || TAB_CONFIG[0];
           const { Icon } = cfg;
+
+          // Simple local state animation for scale
+          const scale = useRef(new Animated.Value(isFocused ? 1.15 : 1)).current;
+
+          useEffect(() => {
+            Animated.spring(scale, { toValue: isFocused ? 1.15 : 1, friction: 5, useNativeDriver: true }).start();
+          }, [isFocused]);
 
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -108,20 +115,11 @@ function CustomTabBar({ state, descriptors, navigation }) {
           };
 
           return (
-            <TouchableOpacity
-              key={route.key}
-              onPress={onPress}
-              activeOpacity={0.7}
-              style={tabStyles.tab}
-            >
-              <View style={tabStyles.pill}>
-                <Icon
-                  color={isFocused ? PRIMARY : '#9CA3AF'}
-                  size={24}
-                  strokeWidth={isFocused ? 2.5 : 2}
-                />
-              </View>
-              <Text style={[tabStyles.label, isFocused && tabStyles.labelActive]}>
+            <TouchableOpacity key={route.key} onPress={onPress} activeOpacity={0.7} style={tabStyles.tab}>
+              <Animated.View style={[tabStyles.pill, { transform: [{ scale }] }]}>
+                <Icon color={isFocused ? '#1b2b4c' : '#64748B'} size={24} strokeWidth={isFocused ? 2.5 : 2} />
+              </Animated.View>
+              <Text style={[tabStyles.label, { color: isFocused ? '#1b2b4c' : '#64748B', fontWeight: isFocused ? '700' : '500' }]}>
                 {cfg.label}
               </Text>
             </TouchableOpacity>
@@ -163,11 +161,7 @@ const tabStyles = StyleSheet.create({
     fontSize: 10,
     color: '#6B7280',
     fontWeight: '500',
-  },
-  labelActive: {
-    color: PRIMARY,
-    fontWeight: '700',
-  },
+  }
 });
 
 // ─── Tab Navigator ──────────────────────────────────────────────────────────
@@ -211,33 +205,48 @@ function TabNavigator() {
 }
 
 const AnimatedLoading = () => {
-  const pulseAnim = React.useRef(new Animated.Value(1)).current;
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.3)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoTranslateY = useRef(new Animated.Value(50)).current;
+  
+  const textOpacity = useRef(new Animated.Value(0)).current;
+  const textTranslateY = useRef(new Animated.Value(20)).current;
 
-  React.useEffect(() => {
-    Animated.timing(fadeAnim, { toValue: 1, duration: 1000, useNativeDriver: true }).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1200, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 1200, useNativeDriver: true })
+  useEffect(() => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(logoScale, { toValue: 1, friction: 4, tension: 50, useNativeDriver: true }),
+        Animated.timing(logoOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.spring(logoTranslateY, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true })
+      ]),
+      Animated.parallel([
+        Animated.timing(textOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.spring(textTranslateY, { toValue: 0, friction: 6, tension: 40, useNativeDriver: true })
       ])
-    ).start();
+    ]).start();
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1b2b4c' }}>
-      <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: pulseAnim }], alignItems: 'center' }}>
-        <View style={{
-          width: 72, height: 72, borderRadius: 24,
-          backgroundColor: PRIMARY,
-          justifyContent: 'center', alignItems: 'center',
-          marginBottom: 24,
-          shadowColor: PRIMARY, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 10,
-        }}>
-          <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>M</Text>
-        </View>
-        <Text style={{ fontSize: 24, fontWeight: '700', color: '#fff', letterSpacing: 1 }}>Madhura</Text>
-        <Text style={{ fontSize: 14, fontWeight: '600', color: '#94A3B8', marginTop: 6, letterSpacing: 3, textTransform: 'uppercase' }}>Workspace</Text>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+      <Animated.View style={{ 
+        transform: [{ scale: logoScale }, { translateY: logoTranslateY }],
+        opacity: logoOpacity,
+        width: 100, height: 100, borderRadius: 24,
+        justifyContent: 'center', alignItems: 'center',
+        marginBottom: 24,
+        shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10,
+        backgroundColor: '#fff'
+      }}>
+        <Image 
+          source={require('./assets/logo.jpeg')} 
+          style={{ width: '100%', height: '100%', borderRadius: 24 }}
+          resizeMode="cover"
+        />
+      </Animated.View>
+      
+      <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }], alignItems: 'center' }}>
+        <Text style={{ fontSize: 28, fontWeight: '800', color: '#111827', letterSpacing: 1 }}>Madhura</Text>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: '#1b2b4c', marginTop: 6, letterSpacing: 4, textTransform: 'uppercase' }}>Workspace</Text>
       </Animated.View>
     </View>
   );

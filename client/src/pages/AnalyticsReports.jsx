@@ -347,7 +347,7 @@ const AnalyticsReports = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[700px]">
                   <thead>
-                    <tr className="border-b border-border/50 bg-gray-50/50">
+                    <tr className="border-b border-border/50 bg-gray-50/50 dark:bg-white/5">
                       <th className="py-3 px-5 text-xs font-semibold text-text-secondary">Name</th>
                       <th className="py-3 px-5 text-xs font-semibold text-text-secondary">Role & Status</th>
                       <th className="py-3 px-5 text-xs font-semibold text-text-secondary">Tasks</th>
@@ -362,7 +362,7 @@ const AnalyticsReports = () => {
                       </tr>
                     ) : (
                       filteredEmployees.map((emp) => (
-                        <tr key={emp._id} className="hover:bg-gray-50/50 transition-colors">
+                        <tr key={emp._id} className="hover:bg-accent/10 dark:hover:bg-accent/20 transition-colors">
                           <td className="py-3 px-5">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-medium text-gray-600 shrink-0">

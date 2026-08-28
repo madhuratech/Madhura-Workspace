@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   CheckCircle2, Clock, Circle,
-  CalendarDays, Flag, FolderKanban,
+  CalendarDays, FolderKanban,
   LayoutList, Columns, CheckSquare,
 } from 'lucide-react-native';
 import { cachedGet, invalidateCache } from '../utils/api';
@@ -20,11 +20,7 @@ const PRIORITY = {
   Medium: { color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
   Low:    { color: '#059669', bg: '#F0FDF4', border: '#BBF7D0' },
 };
-const STATUS = {
-  'To Do':       { color: '#6B7280', bg: '#F9FAFB', border: '#E5E7EB', accent: '#D1D5DB' },
-  'In Progress': { color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE', accent: PRIMARY },
-  'Done':        { color: '#059669', bg: '#F0FDF4', border: '#BBF7D0', accent: '#10B981' },
-};
+
 const FILTERS = ['All', 'To Do', 'In Progress', 'Done'];
 const COLUMNS = ['To Do', 'In Progress', 'Done'];
 
@@ -37,7 +33,7 @@ const Skel = ({ w, h, r = 6, mb = 0 }) => {
       Animated.timing(a, { toValue: 0, duration: 800, useNativeDriver: false }),
     ])).start();
   }, []);
-  const bg = a.interpolate({ inputRange: [0, 1], outputRange: ['#F3F4F6', '#E5E7EB'] });
+  const bg = a.interpolate({ inputRange: [0, 1], outputRange: ['#F1F5F9', '#E2E8F0'] });
   return <Animated.View style={{ width: w, height: h, borderRadius: r, backgroundColor: bg, marginBottom: mb }} />;
 };
 
@@ -58,7 +54,7 @@ const SkeletonCard = () => (
 );
 
 // ── Task Card ─────────────────────────────────────────────────────────────
-const TaskCard = ({ task, onToggle, delay }) => {
+const TaskCard = ({ task, onToggle, delay, STATUS }) => {
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(12)).current;
   useEffect(() => {
@@ -86,7 +82,7 @@ const TaskCard = ({ task, onToggle, delay }) => {
             ? <CheckCircle2 color="#10B981" size={22} />
             : isIP
               ? <Clock color={PRIMARY} size={22} />
-              : <Circle color="#D1D5DB" size={22} />
+              : <Circle color="#94A3B8" size={22} />
           }
         </TouchableOpacity>
         <Text style={[styles.taskTitle, isDone && styles.taskDone]} numberOfLines={2}>
@@ -96,7 +92,7 @@ const TaskCard = ({ task, onToggle, delay }) => {
 
       {task.project?.title && (
         <View style={styles.projectRow}>
-          <FolderKanban color="#9CA3AF" size={11} style={{ marginRight: 4 }} />
+          <FolderKanban color="#64748B" size={11} style={{ marginRight: 4 }} />
           <Text style={styles.projectText} numberOfLines={1}>{task.project.title}</Text>
         </View>
       )}
@@ -112,9 +108,9 @@ const TaskCard = ({ task, onToggle, delay }) => {
           <Text style={[styles.badgeText, { color: sc.color }]}>{task.status}</Text>
         </View>
         {task.dueDate && (
-          <View style={styles.badge}>
-            <CalendarDays color="#9CA3AF" size={10} style={{ marginRight: 3 }} />
-            <Text style={[styles.badgeText, { color: '#6B7280' }]}>
+          <View style={[styles.badge, { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' }]}>
+            <CalendarDays color="#64748B" size={10} style={{ marginRight: 3 }} />
+            <Text style={[styles.badgeText, { color: '#64748B' }]}>
               {new Date(task.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' })}
             </Text>
           </View>
@@ -149,7 +145,7 @@ const BoardCard = ({ task, onToggle }) => {
               ? <CheckCircle2 color="#10B981" size={17} />
               : task.status === 'In Progress'
                 ? <Clock color={PRIMARY} size={17} />
-                : <Circle color="#D1D5DB" size={17} />
+                : <Circle color="#94A3B8" size={17} />
             }
           </TouchableOpacity>
         </View>
@@ -167,6 +163,12 @@ export default function MyTasksScreen() {
   const [filter, setFilter] = useState('All');
   const [wsId, setWsId] = useState(null);
   const fade = useRef(new Animated.Value(0)).current;
+
+  const STATUS = {
+    'To Do':       { color: '#64748B', bg: '#F8FAFC', border: '#E2E8F0', accent: '#94A3B8' },
+    'In Progress': { color: PRIMARY, bg: PRIMARY + '15', border: PRIMARY + '30', accent: PRIMARY },
+    'Done':        { color: '#10B981', bg: '#10B98115', border: '#10B98130', accent: '#10B981' },
+  };
 
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
@@ -212,9 +214,9 @@ export default function MyTasksScreen() {
   const pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
 
   const COL_STYLE = {
-    'To Do':       { dot: '#9CA3AF', label: '#6B7280' },
-    'In Progress': { dot: PRIMARY,   label: PRIMARY   },
-    'Done':        { dot: '#10B981', label: '#059669' },
+    'To Do':       { dot: '#64748B', label: '#64748B' },
+    'In Progress': { dot: PRIMARY,       label: PRIMARY   },
+    'Done':        { dot: '#10B981',       label: '#10B981' },
   };
 
   return (
@@ -231,13 +233,13 @@ export default function MyTasksScreen() {
             style={[styles.toggleBtn, view === 'list' && styles.toggleActive]}
             onPress={() => setView('list')}
           >
-            <LayoutList color={view === 'list' ? PRIMARY : '#9CA3AF'} size={17} />
+            <LayoutList color={view === 'list' ? PRIMARY : '#64748B'} size={17} />
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toggleBtn, view === 'board' && styles.toggleActive]}
             onPress={() => setView('board')}
           >
-            <Columns color={view === 'board' ? PRIMARY : '#9CA3AF'} size={17} />
+            <Columns color={view === 'board' ? PRIMARY : '#64748B'} size={17} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -288,14 +290,14 @@ export default function MyTasksScreen() {
           data={filtered}
           keyExtractor={i => i._id}
           renderItem={({ item, index }) => (
-            <TaskCard task={item} delay={index * 35} onToggle={handleToggle} />
+            <TaskCard task={item} delay={index * 35} onToggle={handleToggle} STATUS={STATUS} />
           )}
           contentContainerStyle={styles.listPad}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyWrap}>
               <View style={styles.emptyIconBox}>
-                <CheckSquare color="#D1D5DB" size={32} />
+                <CheckSquare color="#64748B" size={32} />
               </View>
               <Text style={styles.emptyTitle}>
                 {filter === 'All' ? 'No tasks yet' : `No ${filter} tasks`}
@@ -314,7 +316,6 @@ export default function MyTasksScreen() {
               const cs = COL_STYLE[col];
               return (
                 <View key={col} style={styles.boardCol}>
-                  {/* Column header */}
                   <View style={styles.boardColHead}>
                     <View style={[styles.colDot, { backgroundColor: cs.dot }]} />
                     <Text style={[styles.colLabel, { color: cs.label }]}>{col}</Text>
@@ -342,114 +343,114 @@ export default function MyTasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
 
   // Header
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
   },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
-  headerSub: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
+  headerSub: { fontSize: 13, color: '#64748B', marginTop: 2 },
   viewToggle: {
-    flexDirection: 'row', backgroundColor: '#F9FAFB',
+    flexDirection: 'row', backgroundColor: '#F1F5F9',
     borderRadius: 12, padding: 3,
-    borderWidth: 1, borderColor: '#F3F4F6',
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
   toggleBtn: { padding: 8, borderRadius: 9 },
-  toggleActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
+  toggleActive: { backgroundColor: '#ffffff', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
 
   // Progress
   progressStrip: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 20, paddingVertical: 10,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F3F4F6', gap: 12,
+    backgroundColor: '#ffffff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', gap: 12,
   },
-  progressTrack: { flex: 1, height: 4, backgroundColor: '#F3F4F6', borderRadius: 2, overflow: 'hidden' },
+  progressTrack: { flex: 1, height: 4, backgroundColor: '#F1F5F9', borderRadius: 2, overflow: 'hidden' },
   progressFill: { height: 4, backgroundColor: PRIMARY, borderRadius: 2 },
   progressLabel: { fontSize: 12, fontWeight: '700', color: PRIMARY, minWidth: 52, textAlign: 'right' },
 
   // Filter bar
-  filterBar: { backgroundColor: '#fff', maxHeight: 52, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  filterBar: { backgroundColor: '#ffffff', maxHeight: 52, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
   filterBarContent: { paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
   filterChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20, backgroundColor: '#F9FAFB',
-    borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 20, backgroundColor: '#F1F5F9',
+    borderWidth: 1, borderColor: '#E2E8F0',
   },
-  filterChipActive: { backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' },
-  filterText: { fontSize: 13, fontWeight: '600', color: '#6B7280' },
+  filterChipActive: { backgroundColor: PRIMARY + '15', borderColor: PRIMARY + '30' },
+  filterText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
   filterTextActive: { color: PRIMARY },
   filterBadge: {
     minWidth: 20, height: 18, borderRadius: 9,
-    backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5,
+    backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5,
   },
   filterBadgeActive: { backgroundColor: PRIMARY },
-  filterBadgeText: { fontSize: 10, fontWeight: '700', color: '#9CA3AF' },
-  filterBadgeTextActive: { color: '#fff' },
+  filterBadgeText: { fontSize: 10, fontWeight: '700', color: '#64748B' },
+  filterBadgeTextActive: { color: '#ffffff' },
 
   // List
   listPad: { paddingBottom: 160 },
 
   // Task card
   taskCard: {
-    backgroundColor: '#fff', paddingVertical: 16, paddingHorizontal: 16,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    backgroundColor: '#ffffff', paddingVertical: 16, paddingHorizontal: 16,
+    borderBottomWidth: 1, borderBottomColor: '#E2E8F0', borderLeftWidth: 3,
   },
   taskTop: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
   checkWrap: { marginRight: 12, marginTop: 1 },
   taskTitle: { flex: 1, fontSize: 15, fontWeight: '600', color: '#111827', lineHeight: 22 },
-  taskDone: { textDecorationLine: 'line-through', color: '#9CA3AF' },
+  taskDone: { textDecorationLine: 'line-through', color: '#64748B' },
   projectRow: { flexDirection: 'row', alignItems: 'center', marginLeft: 34, marginBottom: 10 },
-  projectText: { fontSize: 12, color: '#9CA3AF', flex: 1 },
+  projectText: { fontSize: 12, color: '#64748B', flex: 1 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginLeft: 34 },
   badge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: 6, borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
+    borderRadius: 6, borderWidth: 1,
   },
   badgeDot: { width: 5, height: 5, borderRadius: 3 },
-  badgeText: { fontSize: 11, fontWeight: '600', color: '#6B7280' },
+  badgeText: { fontSize: 11, fontWeight: '600' },
 
   // Empty
   emptyWrap: { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
   emptyIconBox: {
     width: 72, height: 72, borderRadius: 12,
-    backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB',
+    backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E2E8F0',
     justifyContent: 'center', alignItems: 'center', marginBottom: 16,
   },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#374151', marginBottom: 6 },
-  emptySub: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', lineHeight: 20 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#111827', marginBottom: 6 },
+  emptySub: { fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 20 },
 
   // Board
   boardRow: { flexDirection: 'row', gap: 16, paddingBottom: 160, paddingHorizontal: 16, paddingTop: 16 },
   boardCol: {
-    width: 280, backgroundColor: '#F8FAFC', borderRadius: 8,
-    borderWidth: 1, borderColor: '#F1F5F9',
+    width: 280, backgroundColor: '#F1F5F9', borderRadius: 8,
+    borderWidth: 1, borderColor: '#E2E8F0',
     overflow: 'hidden',
   },
   boardColHead: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    padding: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    padding: 14, borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
   },
   colDot: { width: 8, height: 8, borderRadius: 4 },
-  colLabel: { flex: 1, fontSize: 13, fontWeight: '700' },
-  colCount: { backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  colCountText: { fontSize: 12, fontWeight: '700', color: '#6B7280' },
+  colLabel: { flex: 1, fontSize: 13, fontWeight: '700', color: '#111827' },
+  colCount: { backgroundColor: '#ffffff', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  colCountText: { fontSize: 12, fontWeight: '700', color: '#64748B' },
   colEmpty: { padding: 24, alignItems: 'center' },
-  colEmptyText: { fontSize: 13, color: '#D1D5DB', fontWeight: '500' },
+  colEmptyText: { fontSize: 13, color: '#64748B', fontWeight: '500' },
   boardCard: {
     flexDirection: 'row', marginHorizontal: 8, marginTop: 8, borderRadius: 6,
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden',
-    shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+    backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
   boardAccent: { width: 3 },
   boardBody: { flex: 1, padding: 12 },
   boardTitle: { fontSize: 14, fontWeight: '600', color: '#111827', lineHeight: 20, marginBottom: 4 },
-  boardProject: { fontSize: 12, color: '#9CA3AF', marginBottom: 8 },
+  boardProject: { fontSize: 12, color: '#64748B', marginBottom: 8 },
   boardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  boardDate: { fontSize: 11, color: '#9CA3AF' },
+  boardDate: { fontSize: 11, color: '#64748B' },
 });

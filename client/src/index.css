@@ -66,6 +66,13 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Global Transition for Theme Switching */
+*, ::before, ::after {
+  transition-property: background-color, border-color, color, fill, stroke, text-decoration-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', sans-serif;
   color: var(--color-brand-blue);
