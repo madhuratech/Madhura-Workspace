@@ -118,10 +118,12 @@ export default function DashboardScreen({ navigation }) {
       <View style={[styles.header, { paddingTop: Math.max(insets.top, 10) }]}>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.workspaceSelector}>
-            <View style={styles.workspaceIcon}>
-              <Text style={styles.workspaceIconText}>{activeWorkspace.charAt(0).toUpperCase()}</Text>
-            </View>
-            <Text style={styles.workspaceName}>{activeWorkspace}</Text>
+            <Image 
+              source={require('../../assets/logo.jpeg')} 
+              style={{ width: 32, height: 32, marginRight: 12, borderRadius: 8 }}
+              resizeMode="cover"
+            />
+            <Text style={styles.workspaceName}>Dashboard</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.navigate('Menu', { screen: 'Settings' })}>
             <View style={styles.profileAvatar}>

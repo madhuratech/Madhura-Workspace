@@ -205,48 +205,41 @@ function TabNavigator() {
 }
 
 const AnimatedLoading = () => {
-  const logoScale = useRef(new Animated.Value(0.3)).current;
-  const logoOpacity = useRef(new Animated.Value(0)).current;
-  const logoTranslateY = useRef(new Animated.Value(50)).current;
-  
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const textTranslateY = useRef(new Animated.Value(20)).current;
+  const leftTranslateX = useRef(new Animated.Value(-100)).current;
+  const rightTranslateX = useRef(new Animated.Value(100)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.8)).current;
+  const subOpacity = useRef(new Animated.Value(0)).current;
+  const subTranslateY = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
-        Animated.spring(logoScale, { toValue: 1, friction: 4, tension: 50, useNativeDriver: true }),
-        Animated.timing(logoOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-        Animated.spring(logoTranslateY, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true })
+        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.spring(scale, { toValue: 1, friction: 6, tension: 40, useNativeDriver: true }),
+        Animated.spring(leftTranslateX, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true }),
+        Animated.spring(rightTranslateX, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true })
       ]),
       Animated.parallel([
-        Animated.timing(textOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-        Animated.spring(textTranslateY, { toValue: 0, friction: 6, tension: 40, useNativeDriver: true })
+        Animated.timing(subOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        Animated.spring(subTranslateY, { toValue: 0, friction: 6, tension: 40, useNativeDriver: true })
       ])
     ]).start();
   }, []);
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-      <Animated.View style={{ 
-        transform: [{ scale: logoScale }, { translateY: logoTranslateY }],
-        opacity: logoOpacity,
-        width: 100, height: 100, borderRadius: 24,
-        justifyContent: 'center', alignItems: 'center',
-        marginBottom: 24,
-        shadowColor: '#1b2b4c', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10,
-        backgroundColor: '#fff'
-      }}>
-        <Image 
-          source={require('./assets/logo.jpeg')} 
-          style={{ width: '100%', height: '100%', borderRadius: 24 }}
-          resizeMode="cover"
-        />
+      <Animated.View style={{ opacity, transform: [{ scale }], flexDirection: 'row', alignItems: 'center' }}>
+        <Animated.View style={{ transform: [{ translateX: leftTranslateX }] }}>
+          <Text style={{ fontSize: 40, fontWeight: '800', color: '#111827', letterSpacing: 1 }}>MAD</Text>
+        </Animated.View>
+        <Animated.View style={{ transform: [{ translateX: rightTranslateX }] }}>
+          <Text style={{ fontSize: 40, fontWeight: '800', color: '#1b2b4c', letterSpacing: 1 }}>HURA</Text>
+        </Animated.View>
       </Animated.View>
       
-      <Animated.View style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }], alignItems: 'center' }}>
-        <Text style={{ fontSize: 28, fontWeight: '800', color: '#111827', letterSpacing: 1 }}>Madhura</Text>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: '#1b2b4c', marginTop: 6, letterSpacing: 4, textTransform: 'uppercase' }}>Workspace</Text>
+      <Animated.View style={{ opacity: subOpacity, transform: [{ translateY: subTranslateY }], marginTop: 8 }}>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748B', letterSpacing: 4, textTransform: 'uppercase' }}>Workspace</Text>
       </Animated.View>
     </View>
   );
