@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
   TouchableOpacity, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FolderKanban, Users, ChevronRight } from 'lucide-react-native';
+import { FolderKanban, Users, ChevronRight, Plus } from 'lucide-react-native';
+import { AuthContext } from '../context/AuthContext';
 import { cachedGet } from '../utils/api';
 
 const PRIMARY = '#1b2b4c';
@@ -147,6 +148,7 @@ const ProjectCard = ({ project, onPress, delay, idx }) => {
 
 // ── Screen ─────────────────────────────────────────────────────────────────
 export default function ProjectsScreen({ navigation }) {
+  const { user } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const fade = useRef(new Animated.Value(0)).current;
@@ -178,11 +180,21 @@ export default function ProjectsScreen({ navigation }) {
             {projects.length} project{projects.length !== 1 ? 's' : ''}
           </Text>
         </View>
-        {projects.length > 0 && (
-          <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeText}>{projects.length}</Text>
-          </View>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {projects.length > 0 && (
+            <View style={styles.headerBadge}>
+              <Text style={styles.headerBadgeText}>{projects.length}</Text>
+            </View>
+          )}
+          {(user?.role === 'super_admin' || user?.role === 'hr') && (
+            <TouchableOpacity 
+              style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: PRIMARY, justifyContent: 'center', alignItems: 'center', marginLeft: 12 }}
+              onPress={() => navigation.navigate('CreateProject')}
+            >
+              <Plus color="#fff" size={20} />
+            </TouchableOpacity>
+          )}
+        </View>
       </Animated.View>
 
       {loading ? (

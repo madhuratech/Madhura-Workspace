@@ -1,7 +1,7 @@
 import React, { useContext, useRef, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
 import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet, Image, Easing } from 'react-native';
 import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react-native';
@@ -15,6 +15,7 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import MyTasksScreen from './src/screens/MyTasksScreen';
 import ProjectsScreen from './src/screens/ProjectsScreen';
 import ProjectDetailsScreen from './src/screens/ProjectDetailsScreen';
+import CreateProjectScreen from './src/screens/CreateProjectScreen';
 import TeamScreen from './src/screens/TeamScreen';
 import MoreScreen from './src/screens/MoreScreen';
 import ChatScreen from './src/screens/ChatScreen';
@@ -32,7 +33,7 @@ import AnnouncementsScreen from './src/screens/AnnouncementsScreen';
 import NotesScreen from './src/screens/NotesScreen';
 
 const Stack = createNativeStackNavigator();
-const Tab = createMaterialTopTabNavigator();
+const Tab = createBottomTabNavigator();
 
 // ─── Stacks ────────────────────────────────────────────────────────────────
 const ProjectsStack = createNativeStackNavigator();
@@ -41,6 +42,7 @@ function ProjectsNavigator() {
     <ProjectsStack.Navigator screenOptions={{ headerShown: false }}>
       <ProjectsStack.Screen name="ProjectsList" component={ProjectsScreen} />
       <ProjectsStack.Screen name="ProjectDetails" component={ProjectDetailsScreen} />
+      <ProjectsStack.Screen name="CreateProject" component={CreateProjectScreen} />
     </ProjectsStack.Navigator>
   );
 }
@@ -168,20 +170,22 @@ const tabStyles = StyleSheet.create({
 const HIDE_TAB = { tabBarStyle: { display: 'none' } };
 
 function TabNavigator() {
+  const { user } = useContext(AuthContext);
   return (
     <Tab.Navigator
-      tabBarPosition="bottom"
       tabBar={props => <CustomTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Tasks" component={MyTasksScreen} />
+      {user?.role !== 'super_admin' && (
+        <Tab.Screen name="Tasks" component={MyTasksScreen} />
+      )}
       <Tab.Screen
         name="Projects"
         component={ProjectsNavigator}
         options={({ route }) => {
           const n = require('@react-navigation/native').getFocusedRouteNameFromRoute(route) ?? 'ProjectsList';
-          return n === 'ProjectDetails' ? HIDE_TAB : {};
+          return n === 'ProjectDetails' || n === 'CreateProject' ? HIDE_TAB : {};
         }}
       />
       <Tab.Screen

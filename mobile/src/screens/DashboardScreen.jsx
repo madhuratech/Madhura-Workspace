@@ -11,6 +11,7 @@ import {
   Lock, Hash, Rocket, Plus, ChevronUp, Filter, AlignRight
 } from 'lucide-react-native';
 import { cachedGet, saveWorkspaceCache, loadWorkspaceCache } from '../utils/api';
+import { BarChart } from 'react-native-chart-kit';
 
 const { width } = Dimensions.get('window');
 const PRIMARY = '#1b2b4c';
@@ -67,6 +68,7 @@ export default function DashboardScreen({ navigation }) {
   const [metrics, setMetrics] = useState({ tasksDue: 0, unreads: 0, meetings: 0 });
   const [notifications, setNotifications] = useState([]);
   const [meetings, setMeetings] = useState([]);
+  const [todayAttendances, setTodayAttendances] = useState([]);
 
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -95,6 +97,12 @@ export default function DashboardScreen({ navigation }) {
         String(m.organizer?._id || m.organizer) === String(user._id) || 
         (m.attendees && m.attendees.some(a => String(a.user?._id || a.user) === String(user._id)))
       );
+
+      if (ws.length > 0) {
+        const atts = await cachedGet(`/workspaces/${ws[0]._id}/attendance`).catch(() => []);
+        const today = new Date().toISOString().split('T')[0];
+        setTodayAttendances(atts.filter(a => a.date === today));
+      }
 
       setMeetings(myMeetings.slice(0, 5)); // Keep top 5
       setNotifications(notifs.slice(0, 5)); // Keep top 5
@@ -144,9 +152,6 @@ export default function DashboardScreen({ navigation }) {
               onChangeText={setSearchQuery}
             />
           </View>
-          <TouchableOpacity style={styles.filterBtn} onPress={() => Toast.show({ type: 'info', text1: 'Filters', text2: 'Advanced filters coming soon!' })}>
-            <AlignRight color="#E2E8F0" size={18} />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -196,17 +201,76 @@ export default function DashboardScreen({ navigation }) {
               </View>
             </View>
 
+            {/* Metrics Chart */}
+            <Section title="Overview" defaultExpanded={true}>
+              <View style={{ alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, paddingVertical: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 10 }}>
+                <BarChart
+                  data={{
+                    labels: ['Tasks', 'Unreads', 'Meetings'],
+                    datasets: [
+                      {
+                        data: [metrics.tasksDue || 0, metrics.unreads || 0, metrics.meetings || 0],
+                      },
+                    ],
+                  }}
+                  width={width - 80}
+                  height={220}
+                  yAxisLabel=""
+                  chartConfig={{
+                    backgroundColor: '#ffffff',
+                    backgroundGradientFrom: '#ffffff',
+                    backgroundGradientTo: '#ffffff',
+                    decimalPlaces: 0,
+                    color: (opacity = 1) => `rgba(27, 43, 76, ${opacity})`,
+                    labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+                    style: {
+                      borderRadius: 16,
+                    },
+                    barPercentage: 0.6,
+                    propsForBackgroundLines: {
+                        strokeWidth: 1,
+                        stroke: '#E2E8F0',
+                        strokeDasharray: '0',
+                    }
+                  }}
+                  style={{
+                    marginVertical: 8,
+                    borderRadius: 16,
+                  }}
+                />
+              </View>
+            </Section>
+
             {/* Dynamic List Sections */}
             <View style={styles.listContainer}>
               
-              {/* Unread Mentions / Notifications */}
-              <Section title="Recent Notifications">
-                {notifications.length === 0 ? (
-                   <Text style={{ paddingLeft: 12, color: '#94A3B8', fontSize: 13 }}>No recent notifications</Text>
+              {/* Today's Attendance */}
+              <Section title="Today's Attendance">
+                {todayAttendances.length === 0 ? (
+                   <Text style={{ paddingLeft: 12, color: '#94A3B8', fontSize: 13 }}>No check-ins today</Text>
                 ) : (
-                  notifications.map((notif, i) => (
-                    <ChannelRow key={notif._id || i} icon={Bell} name={(notif.title || notif.message || 'Notification').toLowerCase().replace(/\s+/g, '-')} badge={notif.isRead ? 0 : 1} />
-                  ))
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 8, gap: 16 }}>
+                    {todayAttendances.map((att, i) => (
+                      <View key={att._id || i} style={{ alignItems: 'center', width: 64 }}>
+                        <View style={{
+                          width: 50, height: 50, borderRadius: 25, 
+                          backgroundColor: att.isLate ? '#FEF2F2' : '#F0FDF4', 
+                          borderWidth: 2, borderColor: att.isLate ? '#FCA5A5' : '#86EFAC',
+                          justifyContent: 'center', alignItems: 'center', marginBottom: 6
+                        }}>
+                          <Text style={{ color: att.isLate ? '#DC2626' : '#16A34A', fontWeight: 'bold', fontSize: 18 }}>
+                            {att.user?.name ? att.user.name.charAt(0).toUpperCase() : '?'}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 12, color: '#475569', textAlign: 'center', fontWeight: '600' }} numberOfLines={1}>
+                          {att.user?.name?.split(' ')[0] || 'User'}
+                        </Text>
+                        <Text style={{ fontSize: 10, color: att.isLate ? '#DC2626' : '#94A3B8', marginTop: 2 }}>
+                          {att.isLate ? 'Late' : 'On Time'}
+                        </Text>
+                      </View>
+                    ))}
+                  </ScrollView>
                 )}
               </Section>
 
@@ -239,12 +303,6 @@ export default function DashboardScreen({ navigation }) {
           </ScrollView>
         )}
       </View>
-
-      {/* ── Floating Action Button (FAB) ── */}
-      <TouchableOpacity style={styles.fab} onPress={() => navigation.navigate('Menu', { screen: 'Tasks' })}>
-        <Text style={styles.fabText}>New</Text>
-        <Plus color="#fff" size={18} style={{ marginLeft: 4 }} />
-      </TouchableOpacity>
     </View>
   );
 }
