@@ -9,69 +9,115 @@ import Avatar from '../components/Avatar';
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
-  const [workspace, setWorkspace] = useState(null);
-  const [allWorkspaces, setAllWorkspaces] = useState([]);
+  const [workspace, setWorkspace] = useState(() => {
+    try {
+      const cached = localStorage.getItem('active_workspace');
+      return cached ? JSON.parse(cached) : null;
+    } catch { return null; }
+  });
+  const [allWorkspaces, setAllWorkspaces] = useState(() => {
+    try {
+      const cached = localStorage.getItem('all_workspaces');
+      return cached ? JSON.parse(cached) : [];
+    } catch { return []; }
+  });
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newWorkspaceData, setNewWorkspaceData] = useState({ name: '', description: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ tasks: 0, meetings: 0, members: 0 });
   const [myTasks, setMyTasks] = useState([]);
   const [upNext, setUpNext] = useState([]);
   const [activities, setActivities] = useState([]);
-  const [attendanceStats, setAttendanceStats] = useState({ onTime: 0, late: 0, absent: 0, total: 0, rate: 0 });
+  const [attendanceStats, setAttendanceStats] = useState({ onTime: 0, late: 0, absent: 0, total: 0, rate: 100 });
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+  }, []);
 
   const fetchData = async (targetWorkspace = null) => {
     try {
-      setLoading(true);
       const res = await axios.get('/workspaces');
-      if (res.data.length > 0) {
+      if (res.data && res.data.length > 0) {
         setAllWorkspaces(res.data);
-        // Ensure we use the target workspace if provided, since state updates are async
-        const ws = targetWorkspace || workspace || res.data[0];
+        localStorage.setItem('all_workspaces', JSON.stringify(res.data));
+        
+        // Ensure we use target workspace, or previously selected workspace if it still exists in list, or first one
+        const ws = targetWorkspace || 
+                   (workspace && res.data.find(w => w._id === workspace._id)) || 
+                   res.data[0];
+        
         setWorkspace(ws);
-        const [tasksRes, meetingsRes, attendanceRes] = await Promise.all([
-          axios.get('/tasks').catch(() => ({ data: [] })),
-          axios.get(`/workspaces/${ws._id}/meetings`).catch(() => ({ data: [] })),
-          axios.get(`/workspaces/${ws._id}/attendance`).catch(() => ({ data: [] }))
+        localStorage.setItem('active_workspace', JSON.stringify(ws));
+
+        const [tasksRes, meetingsRes, attendanceRes] = await Promise.allSettled([
+          axios.get(`/workspaces/${ws._id}/my-tasks`),
+          axios.get(`/workspaces/${ws._id}/meetings`),
+          axios.get(`/workspaces/${ws._id}/attendance`)
         ]);
-        const tasks = tasksRes.data || [];
-        const meetings = meetingsRes.data || [];
-        const attendance = attendanceRes.data || [];
+
+        const tasks = tasksRes.status === 'fulfilled' ? (tasksRes.value.data || []) : [];
+        const meetings = meetingsRes.status === 'fulfilled' ? (meetingsRes.value.data || []) : [];
+        const attendance = attendanceRes.status === 'fulfilled' ? (attendanceRes.value.data || []) : [];
         
         setMyTasks(tasks.filter(t => t.status !== 'completed'));
         const todayStr = new Date().toISOString().split('T')[0];
         const todayMeetings = meetings.filter(m => m.date && new Date(m.date).toISOString().split('T')[0] === todayStr);
         setUpNext(todayMeetings.sort((a, b) => (a.time || '').localeCompare(b.time || '')));
         
-        // Calculate My Attendance Stats (Current Month)
+        // ── Calculate Dynamic & Accurate Attendance Stats ──
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
-        
-        let workingDays = 0;
-        for (let d = 1; d <= now.getDate(); d++) {
-          const dayOfWeek = new Date(currentYear, currentMonth, d).getDay();
-          if (dayOfWeek !== 0 && dayOfWeek !== 6) workingDays++;
-        }
-        
+        const currentUserId = (user?._id || user?.id || '').toString();
+
         const myAttendance = attendance.filter(a => {
-          if (a.user?._id && a.user._id !== user._id && a.user !== user._id) return false;
+          const recordUserId = (a.user?._id || a.user?.id || a.user || '').toString();
+          if (recordUserId && currentUserId && recordUserId !== currentUserId) return false;
           if (!a.date) return false;
+          
+          const parts = typeof a.date === 'string' ? a.date.split('T')[0].split('-') : null;
+          if (parts && parts.length === 3) {
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10) - 1;
+            return m === currentMonth && y === currentYear;
+          }
           const aDate = new Date(a.date);
           return aDate.getMonth() === currentMonth && aDate.getFullYear() === currentYear;
         });
 
-        const late = myAttendance.filter(a => a.isLate).length;
-        const totalPresent = myAttendance.length;
-        const onTime = totalPresent - late;
+        const onTime = myAttendance.filter(a => !a.isLate && (a.status === 'Present' || !a.status)).length;
+        const late = myAttendance.filter(a => a.isLate && (a.status === 'Present' || !a.status)).length;
+        const totalPresent = onTime + late;
+
+        // Inception date (when user/workspace joined)
+        const userJoinDate = user?.createdAt ? new Date(user.createdAt) : (ws?.createdAt ? new Date(ws.createdAt) : now);
+        const joinedThisMonth = (userJoinDate.getMonth() === currentMonth && userJoinDate.getFullYear() === currentYear);
+        const effectiveStartDay = joinedThisMonth ? Math.max(1, userJoinDate.getDate()) : 1;
+
+        let workingDays = 0;
+        for (let d = effectiveStartDay; d <= now.getDate(); d++) {
+          const dayOfWeek = new Date(currentYear, currentMonth, d).getDay();
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            if (d === now.getDate()) {
+              const hasCheckedInToday = myAttendance.some(a => (typeof a.date === 'string' ? a.date.startsWith(todayStr) : false));
+              if (hasCheckedInToday || totalPresent > 0) {
+                workingDays++;
+              }
+            } else {
+              workingDays++;
+            }
+          }
+        }
+
+        // Ensure workingDays is at least totalPresent to prevent negative absences
+        workingDays = Math.max(workingDays, totalPresent);
         const absent = Math.max(0, workingDays - totalPresent);
-        const rate = workingDays > 0 ? Math.round((totalPresent / workingDays) * 100) : 100;
+        const totalTracked = totalPresent + absent;
+        const rate = totalPresent > 0 ? Math.round((onTime / totalPresent) * 100) : (totalTracked === 0 ? 100 : 0);
         
-        setAttendanceStats({ onTime, late, absent, total: workingDays, rate });
+        setAttendanceStats({ onTime, late, absent, total: totalTracked, rate });
 
         const recentActivities = [
           ...tasks.slice(0, 5).map(t => ({
@@ -89,10 +135,20 @@ const Dashboard = () => {
         ].sort((a, b) => b.time - a.time).slice(0, 6);
         
         setActivities(recentActivities);
-        setStats({ tasks: tasks.filter(t => t.status !== 'completed').length || 0, meetings: todayMeetings.length || 0, members: ws.members?.length || 1 });
+        setStats({ 
+          tasks: tasks.filter(t => t.status !== 'completed').length || 0, 
+          meetings: todayMeetings.length || 0, 
+          members: ws.members?.length || 1 
+        });
+      } else {
+        setAllWorkspaces([]);
+        setWorkspace(null);
+        localStorage.removeItem('active_workspace');
+        localStorage.removeItem('all_workspaces');
       }
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) { 
+      console.error('Error fetching dashboard data:', err); 
+    }
   };
 
   const getGreeting = () => {
@@ -438,7 +494,12 @@ const Dashboard = () => {
                   <svg viewBox="0 0 36 36" className="w-28 h-28 -rotate-90 drop-shadow-md">
                     <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--color-border)" strokeWidth="4" className="opacity-40" />
                     {(() => {
-                      const total = attendanceStats.total || 1;
+                      if (!attendanceStats.total || (attendanceStats.onTime === 0 && attendanceStats.late === 0 && attendanceStats.absent === 0)) {
+                        return (
+                          <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="4" className="text-accent-blue/20 opacity-40" />
+                        );
+                      }
+                      const total = attendanceStats.total;
                       const onTimePct = (attendanceStats.onTime / total) * 100;
                       const latePct = (attendanceStats.late / total) * 100;
                       const absentPct = (attendanceStats.absent / total) * 100;
@@ -474,7 +535,9 @@ const Dashboard = () => {
                     <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
                       <TrendingUp size={14} className="text-emerald-600" />
                     </div>
-                    <span className="text-xs font-bold text-emerald-600 tracking-wide">{attendanceStats.rate}% on-time rate this month</span>
+                    <span className="text-xs font-bold text-emerald-600 tracking-wide">
+                      {attendanceStats.total === 0 ? 'No attendance records yet' : `${attendanceStats.rate}% on-time rate this month`}
+                    </span>
                   </div>
                 </div>
               </div>

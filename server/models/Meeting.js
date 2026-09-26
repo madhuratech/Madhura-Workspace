@@ -45,4 +45,6 @@ const MeetingSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+MeetingSchema.index({ workspace: 1, date: 1 });
+
 module.exports = mongoose.model('Meeting', MeetingSchema);

@@ -8,7 +8,8 @@ const getMeetings = async (req, res) => {
   try {
     const meetings = await Meeting.find({ workspace: req.params.workspaceId })
       .populate('participants', 'name email avatar')
-      .populate('createdBy', 'name email avatar');
+      .populate('createdBy', 'name email avatar')
+      .lean();
 
     res.status(200).json(meetings);
   } catch (error) {
