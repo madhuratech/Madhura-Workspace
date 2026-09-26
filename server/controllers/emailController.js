@@ -33,7 +33,6 @@ const extractBody = (payload) => {
     return decodeBase64(payload.body.data);
   }
   if (payload.parts && payload.parts.length > 0) {
-    // Look for text/html first, then text/plain
     const htmlPart = payload.parts.find(p => p.mimeType === 'text/html');
     if (htmlPart && htmlPart.body && htmlPart.body.data) {
       return decodeBase64(htmlPart.body.data);
@@ -70,42 +69,47 @@ exports.getEmails = async (req, res) => {
       const oauth2Client = getOAuth2Client(user);
       const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
+      let q = '';
+      let includeSpamTrash = false;
+
+      if (folder === 'inbox') {
+        q = 'in:inbox';
+      } else if (folder === 'starred') {
+        q = 'is:starred';
+      } else if (folder === 'sent') {
+        q = 'in:sent';
+      } else if (folder === 'drafts') {
+        q = 'in:draft';
+      } else if (folder === 'trash') {
+        q = 'in:trash';
+        includeSpamTrash = true;
+      } else if (folder === 'important') {
+        q = 'is:important';
+      } else if (folder === 'snoozed') {
+        q = 'label:snoozed';
+      } else if (folder === 'chats') {
+        q = 'is:chat';
+        includeSpamTrash = true;
+      } else if (folder === 'scheduled') {
+        q = 'label:scheduled';
+      } else if (folder === 'spam') {
+        q = 'in:spam';
+        includeSpamTrash = true;
+      } else if (folder === 'all') {
+        q = '-in:trash -in:spam';
+      }
+
+      if (search && search.trim()) {
+        q = q ? `(${q}) ${search.trim()}` : search.trim();
+      }
+
       const listParams = {
         userId: 'me',
         maxResults: limit,
       };
 
-      // Configure folder filters for Gmail
-      if (folder === 'inbox') {
-        listParams.labelIds = ['INBOX'];
-      } else if (folder === 'starred') {
-        listParams.labelIds = ['STARRED'];
-      } else if (folder === 'sent') {
-        listParams.labelIds = ['SENT'];
-      } else if (folder === 'drafts') {
-        listParams.labelIds = ['DRAFT'];
-      } else if (folder === 'trash') {
-        listParams.labelIds = ['TRASH'];
-        listParams.includeSpamTrash = true;
-      } else if (folder === 'important') {
-        listParams.labelIds = ['IMPORTANT'];
-      } else if (folder === 'snoozed') {
-        listParams.q = 'label:snoozed';
-      } else if (folder === 'chats') {
-        listParams.labelIds = ['CHAT'];
-      } else if (folder === 'scheduled') {
-        listParams.labelIds = ['SCHEDULED'];
-      } else if (folder === 'spam') {
-        listParams.labelIds = ['SPAM'];
-        listParams.includeSpamTrash = true;
-      } else if (folder === 'all') {
-        listParams.q = '-in:trash -in:spam';
-      }
-
-      if (search && search.trim()) {
-        listParams.q = listParams.q ? `${listParams.q} ${search.trim()}` : search.trim();
-      }
-
+      if (q) listParams.q = q;
+      if (includeSpamTrash) listParams.includeSpamTrash = true;
       if (pageToken && typeof pageToken === 'string' && pageToken.trim() !== '') {
         listParams.pageToken = pageToken.trim();
       }
@@ -237,7 +241,6 @@ exports.getEmailById = async (req, res) => {
       const labelIds = msgData.data.labelIds || [];
       const bodyContent = extractBody(msgData.data.payload);
 
-      // Auto-mark as read in Google if unread
       if (labelIds.includes('UNREAD')) {
         gmail.users.messages.modify({
           userId: 'me',

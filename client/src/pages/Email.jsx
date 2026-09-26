@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
@@ -31,7 +31,7 @@ const Email = () => {
   const [pageSize, setPageSize] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [nextPageToken, setNextPageToken] = useState(null);
-  const [pageTokens, setPageTokens] = useState({ 1: '' });
+  const [tokenHistory, setTokenHistory] = useState({ 1: '' });
   
   // Selection & Actions
   const [selectedEmails, setSelectedEmails] = useState([]);
@@ -47,7 +47,7 @@ const Email = () => {
   const [authRequired, setAuthRequired] = useState(false);
   const [showMobileFolders, setShowMobileFolders] = useState(false);
 
-  // Close more menu on click outside
+  // Click outside for more menu
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
@@ -69,15 +69,18 @@ const Email = () => {
       if (wsRes.data.length > 0) {
         const wsId = wsRes.data[0]._id;
         const detailRes = await axios.get(`/workspaces/${wsId}`);
-        setWorkspace(detailRes.data);
+        const ws = detailRes.data;
+        setWorkspace(ws);
+        fetchMailList({ targetWorkspace: ws, folder: 'inbox', page: 1, token: '', search: '', limit: pageSize });
       }
     } catch (error) {
-      console.error(error);
+      console.error('Failed to fetch workspace', error);
     }
   };
 
-  // Direct fetch function with parameters
-  const loadEmails = useCallback(async ({
+  // Direct fetch function
+  const fetchMailList = async ({
+    targetWorkspace = workspace,
     folder = activeFolder,
     page = currentPage,
     token = '',
@@ -85,7 +88,7 @@ const Email = () => {
     limit = pageSize,
     isManual = false
   } = {}) => {
-    if (!workspace) return;
+    if (!targetWorkspace) return;
     try {
       if (isManual) setRefreshing(true);
       else setLoading(true);
@@ -93,7 +96,7 @@ const Email = () => {
 
       const skip = (page - 1) * limit;
 
-      const res = await axios.get(`/workspaces/${workspace._id}/emails`, {
+      const res = await axios.get(`/workspaces/${targetWorkspace._id}/emails`, {
         params: {
           folder,
           search,
@@ -115,7 +118,7 @@ const Email = () => {
         setTotalEstimated(res.data.resultSizeEstimate || list.length);
 
         if (nextTok) {
-          setPageTokens(prev => ({ ...prev, [page + 1]: nextTok }));
+          setTokenHistory(prev => ({ ...prev, [page + 1]: nextTok }));
         }
       }
       setSelectedEmails([]);
@@ -128,67 +131,60 @@ const Email = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [workspace, activeFolder, currentPage, debouncedSearch, pageSize]);
-
-  // Initial load when workspace is available
-  useEffect(() => {
-    if (workspace) {
-      loadEmails({ folder: 'inbox', page: 1, token: '', search: '', limit: pageSize });
-    }
-  }, [workspace]);
+  };
 
   // Debounce search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (debouncedSearch !== searchQuery) {
+      if (searchQuery !== debouncedSearch) {
         setDebouncedSearch(searchQuery);
         setCurrentPage(1);
-        setPageTokens({ 1: '' });
+        setTokenHistory({ 1: '' });
         if (workspace) {
-          loadEmails({ folder: activeFolder, page: 1, token: '', search: searchQuery, limit: pageSize });
+          fetchMailList({ folder: activeFolder, page: 1, token: '', search: searchQuery, limit: pageSize });
         }
       }
     }, 400);
     return () => clearTimeout(handler);
-  }, [searchQuery, activeFolder, pageSize, workspace, debouncedSearch, loadEmails]);
+  }, [searchQuery]);
 
   // Handle Folder Change
   const handleFolderChange = (folderId) => {
     setActiveFolder(folderId);
     setCurrentPage(1);
-    setPageTokens({ 1: '' });
+    setTokenHistory({ 1: '' });
     setSearchQuery('');
     setDebouncedSearch('');
     setIsComposing(false);
     setViewingEmail(null);
     setShowMobileFolders(false);
-    loadEmails({ folder: folderId, page: 1, token: '', search: '', limit: pageSize });
+    fetchMailList({ folder: folderId, page: 1, token: '', search: '', limit: pageSize });
   };
 
   // Handle Pagination Next
   const handleNextPage = () => {
     if (!nextPageToken && emails.length < pageSize) return;
     const nextPage = currentPage + 1;
-    const token = pageTokens[nextPage] || nextPageToken || '';
+    const token = tokenHistory[nextPage] || nextPageToken || '';
     setCurrentPage(nextPage);
-    loadEmails({ folder: activeFolder, page: nextPage, token, search: debouncedSearch, limit: pageSize });
+    fetchMailList({ folder: activeFolder, page: nextPage, token, search: debouncedSearch, limit: pageSize });
   };
 
   // Handle Pagination Prev
   const handlePrevPage = () => {
     if (currentPage <= 1) return;
     const prevPage = currentPage - 1;
-    const token = pageTokens[prevPage] || '';
+    const token = tokenHistory[prevPage] || '';
     setCurrentPage(prevPage);
-    loadEmails({ folder: activeFolder, page: prevPage, token, search: debouncedSearch, limit: pageSize });
+    fetchMailList({ folder: activeFolder, page: prevPage, token, search: debouncedSearch, limit: pageSize });
   };
 
   // Handle Page Size Change
   const handlePageSizeChange = (newSize) => {
     setPageSize(newSize);
     setCurrentPage(1);
-    setPageTokens({ 1: '' });
-    loadEmails({ folder: activeFolder, page: 1, token: '', search: debouncedSearch, limit: newSize });
+    setTokenHistory({ 1: '' });
+    fetchMailList({ folder: activeFolder, page: 1, token: '', search: debouncedSearch, limit: newSize });
   };
 
   // Open single email detail
@@ -267,7 +263,7 @@ const Email = () => {
       setIsComposing(false);
       setComposeData({ to: '', cc: '', bcc: '', subject: '', body: '' });
       showToast('Email sent successfully!', 'success');
-      loadEmails({ isManual: true });
+      fetchMailList({ isManual: true });
     } catch (error) {
       console.error('Failed to send email', error);
       showToast('Failed to send email. Please check configuration.', 'error');
@@ -290,7 +286,7 @@ const Email = () => {
       await axios.put(`/workspaces/${workspace._id}/emails/${emailId}/status`, { action });
     } catch (error) {
       console.error('Failed to star/unstar email', error);
-      loadEmails({ isManual: true });
+      fetchMailList({ isManual: true });
     }
   };
 
@@ -321,7 +317,7 @@ const Email = () => {
       showToast(`${targets.length} email(s) archived`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      loadEmails({ isManual: true });
+      fetchMailList({ isManual: true });
     } catch (error) {
       console.error('Failed to archive emails', error);
       showToast('Failed to archive emails', 'error');
@@ -338,7 +334,7 @@ const Email = () => {
       showToast(`${targets.length} email(s) moved to trash`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      loadEmails({ isManual: true });
+      fetchMailList({ isManual: true });
     } catch (error) {
       console.error('Failed to trash emails', error);
       showToast('Failed to move emails to trash', 'error');
@@ -723,7 +719,7 @@ const Email = () => {
               <div className="flex-1 p-4 md:p-8 overflow-y-auto custom-scrollbar bg-bg-primary">
                 {loadingDetail ? (
                   <div className="p-8 flex items-center justify-center text-xs text-text-secondary">
-                    <RotateCw size={18} className="animate-spin mr-2" /> Loading full email content...
+                    <RotateCw size={18} className="animate-spin mr-2 text-accent-blue" /> Loading full email content...
                   </div>
                 ) : (
                   <div className="max-w-4xl mx-auto space-y-6">
@@ -820,7 +816,7 @@ const Email = () => {
 
                   {/* Refresh Button */}
                   <button 
-                    onClick={() => loadEmails({ isManual: true })}
+                    onClick={() => fetchMailList({ isManual: true })}
                     className="p-1.5 hover:bg-bg-primary hover:text-text-primary rounded-lg transition-colors border border-transparent hover:border-border cursor-pointer"
                     title="Refresh emails"
                   >
@@ -878,7 +874,7 @@ const Email = () => {
                         </button>
                         <div className="border-t border-border my-1"></div>
                         <button 
-                          onClick={() => { loadEmails({ isManual: true }); setShowMoreMenu(false); }}
+                          onClick={() => { fetchMailList({ isManual: true }); setShowMoreMenu(false); }}
                           className="w-full text-left px-3 py-2 hover:bg-bg-secondary flex items-center gap-2 text-text-primary cursor-pointer"
                         >
                           <RotateCw size={14} /> Refresh List
