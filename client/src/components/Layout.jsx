@@ -3,11 +3,12 @@ import axios from 'axios';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2 } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2, HelpCircle } from 'lucide-react';
 import GlobalQuickNotes from './GlobalQuickNotes';
 import Avatar from './Avatar';
 import NotificationCenter from './notifications/NotificationCenter';
 import NotificationToast from './notifications/NotificationToast';
+import HelpGuideModal from './HelpGuideModal';
 
 const Layout = () => {
   const { user, logout, socket, updateUserStatus } = useContext(AuthContext);
@@ -19,6 +20,7 @@ const Layout = () => {
   const [showStatusSubmenu, setShowStatusSubmenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showQuickNote, setShowQuickNote] = useState(false);
+  const [showHelpGuide, setShowHelpGuide] = useState(false);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,8 +28,6 @@ const Layout = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef(null);
-  const [toastNotif, setToastNotif] = useState(null);
-  const toastTimerRef = React.useRef(null);
   const notificationRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -81,80 +81,6 @@ const Layout = () => {
 
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
-
-  // Base64 simple pop sound to avoid external dependencies
-  const playNotificationSound = () => {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
-      
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
-      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Soft volume
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-      
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.1);
-    } catch (e) {
-      console.log('Audio play failed', e);
-    }
-  };
-
-  const showToast = (title, message) => {
-    setToastNotif({ title, message });
-    playNotificationSound();
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToastNotif(null), 4000);
-  };
-
-  React.useEffect(() => {
-    if (socket && user) {
-      const handleActivity = (msg) => {
-        showToast(msg.title, msg.message);
-      };
-      const handleNotification = (msg) => {
-        showToast(msg.title, msg.message);
-      };
-      const handleNewMessage = (msg) => {
-        if (msg.sender && (msg.sender._id === user._id || msg.sender === user._id)) return;
-        showToast('New Message', msg.text || 'Sent an attachment');
-      };
-      const handleTaskCreated = (task) => {
-        showToast('New Task Assigned', task.title);
-      };
-      const handleMeetingCreated = (meeting) => {
-        showToast('New Meeting Scheduled', meeting.title);
-      };
-      const handleTicketCreated = (ticket) => {
-        showToast('New Ticket Created', ticket.title);
-      };
-      const handleProjectCreated = (project) => {
-        showToast('New Project Created', project.title);
-      };
-      
-      socket.on('activity', handleActivity);
-      socket.on('new_notification', handleNotification);
-      socket.on('new_message', handleNewMessage);
-      socket.on('taskCreated', handleTaskCreated);
-      socket.on('meetingCreated', handleMeetingCreated);
-      socket.on('ticketCreated', handleTicketCreated);
-      socket.on('projectCreated', handleProjectCreated);
-      
-      return () => {
-        socket.off('activity', handleActivity);
-        socket.off('new_notification', handleNotification);
-        socket.off('new_message', handleNewMessage);
-        socket.off('taskCreated', handleTaskCreated);
-        socket.off('meetingCreated', handleMeetingCreated);
-        socket.off('ticketCreated', handleTicketCreated);
-        socket.off('projectCreated', handleProjectCreated);
-      };
-    }
-  }, [socket, user]);
 
   const handleLogout = () => {
     logout();
@@ -383,15 +309,22 @@ const Layout = () => {
         </div>
 
         {/* Profile & Notifications */}
-        <div className="flex items-center space-x-4 ml-auto">
+        <div className="flex items-center space-x-3 ml-auto">
+          <button 
+            onClick={() => setShowHelpGuide(true)}
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white cursor-pointer"
+            title="Knowledge Transfer (KT) & Workflow Guide"
+          >
+            <HelpCircle size={18} />
+          </button>
           <button 
             onClick={() => setShowQuickNote(!showQuickNote)}
-            className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white cursor-pointer"
             title="Quick Notes Scratchpad"
           >
             <StickyNote size={18} />
           </button>
-          <button onClick={toggleTheme} className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white" title="Toggle Theme">
+          <button onClick={toggleTheme} className="p-1.5 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white cursor-pointer" title="Toggle Theme">
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           
@@ -567,6 +500,43 @@ const Layout = () => {
                       })}
                     </div>
                   </div>
+
+                  {/* ── Knowledge Transfer & Help Guide Link ── */}
+                  <div style={{ padding: '8px 10px', borderTop: '1px solid rgba(255,255,255,0.07)', marginTop: '8px' }}>
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        setShowHelpGuide(true);
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '9px 12px',
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        color: 'rgba(255,255,255,0.9)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textAlign: 'left',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(66, 133, 244, 0.2)';
+                        e.currentTarget.style.borderColor = 'rgba(66, 133, 244, 0.4)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                      }}
+                    >
+                      <HelpCircle size={15} style={{ color: '#4285F4' }} />
+                      <span>Knowledge Transfer (KT) Guide</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -732,6 +702,17 @@ const Layout = () => {
               <span>Quick Notes</span>
             </Link>
           </nav>
+
+          {/* KT & Help Center Button at bottom of sidebar */}
+          <div className="p-3 border-t border-border/50 mt-auto">
+            <button
+              onClick={() => setShowHelpGuide(true)}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 transition-all cursor-pointer shadow-sm active:scale-95 group"
+            >
+              <HelpCircle size={15} className="group-hover:scale-110 transition-transform" />
+              <span>KT & Help Center</span>
+            </button>
+          </div>
         </aside>
 
         {/* Page Content — All pages full screen flush */}
@@ -749,25 +730,11 @@ const Layout = () => {
               <Outlet />
             </div>
           )}
-
-          {/* Real-time Toast Popup */}
-          {toastNotif && (
-            <div className="fixed top-6 right-6 bg-bg-secondary border border-border shadow-2xl rounded-xl p-4 pr-10 min-w-[300px] animate-bounce-in z-[9999] group cursor-pointer hover:shadow-accent-blue/10">
-              <div className="flex items-center space-x-3 mb-1">
-                <div className="h-2 w-2 rounded-full bg-accent-blue shadow-[0_0_8px_rgba(66,133,244,0.6)] animate-pulse"></div>
-                <h4 className="font-bold text-text-primary text-sm">{toastNotif.title}</h4>
-              </div>
-              <p className="text-xs text-text-secondary line-clamp-2 ml-5">{toastNotif.message}</p>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setToastNotif(null); }}
-                className="absolute top-2 right-2 text-text-secondary hover:text-text-primary p-1 bg-bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
         </main>
       </div>
+
+      {/* Global Knowledge Transfer & Help Guide Modal */}
+      <HelpGuideModal isOpen={showHelpGuide} onClose={() => setShowHelpGuide(false)} />
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-bg-sidebar border-t border-border shadow-[0_-4px_10px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">

@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Lock, ArrowLeft, ShieldCheck } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
@@ -113,91 +113,106 @@ const Register = () => {
             </h1>
           </div>
 
-          <h2 className="text-3xl font-bold text-text-primary tracking-tight mb-2">
-            {isInvite ? 'Accept Invitation' : 'Create an account'}
-          </h2>
-          <p className="text-text-secondary mb-8">
-            {isInvite ? `Join ${workspaceName || 'the workspace'} by setting up your account.` : 'Set up your workspace MD account.'}
-          </p>
-
-          {error && (
-            <div className="bg-danger/10 text-danger px-4 py-3 rounded-lg mb-6 text-sm font-medium">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Full Name</label>
-              <input 
-                type="text" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors"
-                placeholder="John Doe"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Email</label>
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={`w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors ${isInvite ? 'opacity-70 cursor-not-allowed bg-bg-secondary' : ''}`}
-                placeholder="you@company.com"
-                required
-                disabled={isInvite}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Password</label>
-              <div className="relative">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-transparent border border-border rounded-lg px-4 py-3 pr-10 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors"
-                  placeholder="••••••••"
-                  minLength="6"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary focus:outline-none"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+          {!isInvite && !inviteToken ? (
+            <div className="bg-bg-secondary border border-border/80 p-8 rounded-3xl text-center space-y-5 shadow-soft">
+              <div className="w-16 h-16 bg-accent-blue/10 text-accent-blue rounded-2xl flex items-center justify-center mx-auto border border-accent-blue/20 shadow-sm">
+                <Lock size={28} />
               </div>
-            </div>
-            {!isInvite && (
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Account Role</label>
-                <select 
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary focus:outline-none focus:border-accent-blue transition-colors appearance-none"
-                >
-                  <option value="super_admin">MD (Initial Setup)</option>
-                </select>
-                <p className="text-xs text-text-secondary mt-2">Note: Employees do not use this page. They are created by the MD or HR internally.</p>
+                <h2 className="text-2xl font-bold text-text-primary font-outfit mb-2">Registration Closed</h2>
+                <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  Invite-Only Workspace
+                </span>
               </div>
-            )}
-            <button 
-              type="submit" 
-              className="w-full bg-[#1b2b4c] text-white hover:bg-[#ffca22] hover:text-[#1b2b4c] hover:shadow-lg hover:-translate-y-0.5 font-bold py-3 px-4 rounded-lg transition-all duration-300 mt-4"
-            >
-              Sign Up
-            </button>
-          </form>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                The initial Managing Director account is already created. New team members must be invited by their Managing Director or HR.
+              </p>
+              <div className="pt-3">
+                <Link
+                  to="/login"
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#1b2b4c] text-white hover:bg-[#ffca22] hover:text-[#1b2b4c] font-bold py-3.5 px-4 rounded-xl transition-all duration-300 shadow-md cursor-pointer"
+                >
+                  <ArrowLeft size={16} />
+                  Return to Sign In
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold text-text-primary tracking-tight mb-2">
+                Accept Invitation
+              </h2>
+              <p className="text-text-secondary mb-8">
+                Join <strong className="text-text-primary">{workspaceName || 'the workspace'}</strong> by setting up your credentials.
+              </p>
 
-          <p className="mt-8 text-center text-sm text-text-secondary">
-            Already have an account?{' '}
-            <Link to="/login" className="text-[#1b2b4c] text-[color:var(--text-primary)] hover:text-[#ffca22] font-bold transition-colors">
-              Sign in
-            </Link>
-          </p>
+              {error && (
+                <div className="bg-danger/10 text-danger px-4 py-3 rounded-lg mb-6 text-sm font-medium">
+                  {error}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-text-primary mb-2">Full Name</label>
+                  <input 
+                    type="text" 
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-primary mb-2">Email Address</label>
+                  <input 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors opacity-70 cursor-not-allowed bg-bg-secondary"
+                    placeholder="you@company.com"
+                    required
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-primary mb-2">Create Password</label>
+                  <div className="relative">
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full bg-transparent border border-border rounded-lg px-4 py-3 pr-10 text-text-primary placeholder-text-secondary focus:outline-none focus:border-accent-blue transition-colors"
+                      placeholder="••••••••"
+                      minLength="6"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary focus:outline-none cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+                <button 
+                  type="submit" 
+                  className="w-full bg-[#1b2b4c] text-white hover:bg-[#ffca22] hover:text-[#1b2b4c] hover:shadow-lg hover:-translate-y-0.5 font-bold py-3.5 px-4 rounded-xl transition-all duration-300 mt-4 cursor-pointer"
+                >
+                  Join Workspace
+                </button>
+              </form>
+
+              <p className="mt-8 text-center text-sm text-text-secondary">
+                Already registered?{' '}
+                <Link to="/login" className="text-[#1b2b4c] text-[color:var(--text-primary)] hover:text-[#ffca22] font-bold transition-colors">
+                  Sign in
+                </Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

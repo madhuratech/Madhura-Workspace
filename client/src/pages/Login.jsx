@@ -102,12 +102,15 @@ const Login = () => {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-text-secondary">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-[#1b2b4c] text-[color:var(--text-primary)] hover:text-[#ffca22] font-bold transition-colors">
-              Sign up
-            </Link>
-          </p>
+          <div className="mt-8 pt-6 border-t border-border/40 text-center">
+            <p className="text-xs text-text-secondary flex items-center justify-center gap-1.5 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+              Enterprise Workspace &bull; Invite-Only Access
+            </p>
+            <p className="text-[11px] text-text-secondary/70 mt-1">
+              New team members are provisioned by the Managing Director / HR.
+            </p>
+          </div>
         </div>
       </div>
     </div>

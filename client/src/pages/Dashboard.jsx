@@ -330,58 +330,60 @@ const Dashboard = () => {
             </h1>
           </div>
 
-          {/* Workspace badge with dropdown */}
-          <div className="relative">
-            <div 
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-3 bg-bg-secondary/70 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl px-5 py-3 shadow-soft hover:shadow-hover transition-all duration-300 animate-in fade-in slide-in-from-right-4 duration-500 cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden">
-                <img src="/Madhura-logo.webp" alt="Logo" className="w-full h-full object-contain p-1.5"
-                  onError={e => { e.target.style.display='none'; e.target.parentElement.textContent = workspace.name.charAt(0); e.target.parentElement.className += " font-bold text-accent-blue text-lg"; }} />
+          {/* Workspace badge with dropdown (Only visible to Super Admin / MD) */}
+          {user?.role === 'super_admin' && (
+            <div className="relative">
+              <div 
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-3 bg-bg-secondary/70 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-2xl px-5 py-3 shadow-soft hover:shadow-hover transition-all duration-300 animate-in fade-in slide-in-from-right-4 duration-500 cursor-pointer"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center overflow-hidden">
+                  <img src="/Madhura-logo.webp" alt="Logo" className="w-full h-full object-contain p-1.5"
+                    onError={e => { e.target.style.display='none'; e.target.parentElement.textContent = workspace?.name?.charAt(0) || 'W'; e.target.parentElement.className += " font-bold text-accent-blue text-lg"; }} />
+                </div>
+                <div className="flex-1 pr-2">
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-none mb-1">Workspace</p>
+                  <p className="text-[14px] font-extrabold text-text-primary font-outfit leading-none">{workspace?.name}</p>
+                </div>
+                <ChevronDown size={16} className={`text-text-secondary transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
               </div>
-              <div className="flex-1 pr-2">
-                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-none mb-1">Workspace</p>
-                <p className="text-[14px] font-extrabold text-text-primary font-outfit leading-none">{workspace.name}</p>
-              </div>
-              <ChevronDown size={16} className={`text-text-secondary transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-            </div>
 
-            {dropdownOpen && (
-              <div className="absolute top-full right-0 mt-2 w-64 bg-bg-secondary border border-border/50 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                  {allWorkspaces.map(w => (
-                    <div 
-                      key={w._id} 
-                      onClick={() => {
-                        setWorkspace(w);
-                        setDropdownOpen(false);
-                        fetchData(w);
-                      }}
-                      className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-primary transition-colors border-b border-border/30 ${workspace._id === w._id ? 'bg-bg-primary/50' : ''}`}
-                    >
-                      <span className={`text-sm font-bold ${workspace._id === w._id ? 'text-accent-blue' : 'text-text-primary'}`}>{w.name}</span>
-                      <button 
-                        onClick={(e) => handleDeleteWorkspace(e, w._id)}
-                        className="text-red-500 opacity-60 hover:opacity-100 p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
-                        title="Delete Workspace"
+              {dropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-64 bg-bg-secondary border border-border/50 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                    {allWorkspaces.map(w => (
+                      <div 
+                        key={w._id} 
+                        onClick={() => {
+                          setWorkspace(w);
+                          setDropdownOpen(false);
+                          fetchData(w);
+                        }}
+                        className={`flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-bg-primary transition-colors border-b border-border/30 ${workspace?._id === w._id ? 'bg-bg-primary/50' : ''}`}
                       >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
+                        <span className={`text-sm font-bold ${workspace?._id === w._id ? 'text-accent-blue' : 'text-text-primary'}`}>{w.name}</span>
+                        <button 
+                          onClick={(e) => handleDeleteWorkspace(e, w._id)}
+                          className="text-red-500 opacity-60 hover:opacity-100 p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                          title="Delete Workspace"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-2 border-t border-border/50 bg-bg-primary/30">
+                    <button 
+                      onClick={openCreateModal}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-blue text-white rounded-xl text-sm font-bold hover:bg-accent-indigo transition-colors shadow-sm"
+                    >
+                      <Plus size={16} /> Create Workspace
+                    </button>
+                  </div>
                 </div>
-                <div className="p-2 border-t border-border/50 bg-bg-primary/30">
-                  <button 
-                    onClick={openCreateModal}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-blue text-white rounded-xl text-sm font-bold hover:bg-accent-indigo transition-colors shadow-sm"
-                  >
-                    <Plus size={16} /> Create Workspace
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── STAT CARDS ── */}
