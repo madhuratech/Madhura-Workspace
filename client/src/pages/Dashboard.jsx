@@ -557,7 +557,9 @@ const Dashboard = () => {
               <h2 className="text-sm font-black text-text-primary uppercase tracking-widest mb-5 font-outfit">Quick Actions</h2>
               <div className="grid grid-cols-2 gap-4">
                 {[
-                  { to: '/my-tasks', icon: <Plus size={24} />, label: 'Create Task', gradient: 'from-blue-500 to-indigo-500' },
+                  user?.role === 'employee'
+                    ? { to: '/my-tasks', icon: <CheckSquare size={24} />, label: 'My Tasks', gradient: 'from-blue-500 to-indigo-500' }
+                    : { to: '/my-tasks', icon: <Plus size={24} />, label: 'Create Task', gradient: 'from-blue-500 to-indigo-500' },
                   { to: '/meetings', icon: <CalendarDays size={24} />, label: 'Schedule', gradient: 'from-purple-500 to-pink-500' },
                 ].map((a, i) => (
                   <Link key={i} to={a.to}
