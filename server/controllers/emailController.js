@@ -72,8 +72,14 @@ exports.getEmails = async (req, res) => {
       let q = '';
       let includeSpamTrash = false;
 
-      if (folder === 'inbox') {
+      if (folder === 'inbox' || folder === 'primary') {
         q = 'in:inbox';
+      } else if (folder === 'promotions') {
+        q = 'category:promotions';
+      } else if (folder === 'social') {
+        q = 'category:social';
+      } else if (folder === 'updates') {
+        q = 'category:updates';
       } else if (folder === 'starred') {
         q = 'is:starred';
       } else if (folder === 'sent') {

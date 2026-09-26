@@ -4,7 +4,7 @@ const Invitation = require('../models/Invitation');
 const Workspace = require('../models/Workspace');
 const User = require('../models/User');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // @desc    Send an invitation
 // @route   POST /api/invitations
