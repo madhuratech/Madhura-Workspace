@@ -162,12 +162,89 @@ const Dashboard = () => {
   );
 
   if (!workspace) return (
-    <div className="flex flex-col items-center justify-center h-full text-center p-8 bg-bg-primary">
-      <div className="bg-bg-secondary p-8 rounded-3xl shadow-soft border border-border max-w-md w-full glass">
-        <LayoutDashboard size={48} className="text-text-secondary mb-4 opacity-40 mx-auto" />
+    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-8 bg-bg-primary">
+      <div className="bg-bg-secondary p-8 rounded-3xl shadow-soft border border-border max-w-md w-full glass animate-in fade-in zoom-in-95 duration-300">
+        <div className="w-16 h-16 bg-accent-blue/10 text-accent-blue rounded-2xl flex items-center justify-center mb-4 border border-accent-blue/20 mx-auto">
+          <LayoutDashboard size={32} />
+        </div>
         <h2 className="text-2xl font-bold text-text-primary mb-2 font-outfit">No Workspace Found</h2>
-        <p className="text-text-secondary text-sm">Please contact your administrator to get assigned to a workspace.</p>
+        <p className="text-text-secondary text-sm mb-6">
+          {user?.role === 'super_admin' || allWorkspaces.length === 0
+            ? 'Get started by creating a fresh workspace for your team.'
+            : 'Please contact your administrator to get assigned to a workspace.'}
+        </p>
+
+        {(user?.role === 'super_admin' || allWorkspaces.length === 0) && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="w-full flex items-center justify-center gap-2 bg-accent-blue hover:bg-accent-indigo text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-accent-blue/25 active:scale-[0.98]"
+          >
+            <Plus size={18} />
+            Create Workspace
+          </button>
+        )}
       </div>
+
+      {/* CREATE WORKSPACE MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 text-left">
+          <div className="bg-bg-secondary border border-border/50 rounded-3xl p-6 w-full max-w-md shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowCreateModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <div className="mb-6">
+              <div className="w-12 h-12 bg-accent-blue/10 text-accent-blue rounded-2xl flex items-center justify-center mb-4 border border-accent-blue/20">
+                <LayoutDashboard size={24} />
+              </div>
+              <h3 className="text-2xl font-bold text-text-primary font-outfit">Create Workspace</h3>
+              <p className="text-sm text-text-secondary mt-1">Set up a new workspace for your team.</p>
+            </div>
+
+            <form onSubmit={handleCreateWorkspaceSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Workspace Name</label>
+                <input 
+                  type="text"
+                  value={newWorkspaceData.name}
+                  onChange={e => setNewWorkspaceData({...newWorkspaceData, name: e.target.value})}
+                  placeholder="e.g. Acme Corp"
+                  className="w-full bg-bg-primary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2">Description <span className="normal-case font-normal opacity-70">(Optional)</span></label>
+                <textarea 
+                  value={newWorkspaceData.description}
+                  onChange={e => setNewWorkspaceData({...newWorkspaceData, description: e.target.value})}
+                  placeholder="What is this workspace for?"
+                  rows={3}
+                  className="w-full bg-bg-primary border border-border/50 rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue transition-all resize-none"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  type="submit"
+                  disabled={isSubmitting || !newWorkspaceData.name.trim()}
+                  className="w-full bg-accent-blue hover:bg-accent-indigo text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                >
+                  {isSubmitting ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> : 'Create Workspace'}
+                </button>
+              </div>
+              
+              <p className="text-center text-xs text-text-secondary mt-4">
+                You can invite team members to this workspace from the <strong className="text-text-primary">Team</strong> module after creation.
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 

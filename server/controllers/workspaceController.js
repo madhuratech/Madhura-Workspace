@@ -35,8 +35,15 @@ const createWorkspace = async (req, res) => {
       return res.status(400).json({ message: 'Please add a workspace name' });
     }
 
-    if (req.user.role !== 'super_admin') {
+    const totalWorkspaces = await Workspace.countDocuments();
+    if (totalWorkspaces > 0 && req.user.role !== 'super_admin') {
       return res.status(403).json({ message: 'Only MD can create workspaces' });
+    }
+
+    // If first workspace or user is creating workspace, ensure they have super_admin role
+    if (req.user.role !== 'super_admin') {
+      await User.findByIdAndUpdate(req.user._id, { role: 'super_admin' });
+      req.user.role = 'super_admin';
     }
 
     // Prepare members list: Owner is super_admin. Other selected members get their global roles or default to employee.

@@ -27,12 +27,16 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Assign super_admin if this is the first user in the database
+    const userCount = await User.countDocuments();
+    const assignedRole = role || (userCount === 0 ? 'super_admin' : 'employee');
+
     // Create user (password is hashed in pre-save hook)
     const user = await User.create({
       name,
       email,
       password,
-      role: role || 'employee',
+      role: assignedRole,
     });
 
     if (user) {
