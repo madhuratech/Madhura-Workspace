@@ -165,7 +165,7 @@ const Meetings = () => {
   // ── open new meeting form ──
   const openNewMeeting=(dateStr='',timeStr='')=>{
     const base=defaultNewMtg();
-    setNewMtg({...base, startDate:dateStr||base.startDate, startTime:timeStr||base.startTime, endDate:dateStr||base.endDate, attendees:members.map(m=>m.user._id)});
+    setNewMtg({...base, startDate:dateStr||base.startDate, startTime:timeStr||base.startTime, endDate:dateStr||base.endDate, attendees:[]});
     setAttSearch(''); setView('new-meeting');
   };
 
@@ -173,8 +173,8 @@ const Meetings = () => {
   const saveMeeting=async()=>{
     if(!newMtg.title.trim()){ showToast('Please add a title','error'); return; }
     if(!workspace) return;
-    let ids=newMtg.attendees.length>0?[...newMtg.attendees]:members.map(m=>m.user._id);
-    if(!ids.includes(user._id)) ids.push(user._id);
+    let ids = [...newMtg.attendees];
+    if(user?._id && !ids.includes(user._id)) ids.push(user._id);
     const desc=descRef.current?.innerHTML||newMtg.description;
     const fullDesc=newMtg.location?`📍 ${newMtg.location}\n\n${desc}`:desc;
     try{
@@ -303,54 +303,159 @@ const Meetings = () => {
               </div>
 
               {/* ── Attendees ── */}
-              <div style={{...fieldRow,flexDirection:'column',padding:'6px 0'}}>
+              <div style={{...fieldRow,flexDirection:'column',padding:'8px 0'}}>
                 <div style={{display:'flex',gap:14,width:'100%',alignItems:'flex-start'}}>
-                  <div style={{...iconCol,paddingTop:10}}><UsersIcon size={16}/></div>
+                  <div style={{...iconCol,paddingTop:8}}><UsersIcon size={16}/></div>
                   <div style={{flex:1}}>
-                    {/* chips */}
-                    {newMtg.attendees.length>0&&(
-                      <div style={{display:'flex',flexWrap:'wrap',gap:5,marginBottom:8,marginTop:8}}>
-                        {newMtg.attendees.map(id=>{
-                          const mem=members.find(m=>m.user._id===id); if(!mem) return null;
-                          return(
-                            <span key={id} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 8px 3px 10px',background:'var(--bg-sidebar-hover)',border:`1px solid var(--border-color)`,borderRadius:20,fontSize:13,color:T_PRIMARY}}>
-                              {mem.user.name}
-                              <button onClick={()=>removeAtt(id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-secondary)',padding:0,display:'flex'}}
-                                onMouseEnter={e=>e.currentTarget.style.color='var(--text-primary)'} onMouseLeave={e=>e.currentTarget.style.color='var(--text-secondary)'}
-                              ><X size={11}/></button>
-                            </span>
-                          );
-                        })}
+                    {/* Selected Attendees chips */}
+                    {newMtg.attendees.length>0 && (
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,flexWrap:'wrap',gap:6}}>
+                        <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                          {newMtg.attendees.map(id=>{
+                            const mem=members.find(m=>m.user?._id===id);
+                            if(!mem) return null;
+                            return (
+                              <span key={id} style={{
+                                display:'inline-flex',
+                                alignItems:'center',
+                                gap:6,
+                                padding:'3px 10px 3px 6px',
+                                background:'var(--bg-secondary)',
+                                border:`1px solid var(--border-color)`,
+                                borderRadius:16,
+                                fontSize:12,
+                                fontWeight:500,
+                                color:'var(--text-primary)'
+                              }}>
+                                <span style={{
+                                  width:18,
+                                  height:18,
+                                  borderRadius:'50%',
+                                  background:T_PRIMARY,
+                                  color:'var(--accent-text)',
+                                  fontSize:10,
+                                  fontWeight:700,
+                                  display:'inline-flex',
+                                  alignItems:'center',
+                                  justifyContent:'center'
+                                }}>
+                                  {mem.user.name?.charAt(0).toUpperCase()}
+                                </span>
+                                <span>{mem.user.name}</span>
+                                <button 
+                                  type="button"
+                                  onClick={()=>removeAtt(id)} 
+                                  style={{background:'none',border:'none',cursor:'pointer',color:'var(--text-secondary)',padding:0,display:'flex',marginLeft:2}}
+                                  onMouseEnter={e=>e.currentTarget.style.color='var(--accent-red)'} 
+                                  onMouseLeave={e=>e.currentTarget.style.color='var(--text-secondary)'}
+                                  title="Remove attendee"
+                                >
+                                  <X size={12}/>
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                        {newMtg.attendees.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setNewMtg(p => ({ ...p, attendees: [] }))}
+                            style={{
+                              background:'none',
+                              border:'none',
+                              color:'var(--text-secondary)',
+                              fontSize:11,
+                              cursor:'pointer',
+                              textDecoration:'underline'
+                            }}
+                            onMouseEnter={e=>e.currentTarget.style.color='var(--accent-red)'}
+                            onMouseLeave={e=>e.currentTarget.style.color='var(--text-secondary)'}
+                          >
+                            Clear all ({newMtg.attendees.length})
+                          </button>
+                        )}
                       </div>
                     )}
-                    {/* search */}
+                    {/* Search & dropdown */}
                     <div style={{position:'relative'}}>
-                      <input ref={attInputRef} value={attSearch}
+                      <input 
+                        ref={attInputRef} 
+                        value={attSearch}
                         onChange={e=>{setAttSearch(e.target.value);setShowAttDrop(true);}}
                         onFocus={()=>setShowAttDrop(true)}
-                        placeholder="Enter name or e-mail"
-                        style={{...teamsField,fontSize:14,padding:'10px 0'}}
+                        placeholder="Type name or email to add attendees..."
+                        style={{...teamsField,fontSize:13,padding:'8px 0'}}
                       />
-                      {showAttDrop&&(
-                        <div ref={attDropRef} style={{position:'absolute',top:'100%',left:0,right:0,background:'var(--bg-secondary)',border:'1px solid var(--border-color)',borderRadius:6,zIndex:200,maxHeight:220,overflowY:'auto',boxShadow:'0 8px 24px rgba(0,0,0,0.15)'}}>
-                          {filteredAtts.length===0
-                            ?<div style={{padding:'12px 16px',color:'var(--text-secondary)',fontSize:13}}>{attSearch?'No results found':'All workspace members already added'}</div>
-                            :filteredAtts.slice(0,8).map(m=>(
-                              <div key={m.user._id} onClick={()=>addAtt(m.user._id)}
-                                style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',cursor:'pointer',borderBottom:'1px solid var(--border-color)',transition:'background 0.1s'}}
-                                onMouseEnter={e=>e.currentTarget.style.background='var(--bg-primary)'}
+                      {showAttDrop && (
+                        <div ref={attDropRef} style={{
+                          position:'absolute',
+                          top:'100%',
+                          left:0,
+                          right:0,
+                          background:'var(--bg-primary)',
+                          border:'1px solid var(--border-color)',
+                          borderRadius:8,
+                          zIndex:200,
+                          maxHeight:220,
+                          overflowY:'auto',
+                          boxShadow:'0 10px 30px rgba(0,0,0,0.2)'
+                        }}>
+                          {filteredAtts.length === 0 ? (
+                            <div style={{padding:'12px 16px',color:'var(--text-secondary)',fontSize:12}}>
+                              {attSearch ? 'No matching members found' : 'All workspace members are already added'}
+                            </div>
+                          ) : (
+                            filteredAtts.slice(0, 8).map(m => (
+                              <div 
+                                key={m.user._id} 
+                                onClick={()=>addAtt(m.user._id)}
+                                style={{
+                                  display:'flex',
+                                  alignItems:'center',
+                                  justifyContent:'space-between',
+                                  padding:'8px 12px',
+                                  cursor:'pointer',
+                                  borderBottom:'1px solid var(--border-color)',
+                                  transition:'background 0.12s ease'
+                                }}
+                                onMouseEnter={e=>e.currentTarget.style.background='var(--bg-secondary)'}
                                 onMouseLeave={e=>e.currentTarget.style.background='transparent'}
                               >
-                                <div style={{width:32,height:32,borderRadius:'50%',background:T_PRIMARY,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:'var(--accent-text)',flexShrink:0}}>
-                                  {m.user.name?.charAt(0).toUpperCase()}
+                                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                                  <div style={{
+                                    width:28,
+                                    height:28,
+                                    borderRadius:'50%',
+                                    background:T_PRIMARY,
+                                    display:'flex',
+                                    alignItems:'center',
+                                    justifyContent:'center',
+                                    fontSize:12,
+                                    fontWeight:700,
+                                    color:'var(--accent-text)',
+                                    flexShrink:0
+                                  }}>
+                                    {m.user.name?.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div style={{color:'var(--text-primary)',fontSize:13,fontWeight:500}}>{m.user.name}</div>
+                                    <div style={{color:'var(--text-secondary)',fontSize:11}}>{m.user.email}</div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div style={{color:'var(--text-primary)',fontSize:13,fontWeight:500}}>{m.user.name}</div>
-                                  <div style={{color:'var(--text-secondary)',fontSize:11}}>{m.user.email}</div>
-                                </div>
+                                <span style={{
+                                  fontSize:10,
+                                  textTransform:'capitalize',
+                                  padding:'2px 6px',
+                                  borderRadius:4,
+                                  background:'var(--bg-secondary)',
+                                  border:'1px solid var(--border-color)',
+                                  color:'var(--text-secondary)'
+                                }}>
+                                  {m.role?.replace('_', ' ') || 'member'}
+                                </span>
                               </div>
                             ))
-                          }
+                          )}
                         </div>
                       )}
                     </div>
