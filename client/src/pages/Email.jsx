@@ -34,7 +34,7 @@ const Email = () => {
   const [pageSize, setPageSize] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [nextPageToken, setNextPageToken] = useState(null);
-  const [tokenMap, setTokenMap] = useState({ 1: '' });
+  const tokenMapRef = useRef({ 1: '' });
   
   // Selection & Actions
   const [selectedEmails, setSelectedEmails] = useState([]);
@@ -97,9 +97,10 @@ const Email = () => {
 
     try {
       const skip = (page - 1) * pageSize;
+      const targetFolder = (folder === 'inbox' && inboxCategory && inboxCategory !== 'primary') ? inboxCategory : folder;
       const res = await axios.get(`/workspaces/${currentWs._id}/emails`, {
         params: {
-          folder,
+          folder: targetFolder,
           search,
           maxResults: pageSize,
           pageToken: token || '',
@@ -125,7 +126,7 @@ const Email = () => {
       setTotalCount(totalEst);
 
       if (nextTok) {
-        setTokenMap(prev => ({ ...prev, [page + 1]: nextTok }));
+        tokenMapRef.current[page + 1] = nextTok;
       }
       setSelectedEmails([]);
     } catch (error) {
@@ -145,7 +146,7 @@ const Email = () => {
       if (searchQuery !== debouncedSearch) {
         setDebouncedSearch(searchQuery);
         setCurrentPage(1);
-        setTokenMap({ 1: '' });
+        tokenMapRef.current = { 1: '' };
         if (workspace) {
           fetchFolderEmails(workspace, activeFolder, 1, '', searchQuery);
         }
@@ -159,7 +160,7 @@ const Email = () => {
     setActiveFolder(folderId);
     if (folderId === 'inbox') setInboxCategory('primary');
     setCurrentPage(1);
-    setTokenMap({ 1: '' });
+    tokenMapRef.current = { 1: '' };
     setSearchQuery('');
     setDebouncedSearch('');
     setViewingEmail(null);
@@ -170,7 +171,7 @@ const Email = () => {
   const handleSelectCategory = (categoryId) => {
     setInboxCategory(categoryId);
     setCurrentPage(1);
-    setTokenMap({ 1: '' });
+    tokenMapRef.current = { 1: '' };
     setSearchQuery('');
     setDebouncedSearch('');
     setViewingEmail(null);
@@ -181,18 +182,20 @@ const Email = () => {
   const handleNextPage = () => {
     if (!nextPageToken && emails.length < pageSize) return;
     const nextPage = currentPage + 1;
-    const token = tokenMap[nextPage] || nextPageToken || '';
+    const token = tokenMapRef.current[nextPage] || nextPageToken || '';
     setCurrentPage(nextPage);
-    fetchFolderEmails(workspace, activeFolder, nextPage, token, debouncedSearch);
+    const targetFolder = (activeFolder === 'inbox' && inboxCategory && inboxCategory !== 'primary') ? inboxCategory : activeFolder;
+    fetchFolderEmails(workspace, targetFolder, nextPage, token, debouncedSearch);
   };
 
   // Prev Page
   const handlePrevPage = () => {
     if (currentPage <= 1) return;
     const prevPage = currentPage - 1;
-    const token = tokenMap[prevPage] || '';
+    const token = tokenMapRef.current[prevPage] || '';
     setCurrentPage(prevPage);
-    fetchFolderEmails(workspace, activeFolder, prevPage, token, debouncedSearch);
+    const targetFolder = (activeFolder === 'inbox' && inboxCategory && inboxCategory !== 'primary') ? inboxCategory : activeFolder;
+    fetchFolderEmails(workspace, targetFolder, prevPage, token, debouncedSearch);
   };
 
   // Open Full Email
