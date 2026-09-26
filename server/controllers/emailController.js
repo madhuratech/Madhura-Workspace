@@ -67,21 +67,6 @@ exports.getEmails = async (req, res) => {
     if (user.activeEmailProvider === 'google') {
       if (!user.googleAccessToken) return res.status(401).json({ authRequired: true, message: 'Google Authentication required' });
       
-      let folderQuery = '';
-      if (folder === 'inbox') folderQuery = 'in:inbox';
-      else if (folder === 'sent') folderQuery = 'in:sent';
-      else if (folder === 'drafts') folderQuery = 'is:draft';
-      else if (folder === 'starred') folderQuery = 'is:starred';
-      else if (folder === 'trash') folderQuery = 'in:trash';
-      else if (folder === 'important') folderQuery = 'is:important';
-      else if (folder === 'snoozed') folderQuery = 'is:snoozed';
-      else if (folder === 'chats') folderQuery = 'is:chat';
-      else if (folder === 'scheduled') folderQuery = 'is:scheduled';
-      else if (folder === 'spam') folderQuery = 'in:spam';
-      else if (folder === 'all') folderQuery = '';
-
-      let q = [folderQuery, search.trim()].filter(Boolean).join(' ');
-
       const oauth2Client = getOAuth2Client(user);
       const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
@@ -89,8 +74,41 @@ exports.getEmails = async (req, res) => {
         userId: 'me',
         maxResults: limit,
       };
-      if (q) listParams.q = q;
-      if (pageToken) listParams.pageToken = pageToken;
+
+      // Configure folder filters for Gmail
+      if (folder === 'inbox') {
+        listParams.labelIds = ['INBOX'];
+      } else if (folder === 'starred') {
+        listParams.labelIds = ['STARRED'];
+      } else if (folder === 'sent') {
+        listParams.labelIds = ['SENT'];
+      } else if (folder === 'drafts') {
+        listParams.labelIds = ['DRAFT'];
+      } else if (folder === 'trash') {
+        listParams.labelIds = ['TRASH'];
+        listParams.includeSpamTrash = true;
+      } else if (folder === 'important') {
+        listParams.labelIds = ['IMPORTANT'];
+      } else if (folder === 'snoozed') {
+        listParams.q = 'label:snoozed';
+      } else if (folder === 'chats') {
+        listParams.labelIds = ['CHAT'];
+      } else if (folder === 'scheduled') {
+        listParams.labelIds = ['SCHEDULED'];
+      } else if (folder === 'spam') {
+        listParams.labelIds = ['SPAM'];
+        listParams.includeSpamTrash = true;
+      } else if (folder === 'all') {
+        listParams.q = '-in:trash -in:spam';
+      }
+
+      if (search && search.trim()) {
+        listParams.q = listParams.q ? `${listParams.q} ${search.trim()}` : search.trim();
+      }
+
+      if (pageToken && typeof pageToken === 'string' && pageToken.trim() !== '') {
+        listParams.pageToken = pageToken.trim();
+      }
 
       const response = await gmail.users.messages.list(listParams);
       if (!response.data.messages || response.data.messages.length === 0) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
@@ -6,7 +6,7 @@ import {
   Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, 
   Calendar, Mail, AlertTriangle, Paperclip, Check, X, Search, 
   MoreVertical, Trash2, Archive, Menu, ChevronDown, ChevronRight, 
-  ChevronLeft, RotateCw, Reply, Forward, CheckCheck, Eye
+  ChevronLeft, RotateCw, Reply, Forward, CheckCheck
 } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
@@ -31,7 +31,7 @@ const Email = () => {
   const [pageSize, setPageSize] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [nextPageToken, setNextPageToken] = useState(null);
-  const [tokenStack, setTokenStack] = useState(['']); // index 0 is page 1 (empty token)
+  const [pageTokens, setPageTokens] = useState({ 1: '' });
   
   // Selection & Actions
   const [selectedEmails, setSelectedEmails] = useState([]);
@@ -58,31 +58,17 @@ const Email = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Debounce search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
-      setTokenStack(['']);
-    }, 400);
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
+  // Fetch initial workspace
   useEffect(() => {
     fetchWorkspace();
   }, [user]);
-
-  useEffect(() => {
-    if (workspace) {
-      fetchEmails();
-    }
-  }, [workspace, activeFolder, debouncedSearch, pageSize, currentPage]);
 
   const fetchWorkspace = async () => {
     try {
       const wsRes = await axios.get('/workspaces');
       if (wsRes.data.length > 0) {
-        const detailRes = await axios.get(`/workspaces/${wsRes.data[0]._id}`);
+        const wsId = wsRes.data[0]._id;
+        const detailRes = await axios.get(`/workspaces/${wsId}`);
         setWorkspace(detailRes.data);
       }
     } catch (error) {
@@ -90,22 +76,30 @@ const Email = () => {
     }
   };
 
-  const fetchEmails = async (isManualRefresh = false) => {
+  // Direct fetch function with parameters
+  const loadEmails = useCallback(async ({
+    folder = activeFolder,
+    page = currentPage,
+    token = '',
+    search = debouncedSearch,
+    limit = pageSize,
+    isManual = false
+  } = {}) => {
+    if (!workspace) return;
     try {
-      if (isManualRefresh) setRefreshing(true);
+      if (isManual) setRefreshing(true);
       else setLoading(true);
       setAuthRequired(false);
 
-      const currentToken = tokenStack[currentPage - 1] || '';
-      const skip = (currentPage - 1) * pageSize;
-      
+      const skip = (page - 1) * limit;
+
       const res = await axios.get(`/workspaces/${workspace._id}/emails`, {
         params: {
-          folder: activeFolder,
-          search: debouncedSearch,
-          maxResults: pageSize,
-          pageToken: currentToken,
-          skip: skip
+          folder,
+          search,
+          maxResults: limit,
+          pageToken: token || '',
+          skip
         }
       });
 
@@ -114,9 +108,15 @@ const Email = () => {
         setTotalEstimated(res.data.length);
         setNextPageToken(null);
       } else {
-        setEmails(res.data.emails || []);
-        setNextPageToken(res.data.nextPageToken || null);
-        setTotalEstimated(res.data.resultSizeEstimate || (res.data.emails || []).length);
+        const list = res.data.emails || [];
+        const nextTok = res.data.nextPageToken || null;
+        setEmails(list);
+        setNextPageToken(nextTok);
+        setTotalEstimated(res.data.resultSizeEstimate || list.length);
+
+        if (nextTok) {
+          setPageTokens(prev => ({ ...prev, [page + 1]: nextTok }));
+        }
       }
       setSelectedEmails([]);
     } catch (error) {
@@ -128,42 +128,77 @@ const Email = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [workspace, activeFolder, currentPage, debouncedSearch, pageSize]);
 
-  const handleNextPage = () => {
-    if (!nextPageToken && emails.length < pageSize) return;
-    if (nextPageToken) {
-      const newStack = [...tokenStack];
-      newStack[currentPage] = nextPageToken;
-      setTokenStack(newStack);
+  // Initial load when workspace is available
+  useEffect(() => {
+    if (workspace) {
+      loadEmails({ folder: 'inbox', page: 1, token: '', search: '', limit: pageSize });
     }
-    setCurrentPage(prev => prev + 1);
-  };
+  }, [workspace]);
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (debouncedSearch !== searchQuery) {
+        setDebouncedSearch(searchQuery);
+        setCurrentPage(1);
+        setPageTokens({ 1: '' });
+        if (workspace) {
+          loadEmails({ folder: activeFolder, page: 1, token: '', search: searchQuery, limit: pageSize });
+        }
+      }
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery, activeFolder, pageSize, workspace, debouncedSearch, loadEmails]);
 
+  // Handle Folder Change
   const handleFolderChange = (folderId) => {
     setActiveFolder(folderId);
     setCurrentPage(1);
-    setTokenStack(['']);
+    setPageTokens({ 1: '' });
     setSearchQuery('');
     setDebouncedSearch('');
     setIsComposing(false);
     setViewingEmail(null);
     setShowMobileFolders(false);
+    loadEmails({ folder: folderId, page: 1, token: '', search: '', limit: pageSize });
   };
 
+  // Handle Pagination Next
+  const handleNextPage = () => {
+    if (!nextPageToken && emails.length < pageSize) return;
+    const nextPage = currentPage + 1;
+    const token = pageTokens[nextPage] || nextPageToken || '';
+    setCurrentPage(nextPage);
+    loadEmails({ folder: activeFolder, page: nextPage, token, search: debouncedSearch, limit: pageSize });
+  };
+
+  // Handle Pagination Prev
+  const handlePrevPage = () => {
+    if (currentPage <= 1) return;
+    const prevPage = currentPage - 1;
+    const token = pageTokens[prevPage] || '';
+    setCurrentPage(prevPage);
+    loadEmails({ folder: activeFolder, page: prevPage, token, search: debouncedSearch, limit: pageSize });
+  };
+
+  // Handle Page Size Change
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+    setPageTokens({ 1: '' });
+    loadEmails({ folder: activeFolder, page: 1, token: '', search: debouncedSearch, limit: newSize });
+  };
+
+  // Open single email detail
   const openEmailDetail = async (email) => {
     setViewingEmail(email);
     setLoadingDetail(true);
     try {
       const res = await axios.get(`/workspaces/${workspace._id}/emails/${email._id}`);
       setViewingEmail(res.data);
-      // Update local read state
+      // Mark as read locally
       setEmails(prev => prev.map(e => e._id === email._id ? { ...e, isRead: true } : e));
     } catch (error) {
       console.error('Failed to load email details:', error);
@@ -232,7 +267,7 @@ const Email = () => {
       setIsComposing(false);
       setComposeData({ to: '', cc: '', bcc: '', subject: '', body: '' });
       showToast('Email sent successfully!', 'success');
-      fetchEmails();
+      loadEmails({ isManual: true });
     } catch (error) {
       console.error('Failed to send email', error);
       showToast('Failed to send email. Please check configuration.', 'error');
@@ -241,7 +276,7 @@ const Email = () => {
 
   const toggleStar = async (emailId, e) => {
     if (e) e.stopPropagation();
-    const email = emails.find(e => e._id === emailId) || viewingEmail;
+    const email = emails.find(item => item._id === emailId) || viewingEmail;
     const isCurrentlyStarred = email?.isStarred;
     const action = isCurrentlyStarred ? 'unstar' : 'star';
 
@@ -255,7 +290,7 @@ const Email = () => {
       await axios.put(`/workspaces/${workspace._id}/emails/${emailId}/status`, { action });
     } catch (error) {
       console.error('Failed to star/unstar email', error);
-      fetchEmails();
+      loadEmails({ isManual: true });
     }
   };
 
@@ -286,7 +321,7 @@ const Email = () => {
       showToast(`${targets.length} email(s) archived`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      fetchEmails();
+      loadEmails({ isManual: true });
     } catch (error) {
       console.error('Failed to archive emails', error);
       showToast('Failed to archive emails', 'error');
@@ -303,7 +338,7 @@ const Email = () => {
       showToast(`${targets.length} email(s) moved to trash`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      fetchEmails();
+      loadEmails({ isManual: true });
     } catch (error) {
       console.error('Failed to trash emails', error);
       showToast('Failed to move emails to trash', 'error');
@@ -355,7 +390,7 @@ const Email = () => {
   };
 
   const folders = [
-    { id: 'inbox', name: 'Inbox', icon: <Inbox size={17} />, count: emails.filter(e => !e.isRead).length },
+    { id: 'inbox', name: 'Inbox', icon: <Inbox size={17} />, count: activeFolder === 'inbox' ? emails.filter(e => !e.isRead).length : 0 },
     { id: 'starred', name: 'Starred', icon: <Star size={17} /> },
     { id: 'snoozed', name: 'Snoozed', icon: <Clock size={17} /> },
     { id: 'sent', name: 'Sent', icon: <Send size={17} /> },
@@ -785,7 +820,7 @@ const Email = () => {
 
                   {/* Refresh Button */}
                   <button 
-                    onClick={() => fetchEmails(true)}
+                    onClick={() => loadEmails({ isManual: true })}
                     className="p-1.5 hover:bg-bg-primary hover:text-text-primary rounded-lg transition-colors border border-transparent hover:border-border cursor-pointer"
                     title="Refresh emails"
                   >
@@ -843,7 +878,7 @@ const Email = () => {
                         </button>
                         <div className="border-t border-border my-1"></div>
                         <button 
-                          onClick={() => { fetchEmails(true); setShowMoreMenu(false); }}
+                          onClick={() => { loadEmails({ isManual: true }); setShowMoreMenu(false); }}
                           className="w-full text-left px-3 py-2 hover:bg-bg-secondary flex items-center gap-2 text-text-primary cursor-pointer"
                         >
                           <RotateCw size={14} /> Refresh List
@@ -875,7 +910,7 @@ const Email = () => {
                     {searchQuery && (
                       <button 
                         onClick={() => setSearchQuery('')}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary cursor-pointer"
                       >
                         <X size={13} />
                       </button>
@@ -893,11 +928,7 @@ const Email = () => {
                     {/* Page Size Selector */}
                     <select 
                       value={pageSize} 
-                      onChange={(e) => {
-                        setPageSize(Number(e.target.value));
-                        setCurrentPage(1);
-                        setTokenStack(['']);
-                      }}
+                      onChange={(e) => handlePageSizeChange(Number(e.target.value))}
                       className="bg-bg-primary border border-border rounded-lg px-2 py-1 text-xs text-text-primary focus:outline-none cursor-pointer"
                       title="Items per page"
                     >
@@ -959,7 +990,7 @@ const Email = () => {
                 ) : loading ? (
                   <div className="p-12 flex flex-col items-center justify-center text-xs text-text-secondary gap-3">
                     <RotateCw size={22} className="animate-spin text-accent-blue" />
-                    <span>Loading mailbox...</span>
+                    <span>Loading emails for {activeFolder}...</span>
                   </div>
                 ) : emails.length === 0 ? (
                   <div className="p-12 flex flex-col items-center justify-center text-text-secondary text-center">
