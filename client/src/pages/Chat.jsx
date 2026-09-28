@@ -31,7 +31,25 @@ const Chat = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dmSearchQuery, setDmSearchQuery] = useState('');
-  const [memberLastActive, setMemberLastActive] = useState({});
+  const [memberLastActive, setMemberLastActive] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`chat_dm_last_active_${user?._id}`);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    if (user?._id && Object.keys(memberLastActive).length > 0) {
+      try {
+        localStorage.setItem(`chat_dm_last_active_${user._id}`, JSON.stringify(memberLastActive));
+      } catch (e) {
+        console.error('Error saving chat_dm_last_active', e);
+      }
+    }
+  }, [memberLastActive, user?._id]);
+
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -51,7 +69,13 @@ const Chat = () => {
 
         // WhatsApp-style: update last active timestamp for direct messages
         if (isDM && senderId && senderId !== String(user._id)) {
-          setMemberLastActive(prev => ({ ...prev, [senderId]: Date.now() }));
+          setMemberLastActive(prev => {
+            const updated = { ...prev, [senderId]: Date.now() };
+            try {
+              localStorage.setItem(`chat_dm_last_active_${user?._id}`, JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
         }
 
         if (activeChannel && msg.channel && String(msg.channel) === String(activeChannel._id)) {
@@ -184,14 +208,25 @@ const Chat = () => {
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
         
-        const [detailRes, channelsRes, unreadRes] = await Promise.all([
+        const [detailRes, channelsRes, unreadRes, dmRecentRes] = await Promise.all([
           axios.get(`/workspaces/${ws._id}`).catch(e => ({ error: true, data: e })),
           axios.get(`/workspaces/${ws._id}/channels`).catch(e => ({ error: true, data: e })),
-          axios.get(`/workspaces/${ws._id}/channels/unread`).catch(e => ({ error: true, data: e }))
+          axios.get(`/workspaces/${ws._id}/channels/unread`).catch(e => ({ error: true, data: e })),
+          axios.get(`/workspaces/${ws._id}/dms/activity/recent`).catch(e => ({ error: true, data: {} }))
         ]);
         
         const fullWorkspace = (!detailRes.error && detailRes.data) ? detailRes.data : ws;
         setWorkspace(fullWorkspace);
+
+        if (dmRecentRes && !dmRecentRes.error && dmRecentRes.data && typeof dmRecentRes.data === 'object') {
+          setMemberLastActive(prev => {
+            const merged = { ...dmRecentRes.data, ...prev };
+            try {
+              localStorage.setItem(`chat_dm_last_active_${user?._id}`, JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
+        }
 
         if (fullWorkspace.members) {
           const memberMap = new Map();
@@ -313,7 +348,16 @@ const Chat = () => {
       if (activeChannel) {
         await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages`, payload);
       } else if (activeDM) {
-        setMemberLastActive(prev => ({ ...prev, [activeDM.user._id]: Date.now() }));
+        const partnerId = activeDM.user?._id;
+        if (partnerId) {
+          setMemberLastActive(prev => {
+            const updated = { ...prev, [partnerId]: Date.now() };
+            try {
+              localStorage.setItem(`chat_dm_last_active_${user?._id}`, JSON.stringify(updated));
+            } catch {}
+            return updated;
+          });
+        }
         await axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages`, payload);
       }
     } catch (error) {

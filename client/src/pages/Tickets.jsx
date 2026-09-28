@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { Plus, Ticket as TicketIcon, Search, AlertCircle, Clock, ChevronDown, User, Send, CheckCircle, Info, X } from 'lucide-react';
+import { Plus, Ticket as TicketIcon, Search, AlertCircle, Clock, ChevronDown, User, Send, CheckCircle, Info, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import Avatar from '../components/Avatar';
 
 const Tickets = () => {
   const { user } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Create ticket state
   const [formData, setFormData] = useState({
@@ -53,14 +56,21 @@ const Tickets = () => {
 
   const handleCreateTicket = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     try {
+      setIsSubmitting(true);
       const res = await axios.post('/tickets', formData);
       setTickets([res.data, ...tickets]);
       setSelectedTicket(res.data);
       setShowModal(false);
       setFormData({ title: '', description: '', priority: 'Medium', department: 'General', assignedRole: 'super_admin' });
+      showToast('Support ticket created successfully!', 'success');
     } catch (error) {
       console.error('Error creating ticket', error);
+      showToast(error.response?.data?.message || 'Failed to create ticket', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -419,8 +429,22 @@ const Tickets = () => {
                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-sm border border-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button type="submit" className="px-6 py-2.5 text-sm bg-accent-blue text-accent-text font-medium rounded-lg hover:bg-accent-indigo transition-colors shadow-sm flex items-center gap-2">
-                  <TicketIcon size={16} /> Submit Ticket
+                <button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 text-sm bg-accent-blue text-accent-text font-medium rounded-lg hover:bg-accent-indigo transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <TicketIcon size={16} /> 
+                      <span>Submit Ticket</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

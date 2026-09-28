@@ -73,6 +73,8 @@ const Team = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isSubmittingMember, setIsSubmittingMember] = useState(false);
+  const [isSubmittingTeam, setIsSubmittingTeam] = useState(false);
   const [editTeamItem, setEditTeamItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [viewMember, setViewMember] = useState(null); // New state for details modal
@@ -219,8 +221,9 @@ const Team = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!workspace) return;
+    if (!workspace || isSubmittingMember) return;
 
+    setIsSubmittingMember(true);
     try {
       if (editItem) {
         // Update role and designation
@@ -244,6 +247,8 @@ const Team = () => {
       console.error('[DEBUG FRONTEND] Error sending invitation:', error);
       console.error('[DEBUG FRONTEND] Server error message:', error.response?.data);
       showToast(error.response?.data?.message || 'Error updating member', 'error');
+    } finally {
+      setIsSubmittingMember(false);
     }
   };
 
@@ -599,15 +604,18 @@ const Team = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
+                  disabled={isSubmittingMember}
                   className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
+                  disabled={isSubmittingMember}
+                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20 flex items-center space-x-2"
                 >
-                  {editItem ? 'Save Changes' : 'Send Invite'}
+                  {isSubmittingMember && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
+                  <span>{editItem ? 'Save Changes' : 'Send Invite'}</span>
                 </button>
               </div>
             </form>
@@ -625,25 +633,30 @@ const Team = () => {
                 <h3 className="text-xl font-bold text-text-primary mb-1">{editTeamItem ? 'Edit Team' : 'Create Team'}</h3>
                 <p className="text-xs text-text-secondary">Organize members into functional groups.</p>
               </div>
-              <button onClick={() => setIsTeamModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
+              <button onClick={() => setIsTeamModalOpen(false)} disabled={isSubmittingTeam} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
                 <X size={18} />
               </button>
             </div>
             <div className="p-6">
             
-             <form onSubmit={async (e) => {
+              <form onSubmit={async (e) => {
               e.preventDefault();
+              if (isSubmittingTeam) return;
+              const teamNameVal = e.target.teamName.value.trim();
+              if (!teamNameVal) return;
+
+              setIsSubmittingTeam(true);
               try {
                  if (editTeamItem) {
                    await axios.put(`/workspaces/${workspace._id}/teams/${editTeamItem._id}`, {
-                      name: e.target.teamName.value,
+                      name: teamNameVal,
                       leader: e.target.teamLeader.value || null,
                       members: selectedTeamMembers
                    });
                    showToast('Team updated successfully!', 'success');
                  } else {
                    await axios.post(`/workspaces/${workspace._id}/teams`, {
-                      name: e.target.teamName.value,
+                      name: teamNameVal,
                       leader: e.target.teamLeader.value || null,
                       members: selectedTeamMembers
                    });
@@ -654,28 +667,20 @@ const Team = () => {
               } catch(err) {
                  console.error(err);
                  showToast(err.response?.data?.message || 'Error saving team', 'error');
+              } finally {
+                 setIsSubmittingTeam(false);
               }
             }} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Team Name</label>
-                <select 
+                <input 
+                  type="text"
                   name="teamName"
                   defaultValue={editTeamItem ? editTeamItem.name : ''}
-                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue appearance-none"
+                  placeholder="Enter team name (e.g. Tech, Marketing, Design, Sales...)"
+                  className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue placeholder:text-text-secondary/50 transition-colors"
                   required
-                >
-                  <option value="" disabled>-- Select a Team Name --</option>
-                  <option value="UI/UX Design">UI/UX Design</option>
-                  <option value="Technical">Technical</option>
-                  <option value="BDM">BDM</option>
-                  <option value="Digital Marketing">Digital Marketing</option>
-                  <option value="Media">Media</option>
-                  <option value="HR">HR</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Sales">Sales</option>
-                  <option value="Support">Support</option>
-                  <option value="Management">Management</option>
-                </select>
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Select Team Leader</label>
@@ -719,15 +724,18 @@ const Team = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsTeamModalOpen(false)}
+                  disabled={isSubmittingTeam}
                   className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
+                  disabled={isSubmittingTeam}
+                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20 flex items-center space-x-2"
                 >
-                  {editTeamItem ? 'Save Changes' : 'Create Team'}
+                  {isSubmittingTeam && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
+                  <span>{editTeamItem ? 'Save Changes' : 'Create Team'}</span>
                 </button>
               </div>
             </form>

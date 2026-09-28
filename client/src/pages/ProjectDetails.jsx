@@ -16,12 +16,12 @@ const idFromSlug = (slug = '') => {
 const getValidStages = (project) => {
   const types = project?.projectType || ['Software'];
   const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-  let validStages = [];
-  if (hasSoftware) validStages.push('Proposal', 'UI/UX', 'Tech', 'Test', 'DevOps');
-  if (types.includes('Digital Marketing')) validStages.push('Proposal', 'Digital Marketing');
-  if (types.includes('SEO')) validStages.push('Proposal', 'SEO');
-  validStages.push('Completed');
-  return validStages;
+  const stages = ['Proposal'];
+  if (hasSoftware) stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
+  if (types.includes('Digital Marketing')) stages.push('Digital Marketing');
+  if (types.includes('SEO')) stages.push('SEO');
+  stages.push('Completed');
+  return [...new Set(stages)];
 };
 
 

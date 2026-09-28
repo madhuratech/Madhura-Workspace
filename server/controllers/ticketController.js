@@ -72,10 +72,6 @@ const getTicket = async (req, res) => {
 // @access  Private
 const createTicket = async (req, res) => {
   try {
-    if (req.user.role === 'super_admin') {
-      return res.status(403).json({ message: 'Super admins cannot create support tickets.' });
-    }
-
     const { title, description, priority, department, workspace, assignedRole } = req.body;
     
     if (!title || !description) {

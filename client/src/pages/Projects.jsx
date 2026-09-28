@@ -20,6 +20,7 @@ const Projects = () => {
   const [workspaceId, setWorkspaceId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [formData, setFormData] = useState({ 
     title: '', 
@@ -57,7 +58,10 @@ const Projects = () => {
 
         if (user?.role !== 'employee') {
           setWorkspaceMembers((membersRes?.data || []).filter(m => m.user));
-          setTeams(teamsRes?.data || []);
+          const uniqueTeams = (teamsRes?.data || []).filter((t, idx, self) =>
+            idx === self.findIndex(o => (o.name || '').trim().toLowerCase() === (t.name || '').trim().toLowerCase())
+          );
+          setTeams(uniqueTeams);
         }
       }
     } catch (error) {
@@ -107,8 +111,9 @@ const Projects = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!workspaceId) return;
+    if (!workspaceId || isSubmitting) return;
 
+    setIsSubmitting(true);
     let participantsIds = [];
     if (formData.participantType === 'all') {
       participantsIds = workspaceMembers.filter(m => m.role !== 'super_admin').map(m => m.user._id);
@@ -156,6 +161,8 @@ const Projects = () => {
     } catch (error) {
       console.error(error);
       showToast(error.response?.data?.message || 'Error saving project', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -501,13 +508,13 @@ const Projects = () => {
                     const hasSoftware = formData.projectType.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
                     const stages = [];
                     if (hasSoftware) {
-                      stages.push({ key: 'uiux', label: 'UI/UX' });
-                      stages.push({ key: 'tech', label: 'Tech' });
-                      stages.push({ key: 'test', label: 'Test' });
-                      stages.push({ key: 'devops', label: 'DevOps' });
+                      stages.push({ key: 'uiux', label: 'Team 1 (UI/UX)' });
+                      stages.push({ key: 'tech', label: 'Team 2 (Tech)' });
+                      stages.push({ key: 'test', label: 'Team 3 (Test)' });
+                      stages.push({ key: 'devops', label: 'Team 4 (DevOps)' });
                     }
-                    if (formData.projectType.includes('Digital Marketing')) stages.push({ key: 'digitalMarketing', label: 'Digital Marketing' });
-                    if (formData.projectType.includes('SEO')) stages.push({ key: 'seo', label: 'SEO' });
+                    if (formData.projectType.includes('Digital Marketing')) stages.push({ key: 'digitalMarketing', label: 'Team (Digital Marketing)' });
+                    if (formData.projectType.includes('SEO')) stages.push({ key: 'seo', label: 'Team (SEO)' });
 
                     if (stages.length === 0) return null;
 
@@ -546,15 +553,18 @@ const Projects = () => {
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
+                  disabled={isSubmitting}
                   className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20"
+                  disabled={isSubmitting}
+                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20 flex items-center space-x-2"
                 >
-                  {editItem ? 'Save Changes' : 'Create Project'}
+                  {isSubmitting && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
+                  <span>{editItem ? 'Save Changes' : 'Create Project'}</span>
                 </button>
               </div>
             </form>

@@ -212,3 +212,59 @@ exports.deleteDMMessage = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Get recent DM activity timestamps for sorting
+// @route   GET /api/workspaces/:workspaceId/dms/activity/recent
+// @access  Private
+exports.getRecentDMActivity = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    const currentUserId = req.user._id || req.user.id;
+
+    // Find all DMs in this workspace where the user is a participant
+    const dms = await DM.find({
+      workspace: workspaceId,
+      participants: currentUserId
+    }).lean();
+
+    if (!dms || dms.length === 0) {
+      return res.status(200).json({});
+    }
+
+    const dmMap = new Map(); // dmId string -> otherUserId string
+    const dmIds = [];
+
+    dms.forEach(d => {
+      dmIds.push(d._id);
+      const otherParticipant = d.participants.find(p => String(p) !== String(currentUserId));
+      if (otherParticipant) {
+        dmMap.set(String(d._id), String(otherParticipant));
+      }
+    });
+
+    const recentMsgs = await DMMessage.aggregate([
+      { $match: { dm: { $in: dmIds }, isDeleted: { $ne: true } } },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$dm',
+          lastActive: { $first: '$createdAt' }
+        }
+      }
+    ]);
+
+    const activityMap = {};
+    recentMsgs.forEach(item => {
+      const otherUserId = dmMap.get(String(item._id));
+      if (otherUserId && item.lastActive) {
+        activityMap[otherUserId] = new Date(item.lastActive).getTime();
+      }
+    });
+
+    res.status(200).json(activityMap);
+  } catch (error) {
+    console.error('Error fetching recent DM activity:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+

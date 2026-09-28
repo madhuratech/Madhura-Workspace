@@ -7,11 +7,13 @@ const {
   sendDMMessage,
   markDMMessagesRead,
   updateDMMessage,
-  deleteDMMessage
+  deleteDMMessage,
+  getRecentDMActivity
 } = require('../controllers/dmController');
 
 router.use(protect);
 
+router.get('/activity/recent', getRecentDMActivity);
 router.get('/:otherUserId', getOrCreateDM);
 router.route('/:dmId/messages')
   .get(getDMMessages)
