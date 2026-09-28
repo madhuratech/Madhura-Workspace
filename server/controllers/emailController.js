@@ -111,39 +111,36 @@ exports.getEmails = async (req, res) => {
         listParams.pageToken = pageToken.trim();
       }
 
-      // Fetch exact label metadata if not searching
+      // Concurrently fetch label metadata & message list for maximum speed
+      const listPromise = gmail.users.messages.list(listParams);
+      const labelPromise = (!search.trim() && targetLabelId) 
+        ? gmail.users.labels.get({ userId: 'me', id: targetLabelId }).catch(() => null)
+        : Promise.resolve(null);
+      const inboxUnreadPromise = (!search.trim() && folder !== 'inbox')
+        ? gmail.users.labels.get({ userId: 'me', id: 'INBOX' }).catch(() => null)
+        : Promise.resolve(null);
+
+      const [response, labelRes, inboxRes] = await Promise.all([
+        listPromise,
+        labelPromise,
+        inboxUnreadPromise
+      ]);
+
       let exactTotal = null;
       let unreadCount = 0;
-      if (!search.trim() && targetLabelId) {
-        try {
-          const labelRes = await gmail.users.labels.get({
-            userId: 'me',
-            id: targetLabelId
-          });
-          if (labelRes.data) {
-            if (typeof labelRes.data.messagesTotal === 'number') {
-              exactTotal = labelRes.data.messagesTotal;
-            }
-            if (typeof labelRes.data.messagesUnread === 'number') {
-              unreadCount = labelRes.data.messagesUnread;
-            }
-          }
-        } catch (labelErr) {
-          console.error('Label fetch error:', labelErr.message);
+
+      if (labelRes && labelRes.data) {
+        if (typeof labelRes.data.messagesTotal === 'number') {
+          exactTotal = labelRes.data.messagesTotal;
+        }
+        if (typeof labelRes.data.messagesUnread === 'number') {
+          unreadCount = labelRes.data.messagesUnread;
         }
       }
 
-      // Also fetch INBOX unread count for badge if not on inbox
-      if (folder !== 'inbox' && !search.trim()) {
-        try {
-          const inboxRes = await gmail.users.labels.get({ userId: 'me', id: 'INBOX' });
-          if (inboxRes.data && typeof inboxRes.data.messagesUnread === 'number') {
-            unreadCount = inboxRes.data.messagesUnread;
-          }
-        } catch (e) {}
+      if (unreadCount === 0 && inboxRes && inboxRes.data && typeof inboxRes.data.messagesUnread === 'number') {
+        unreadCount = inboxRes.data.messagesUnread;
       }
-
-      const response = await gmail.users.messages.list(listParams);
 
       if (!response.data.messages || response.data.messages.length === 0) {
         return res.status(200).json({

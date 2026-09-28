@@ -27,6 +27,10 @@ const Email = () => {
   
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0);
   
+  // Cache & Request tracking for instant loading and race-condition prevention
+  const folderCacheRef = useRef({});
+  const activeRequestIdRef = useRef(0);
+
   // Collapsible sidebar
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
 
@@ -99,13 +103,16 @@ const Email = () => {
     }
   };
 
-  // Main Email Fetcher
+  // Main Email Fetcher with Request Sequence & Cache
   const fetchFolderEmails = async (ws, folder = activeFolder, page = 1, token = '', search = debouncedSearch, isManual = false) => {
     const currentWs = ws || workspace;
     if (!currentWs) return;
 
+    const requestId = ++activeRequestIdRef.current;
+
     if (isManual) setRefreshing(true);
-    else setLoading(true);
+    else if (!folderCacheRef.current[folder] || page > 1 || search) setLoading(true);
+    
     setAuthRequired(false);
 
     try {
@@ -119,6 +126,11 @@ const Email = () => {
           skip
         }
       });
+
+      // Discard stale responses from previously clicked folders
+      if (requestId !== activeRequestIdRef.current) {
+        return;
+      }
 
       let rawEmails = [];
       let nextTok = null;
@@ -148,15 +160,29 @@ const Email = () => {
       } else {
         delete tokenMapRef.current[page + 1];
       }
+
+      // Cache page 1 for instant navigation
+      if (page === 1 && !search) {
+        folderCacheRef.current[folder] = {
+          emails: rawEmails,
+          totalCount: totalEst,
+          nextPageToken: nextTok
+        };
+      }
+
       setSelectedEmails([]);
     } catch (error) {
-      if (error.response?.status === 401 && error.response?.data?.authRequired) {
-        setAuthRequired(true);
+      if (requestId === activeRequestIdRef.current) {
+        if (error.response?.status === 401 && error.response?.data?.authRequired) {
+          setAuthRequired(true);
+        }
+        console.error('Error fetching emails:', error);
       }
-      console.error('Error fetching emails:', error);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (requestId === activeRequestIdRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   };
 
@@ -176,7 +202,7 @@ const Email = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Folder Selection
+  // Folder Selection with Instant Cache
   const handleSelectFolder = (folderId) => {
     setActiveFolder(folderId);
     setCurrentPage(1);
@@ -185,6 +211,22 @@ const Email = () => {
     setSearchQuery('');
     setDebouncedSearch('');
     setViewingEmail(null);
+
+    // If cached, display immediately for 0ms delay!
+    const cached = folderCacheRef.current[folderId];
+    if (cached) {
+      setEmails(cached.emails);
+      setTotalCount(cached.totalCount);
+      setNextPageToken(cached.nextPageToken);
+      if (cached.nextPageToken) {
+        tokenMapRef.current[2] = cached.nextPageToken;
+      }
+    } else {
+      setEmails([]);
+      setTotalCount(0);
+    }
+
+    // Revalidate with fresh data in background
     fetchFolderEmails(workspace, folderId, 1, '', '');
   };
 
