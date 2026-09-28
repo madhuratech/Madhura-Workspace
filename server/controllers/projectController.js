@@ -66,9 +66,9 @@ const getProject = async (req, res) => {
         return res.status(400).json({ message: 'Please add a project title' });
       }
 
-      // Only super_admin, hr, and Project Coordinators can create projects
-      if (!['super_admin', 'hr'].includes(req.user.role) && !(req.user.designation || '').toLowerCase().includes('coordinator')) {
-        return res.status(401).json({ message: 'Not authorized. Only MD, HR, and Project Coordinators can create projects.' });
+      // Only super_admin and hr can create projects
+      if (!['super_admin', 'hr'].includes(req.user.role)) {
+        return res.status(403).json({ message: 'Not authorized. Only MD and HR can create projects.' });
       }
 
       // Determine initial stage based on project type
@@ -229,13 +229,28 @@ const advanceStage = async (req, res) => {
        return res.status(401).json({ message: 'Not authorized to advance project stage.' });
     }
 
-    const hasSoftware = project.projectType.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
     let stages = ['Proposal'];
-    if (hasSoftware) {
-      stages.push('Team 1', 'Team 2', 'Team 3', 'Team 4');
+    const keys = [
+      { key: 'uiux', label: 'Team 1' },
+      { key: 'tech', label: 'Team 2' },
+      { key: 'test', label: 'Team 3' },
+      { key: 'devops', label: 'Team 4' },
+      { key: 'digitalMarketing', label: 'Team 5' },
+      { key: 'seo', label: 'Team 6' },
+    ];
+    
+    if (project.workflowTeams) {
+      let teamCounter = 1;
+      keys.forEach(({ key }) => {
+        if (project.workflowTeams[key]) {
+          stages.push(`Team ${teamCounter}`);
+          teamCounter++;
+        }
+      });
     }
-    if (project.projectType.includes('Digital Marketing')) stages.push('Team 5');
-    if (project.projectType.includes('SEO')) stages.push('Team 6');
+    if (stages.length === 1) {
+      stages.push('Team 1');
+    }
     stages.push('Completed');
     stages = [...new Set(stages)];
 
@@ -315,15 +330,38 @@ const advanceStage = async (req, res) => {
           `/projects`
         );
       });
-    } else if (nextStage === 'Completed' && populated.coordinator) {
-      sendNotification(
-        req, 
-        populated.coordinator._id, 
-        'success', 
-        'Project Completed', 
-        `The project ${project.title} has reached the final stage!`, 
-        `/projects`
-      );
+    } else if (nextStage === 'Completed') {
+      if (populated.coordinator) {
+        sendNotification(
+          req, 
+          populated.coordinator._id, 
+          'success', 
+          'Project Completed', 
+          `The project ${project.title} has reached the final stage!`, 
+          `/projects`
+        );
+      }
+      
+      // Notify Managing Director (super_admin) and HR
+      try {
+        const ws = await Workspace.findById(req.params.workspaceId).populate('members.user');
+        if (ws && ws.members) {
+          ws.members.forEach(m => {
+            if (m.user && ['super_admin', 'hr'].includes(m.role)) {
+              sendNotification(
+                req,
+                m.user._id,
+                'success',
+                'Project Completed',
+                `Project "${project.title}" has been successfully completed by the final team!`,
+                `/projects`
+              );
+            }
+          });
+        }
+      } catch (notifErr) {
+        console.error('Error notifying MD/HR of project completion:', notifErr);
+      }
     }
 
     await logActivity({

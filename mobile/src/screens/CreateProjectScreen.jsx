@@ -4,7 +4,7 @@ import {
   ActivityIndicator, ScrollView, Platform, Modal, FlatList
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronDown, Check } from 'lucide-react-native';
+import { ChevronLeft, ChevronDown, Check, Plus, Trash2 } from 'lucide-react-native';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import { AuthContext } from '../context/AuthContext';
@@ -19,6 +19,7 @@ export default function CreateProjectScreen({ navigation }) {
   const [description, setDescription] = useState('');
   const [projectTypes, setProjectTypes] = useState(['Software']);
   const [coordinator, setCoordinator] = useState(user?._id);
+  const [pipelineStagesCount, setPipelineStagesCount] = useState(1);
   const [workflowTeams, setWorkflowTeams] = useState({
     uiux: null, tech: null, test: null, devops: null,
     digitalMarketing: null, seo: null
@@ -33,8 +34,14 @@ export default function CreateProjectScreen({ navigation }) {
   const [teamModal, setTeamModal] = useState({ visible: false, stageKey: null });
 
   useEffect(() => {
+    // Only super_admin and hr can create projects
+    if (user && !['super_admin', 'hr'].includes(user.role)) {
+      Toast.show({ type: 'error', text1: 'Unauthorized', text2: 'Only MD and HR can create projects.' });
+      navigation.goBack();
+      return;
+    }
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     try {
@@ -62,21 +69,15 @@ export default function CreateProjectScreen({ navigation }) {
     }
   };
 
-  const hasSoftware = projectTypes.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-  const hasDM = projectTypes.includes('Digital Marketing');
-  const hasSEO = projectTypes.includes('SEO');
-
-  const requiredStages = [];
-  if (hasSoftware) {
-    requiredStages.push(
-      { key: 'uiux', label: 'Team 1' },
-      { key: 'tech', label: 'Team 2' },
-      { key: 'test', label: 'Team 3' },
-      { key: 'devops', label: 'Team 4' }
-    );
-  }
-  if (hasDM) requiredStages.push({ key: 'digitalMarketing', label: 'Team 5' });
-  if (hasSEO) requiredStages.push({ key: 'seo', label: 'Team 6' });
+  const ALL_STAGES = [
+    { key: 'uiux', label: 'Team 1' },
+    { key: 'tech', label: 'Team 2' },
+    { key: 'test', label: 'Team 3' },
+    { key: 'devops', label: 'Team 4' },
+    { key: 'digitalMarketing', label: 'Team 5' },
+    { key: 'seo', label: 'Team 6' }
+  ];
+  const requiredStages = ALL_STAGES.slice(0, pipelineStagesCount);
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -92,6 +93,14 @@ export default function CreateProjectScreen({ navigation }) {
       }
     }
 
+    const stageKeys = ['uiux', 'tech', 'test', 'devops', 'digitalMarketing', 'seo'];
+    const wfPayload = {};
+    stageKeys.forEach((k, idx) => {
+      if (idx < pipelineStagesCount && workflowTeams[k]) {
+        wfPayload[k] = workflowTeams[k];
+      }
+    });
+
     setLoading(true);
     try {
       const ws = await cachedGet('/workspaces');
@@ -104,8 +113,8 @@ export default function CreateProjectScreen({ navigation }) {
           description,
           projectType: projectTypes,
           coordinator: coordinator,
-          workflowTeams: workflowTeams,
-          members: [user?._id] // Creator added, others usually added through teams automatically on backend if needed, or web just uses teams
+          workflowTeams: wfPayload,
+          members: [user?._id]
         });
         Toast.show({ type: 'success', text1: 'Success', text2: 'Project created successfully' });
         navigation.goBack();
@@ -133,7 +142,7 @@ export default function CreateProjectScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <ChevronLeft color="#111827" size={24} />
@@ -198,15 +207,40 @@ export default function CreateProjectScreen({ navigation }) {
             <ChevronDown color="#64748B" size={20} />
           </TouchableOpacity>
 
-          <Text style={[styles.label, { marginTop: 24 }]}>PIPELINE SETUP (REQUIRED)</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 10 }}>
+            <Text style={[styles.label, { marginBottom: 0 }]}>PIPELINE STAGES ({pipelineStagesCount} {pipelineStagesCount === 1 ? 'TEAM' : 'TEAMS'})</Text>
+            {pipelineStagesCount < 6 && (
+              <TouchableOpacity 
+                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4, paddingHorizontal: 8, backgroundColor: '#EEF2FF', borderRadius: 6 }}
+                onPress={() => setPipelineStagesCount(prev => Math.min(prev + 1, 6))}
+              >
+                <Plus size={14} color={PRIMARY} style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: PRIMARY }}>Add Team {pipelineStagesCount + 1}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
           <View style={styles.pipelineGrid}>
             {requiredStages.map((stage, idx) => (
               <View key={stage.key} style={styles.pipelineCard}>
-                <View style={styles.pipelineHeader}>
-                  <View style={styles.pipelineNumber}>
-                    <Text style={styles.pipelineNumberText}>{idx + 1}</Text>
+                <View style={[styles.pipelineHeader, { justifyContent: 'space-between' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={styles.pipelineNumber}>
+                      <Text style={styles.pipelineNumberText}>{idx + 1}</Text>
+                    </View>
+                    <Text style={styles.pipelineStageName}>{stage.label}</Text>
                   </View>
-                  <Text style={styles.pipelineStageName}>{stage.label}</Text>
+                  {idx > 0 && idx === requiredStages.length - 1 && (
+                    <TouchableOpacity 
+                      onPress={() => {
+                        setWorkflowTeams(prev => ({ ...prev, [stage.key]: null }));
+                        setPipelineStagesCount(prev => Math.max(prev - 1, 1));
+                      }}
+                      style={{ padding: 2 }}
+                    >
+                      <Trash2 size={14} color="#EF4444" />
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <TouchableOpacity 
                   style={styles.dropdownBtnSmall}

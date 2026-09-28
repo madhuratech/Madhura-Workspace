@@ -34,6 +34,7 @@ const Projects = () => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('All');
+  const [pipelineStagesCount, setPipelineStagesCount] = useState(1);
 
   useEffect(() => {
     fetchData();
@@ -74,6 +75,9 @@ const Projects = () => {
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditItem(item);
+      const stageKeys = ['uiux', 'tech', 'test', 'devops', 'digitalMarketing', 'seo'];
+      const existingCount = stageKeys.filter(k => item.workflowTeams?.[k]).length || 1;
+      setPipelineStagesCount(existingCount);
       setFormData({ 
         title: item.title, 
         description: item.description || '', 
@@ -94,6 +98,7 @@ const Projects = () => {
       });
     } else {
       setEditItem(null);
+      setPipelineStagesCount(1);
       setFormData({ 
         title: '', 
         description: '', 
@@ -132,20 +137,21 @@ const Projects = () => {
       participantsIds.push(user._id);
     }
 
+    const stageKeys = ['uiux', 'tech', 'test', 'devops', 'digitalMarketing', 'seo'];
+    const wfPayload = {};
+    stageKeys.forEach((k, idx) => {
+      if (idx < pipelineStagesCount && formData.workflowTeams[k]) {
+        wfPayload[k] = formData.workflowTeams[k];
+      }
+    });
+
     const payload = {
       title: formData.title,
       description: formData.description,
       projectType: formData.projectType,
       members: participantsIds,
       coordinator: formData.coordinator || undefined,
-      workflowTeams: {
-        uiux: formData.workflowTeams.uiux || undefined,
-        tech: formData.workflowTeams.tech || undefined,
-        test: formData.workflowTeams.test || undefined,
-        devops: formData.workflowTeams.devops || undefined,
-        digitalMarketing: formData.workflowTeams.digitalMarketing || undefined,
-        seo: formData.workflowTeams.seo || undefined
-      }
+      workflowTeams: wfPayload
     };
 
     try {
@@ -505,30 +511,59 @@ const Projects = () => {
                   </div>
 
                   {(() => {
-                    const hasSoftware = formData.projectType.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-                    const stages = [];
-                    if (hasSoftware) {
-                      stages.push({ key: 'uiux', label: 'Team 1' });
-                      stages.push({ key: 'tech', label: 'Team 2' });
-                      stages.push({ key: 'test', label: 'Team 3' });
-                      stages.push({ key: 'devops', label: 'Team 4' });
-                    }
-                    if (formData.projectType.includes('Digital Marketing')) stages.push({ key: 'digitalMarketing', label: 'Team 5' });
-                    if (formData.projectType.includes('SEO')) stages.push({ key: 'seo', label: 'Team 6' });
-
-                    if (stages.length === 0) return null;
+                    const allPossibleStages = [
+                      { key: 'uiux', label: 'Team 1' },
+                      { key: 'tech', label: 'Team 2' },
+                      { key: 'test', label: 'Team 3' },
+                      { key: 'devops', label: 'Team 4' },
+                      { key: 'digitalMarketing', label: 'Team 5' },
+                      { key: 'seo', label: 'Team 6' },
+                    ];
+                    const currentStages = allPossibleStages.slice(0, pipelineStagesCount);
 
                     return (
                       <div className="mt-4">
-                        <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wide">Pipeline Setup (Required)</label>
+                        <div className="flex items-center justify-between mb-3">
+                          <label className="block text-xs font-bold text-text-secondary uppercase tracking-wide">
+                            Pipeline Stages ({pipelineStagesCount} {pipelineStagesCount === 1 ? 'Team' : 'Teams'})
+                          </label>
+                          {pipelineStagesCount < 6 && (
+                            <button
+                              type="button"
+                              onClick={() => setPipelineStagesCount(prev => Math.min(prev + 1, 6))}
+                              className="text-xs font-bold text-accent-blue hover:text-accent-indigo flex items-center space-x-1 cursor-pointer"
+                            >
+                              <Plus size={14} />
+                              <span>Add Stage (Team {pipelineStagesCount + 1})</span>
+                            </button>
+                          )}
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2 w-full">
-                          {stages.map((stage, idx, arr) => (
+                          {currentStages.map((stage, idx) => (
                             <div key={stage.key} className="bg-bg-secondary p-3.5 rounded-2xl border border-border shadow-sm relative group hover:border-accent-blue/50 transition-colors">
-                              <div className="flex items-center space-x-2.5 mb-3">
-                                <div className="w-5 h-5 rounded-full bg-accent-blue text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
-                                  {idx + 1}
+                              <div className="flex items-center justify-between space-x-2.5 mb-3">
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-5 h-5 rounded-full bg-accent-blue text-white flex items-center justify-center text-[10px] font-bold shadow-sm">
+                                    {idx + 1}
+                                  </div>
+                                  <label className="text-xs font-bold text-text-primary uppercase tracking-wide">{stage.label}</label>
                                 </div>
-                                <label className="text-xs font-bold text-text-primary uppercase tracking-wide">{stage.label}</label>
+                                {idx > 0 && idx === currentStages.length - 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        workflowTeams: { ...prev.workflowTeams, [stage.key]: '' }
+                                      }));
+                                      setPipelineStagesCount(prev => Math.max(prev - 1, 1));
+                                    }}
+                                    className="text-text-secondary hover:text-danger p-1 rounded transition-colors cursor-pointer"
+                                    title="Remove this stage"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                )}
                               </div>
                               <select 
                                 value={formData.workflowTeams[stage.key]} 

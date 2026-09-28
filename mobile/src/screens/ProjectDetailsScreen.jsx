@@ -27,14 +27,33 @@ const PRIORITY_CONFIG = {
 };
 
 const getValidStages = (project) => {
-  const types = project?.projectType || ['Software'];
-  const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-  let validStages = ['Proposal'];
-  if (hasSoftware) validStages.push('Team 1', 'Team 2', 'Team 3', 'Team 4');
-  if (types.includes('Digital Marketing')) validStages.push('Team 5');
-  if (types.includes('SEO')) validStages.push('Team 6');
-  validStages.push('Completed');
-  return [...new Set(validStages)];
+  const stages = ['Proposal'];
+  const keys = [
+    { key: 'uiux', label: 'Team 1' },
+    { key: 'tech', label: 'Team 2' },
+    { key: 'test', label: 'Team 3' },
+    { key: 'devops', label: 'Team 4' },
+    { key: 'digitalMarketing', label: 'Team 5' },
+    { key: 'seo', label: 'Team 6' },
+  ];
+  
+  if (project?.workflowTeams) {
+    let teamCounter = 1;
+    keys.forEach(({ key }) => {
+      const teamVal = project.workflowTeams[key];
+      if (teamVal && (teamVal._id || typeof teamVal === 'string')) {
+        stages.push(`Team ${teamCounter}`);
+        teamCounter++;
+      }
+    });
+  }
+  
+  if (stages.length === 1) {
+    stages.push('Team 1');
+  }
+  
+  stages.push('Completed');
+  return [...new Set(stages)];
 };
 
 export default function ProjectDetailsScreen({ route, navigation }) {
@@ -117,15 +136,29 @@ export default function ProjectDetailsScreen({ route, navigation }) {
     let currentStage = project.stage;
     if (!validStages.includes(currentStage)) currentStage = validStages[0];
 
-    const stageToKey = {
-      'Team 1': 'uiux', 'Team 2': 'tech', 'Team 3': 'test', 'Team 4': 'devops',
-      'Team 5': 'digitalMarketing', 'Team 6': 'seo',
-      'UI/UX': 'uiux', 'Tech': 'tech', 'Test': 'test', 'DevOps': 'devops',
-      'Digital Marketing': 'digitalMarketing', 'SEO': 'seo'
-    };
-    const stageKey = stageToKey[currentStage];
-    if (!stageKey) return null;
-    return project.workflowTeams[stageKey]?._id || project.workflowTeams[stageKey];
+    const stageIndex = validStages.indexOf(currentStage);
+    if (stageIndex <= 0 || currentStage === 'Completed') return null;
+
+    const keys = ['uiux', 'tech', 'test', 'devops', 'digitalMarketing', 'seo'];
+    const assignedKeys = keys.filter(k => {
+      const val = project.workflowTeams[k];
+      return val && (val._id || typeof val === 'string');
+    });
+
+    const targetKey = assignedKeys[stageIndex - 1];
+    if (!targetKey) return null;
+    return project.workflowTeams[targetKey]?._id || project.workflowTeams[targetKey];
+  };
+
+  const isUserInActiveTeam = () => {
+    if (!project || !workspaceTeams.length) return false;
+    const activeTeamId = getActiveTeamId();
+    if (!activeTeamId) return false;
+    const team = workspaceTeams.find(t => String(t._id) === String(activeTeamId));
+    if (!team) return false;
+    if (String(team.leader?._id || team.leader) === String(user?._id)) return true;
+    if (team.members && team.members.some(m => String(m._id || m) === String(user?._id))) return true;
+    return false;
   };
 
   const isUserActiveTL = () => {
@@ -135,18 +168,6 @@ export default function ProjectDetailsScreen({ route, navigation }) {
     const team = workspaceTeams.find(t => String(t._id) === String(activeTeamId));
     if (!team) return false;
     return String(team.leader?._id || team.leader) === String(user?._id);
-  };
-
-  const isUserAnyTL = () => {
-    if (!project || !workspaceTeams.length) return false;
-    for (const key in project.workflowTeams) {
-      const teamId = project.workflowTeams[key]?._id || project.workflowTeams[key];
-      if (teamId) {
-        const team = workspaceTeams.find(t => String(t._id) === String(teamId));
-        if (team && String(team.leader?._id || team.leader) === String(user?._id)) return true;
-      }
-    }
-    return false;
   };
 
   // --- Handoff Logic ---
@@ -306,7 +327,7 @@ export default function ProjectDetailsScreen({ route, navigation }) {
     );
   };
 
-  const hasAccessToActions = isUserAnyTL() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role);
+  const hasAccessToActions = isUserActiveTL() || isUserInActiveTeam() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role);
   const canAdvanceStage = isUserActiveTL() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role);
 
   return (

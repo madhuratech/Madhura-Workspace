@@ -14,12 +14,31 @@ const idFromSlug = (slug = '') => {
 
 // Valid stages logic
 const getValidStages = (project) => {
-  const types = project?.projectType || ['Software'];
-  const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
   const stages = ['Proposal'];
-  if (hasSoftware) stages.push('Team 1', 'Team 2', 'Team 3', 'Team 4');
-  if (types.includes('Digital Marketing')) stages.push('Team 5');
-  if (types.includes('SEO')) stages.push('Team 6');
+  const keys = [
+    { key: 'uiux', label: 'Team 1' },
+    { key: 'tech', label: 'Team 2' },
+    { key: 'test', label: 'Team 3' },
+    { key: 'devops', label: 'Team 4' },
+    { key: 'digitalMarketing', label: 'Team 5' },
+    { key: 'seo', label: 'Team 6' },
+  ];
+  
+  if (project?.workflowTeams) {
+    let teamCounter = 1;
+    keys.forEach(({ key }) => {
+      const teamVal = project.workflowTeams[key];
+      if (teamVal && (teamVal._id || typeof teamVal === 'string')) {
+        stages.push(`Team ${teamCounter}`);
+        teamCounter++;
+      }
+    });
+  }
+  
+  if (stages.length === 1) {
+    stages.push('Team 1');
+  }
+  
   stages.push('Completed');
   return [...new Set(stages)];
 };
@@ -127,34 +146,24 @@ const ProjectDetails = () => {
   const getActiveTeamId = () => {
     if (!project || !project.workflowTeams) return null;
     
-    // Compute current valid stages
     const validStages = getValidStages(project);
-    
-    // If the database stage isn't valid for this project type, assume the first valid stage.
     let currentStage = project.stage;
     if (!validStages.includes(currentStage)) {
        currentStage = validStages[0];
     }
 
-    const stageToKey = {
-      'Team 1': 'uiux',
-      'Team 2': 'tech',
-      'Team 3': 'test',
-      'Team 4': 'devops',
-      'Team 5': 'digitalMarketing',
-      'Team 6': 'seo',
-      'UI/UX': 'uiux',
-      'Tech': 'tech',
-      'Test': 'test',
-      'DevOps': 'devops',
-      'Digital Marketing': 'digitalMarketing',
-      'SEO': 'seo'
-    };
-    
-    const stageKey = stageToKey[currentStage];
-    if (!stageKey) return null;
-    
-    return project.workflowTeams[stageKey]?._id || project.workflowTeams[stageKey];
+    const stageIndex = validStages.indexOf(currentStage);
+    if (stageIndex <= 0 || currentStage === 'Completed') return null;
+
+    const keys = ['uiux', 'tech', 'test', 'devops', 'digitalMarketing', 'seo'];
+    const assignedKeys = keys.filter(k => {
+      const val = project.workflowTeams[k];
+      return val && (val._id || typeof val === 'string');
+    });
+
+    const targetKey = assignedKeys[stageIndex - 1];
+    if (!targetKey) return null;
+    return project.workflowTeams[targetKey]?._id || project.workflowTeams[targetKey];
   };
 
   const isUserInActiveTeam = () => {
@@ -280,7 +289,7 @@ const ProjectDetails = () => {
         <div className="flex flex-wrap items-center gap-3">
           {project?.stage !== 'Completed' && (
             <>
-              {(isUserAnyTL() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role)) && (
+              {(isUserActiveTL() || isUserInActiveTeam() || String(project?.coordinator?._id || project?.coordinator) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role)) && (
                 <button
                   onClick={() => setIsRollbackModalOpen(true)}
                   className="bg-bg-primary border border-danger/50 text-danger shadow-sm px-4 py-2 rounded-lg hover:bg-danger hover:text-white transition-all text-sm font-medium flex items-center space-x-2"

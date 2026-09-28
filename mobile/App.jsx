@@ -240,7 +240,7 @@ const AnimatedSplashScreen = ({ onFinish }) => {
   }, []);
 
   return (
-    <Animated.View style={[splashStyles.container, { opacity: containerOpacity }]}>
+    <Animated.View style={[splashStyles.container, { opacity: containerOpacity }]} pointerEvents="none">
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <Animated.View style={[splashStyles.logoContainer, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
         <Image 
@@ -317,17 +317,12 @@ const splashStyles = StyleSheet.create({
 // ─── Root ──────────────────────────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading } = useContext(AuthContext);
-  const [showSplash, setShowSplash] = React.useState(true);
 
-  if (loading || showSplash) {
+  if (loading) {
     return (
-      <AnimatedSplashScreen 
-        onFinish={() => {
-          if (!loading) {
-            setShowSplash(false);
-          }
-        }} 
-      />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#1b2b4c" />
+      </View>
     );
   }
 
@@ -339,15 +334,15 @@ function RootNavigator() {
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
         </>
       ) : (
-        <>
-          <Stack.Screen name="Login" component={LoginScreen} />
-        </>
+        <Stack.Screen name="Login" component={LoginScreen} />
       )}
     </Stack.Navigator>
   );
 }
 
 export default function App() {
+  const [splashFinished, setSplashFinished] = React.useState(false);
+
   return (
     <SafeAreaProvider style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
@@ -356,6 +351,9 @@ export default function App() {
           <NavigationContainer>
             <RootNavigator />
           </NavigationContainer>
+          {!splashFinished && (
+            <AnimatedSplashScreen onFinish={() => setSplashFinished(true)} />
+          )}
           <Toast />
         </SocketProvider>
       </AuthProvider>

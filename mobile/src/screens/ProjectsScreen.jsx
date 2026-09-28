@@ -170,7 +170,7 @@ export default function ProjectsScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
 
       {/* Header */}
       <Animated.View style={[styles.header, { opacity: fade }]}>
