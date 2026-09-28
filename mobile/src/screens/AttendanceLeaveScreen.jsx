@@ -216,38 +216,61 @@ export default function AttendanceLeaveScreen({ navigation }) {
               <View>
                 <DigitalClock />
                 <View style={styles.actionCard}>
-                  <View style={styles.actionTextWrapper}>
-                    <Text style={styles.actionTitle}>Timecard</Text>
-                    <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 4}}>
-                      <Calendar color="#64748B" size={14} style={{marginRight: 6}} />
-                      <Text style={styles.actionSub}>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+                  <View style={styles.actionHeader}>
+                    <View style={styles.actionTextWrapper}>
+                      <Text style={styles.actionTitle}>Timecard</Text>
+                      <View style={styles.dateRowItem}>
+                        <Calendar color="#64748B" size={14} style={{ marginRight: 6 }} />
+                        <Text style={styles.actionSub}>
+                          {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                        </Text>
+                      </View>
                     </View>
+
+                    {isCheckedIn ? (
+                      <View style={[styles.statusBadge, { 
+                        backgroundColor: isCheckedOut ? '#F1F5F9' : '#10B98115', 
+                        borderColor: isCheckedOut ? '#E2E8F0' : '#10B98140' 
+                      }]}>
+                        <CheckCircle color={isCheckedOut ? '#64748B' : '#10B981'} size={14} />
+                        <Text style={[styles.statusBadgeText, { color: isCheckedOut ? '#64748B' : '#10B981' }]}>
+                          {isCheckedOut ? 'OUT' : 'IN'}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={[styles.statusBadge, { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' }]}>
+                        <Clock color="#64748B" size={14} />
+                        <Text style={[styles.statusBadgeText, { color: '#64748B' }]}>NOT IN</Text>
+                      </View>
+                    )}
                   </View>
                   
-                  {isCheckedIn ? (
-                    <View style={styles.checkedInRow}>
-                      <View style={[styles.statusBadge, { backgroundColor: '#10B98115', borderColor: '#10B98140' }]}>
-                        <CheckCircle color="#10B981" size={14} />
-                        <Text style={[styles.statusBadgeText, { color: '#10B981' }]}>IN</Text>
+                  <View style={styles.actionBtnContainer}>
+                    {!isCheckedIn ? (
+                      <TouchableOpacity 
+                        style={[styles.punchActionBtn, { backgroundColor: PRIMARY }]} 
+                        onPress={handleCheckIn}
+                        activeOpacity={0.8}
+                      >
+                        <LogIn color="#ffffff" size={16} style={{ marginRight: 8 }} />
+                        <Text style={styles.punchActionBtnText}>Punch In</Text>
+                      </TouchableOpacity>
+                    ) : !isCheckedOut ? (
+                      <TouchableOpacity 
+                        style={[styles.punchActionBtn, { backgroundColor: '#D97706' }]} 
+                        onPress={handleCheckOut}
+                        activeOpacity={0.8}
+                      >
+                        <LogOut color="#ffffff" size={16} style={{ marginRight: 8 }} />
+                        <Text style={styles.punchActionBtnText}>Punch Out</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={styles.completedBadge}>
+                        <CheckCircle color="#10B981" size={16} style={{ marginRight: 6 }} />
+                        <Text style={styles.completedText}>Punched Out for Today</Text>
                       </View>
-                      {!isCheckedOut ? (
-                        <TouchableOpacity style={[styles.checkOutBtn, { backgroundColor: '#F59E0B' }]} onPress={handleCheckOut}>
-                          <LogOut color="#ffffff" size={14} style={{marginRight: 6}} />
-                          <Text style={styles.checkOutText}>Punch Out</Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <View style={[styles.statusBadge, { backgroundColor: '#F1F5F9', marginLeft: 8, borderColor: '#E2E8F0' }]}>
-                          <CheckCircle color="#94A3B8" size={14} />
-                          <Text style={[styles.statusBadgeText, { color: '#64748B' }]}>OUT</Text>
-                        </View>
-                      )}
-                    </View>
-                  ) : (
-                    <TouchableOpacity style={[styles.checkInBtn, { backgroundColor: PRIMARY }]} onPress={handleCheckIn}>
-                      <LogIn color="#ffffff" size={14} style={{marginRight: 6}} />
-                      <Text style={styles.checkInText}>Punch In</Text>
-                    </TouchableOpacity>
-                  )}
+                    )}
+                  </View>
                 </View>
 
                 {isManager && (
@@ -524,34 +547,121 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
+    backgroundColor: '#ffffff',
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  actionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  actionTextWrapper: { flex: 1, paddingRight: 12 },
+  actionTitle: { 
+    fontSize: 18, 
+    fontWeight: '800', 
+    marginBottom: 4, 
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', 
+    color: '#111827' 
+  },
+  dateRowItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderColor: '#E2E8F0'
+    marginTop: 2,
   },
-  actionTextWrapper: { flex: 1 },
-  actionTitle: { fontSize: 20, fontWeight: '800', marginBottom: 2, fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', color: '#111827' },
   actionSub: { fontSize: 13, fontWeight: '500', color: '#64748B' },
-  checkInBtn: {
-    paddingHorizontal: 20, paddingVertical: 12,
-    borderRadius: 12, flexDirection: 'row', alignItems: 'center',
+  statusBadge: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: 10, 
+    paddingVertical: 6, 
+    borderRadius: 8, 
+    borderWidth: 1 
   },
-  checkInText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
-  checkedInRow: { flexDirection: 'row', alignItems: 'center' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginRight: 12, borderWidth: 1 },
   statusBadgeText: { fontWeight: '700', fontSize: 12, marginLeft: 4 },
-  checkOutBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, flexDirection: 'row', alignItems: 'center' },
-  checkOutText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
+  
+  actionBtnContainer: {
+    width: '100%',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  punchActionBtn: {
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  punchActionBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 15,
+    letterSpacing: 0.3,
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#10B98115',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#10B98130',
+  },
+  completedText: {
+    color: '#10B981',
+    fontWeight: '700',
+    fontSize: 14,
+  },
   
   logToggleContainer: { flexDirection: 'row', padding: 4, borderRadius: 12, marginBottom: 24, backgroundColor: '#F1F5F9' },
   logToggleBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   logToggleBtnActive: { shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1, backgroundColor: '#ffffff' },
   logToggleText: { fontSize: 13, fontWeight: '600' },
   
-  clockContainer: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, alignItems: 'center', marginBottom: 24, alignSelf: 'center', width: '100%', backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' },
-  clockTime: { fontSize: 28, fontWeight: '800', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', letterSpacing: 1, color: '#111827' },
-  clockLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginTop: 4, color: '#64748B' },
+  clockContainer: { 
+    paddingHorizontal: 20, 
+    paddingVertical: 16, 
+    borderRadius: 16, 
+    borderWidth: 1, 
+    alignItems: 'center', 
+    marginBottom: 20, 
+    alignSelf: 'center', 
+    width: '100%', 
+    backgroundColor: '#ffffff', 
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  clockTime: { 
+    fontSize: 32, 
+    fontWeight: '800', 
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', 
+    letterSpacing: 2, 
+    color: '#1b2b4c' 
+  },
+  clockLabel: { 
+    fontSize: 11, 
+    fontWeight: '700', 
+    letterSpacing: 2, 
+    marginTop: 6, 
+    color: '#64748B' 
+  },
   
   recordName: { fontSize: 12, fontWeight: '700', marginBottom: 2, color: '#111827', fontSize: 14 },
   

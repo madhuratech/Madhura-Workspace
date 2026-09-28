@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
 import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet, Image, Easing } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react-native';
 import { SocketProvider } from './src/context/SocketContext';
 import Toast from 'react-native-toast-message';
@@ -85,8 +87,6 @@ const TAB_CONFIG = [
   { name: 'Chat',      label: 'Chat',     Icon: MessageSquare },
   { name: 'Menu',      label: 'More',     Icon: MoreHorizontal },
 ];
-
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
@@ -208,57 +208,131 @@ function TabNavigator() {
   );
 }
 
-const AnimatedLoading = () => {
-  const leftTranslateX = useRef(new Animated.Value(-100)).current;
-  const rightTranslateX = useRef(new Animated.Value(100)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.8)).current;
-  const subOpacity = useRef(new Animated.Value(0)).current;
-  const subTranslateY = useRef(new Animated.Value(20)).current;
+const AnimatedSplashScreen = ({ onFinish }) => {
+  const logoScale = useRef(new Animated.Value(0.6)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const textOpacity = useRef(new Animated.Value(0)).current;
+  const textTranslateY = useRef(new Animated.Value(20)).current;
+  const tagOpacity = useRef(new Animated.Value(0)).current;
+  const containerOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    // 1. Logo scale & fade in
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-        Animated.spring(scale, { toValue: 1, friction: 6, tension: 40, useNativeDriver: true }),
-        Animated.spring(leftTranslateX, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true }),
-        Animated.spring(rightTranslateX, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true })
+        Animated.timing(logoOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(logoScale, { toValue: 1, friction: 6, tension: 45, useNativeDriver: true })
       ]),
+      // 2. Text slide and fade in
       Animated.parallel([
-        Animated.timing(subOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-        Animated.spring(subTranslateY, { toValue: 0, friction: 6, tension: 40, useNativeDriver: true })
-      ])
-    ]).start();
+        Animated.timing(textOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.spring(textTranslateY, { toValue: 0, friction: 6, tension: 50, useNativeDriver: true })
+      ]),
+      // 3. Tagline fade in
+      Animated.timing(tagOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+      // 4. Hold briefly for a smooth look
+      Animated.delay(600),
+      // 5. Fade out splash
+      Animated.timing(containerOpacity, { toValue: 0, duration: 400, useNativeDriver: true })
+    ]).start(() => {
+      if (onFinish) onFinish();
+    });
   }, []);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-      <Animated.View style={{ opacity, transform: [{ scale }], flexDirection: 'row', alignItems: 'center' }}>
-        <Animated.View style={{ transform: [{ translateX: leftTranslateX }] }}>
-          <Text style={{ fontSize: 40, fontWeight: '800', color: '#111827', letterSpacing: 1 }}>MAD</Text>
-        </Animated.View>
-        <Animated.View style={{ transform: [{ translateX: rightTranslateX }] }}>
-          <Text style={{ fontSize: 40, fontWeight: '800', color: '#1b2b4c', letterSpacing: 1 }}>HURA</Text>
-        </Animated.View>
+    <Animated.View style={[splashStyles.container, { opacity: containerOpacity }]}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
+      <Animated.View style={[splashStyles.logoContainer, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
+        <Image 
+          source={require('./assets/logo.jpeg')} 
+          style={splashStyles.logo}
+          resizeMode="contain"
+        />
       </Animated.View>
-      
-      <Animated.View style={{ opacity: subOpacity, transform: [{ translateY: subTranslateY }], marginTop: 8 }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: '#64748B', letterSpacing: 4, textTransform: 'uppercase' }}>Workspace</Text>
+
+      <Animated.View style={[splashStyles.textContainer, { opacity: textOpacity, transform: [{ translateY: textTranslateY }] }]}>
+        <Text style={splashStyles.brandTitle}>
+          Madhura<Text style={{ color: '#ffca22' }}>Workspace</Text>
+        </Text>
       </Animated.View>
-    </View>
+
+      <Animated.View style={[splashStyles.tagContainer, { opacity: tagOpacity }]}>
+        <Text style={splashStyles.tagText}>ENTERPRISE WORKSPACE</Text>
+        <ActivityIndicator size="small" color="#1b2b4c" style={{ marginTop: 20 }} />
+      </Animated.View>
+    </Animated.View>
   );
 };
+
+const splashStyles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  logoContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#1b2b4c',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9',
+    marginBottom: 20,
+  },
+  logo: {
+    width: 76,
+    height: 76,
+    borderRadius: 20,
+  },
+  textContainer: {
+    alignItems: 'center',
+  },
+  brandTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1b2b4c',
+    letterSpacing: -0.5,
+  },
+  tagContainer: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  tagText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 3,
+  }
+});
 
 // ─── Root ──────────────────────────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading } = useContext(AuthContext);
+  const [showSplash, setShowSplash] = React.useState(true);
 
-  if (loading) {
-    return <AnimatedLoading />;
+  if (loading || showSplash) {
+    return (
+      <AnimatedSplashScreen 
+        onFinish={() => {
+          if (!loading) {
+            setShowSplash(false);
+          }
+        }} 
+      />
+    );
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
       {user ? (
         <>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
@@ -267,7 +341,6 @@ function RootNavigator() {
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
         </>
       )}
     </Stack.Navigator>
@@ -276,13 +349,16 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
-        <Toast />
-      </SocketProvider>
-    </AuthProvider>
+    <SafeAreaProvider style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
+      <AuthProvider>
+        <SocketProvider>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+          <Toast />
+        </SocketProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

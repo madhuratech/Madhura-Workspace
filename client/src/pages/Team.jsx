@@ -77,6 +77,7 @@ const Team = () => {
   const [isSubmittingTeam, setIsSubmittingTeam] = useState(false);
   const [editTeamItem, setEditTeamItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee', designation: '' });
   const [viewMember, setViewMember] = useState(null); // New state for details modal
 
   // Password reset state for Super Admin & HR
