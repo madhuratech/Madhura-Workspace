@@ -25,6 +25,7 @@ const Chat = () => {
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const [channelsCollapsed, setChannelsCollapsed] = useState(false);
   const [dmsCollapsed, setDmsCollapsed] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
