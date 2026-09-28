@@ -31,6 +31,9 @@ exports.createChannel = async (req, res) => {
       createdBy: req.user._id,
       members: members
     });
+    if (req.io) {
+      req.io.emit('channel_created', channel);
+    }
     res.status(201).json(channel);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -43,9 +46,9 @@ exports.updateChannel = async (req, res) => {
     if (!channel) return res.status(404).json({ message: 'Channel not found' });
 
     const isCreator = channel.createdBy && channel.createdBy.toString() === req.user._id.toString();
-    const isSuperAdmin = req.user.role === 'super_admin';
-    if (!isCreator && !isSuperAdmin) {
-      return res.status(403).json({ message: 'Only the channel creator can edit this channel' });
+    const isAuthorized = isCreator || ['super_admin', 'hr'].includes(req.user.role);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'Only the channel creator, HR or Admin can edit this channel' });
     }
 
     if (req.body.name) channel.name = req.body.name.toLowerCase().replace(/\s+/g, '-');
@@ -60,6 +63,9 @@ exports.updateChannel = async (req, res) => {
     }
 
     await channel.save();
+    if (req.io) {
+      req.io.emit('channel_updated', channel);
+    }
     res.status(200).json(channel);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -72,13 +78,17 @@ exports.deleteChannel = async (req, res) => {
     if (!channel) return res.status(404).json({ message: 'Channel not found' });
 
     const isCreator = channel.createdBy && channel.createdBy.toString() === req.user._id.toString();
-    const isSuperAdmin = req.user.role === 'super_admin';
-    if (!isCreator && !isSuperAdmin) {
-      return res.status(403).json({ message: 'Only the channel creator can delete this channel' });
+    const isAuthorized = isCreator || ['super_admin', 'hr'].includes(req.user.role);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'Only the channel creator, HR or Admin can delete this channel' });
     }
 
     await Message.deleteMany({ channel: channel._id });
     await Channel.findByIdAndDelete(channel._id);
+
+    if (req.io) {
+      req.io.emit('channel_deleted', { channelId: channel._id });
+    }
 
     res.status(200).json({ message: 'Channel deleted successfully' });
   } catch (error) {
@@ -92,9 +102,9 @@ exports.addChannelMembers = async (req, res) => {
     if (!channel) return res.status(404).json({ message: 'Channel not found' });
 
     const isCreator = channel.createdBy && channel.createdBy.toString() === req.user._id.toString();
-    const isSuperAdmin = req.user.role === 'super_admin';
-    if (!isCreator && !isSuperAdmin) {
-      return res.status(403).json({ message: 'Only the channel creator can add members' });
+    const isAuthorized = isCreator || ['super_admin', 'hr'].includes(req.user.role);
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'Only the channel creator, HR or Admin can add members' });
     }
 
     const { memberIds } = req.body;
@@ -105,6 +115,9 @@ exports.addChannelMembers = async (req, res) => {
         }
       });
       await channel.save();
+      if (req.io) {
+        req.io.emit('channel_updated', channel);
+      }
     }
 
     res.status(200).json(channel);

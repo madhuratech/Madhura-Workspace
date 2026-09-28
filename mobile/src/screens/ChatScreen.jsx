@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, Animated,
+  View, Text, StyleSheet, TouchableOpacity, TextInput,
+  ScrollView, Animated, Modal, Switch, Alert, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Hash, Lock, MessageCircle, Search, Users } from 'lucide-react-native';
+import { Hash, Lock, MessageCircle, Search, Users, Plus, X, Check } from 'lucide-react-native';
+import axios from 'axios';
+import { io } from 'socket.io-client';
 import { cachedGet } from '../utils/api';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext, API_URL } from '../context/AuthContext';
 
 const PRIMARY = '#1b2b4c';
 
@@ -55,12 +57,15 @@ const ChannelRow = ({ channel, onPress, idx, delay }) => {
     <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
       <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
         <View style={styles.rowIconBox}>
-          <IconCmp color="#9CA3AF" size={20} strokeWidth={2.5} />
+          <IconCmp color={channel.isPrivate ? '#F59E0B' : '#9CA3AF'} size={20} strokeWidth={2.5} />
         </View>
         <View style={styles.rowInfo}>
           <Text style={[styles.rowTitle, { fontWeight: channel.isPrivate ? '600' : '500' }]}>
             {channel.name}
           </Text>
+          {channel.description ? (
+            <Text style={styles.rowSub} numberOfLines={1}>{channel.description}</Text>
+          ) : null}
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -107,8 +112,6 @@ const DMRow = ({ member, onPress, idx, delay }) => {
   );
 };
 
-// Removed chevron
-
 export default function ChatScreen({ navigation }) {
   const { user } = useContext(AuthContext);
   const [workspace, setWorkspace] = useState(null);
@@ -121,10 +124,55 @@ export default function ChatScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const fade = useRef(new Animated.Value(0)).current;
 
+  // Create Channel Modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newChannelName, setNewChannelName] = useState('');
+  const [newChannelDesc, setNewChannelDesc] = useState('');
+  const [newChannelIsPrivate, setNewChannelIsPrivate] = useState(false);
+  const [newChannelMembers, setNewChannelMembers] = useState([]);
+  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
     load();
-  }, []);
+
+    const socket = io(API_URL.replace('/api', ''));
+    
+    socket.on('channel_created', (newChan) => {
+      setPublicChannels(prev => {
+        if (newChan.isPrivate || prev.some(c => c._id === newChan._id)) return prev;
+        return [...prev, newChan];
+      });
+      setPrivateChannels(prev => {
+        if (!newChan.isPrivate || prev.some(c => c._id === newChan._id)) return prev;
+        const hasAccess = newChan.members?.some(m => String(m._id || m) === String(user?._id)) || String(newChan.createdBy) === String(user?._id);
+        return hasAccess ? [...prev, newChan] : prev;
+      });
+    });
+
+    socket.on('channel_updated', (upChan) => {
+      setPublicChannels(prev => {
+        if (upChan.isPrivate) return prev.filter(c => c._id !== upChan._id);
+        if (prev.some(c => c._id === upChan._id)) return prev.map(c => c._id === upChan._id ? upChan : c);
+        return [...prev, upChan];
+      });
+      setPrivateChannels(prev => {
+        const hasAccess = upChan.members?.some(m => String(m._id || m) === String(user?._id)) || String(upChan.createdBy) === String(user?._id);
+        if (!upChan.isPrivate || !hasAccess) return prev.filter(c => c._id !== upChan._id);
+        if (prev.some(c => c._id === upChan._id)) return prev.map(c => c._id === upChan._id ? upChan : c);
+        return [...prev, upChan];
+      });
+    });
+
+    socket.on('channel_deleted', ({ channelId }) => {
+      setPublicChannels(prev => prev.filter(c => c._id !== channelId));
+      setPrivateChannels(prev => prev.filter(c => c._id !== channelId));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user?._id]);
 
   const load = async () => {
     try {
@@ -178,6 +226,47 @@ export default function ChatScreen({ navigation }) {
     } catch (e) { console.error(e); }
   };
 
+  const handleCreateChannel = async () => {
+    if (!newChannelName.trim()) {
+      Alert.alert('Required', 'Please enter a channel name');
+      return;
+    }
+    if (!workspace?._id) return;
+    setIsCreatingChannel(true);
+    try {
+      const formattedName = newChannelName.trim().toLowerCase().replace(/\s+/g, '-');
+      const finalMembers = newChannelIsPrivate 
+        ? (newChannelMembers.includes(user?._id) ? newChannelMembers : [...newChannelMembers, user?._id])
+        : [];
+      
+      const res = await axios.post(`/workspaces/${workspace._id}/channels`, {
+        name: formattedName,
+        description: newChannelDesc.trim(),
+        isPrivate: newChannelIsPrivate,
+        members: finalMembers,
+      });
+
+      setIsCreateModalOpen(false);
+      setNewChannelName('');
+      setNewChannelDesc('');
+      setNewChannelIsPrivate(false);
+      setNewChannelMembers([]);
+      
+      // Navigate straight into new channel
+      openChannel(res.data);
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to create channel');
+    } finally {
+      setIsCreatingChannel(false);
+    }
+  };
+
+  const toggleMemberSelection = (memberId) => {
+    setNewChannelMembers(prev => 
+      prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
+    );
+  };
+
   const filteredPublicChannels = publicChannels.filter(c => 
     !searchQuery.trim() || c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -203,7 +292,7 @@ export default function ChatScreen({ navigation }) {
     });
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
 
       {/* Header */}
       <Animated.View style={[styles.header, { opacity: fade }]}>
@@ -227,9 +316,19 @@ export default function ChatScreen({ navigation }) {
         ) : (
           <>
             <Text style={styles.headerTitle}>Messages</Text>
-            <TouchableOpacity style={styles.searchBtn} onPress={() => setShowSearch(true)}>
-              <Search color="#6B7280" size={18} strokeWidth={2} />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <TouchableOpacity 
+                style={styles.createBtn} 
+                onPress={() => setIsCreateModalOpen(true)}
+                activeOpacity={0.7}
+              >
+                <Plus color="#FFFFFF" size={18} strokeWidth={2.5} />
+                <Text style={styles.createBtnText}>Channel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.searchBtn} onPress={() => setShowSearch(true)}>
+                <Search color="#6B7280" size={18} strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </Animated.View>
@@ -244,6 +343,15 @@ export default function ChatScreen({ navigation }) {
           <View style={styles.sectionBadge}>
             <Text style={styles.sectionBadgeText}>{filteredPublicChannels.length}</Text>
           </View>
+          <TouchableOpacity 
+            style={{ marginLeft: 'auto', padding: 4 }}
+            onPress={() => {
+              setNewChannelIsPrivate(false);
+              setIsCreateModalOpen(true);
+            }}
+          >
+            <Plus color="#6B7280" size={16} />
+          </TouchableOpacity>
         </View>
 
         {loading ? (
@@ -266,28 +374,42 @@ export default function ChatScreen({ navigation }) {
         )}
 
         {/* ── Private Channels ──────────────────────────── */}
-        {(!loading && (filteredPrivateChannels.length > 0 || privateChannels.length > 0)) && (
-          <>
-            <View style={[styles.sectionHeader, { marginTop: 8 }]}>
-              <Text style={styles.sectionTitle}>Private Channels</Text>
-              <View style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>{filteredPrivateChannels.length}</Text>
-              </View>
-            </View>
-            {filteredPrivateChannels.map((ch, i) => (
-              <ChannelRow
-                key={ch._id}
-                channel={ch}
-                idx={i + filteredPublicChannels.length}
-                delay={i * 40}
-                onPress={() => openChannel(ch)}
-              />
-            ))}
-          </>
+        <View style={[styles.sectionHeader, { marginTop: 12 }]}>
+          <Text style={styles.sectionTitle}>Private Channels</Text>
+          <View style={styles.sectionBadge}>
+            <Text style={styles.sectionBadgeText}>{filteredPrivateChannels.length}</Text>
+          </View>
+          <TouchableOpacity 
+            style={{ marginLeft: 'auto', padding: 4 }}
+            onPress={() => {
+              setNewChannelIsPrivate(true);
+              setIsCreateModalOpen(true);
+            }}
+          >
+            <Plus color="#6B7280" size={16} />
+          </TouchableOpacity>
+        </View>
+        {loading ? (
+          <SkeletonRow />
+        ) : filteredPrivateChannels.length === 0 ? (
+          <View style={styles.emptySection}>
+            <Lock color="#E5E7EB" size={18} />
+            <Text style={styles.emptySectionText}>No private channels</Text>
+          </View>
+        ) : (
+          filteredPrivateChannels.map((ch, i) => (
+            <ChannelRow
+              key={ch._id}
+              channel={ch}
+              idx={i + filteredPublicChannels.length}
+              delay={i * 40}
+              onPress={() => openChannel(ch)}
+            />
+          ))
         )}
 
         {/* ── Direct Messages ────────────────────── */}
-        <View style={[styles.sectionHeader, { marginTop: 8 }]}>
+        <View style={[styles.sectionHeader, { marginTop: 12 }]}>
           <Text style={styles.sectionTitle}>Direct Messages</Text>
           <View style={styles.sectionBadge}>
             <Text style={styles.sectionBadgeText}>{filteredMembers.length}</Text>
@@ -315,6 +437,113 @@ export default function ChatScreen({ navigation }) {
 
         <View style={{ height: 140 }} />
       </ScrollView>
+
+      {/* CREATE CHANNEL MODAL */}
+      <Modal
+        visible={isCreateModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsCreateModalOpen(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Create New Channel</Text>
+              <TouchableOpacity onPress={() => setIsCreateModalOpen(false)}>
+                <X color="#64748B" size={20} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              <Text style={styles.inputLabel}>Channel Name *</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={newChannelName}
+                onChangeText={setNewChannelName}
+                placeholder="e.g. project-updates"
+                placeholderTextColor="#94A3B8"
+                autoCapitalize="none"
+              />
+
+              <Text style={styles.inputLabel}>Description (Optional)</Text>
+              <TextInput
+                style={[styles.modalInput, { height: 60, textAlignVertical: 'top' }]}
+                value={newChannelDesc}
+                onChangeText={setNewChannelDesc}
+                placeholder="What is this channel about?"
+                placeholderTextColor="#94A3B8"
+                multiline
+              />
+
+              {/* Private Channel Toggle */}
+              <View style={styles.toggleRow}>
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={styles.toggleTitle}>Private Channel</Text>
+                  <Text style={styles.toggleSub}>Only invited employees can access</Text>
+                </View>
+                <Switch
+                  value={newChannelIsPrivate}
+                  onValueChange={setNewChannelIsPrivate}
+                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Member Selection if Private */}
+              {newChannelIsPrivate && (
+                <View style={{ marginTop: 12 }}>
+                  <Text style={styles.inputLabel}>Select Members ({newChannelMembers.length})</Text>
+                  <View style={styles.membersList}>
+                    {members.map(m => {
+                      const isSelected = newChannelMembers.includes(m._id);
+                      return (
+                        <TouchableOpacity
+                          key={m._id}
+                          style={[styles.memberItem, isSelected && styles.memberItemSelected]}
+                          onPress={() => toggleMemberSelection(m._id)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.memberAvatar}>
+                            <Text style={styles.memberAvatarText}>{getInitials(m.name)}</Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.memberName}>{m.name || m.email}</Text>
+                            <Text style={styles.memberRole}>{m.designation || m.role?.replace(/_/g, ' ')}</Text>
+                          </View>
+                          <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+                            {isSelected && <Check color="#FFF" size={14} strokeWidth={3} />}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setIsCreateModalOpen(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.createSubmitBtn, isCreatingChannel && { opacity: 0.7 }]}
+                onPress={handleCreateChannel}
+                disabled={isCreatingChannel}
+              >
+                {isCreatingChannel ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.createSubmitText}>Create Channel</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -333,6 +562,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     justifyContent: 'center', alignItems: 'center',
   },
+  createBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+  },
+  createBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   searchInput: {
     flex: 1,
     height: 38,
@@ -387,5 +622,70 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, right: 0,
     width: 10, height: 10, borderRadius: 5,
     backgroundColor: '#10B981', borderWidth: 2, borderColor: '#fff',
-  }
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#fff', borderRadius: 20, width: '100%',
+    padding: 22, shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15, shadowRadius: 20, elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1b2b4c' },
+  inputLabel: { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 6, textTransform: 'uppercase' },
+  modalInput: {
+    backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#1b2b4c',
+    marginBottom: 14,
+  },
+  toggleRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    marginBottom: 10,
+  },
+  toggleTitle: { fontSize: 14, fontWeight: '600', color: '#1b2b4c' },
+  toggleSub: { fontSize: 11, color: '#64748B', marginTop: 2 },
+  membersList: {
+    maxHeight: 180, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC', padding: 4,
+  },
+  memberItem: {
+    flexDirection: 'row', alignItems: 'center', padding: 8, borderRadius: 8,
+    marginBottom: 4,
+  },
+  memberItemSelected: {
+    backgroundColor: '#EEF2FF',
+  },
+  memberAvatar: {
+    width: 30, height: 30, borderRadius: 15, backgroundColor: '#E2E8F0',
+    justifyContent: 'center', alignItems: 'center', marginRight: 10,
+  },
+  memberAvatarText: { fontSize: 11, fontWeight: '700', color: '#1b2b4c' },
+  memberName: { fontSize: 13, fontWeight: '600', color: '#1E293B' },
+  memberRole: { fontSize: 10, color: '#64748B', textTransform: 'capitalize' },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: '#CBD5E1',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#1b2b4c', borderColor: '#1b2b4c',
+  },
+  modalActions: {
+    flexDirection: 'row', justifyContent: 'flex-end', gap: 10,
+    marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9',
+  },
+  cancelBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+  cancelBtnText: { color: '#64748B', fontWeight: '600', fontSize: 14 },
+  createSubmitBtn: {
+    backgroundColor: PRIMARY, paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 10, minWidth: 100, alignItems: 'center',
+  },
+  createSubmitText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

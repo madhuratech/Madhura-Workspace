@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
   ActivityIndicator, KeyboardAvoidingView, Platform, Image,
-  Keyboard, Linking, ScrollView, Alert,
+  Keyboard, Linking, ScrollView, Alert, Modal, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -70,11 +70,16 @@ export default function ChatWindowScreen({ route, navigation }) {
   // Channel edit/delete state
   const isChannelCreator = !isDM && (
     (channel?.createdBy && String(channel.createdBy) === String(user?._id)) ||
-    user?.role === 'super_admin'
+    user?.role === 'super_admin' ||
+    user?.role === 'hr'
   );
   const [isChannelModalVisible, setIsChannelModalVisible] = useState(false);
   const [editName, setEditName] = useState(channelName || '');
   const [editDesc, setEditDesc] = useState(channel?.description || '');
+  const [editIsPrivate, setEditIsPrivate] = useState(!!channel?.isPrivate);
+  const [editMembers, setEditMembers] = useState(
+    channel?.members ? channel.members.map(m => String(m._id || m)) : []
+  );
   const [isSavingChannel, setIsSavingChannel] = useState(false);
 
   const socketRef = useRef(null);
@@ -260,9 +265,16 @@ export default function ChatWindowScreen({ route, navigation }) {
     if (!editName.trim()) return;
     setIsSavingChannel(true);
     try {
+      const formattedName = editName.trim().toLowerCase().replace(/\s+/g, '-');
+      const finalMembers = editIsPrivate
+        ? (editMembers.includes(String(user?._id)) ? editMembers : [...editMembers, String(user?._id)])
+        : [];
+      
       await axios.put(`/workspaces/${workspaceId}/channels/${channelId}`, {
-        name: editName.trim(),
+        name: formattedName,
         description: editDesc.trim(),
+        isPrivate: editIsPrivate,
+        members: finalMembers,
       });
       setIsChannelModalVisible(false);
       Alert.alert('Success', 'Channel updated successfully');
@@ -271,6 +283,13 @@ export default function ChatWindowScreen({ route, navigation }) {
     } finally {
       setIsSavingChannel(false);
     }
+  };
+
+  const toggleEditMemberSelection = (memberId) => {
+    const idStr = String(memberId);
+    setEditMembers(prev => 
+      prev.includes(idStr) ? prev.filter(id => id !== idStr) : [...prev, idStr]
+    );
   };
 
   const handleDeleteChannel = () => {
@@ -680,24 +699,74 @@ export default function ChatWindowScreen({ route, navigation }) {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.inputLabel}>Channel Name</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={editName}
-              onChangeText={setEditName}
-              placeholder="e.g. general"
-              placeholderTextColor="#94A3B8"
-            />
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              <Text style={styles.inputLabel}>Channel Name *</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="e.g. general"
+                placeholderTextColor="#94A3B8"
+                autoCapitalize="none"
+              />
 
-            <Text style={styles.inputLabel}>Description</Text>
-            <TextInput
-              style={[styles.modalInput, { height: 70, textAlignVertical: 'top' }]}
-              value={editDesc}
-              onChangeText={setEditDesc}
-              placeholder="What is this channel about?"
-              placeholderTextColor="#94A3B8"
-              multiline
-            />
+              <Text style={styles.inputLabel}>Description</Text>
+              <TextInput
+                style={[styles.modalInput, { height: 60, textAlignVertical: 'top' }]}
+                value={editDesc}
+                onChangeText={setEditDesc}
+                placeholder="What is this channel about?"
+                placeholderTextColor="#94A3B8"
+                multiline
+              />
+
+              {/* Private Channel Toggle */}
+              <View style={styles.toggleRow}>
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                  <Text style={styles.toggleTitle}>Private Channel</Text>
+                  <Text style={styles.toggleSub}>Only invited employees can access</Text>
+                </View>
+                <Switch
+                  value={editIsPrivate}
+                  onValueChange={setEditIsPrivate}
+                  trackColor={{ false: '#E2E8F0', true: '#1b2b4c' }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Member Selection if Private */}
+              {editIsPrivate && (
+                <View style={{ marginTop: 12 }}>
+                  <Text style={styles.inputLabel}>Manage Members ({editMembers.length})</Text>
+                  <View style={styles.membersList}>
+                    {workspaceMembers.map(m => {
+                      const isSelected = editMembers.includes(String(m._id));
+                      return (
+                        <TouchableOpacity
+                          key={m._id}
+                          style={[styles.memberItem, isSelected && styles.memberItemSelected]}
+                          onPress={() => toggleEditMemberSelection(m._id)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.memberAvatar}>
+                            <Text style={styles.memberAvatarText}>
+                              {m.name ? m.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?'}
+                            </Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.memberName}>{m.name || m.email}</Text>
+                            <Text style={styles.memberRole}>{m.designation || m.role?.replace(/_/g, ' ')}</Text>
+                          </View>
+                          <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+                            {isSelected && <Check color="#FFF" size={14} strokeWidth={3} />}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+            </ScrollView>
 
             <View style={styles.modalActions}>
               <TouchableOpacity 
@@ -761,6 +830,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
     paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#1b2b4c',
     marginBottom: 14,
+  },
+  toggleRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    marginBottom: 10,
+  },
+  toggleTitle: { fontSize: 14, fontWeight: '600', color: '#1b2b4c' },
+  toggleSub: { fontSize: 11, color: '#64748B', marginTop: 2 },
+  membersList: {
+    maxHeight: 180, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC', padding: 4,
+  },
+  memberItem: {
+    flexDirection: 'row', alignItems: 'center', padding: 8, borderRadius: 8,
+    marginBottom: 4,
+  },
+  memberItemSelected: {
+    backgroundColor: '#EEF2FF',
+  },
+  memberAvatar: {
+    width: 30, height: 30, borderRadius: 15, backgroundColor: '#E2E8F0',
+    justifyContent: 'center', alignItems: 'center', marginRight: 10,
+  },
+  memberAvatarText: { fontSize: 11, fontWeight: '700', color: '#1b2b4c' },
+  memberName: { fontSize: 13, fontWeight: '600', color: '#1E293B' },
+  memberRole: { fontSize: 10, color: '#64748B', textTransform: 'capitalize' },
+  checkbox: {
+    width: 20, height: 20, borderRadius: 6, borderWidth: 1.5, borderColor: '#CBD5E1',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#1b2b4c', borderColor: '#1b2b4c',
   },
   modalActions: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

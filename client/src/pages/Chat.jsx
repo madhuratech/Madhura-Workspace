@@ -124,6 +124,39 @@ const Chat = () => {
         }
       };
 
+      const handleChannelCreated = (newChan) => {
+        setChannels(prev => {
+          if (prev.some(c => c._id === newChan._id)) return prev;
+          if (!newChan.isPrivate || newChan.members?.some(m => String(m._id || m) === String(user?._id)) || String(newChan.createdBy) === String(user?._id)) {
+            return [...prev, newChan];
+          }
+          return prev;
+        });
+      };
+
+      const handleChannelUpdated = (updatedChan) => {
+        setChannels(prev => {
+          const hasAccess = !updatedChan.isPrivate || updatedChan.members?.some(m => String(m._id || m) === String(user?._id)) || String(updatedChan.createdBy) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role);
+          if (!hasAccess) {
+            return prev.filter(c => c._id !== updatedChan._id);
+          }
+          if (prev.some(c => c._id === updatedChan._id)) {
+            return prev.map(c => c._id === updatedChan._id ? updatedChan : c);
+          }
+          return [...prev, updatedChan];
+        });
+        setActiveChannel(prev => (prev && prev._id === updatedChan._id) ? updatedChan : prev);
+      };
+
+      const handleChannelDeleted = ({ channelId }) => {
+        setChannels(prev => prev.filter(c => c._id !== channelId));
+        setActiveChannel(prev => (prev && prev._id === channelId) ? null : prev);
+      };
+
+      socket.on('channel_created', handleChannelCreated);
+      socket.on('channel_updated', handleChannelUpdated);
+      socket.on('channel_deleted', handleChannelDeleted);
+
       socket.on('new_message', handleNewMessage);
       socket.on('message_updated', handleMessageUpdated);
       socket.on('message_deleted', handleMessageDeleted);
@@ -165,6 +198,9 @@ const Chat = () => {
       });
 
       return () => {
+        socket.off('channel_created', handleChannelCreated);
+        socket.off('channel_updated', handleChannelUpdated);
+        socket.off('channel_deleted', handleChannelDeleted);
         socket.off('new_message', handleNewMessage);
         socket.off('message_updated', handleMessageUpdated);
         socket.off('message_deleted', handleMessageDeleted);
@@ -172,7 +208,7 @@ const Chat = () => {
         socket.off('dm_messages_read');
       };
     }
-  }, [socket, activeChannel, activeDM]);
+  }, [socket, activeChannel, activeDM, user]);
 
   useEffect(() => {
     if (activeChannel) {
@@ -459,7 +495,8 @@ const Chat = () => {
 
   const isChannelCreator = activeChannel && (
     (activeChannel.createdBy && String(activeChannel.createdBy) === String(user?._id)) ||
-    user?.role === 'super_admin'
+    user?.role === 'super_admin' ||
+    user?.role === 'hr'
   );
 
   const handleOpenEditChannel = () => {
