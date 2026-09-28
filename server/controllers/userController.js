@@ -127,18 +127,18 @@ const changePassword = async (req, res) => {
   }
 };
 
-// @desc    Admin reset user password
+// @desc    Admin / HR reset user password
 // @route   PUT /api/users/:id/reset-password
-// @access  Private/SuperAdmin
+// @access  Private (SuperAdmin or HR)
 const resetUserPassword = async (req, res) => {
   try {
-    if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (!['super_admin', 'hr'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Only MD and HR are authorized to reset employee passwords' });
     }
     
     const { newPassword } = req.body;
     if (!newPassword || newPassword.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
     }
     
     const user = await User.findById(req.params.id).select('+password');
@@ -148,8 +148,23 @@ const resetUserPassword = async (req, res) => {
     
     user.password = newPassword;
     await user.save();
+
+    // Send in-app notification to the user
+    try {
+      const { sendNotification } = require('./notificationController');
+      await sendNotification(
+        req,
+        user._id,
+        'password_reset_success',
+        '🔑 Password Reset Completed',
+        `Your password was reset by ${req.user.name} (${req.user.role === 'super_admin' ? 'MD' : 'HR'}). Please use your new password to sign in.`,
+        '/settings'
+      );
+    } catch (notifErr) {
+      console.error('Failed to send reset confirmation notification', notifErr);
+    }
     
-    res.status(200).json({ message: 'Password reset successfully' });
+    res.status(200).json({ message: `Password for ${user.name} has been reset successfully` });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

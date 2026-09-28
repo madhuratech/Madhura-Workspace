@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import { Search, Plus, UserPlus, Shield, X, Mail, Users } from 'lucide-react';
+import { Search, Plus, UserPlus, Shield, X, Mail, Users, KeyRound, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import OrgChart from '../components/OrgChart';
 
@@ -62,6 +63,7 @@ const StatusBadge = ({ status }) => {
 const Team = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
+  const location = useLocation();
   const [workspace, setWorkspace] = useState(null);
   const [members, setMembers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -74,6 +76,13 @@ const Team = () => {
   const [editTeamItem, setEditTeamItem] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [viewMember, setViewMember] = useState(null); // New state for details modal
+
+  // Password reset state for Super Admin & HR
+  const [resetPasswordMember, setResetPasswordMember] = useState(null);
+  const [newPasswordVal, setNewPasswordVal] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(true);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
   
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee', designation: '' });
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
@@ -82,6 +91,70 @@ const Team = () => {
   useEffect(() => {
     fetchWorkspaceData();
   }, []);
+
+  // Listen for resetUser query parameter in URL (e.g. from notification click)
+  useEffect(() => {
+    if (members.length > 0) {
+      const params = new URLSearchParams(location.search);
+      const resetUserId = params.get('resetUser');
+      if (resetUserId) {
+        const targetMember = members.find(m => m.user && (m.user._id === resetUserId || String(m.user._id) === String(resetUserId)));
+        if (targetMember && (currentUserRole === 'super_admin' || currentUserRole === 'hr')) {
+          setActiveTab('members');
+          handleOpenResetPassword(targetMember);
+        }
+      }
+    }
+  }, [location.search, members, currentUserRole]);
+
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
+    let result = '';
+    for (let i = 0; i < 10; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const handleOpenResetPassword = (member) => {
+    setResetPasswordMember(member);
+    setNewPasswordVal(generateRandomPassword());
+    setShowNewPassword(true);
+    setCopiedPassword(false);
+  };
+
+  const handleCloseResetPassword = () => {
+    setResetPasswordMember(null);
+    setNewPasswordVal('');
+    setCopiedPassword(false);
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!resetPasswordMember || !newPasswordVal.trim()) return;
+
+    try {
+      setIsResettingPassword(true);
+      await axios.put(`/users/${resetPasswordMember.user._id}/reset-password`, {
+        newPassword: newPasswordVal.trim()
+      });
+      showToast(`Password successfully reset for ${resetPasswordMember.user.name || resetPasswordMember.user.email}!`, 'success');
+      handleCloseResetPassword();
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      showToast(error.response?.data?.message || 'Failed to reset password', 'error');
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const handleCopyPassword = () => {
+    if (!newPasswordVal) return;
+    navigator.clipboard.writeText(newPasswordVal);
+    setCopiedPassword(true);
+    showToast('New password copied to clipboard!', 'info');
+    setTimeout(() => setCopiedPassword(false), 2000);
+  };
 
   const fetchWorkspaceData = async () => {
     try {
@@ -305,6 +378,13 @@ const Team = () => {
                   <div className="md:w-12 flex justify-end md:justify-center absolute top-4 right-4 md:static">
                     {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-2">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleOpenResetPassword(member); }}
+                          className="p-1.5 bg-bg-secondary hover:bg-amber-500 hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          title="Reset Password"
+                        >
+                          <KeyRound size={14} />
+                        </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleOpenModal(member); }}
                           className="p-1.5 bg-bg-secondary hover:bg-accent-blue hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
@@ -674,7 +754,154 @@ const Team = () => {
                   )}
                 </div>
               </div>
+
+              {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
+                <div className="pt-2 border-t border-border/50">
+                  <button
+                    onClick={() => {
+                      const target = viewMember;
+                      setViewMember(null);
+                      handleOpenResetPassword(target);
+                    }}
+                    className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-white border border-amber-500/30 rounded-xl font-medium text-xs transition-all shadow-sm group"
+                  >
+                    <KeyRound size={15} />
+                    <span>Reset Employee Password</span>
+                  </button>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* RESET PASSWORD MODAL FOR SUPER ADMIN & HR */}
+      {resetPasswordMember && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-sm">
+                  <KeyRound size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary leading-tight">Reset Password</h3>
+                  <p className="text-xs text-text-secondary">Provision a new password for this team member</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleCloseResetPassword} 
+                className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleResetPasswordSubmit} className="p-6 space-y-5">
+              {/* Member Summary Card */}
+              <div className="flex items-center space-x-3.5 p-3.5 bg-bg-primary/70 rounded-xl border border-border">
+                <Avatar user={resetPasswordMember.user} size="h-11 w-11" showStatus={false} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm font-bold text-text-primary truncate">{resetPasswordMember.user.name || 'Team Member'}</p>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 bg-accent-blue/10 text-accent-blue rounded-full border border-accent-blue/20 uppercase tracking-wider">
+                      {resetPasswordMember.role.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-secondary truncate mt-0.5">{resetPasswordMember.user.email}</p>
+                </div>
+              </div>
+
+              {/* Password Field with Generator & Toggle */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">New Password</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newPass = generateRandomPassword();
+                      setNewPasswordVal(newPass);
+                      setCopiedPassword(false);
+                    }}
+                    className="text-xs text-amber-500 hover:text-amber-400 flex items-center space-x-1 font-medium transition-colors"
+                  >
+                    <RefreshCw size={12} className="animate-spin-once" />
+                    <span>Generate Strong</span>
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPasswordVal}
+                    onChange={(e) => setNewPasswordVal(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Enter or generate new password"
+                    className="w-full bg-bg-primary border border-border focus:border-amber-500/80 rounded-xl pl-4 pr-20 py-2.5 text-sm text-text-primary font-mono tracking-wide focus:outline-none transition-colors"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="p-1.5 text-text-secondary hover:text-text-primary transition-colors rounded-lg"
+                      title={showNewPassword ? 'Hide Password' : 'Show Password'}
+                    >
+                      {showNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCopyPassword}
+                      className="p-1.5 text-text-secondary hover:text-amber-500 transition-colors rounded-lg"
+                      title="Copy Password to Clipboard"
+                    >
+                      {copiedPassword ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[11px] text-text-secondary mt-1.5">
+                  Minimum 6 characters. Copy and securely share this temporary password with the user.
+                </p>
+              </div>
+
+              {/* Notification Banner */}
+              <div className="p-3 bg-accent-blue/10 border border-accent-blue/20 rounded-xl flex items-start space-x-2.5 text-xs text-text-secondary">
+                <span className="text-accent-blue text-sm font-bold">ℹ</span>
+                <span>
+                  The employee will automatically receive an in-app confirmation notification that their password was reset by an Administrator.
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={handleCloseResetPassword}
+                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-xl transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isResettingPassword || !newPasswordVal.trim()}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium px-5 py-2 rounded-xl text-sm hover:opacity-90 transition-opacity shadow-lg shadow-amber-500/20 disabled:opacity-50 flex items-center space-x-2"
+                >
+                  {isResettingPassword ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound size={15} />
+                      <span>Set New Password</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
