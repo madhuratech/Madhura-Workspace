@@ -137,14 +137,6 @@ router.put('/:id/approve', async (req, res) => {
   }
 });
 
-    await earlyLeave.save();
-    res.json(earlyLeave);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
 // 4. Reject early leave
 router.put('/:id/reject', async (req, res) => {
   try {
