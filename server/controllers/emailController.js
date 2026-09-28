@@ -71,26 +71,39 @@ exports.getEmails = async (req, res) => {
 
       let q = '';
       let includeSpamTrash = false;
+      let targetLabelId = null;
 
-      if (folder === 'inbox' || folder === 'primary') {
+      if (folder === 'inbox') {
         q = 'in:inbox';
+        targetLabelId = 'INBOX';
+      } else if (folder === 'primary') {
+        q = 'category:primary in:inbox';
+        targetLabelId = 'CATEGORY_PERSONAL';
       } else if (folder === 'promotions') {
-        q = 'category:promotions';
+        q = 'category:promotions in:inbox';
+        targetLabelId = 'CATEGORY_PROMOTIONS';
       } else if (folder === 'social') {
-        q = 'category:social';
+        q = 'category:social in:inbox';
+        targetLabelId = 'CATEGORY_SOCIAL';
       } else if (folder === 'updates') {
-        q = 'category:updates';
+        q = 'category:updates in:inbox';
+        targetLabelId = 'CATEGORY_UPDATES';
       } else if (folder === 'starred') {
         q = 'is:starred';
+        targetLabelId = 'STARRED';
       } else if (folder === 'sent') {
         q = 'in:sent';
+        targetLabelId = 'SENT';
       } else if (folder === 'drafts') {
         q = 'in:draft';
+        targetLabelId = 'DRAFT';
       } else if (folder === 'trash') {
         q = 'in:trash';
         includeSpamTrash = true;
+        targetLabelId = 'TRASH';
       } else if (folder === 'important') {
         q = 'is:important';
+        targetLabelId = 'IMPORTANT';
       } else if (folder === 'snoozed') {
         q = 'label:snoozed';
       } else if (folder === 'chats') {
@@ -101,6 +114,7 @@ exports.getEmails = async (req, res) => {
       } else if (folder === 'spam') {
         q = 'in:spam';
         includeSpamTrash = true;
+        targetLabelId = 'SPAM';
       } else if (folder === 'all') {
         q = '-in:trash -in:spam';
       }
@@ -120,12 +134,63 @@ exports.getEmails = async (req, res) => {
         listParams.pageToken = pageToken.trim();
       }
 
-      const response = await gmail.users.messages.list(listParams);
+      // Fetch exact label metadata if not searching
+      let exactTotal = null;
+      let unreadCount = 0;
+      if (!search.trim() && targetLabelId) {
+        try {
+          const labelRes = await gmail.users.labels.get({
+            userId: 'me',
+            id: targetLabelId
+          });
+          if (labelRes.data) {
+            if (typeof labelRes.data.messagesTotal === 'number') {
+              exactTotal = labelRes.data.messagesTotal;
+            }
+            if (typeof labelRes.data.messagesUnread === 'number') {
+              unreadCount = labelRes.data.messagesUnread;
+            }
+          }
+        } catch (labelErr) {
+          if (targetLabelId === 'CATEGORY_PERSONAL') {
+            try {
+              const inboxRes = await gmail.users.labels.get({ userId: 'me', id: 'INBOX' });
+              if (inboxRes.data && typeof inboxRes.data.messagesTotal === 'number') {
+                exactTotal = inboxRes.data.messagesTotal;
+              }
+              if (inboxRes.data && typeof inboxRes.data.messagesUnread === 'number') {
+                unreadCount = inboxRes.data.messagesUnread;
+              }
+            } catch (e) {}
+          }
+        }
+      }
+
+      // Also get unread count for INBOX if not already fetched
+      if (unreadCount === 0 && folder !== 'inbox' && folder !== 'primary') {
+        try {
+          const inboxRes = await gmail.users.labels.get({ userId: 'me', id: 'INBOX' });
+          if (inboxRes.data && typeof inboxRes.data.messagesUnread === 'number') {
+            unreadCount = inboxRes.data.messagesUnread;
+          }
+        } catch (e) {}
+      }
+
+      let response = await gmail.users.messages.list(listParams);
+
+      // If category:primary returned no messages (fallback to in:inbox if needed)
+      if ((!response.data.messages || response.data.messages.length === 0) && folder === 'primary' && !search.trim()) {
+        listParams.q = 'in:inbox';
+        response = await gmail.users.messages.list(listParams);
+      }
+
       if (!response.data.messages || response.data.messages.length === 0) {
         return res.status(200).json({
           emails: [],
           nextPageToken: null,
-          resultSizeEstimate: 0
+          resultSizeEstimate: 0,
+          totalCount: exactTotal !== null ? exactTotal : 0,
+          unreadCount
         });
       }
 
@@ -165,10 +230,23 @@ exports.getEmails = async (req, res) => {
 
       const validMessages = messages.filter(Boolean);
 
+      let finalTotal = exactTotal;
+      if (finalTotal === null || finalTotal === undefined) {
+        if (!response.data.nextPageToken && (!pageToken || pageToken === '')) {
+          finalTotal = validMessages.length;
+        } else if (!response.data.nextPageToken) {
+          finalTotal = (parseInt(skip) || 0) + validMessages.length;
+        } else {
+          finalTotal = response.data.resultSizeEstimate || validMessages.length;
+        }
+      }
+
       return res.status(200).json({
         emails: validMessages,
         nextPageToken: response.data.nextPageToken || null,
-        resultSizeEstimate: response.data.resultSizeEstimate || validMessages.length
+        resultSizeEstimate: finalTotal,
+        totalCount: finalTotal,
+        unreadCount
       });
 
     } else if (user.activeEmailProvider === 'microsoft') {
@@ -180,16 +258,19 @@ exports.getEmails = async (req, res) => {
       if (folder === 'trash') msFolder = 'deleteditems';
       if (folder === 'spam') msFolder = 'junkemail';
       
-      let endpoint = `https://graph.microsoft.com/v1.0/me/mailFolders/${msFolder}/messages?$top=${limit}&$skip=${skip}&$select=id,subject,bodyPreview,from,toRecipients,receivedDateTime,isRead,flag`;
+      let endpoint = `https://graph.microsoft.com/v1.0/me/mailFolders/${msFolder}/messages?$top=${limit}&$skip=${skip}&$select=id,subject,bodyPreview,from,toRecipients,receivedDateTime,isRead,flag&$count=true`;
       if (folder === 'all') {
-         endpoint = `https://graph.microsoft.com/v1.0/me/messages?$top=${limit}&$skip=${skip}&$select=id,subject,bodyPreview,from,toRecipients,receivedDateTime,isRead,flag`;
+         endpoint = `https://graph.microsoft.com/v1.0/me/messages?$top=${limit}&$skip=${skip}&$select=id,subject,bodyPreview,from,toRecipients,receivedDateTime,isRead,flag&$count=true`;
       }
       if (search.trim()) {
         endpoint += `&$search="${encodeURIComponent(search.trim())}"`;
       }
       
       const response = await axios.get(endpoint, {
-        headers: { Authorization: `Bearer ${user.microsoftAccessToken}` }
+        headers: { 
+          Authorization: `Bearer ${user.microsoftAccessToken}`,
+          ConsistencyLevel: 'eventual'
+        }
       });
 
       const messages = (response.data.value || []).map(msg => ({
@@ -205,10 +286,14 @@ exports.getEmails = async (req, res) => {
         isImportant: false
       }));
 
+      const totalCount = response.data['@odata.count'] || messages.length;
+      const hasNext = (messages.length === limit);
+
       return res.status(200).json({
         emails: messages,
-        nextPageToken: response.data['@odata.nextLink'] || null,
-        resultSizeEstimate: messages.length
+        nextPageToken: hasNext ? String(parseInt(skip || 0) + limit) : null,
+        resultSizeEstimate: totalCount,
+        totalCount: totalCount
       });
     }
     

@@ -26,6 +26,8 @@ const Email = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
+  const [inboxUnreadCount, setInboxUnreadCount] = useState(0);
+  
   // Collapsible sidebar
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const [moreFoldersOpen, setMoreFoldersOpen] = useState(false);
@@ -56,6 +58,14 @@ const Email = () => {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [authRequired, setAuthRequired] = useState(false);
 
+  // Helper to determine active category/folder parameter
+  const getEffectiveFolder = (folder = activeFolder, category = inboxCategory) => {
+    if (folder === 'inbox') {
+      return category || 'primary';
+    }
+    return folder;
+  };
+
   // Close menus on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -79,10 +89,23 @@ const Email = () => {
         const detailRes = await axios.get(`/workspaces/${wsId}`);
         const ws = detailRes.data;
         setWorkspace(ws);
-        fetchFolderEmails(ws, 'inbox', 1, '', '');
+        fetchFolderEmails(ws, 'primary', 1, '', '');
       }
     } catch (error) {
       console.error('Failed to fetch workspace', error);
+    }
+  };
+
+  // Connect Google account handler
+  const handleConnectGmail = async () => {
+    try {
+      const res = await axios.get('/auth/google/url');
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      console.error('Failed to get Google Auth URL', err);
+      showToast('Failed to start Google sign-in', 'error');
     }
   };
 
@@ -97,10 +120,9 @@ const Email = () => {
 
     try {
       const skip = (page - 1) * pageSize;
-      const targetFolder = (folder === 'inbox' && inboxCategory && inboxCategory !== 'primary') ? inboxCategory : folder;
       const res = await axios.get(`/workspaces/${currentWs._id}/emails`, {
         params: {
-          folder: targetFolder,
+          folder,
           search,
           maxResults: pageSize,
           pageToken: token || '',
@@ -118,7 +140,13 @@ const Email = () => {
       } else if (res.data && res.data.emails) {
         rawEmails = res.data.emails;
         nextTok = res.data.nextPageToken || null;
-        totalEst = res.data.resultSizeEstimate || rawEmails.length;
+        totalEst = typeof res.data.totalCount === 'number' 
+          ? res.data.totalCount 
+          : (res.data.resultSizeEstimate || rawEmails.length);
+        
+        if (typeof res.data.unreadCount === 'number') {
+          setInboxUnreadCount(res.data.unreadCount);
+        }
       }
 
       setEmails(rawEmails);
@@ -127,6 +155,8 @@ const Email = () => {
 
       if (nextTok) {
         tokenMapRef.current[page + 1] = nextTok;
+      } else {
+        delete tokenMapRef.current[page + 1];
       }
       setSelectedEmails([]);
     } catch (error) {
@@ -148,7 +178,8 @@ const Email = () => {
         setCurrentPage(1);
         tokenMapRef.current = { 1: '' };
         if (workspace) {
-          fetchFolderEmails(workspace, activeFolder, 1, '', searchQuery);
+          const effective = getEffectiveFolder(activeFolder, inboxCategory);
+          fetchFolderEmails(workspace, effective, 1, '', searchQuery);
         }
       }
     }, 400);
@@ -158,44 +189,50 @@ const Email = () => {
   // Folder Selection
   const handleSelectFolder = (folderId) => {
     setActiveFolder(folderId);
-    if (folderId === 'inbox') setInboxCategory('primary');
+    let targetFolder = folderId;
+    if (folderId === 'inbox') {
+      setInboxCategory('primary');
+      targetFolder = 'primary';
+    }
     setCurrentPage(1);
+    setNextPageToken(null);
     tokenMapRef.current = { 1: '' };
     setSearchQuery('');
     setDebouncedSearch('');
     setViewingEmail(null);
-    fetchFolderEmails(workspace, folderId, 1, '', '');
+    fetchFolderEmails(workspace, targetFolder, 1, '', '');
   };
 
   // Category Tab Selection (Primary, Promotions, Social, Updates)
   const handleSelectCategory = (categoryId) => {
     setInboxCategory(categoryId);
     setCurrentPage(1);
+    setNextPageToken(null);
     tokenMapRef.current = { 1: '' };
     setSearchQuery('');
     setDebouncedSearch('');
     setViewingEmail(null);
-    fetchFolderEmails(workspace, categoryId, 1, '', '');
+    fetchFolderEmails(workspace, categoryId, 1, '', debouncedSearch);
   };
 
   // Next Page
   const handleNextPage = () => {
-    if (!nextPageToken && emails.length < pageSize) return;
+    if (!nextPageToken || loading) return;
     const nextPage = currentPage + 1;
-    const token = tokenMapRef.current[nextPage] || nextPageToken || '';
+    const token = tokenMapRef.current[nextPage] || nextPageToken;
     setCurrentPage(nextPage);
-    const targetFolder = (activeFolder === 'inbox' && inboxCategory && inboxCategory !== 'primary') ? inboxCategory : activeFolder;
-    fetchFolderEmails(workspace, targetFolder, nextPage, token, debouncedSearch);
+    const effective = getEffectiveFolder(activeFolder, inboxCategory);
+    fetchFolderEmails(workspace, effective, nextPage, token, debouncedSearch);
   };
 
   // Prev Page
   const handlePrevPage = () => {
-    if (currentPage <= 1) return;
+    if (currentPage <= 1 || loading) return;
     const prevPage = currentPage - 1;
     const token = tokenMapRef.current[prevPage] || '';
     setCurrentPage(prevPage);
-    const targetFolder = (activeFolder === 'inbox' && inboxCategory && inboxCategory !== 'primary') ? inboxCategory : activeFolder;
-    fetchFolderEmails(workspace, targetFolder, prevPage, token, debouncedSearch);
+    const effective = getEffectiveFolder(activeFolder, inboxCategory);
+    fetchFolderEmails(workspace, effective, prevPage, token, debouncedSearch);
   };
 
   // Open Full Email
@@ -261,7 +298,8 @@ const Email = () => {
       showToast(`${targets.length} email(s) archived`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      fetchFolderEmails(workspace, activeFolder, currentPage, tokenMap[currentPage] || '', debouncedSearch);
+      const effective = getEffectiveFolder(activeFolder, inboxCategory);
+      fetchFolderEmails(workspace, effective, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch);
     } catch (err) {
       showToast('Failed to archive', 'error');
     }
@@ -277,7 +315,8 @@ const Email = () => {
       showToast(`${targets.length} email(s) moved to Trash`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      fetchFolderEmails(workspace, activeFolder, currentPage, tokenMap[currentPage] || '', debouncedSearch);
+      const effective = getEffectiveFolder(activeFolder, inboxCategory);
+      fetchFolderEmails(workspace, effective, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch);
     } catch (err) {
       showToast('Failed to delete', 'error');
     }
@@ -344,7 +383,8 @@ const Email = () => {
       showToast('Email sent successfully!', 'success');
       setIsComposing(false);
       setComposeData({ to: '', cc: '', bcc: '', subject: '', body: '' });
-      fetchFolderEmails(workspace, activeFolder, 1, '', debouncedSearch, true);
+      const effective = getEffectiveFolder(activeFolder, inboxCategory);
+      fetchFolderEmails(workspace, effective, 1, '', debouncedSearch, true);
     } catch (err) {
       showToast('Failed to send email', 'error');
     }
@@ -363,7 +403,12 @@ const Email = () => {
 
   // Folders definition
   const primaryFolders = [
-    { id: 'inbox', label: 'Inbox', icon: Inbox, count: activeFolder === 'inbox' ? emails.filter(e => !e.isRead).length : 0 },
+    { 
+      id: 'inbox', 
+      label: 'Inbox', 
+      icon: Inbox, 
+      count: inboxUnreadCount || (activeFolder === 'inbox' ? emails.filter(e => !e.isRead).length : 0) 
+    },
     { id: 'starred', label: 'Starred', icon: Star },
     { id: 'snoozed', label: 'Snoozed', icon: Clock },
     { id: 'sent', label: 'Sent', icon: Send },
@@ -379,8 +424,10 @@ const Email = () => {
     { id: 'trash', label: 'Trash', icon: Trash2 },
   ];
 
-  const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = startIndex + emails.length - 1;
+  const startIndex = emails.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endIndex = totalCount > 0 
+    ? Math.min(startIndex + emails.length - 1, totalCount) 
+    : (startIndex + emails.length - 1);
 
   if (!workspace) {
     return (
@@ -700,7 +747,10 @@ const Email = () => {
 
                   {/* Refresh */}
                   <button 
-                    onClick={() => fetchFolderEmails(workspace, activeFolder, currentPage, tokenMap[currentPage] || '', debouncedSearch, true)}
+                    onClick={() => {
+                      const effective = getEffectiveFolder(activeFolder, inboxCategory);
+                      fetchFolderEmails(workspace, effective, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch, true);
+                    }}
                     className="p-2 hover:bg-bg-secondary rounded-full text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
                     title="Refresh"
                   >
@@ -744,7 +794,7 @@ const Email = () => {
                     </button>
                     <button 
                       onClick={handleNextPage}
-                      disabled={(!nextPageToken && emails.length < pageSize) || loading}
+                      disabled={!nextPageToken || loading}
                       className="p-1.5 rounded-full hover:bg-bg-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                       title="Older"
                     >
