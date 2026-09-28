@@ -17,9 +17,9 @@ const getValidStages = (project) => {
   const types = project?.projectType || ['Software'];
   const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
   const stages = ['Proposal'];
-  if (hasSoftware) stages.push('UI/UX', 'Tech', 'Test', 'DevOps');
-  if (types.includes('Digital Marketing')) stages.push('Digital Marketing');
-  if (types.includes('SEO')) stages.push('SEO');
+  if (hasSoftware) stages.push('Team 1', 'Team 2', 'Team 3', 'Team 4');
+  if (types.includes('Digital Marketing')) stages.push('Team 5');
+  if (types.includes('SEO')) stages.push('Team 6');
   stages.push('Completed');
   return [...new Set(stages)];
 };
@@ -137,6 +137,12 @@ const ProjectDetails = () => {
     }
 
     const stageToKey = {
+      'Team 1': 'uiux',
+      'Team 2': 'tech',
+      'Team 3': 'test',
+      'Team 4': 'devops',
+      'Team 5': 'digitalMarketing',
+      'Team 6': 'seo',
       'UI/UX': 'uiux',
       'Tech': 'tech',
       'Test': 'test',

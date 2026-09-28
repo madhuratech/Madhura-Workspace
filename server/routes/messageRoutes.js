@@ -3,6 +3,9 @@ const router = express.Router({ mergeParams: true });
 const {
   getChannels,
   createChannel,
+  updateChannel,
+  deleteChannel,
+  addChannelMembers,
   getOrCreateDMChannel,
   getMessages,
   createMessage,
@@ -22,6 +25,13 @@ router.route('/')
 
 router.route('/dm')
   .post(protect, getOrCreateDMChannel);
+
+router.route('/:channelId')
+  .put(protect, updateChannel)
+  .delete(protect, deleteChannel);
+
+router.route('/:channelId/members')
+  .post(protect, addChannelMembers);
 
 router.route('/:channelId/messages')
   .get(protect, getMessages)

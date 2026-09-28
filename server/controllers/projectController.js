@@ -230,17 +230,26 @@ const advanceStage = async (req, res) => {
     }
 
     const hasSoftware = project.projectType.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-    let stages = [];
+    let stages = ['Proposal'];
     if (hasSoftware) {
-      stages.push('Proposal', 'UI/UX', 'Tech', 'Test', 'DevOps');
+      stages.push('Team 1', 'Team 2', 'Team 3', 'Team 4');
     }
-    if (project.projectType.includes('Digital Marketing')) stages.push('Proposal', 'Digital Marketing');
-    if (project.projectType.includes('SEO')) stages.push('Proposal', 'SEO');
+    if (project.projectType.includes('Digital Marketing')) stages.push('Team 5');
+    if (project.projectType.includes('SEO')) stages.push('Team 6');
     stages.push('Completed');
+    stages = [...new Set(stages)];
 
-    if (stages.length === 1) stages.unshift('Proposal'); // Fallback if somehow empty
-
-    const currentIndex = stages.indexOf(project.stage);
+    // Map legacy stage if necessary
+    const legacyStageMap = {
+      'UI/UX': 'Team 1',
+      'Tech': 'Team 2',
+      'Test': 'Team 3',
+      'DevOps': 'Team 4',
+      'Digital Marketing': 'Team 5',
+      'SEO': 'Team 6'
+    };
+    const currentStageName = legacyStageMap[project.stage] || project.stage;
+    const currentIndex = stages.indexOf(currentStageName);
     
     if (currentIndex === -1 || currentIndex >= stages.length - 1) {
       return res.status(400).json({ message: 'Project is already at the final stage.' });
@@ -283,11 +292,12 @@ const advanceStage = async (req, res) => {
     // Send notifications to the incoming team
     const nextStage = project.stage;
     let targetTeam = null;
-    if (nextStage === 'Tech' && populated.workflowTeams?.tech) targetTeam = populated.workflowTeams.tech;
-    else if (nextStage === 'Test' && populated.workflowTeams?.test) targetTeam = populated.workflowTeams.test;
-    else if (nextStage === 'DevOps' && populated.workflowTeams?.devops) targetTeam = populated.workflowTeams.devops;
-    else if (nextStage === 'Digital Marketing' && populated.workflowTeams?.digitalMarketing) targetTeam = populated.workflowTeams.digitalMarketing;
-    else if (nextStage === 'SEO' && populated.workflowTeams?.seo) targetTeam = populated.workflowTeams.seo;
+    if ((nextStage === 'Team 1' || nextStage === 'UI/UX') && populated.workflowTeams?.uiux) targetTeam = populated.workflowTeams.uiux;
+    else if ((nextStage === 'Team 2' || nextStage === 'Tech') && populated.workflowTeams?.tech) targetTeam = populated.workflowTeams.tech;
+    else if ((nextStage === 'Team 3' || nextStage === 'Test') && populated.workflowTeams?.test) targetTeam = populated.workflowTeams.test;
+    else if ((nextStage === 'Team 4' || nextStage === 'DevOps') && populated.workflowTeams?.devops) targetTeam = populated.workflowTeams.devops;
+    else if ((nextStage === 'Team 5' || nextStage === 'Digital Marketing') && populated.workflowTeams?.digitalMarketing) targetTeam = populated.workflowTeams.digitalMarketing;
+    else if ((nextStage === 'Team 6' || nextStage === 'SEO') && populated.workflowTeams?.seo) targetTeam = populated.workflowTeams.seo;
 
     if (targetTeam && targetTeam.members) {
       const allTeamMembers = [...targetTeam.members];

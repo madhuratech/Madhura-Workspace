@@ -508,13 +508,13 @@ const Projects = () => {
                     const hasSoftware = formData.projectType.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
                     const stages = [];
                     if (hasSoftware) {
-                      stages.push({ key: 'uiux', label: 'Team 1 (UI/UX)' });
-                      stages.push({ key: 'tech', label: 'Team 2 (Tech)' });
-                      stages.push({ key: 'test', label: 'Team 3 (Test)' });
-                      stages.push({ key: 'devops', label: 'Team 4 (DevOps)' });
+                      stages.push({ key: 'uiux', label: 'Team 1' });
+                      stages.push({ key: 'tech', label: 'Team 2' });
+                      stages.push({ key: 'test', label: 'Team 3' });
+                      stages.push({ key: 'devops', label: 'Team 4' });
                     }
-                    if (formData.projectType.includes('Digital Marketing')) stages.push({ key: 'digitalMarketing', label: 'Team (Digital Marketing)' });
-                    if (formData.projectType.includes('SEO')) stages.push({ key: 'seo', label: 'Team (SEO)' });
+                    if (formData.projectType.includes('Digital Marketing')) stages.push({ key: 'digitalMarketing', label: 'Team 5' });
+                    if (formData.projectType.includes('SEO')) stages.push({ key: 'seo', label: 'Team 6' });
 
                     if (stages.length === 0) return null;
 

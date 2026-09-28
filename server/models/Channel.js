@@ -18,6 +18,10 @@ const ChannelSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   members: [
     {
       type: mongoose.Schema.Types.ObjectId,

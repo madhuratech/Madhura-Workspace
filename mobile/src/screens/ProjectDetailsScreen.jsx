@@ -29,12 +29,12 @@ const PRIORITY_CONFIG = {
 const getValidStages = (project) => {
   const types = project?.projectType || ['Software'];
   const hasSoftware = types.some(t => ['Software', 'Website', 'SaaS', 'PaaS'].includes(t));
-  let validStages = [];
-  if (hasSoftware) validStages.push('Proposal', 'UI/UX', 'Tech', 'Test', 'DevOps');
-  if (types.includes('Digital Marketing')) validStages.push('Proposal', 'Digital Marketing');
-  if (types.includes('SEO')) validStages.push('Proposal', 'SEO');
+  let validStages = ['Proposal'];
+  if (hasSoftware) validStages.push('Team 1', 'Team 2', 'Team 3', 'Team 4');
+  if (types.includes('Digital Marketing')) validStages.push('Team 5');
+  if (types.includes('SEO')) validStages.push('Team 6');
   validStages.push('Completed');
-  return validStages;
+  return [...new Set(validStages)];
 };
 
 export default function ProjectDetailsScreen({ route, navigation }) {
@@ -118,6 +118,8 @@ export default function ProjectDetailsScreen({ route, navigation }) {
     if (!validStages.includes(currentStage)) currentStage = validStages[0];
 
     const stageToKey = {
+      'Team 1': 'uiux', 'Team 2': 'tech', 'Team 3': 'test', 'Team 4': 'devops',
+      'Team 5': 'digitalMarketing', 'Team 6': 'seo',
       'UI/UX': 'uiux', 'Tech': 'tech', 'Test': 'test', 'DevOps': 'devops',
       'Digital Marketing': 'digitalMarketing', 'SEO': 'seo'
     };

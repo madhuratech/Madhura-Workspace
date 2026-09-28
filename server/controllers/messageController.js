@@ -19,14 +19,95 @@ exports.getChannels = async (req, res) => {
 
 exports.createChannel = async (req, res) => {
   try {
+    let members = req.body.members || [];
+    if (!members.some(m => m.toString() === req.user._id.toString())) {
+      members.push(req.user._id);
+    }
     const channel = await Channel.create({
       name: req.body.name,
       description: req.body.description,
       workspace: req.params.workspaceId,
       isPrivate: req.body.isPrivate || false,
-      members: req.body.members || []
+      createdBy: req.user._id,
+      members: members
     });
     res.status(201).json(channel);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateChannel = async (req, res) => {
+  try {
+    const channel = await Channel.findById(req.params.channelId);
+    if (!channel) return res.status(404).json({ message: 'Channel not found' });
+
+    const isCreator = channel.createdBy && channel.createdBy.toString() === req.user._id.toString();
+    const isSuperAdmin = req.user.role === 'super_admin';
+    if (!isCreator && !isSuperAdmin) {
+      return res.status(403).json({ message: 'Only the channel creator can edit this channel' });
+    }
+
+    if (req.body.name) channel.name = req.body.name.toLowerCase().replace(/\s+/g, '-');
+    if (req.body.description !== undefined) channel.description = req.body.description;
+    if (req.body.isPrivate !== undefined) channel.isPrivate = req.body.isPrivate;
+    if (req.body.members) {
+      let members = req.body.members;
+      if (channel.createdBy && !members.some(m => m.toString() === channel.createdBy.toString())) {
+        members.push(channel.createdBy);
+      }
+      channel.members = members;
+    }
+
+    await channel.save();
+    res.status(200).json(channel);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.deleteChannel = async (req, res) => {
+  try {
+    const channel = await Channel.findById(req.params.channelId);
+    if (!channel) return res.status(404).json({ message: 'Channel not found' });
+
+    const isCreator = channel.createdBy && channel.createdBy.toString() === req.user._id.toString();
+    const isSuperAdmin = req.user.role === 'super_admin';
+    if (!isCreator && !isSuperAdmin) {
+      return res.status(403).json({ message: 'Only the channel creator can delete this channel' });
+    }
+
+    await Message.deleteMany({ channel: channel._id });
+    await Channel.findByIdAndDelete(channel._id);
+
+    res.status(200).json({ message: 'Channel deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.addChannelMembers = async (req, res) => {
+  try {
+    const channel = await Channel.findById(req.params.channelId);
+    if (!channel) return res.status(404).json({ message: 'Channel not found' });
+
+    const isCreator = channel.createdBy && channel.createdBy.toString() === req.user._id.toString();
+    const isSuperAdmin = req.user.role === 'super_admin';
+    if (!isCreator && !isSuperAdmin) {
+      return res.status(403).json({ message: 'Only the channel creator can add members' });
+    }
+
+    const { memberIds } = req.body;
+    if (memberIds && Array.isArray(memberIds)) {
+      memberIds.forEach(id => {
+        if (!channel.members.some(m => m.toString() === id.toString())) {
+          channel.members.push(id);
+        }
+      });
+      await channel.save();
+    }
+
+    res.status(200).json(channel);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

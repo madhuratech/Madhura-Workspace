@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft, Send, Check, CheckCheck, Smile,
   Paperclip, Image as ImageIcon, File, Video,
+  Settings, Trash2, Edit3, MoreVertical, X, Users,
 } from 'lucide-react-native';
 import axios from 'axios';
 import { io } from 'socket.io-client';
@@ -56,7 +57,7 @@ const emojiStyles = StyleSheet.create({
 
 // ── Main Screen ────────────────────────────────────────────────────────────
 export default function ChatWindowScreen({ route, navigation }) {
-  const { workspaceId, channelId, channelName, isDM } = route.params;
+  const { workspaceId, channelId, channelName, isDM, channel } = route.params;
   const { user } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -65,6 +66,16 @@ export default function ChatWindowScreen({ route, navigation }) {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
+
+  // Channel edit/delete state
+  const isChannelCreator = !isDM && (
+    (channel?.createdBy && String(channel.createdBy) === String(user?._id)) ||
+    user?.role === 'super_admin'
+  );
+  const [isChannelModalVisible, setIsChannelModalVisible] = useState(false);
+  const [editName, setEditName] = useState(channelName || '');
+  const [editDesc, setEditDesc] = useState(channel?.description || '');
+  const [isSavingChannel, setIsSavingChannel] = useState(false);
 
   const socketRef = useRef(null);
   const flatListRef = useRef(null);
@@ -243,6 +254,46 @@ export default function ChatWindowScreen({ route, navigation }) {
         }
       }
     ]);
+  };
+
+  const handleSaveChannel = async () => {
+    if (!editName.trim()) return;
+    setIsSavingChannel(true);
+    try {
+      await axios.put(`/workspaces/${workspaceId}/channels/${channelId}`, {
+        name: editName.trim(),
+        description: editDesc.trim(),
+      });
+      setIsChannelModalVisible(false);
+      Alert.alert('Success', 'Channel updated successfully');
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || 'Failed to update channel');
+    } finally {
+      setIsSavingChannel(false);
+    }
+  };
+
+  const handleDeleteChannel = () => {
+    Alert.alert(
+      'Delete Channel',
+      `Are you sure you want to delete #${channelName}? All messages will be permanently deleted.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete(`/workspaces/${workspaceId}/channels/${channelId}`);
+              setIsChannelModalVisible(false);
+              navigation.goBack();
+            } catch (err) {
+              Alert.alert('Error', err.response?.data?.message || 'Failed to delete channel');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleFileUpload = async (type) => {
@@ -444,6 +495,14 @@ export default function ChatWindowScreen({ route, navigation }) {
             {isDM ? channelName : `# ${channelName}`}
           </Text>
         </View>
+        {isChannelCreator && (
+          <TouchableOpacity 
+            style={styles.settingsBtn} 
+            onPress={() => setIsChannelModalVisible(true)}
+          >
+            <Settings color="#1b2b4c" size={20} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <KeyboardAvoidingView
@@ -604,6 +663,67 @@ export default function ChatWindowScreen({ route, navigation }) {
           />
         )}
       </KeyboardAvoidingView>
+
+      {/* Channel Management Modal */}
+      <Modal
+        visible={isChannelModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsChannelModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Channel Settings</Text>
+              <TouchableOpacity onPress={() => setIsChannelModalVisible(false)}>
+                <X color="#64748B" size={20} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.inputLabel}>Channel Name</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="e.g. general"
+              placeholderTextColor="#94A3B8"
+            />
+
+            <Text style={styles.inputLabel}>Description</Text>
+            <TextInput
+              style={[styles.modalInput, { height: 70, textAlignVertical: 'top' }]}
+              value={editDesc}
+              onChangeText={setEditDesc}
+              placeholder="What is this channel about?"
+              placeholderTextColor="#94A3B8"
+              multiline
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.deleteChannelBtn}
+                onPress={handleDeleteChannel}
+              >
+                <Trash2 color="#EF4444" size={16} />
+                <Text style={styles.deleteChannelText}>Delete</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.saveChannelBtn, isSavingChannel && { opacity: 0.7 }]}
+                onPress={handleSaveChannel}
+                disabled={isSavingChannel}
+              >
+                {isSavingChannel ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.saveChannelText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -616,8 +736,47 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 12,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
+  settingsBtn: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center', alignItems: 'center', padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#fff', borderRadius: 20, width: '100%',
+    padding: 22, shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15, shadowRadius: 20, elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1b2b4c' },
+  inputLabel: { fontSize: 12, fontWeight: '600', color: '#64748B', marginBottom: 6, textTransform: 'uppercase' },
+  modalInput: {
+    backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
+    paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#1b2b4c',
+    marginBottom: 14,
+  },
+  modalActions: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 10,
+  },
+  deleteChannelBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10,
+    backgroundColor: '#FEF2F2',
+  },
+  deleteChannelText: { color: '#EF4444', fontWeight: '700', fontSize: 13 },
+  saveChannelBtn: {
+    backgroundColor: '#1b2b4c', paddingHorizontal: 20, paddingVertical: 10,
+    borderRadius: 10, minWidth: 80, alignItems: 'center',
+  },
+  saveChannelText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   backBtn: {
     width: 36, height: 36, borderRadius: 10, backgroundColor: '#F1F5F9',
     justifyContent: 'center', alignItems: 'center', marginRight: 12,

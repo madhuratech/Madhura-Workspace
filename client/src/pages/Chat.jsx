@@ -22,6 +22,8 @@ const Chat = () => {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [newChannelData, setNewChannelData] = useState({ name: '', description: '', isPrivate: false, members: [] });
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
+  const [isEditChannelModalOpen, setIsEditChannelModalOpen] = useState(false);
+  const [editChannelData, setEditChannelData] = useState({ _id: '', name: '', description: '', isPrivate: false, members: [] });
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
@@ -455,6 +457,54 @@ const Chat = () => {
     }
   };
 
+  const isChannelCreator = activeChannel && (
+    (activeChannel.createdBy && String(activeChannel.createdBy) === String(user?._id)) ||
+    user?.role === 'super_admin'
+  );
+
+  const handleOpenEditChannel = () => {
+    if (!activeChannel) return;
+    setEditChannelData({
+      _id: activeChannel._id,
+      name: activeChannel.name,
+      description: activeChannel.description || '',
+      isPrivate: !!activeChannel.isPrivate,
+      members: activeChannel.members || []
+    });
+    setIsEditChannelModalOpen(true);
+  };
+
+  const handleUpdateChannel = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.put(`/workspaces/${workspace._id}/channels/${editChannelData._id}`, {
+        name: editChannelData.name,
+        description: editChannelData.description,
+        isPrivate: editChannelData.isPrivate,
+        members: editChannelData.members
+      });
+      setChannels(channels.map(c => c._id === res.data._id ? res.data : c));
+      setActiveChannel(res.data);
+      setIsEditChannelModalOpen(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update channel');
+    }
+  };
+
+  const handleDeleteChannel = async () => {
+    if (!activeChannel) return;
+    if (!window.confirm(`Are you sure you want to delete #${activeChannel.name}? All messages will be permanently removed.`)) return;
+    try {
+      await axios.delete(`/workspaces/${workspace._id}/channels/${activeChannel._id}`);
+      const remaining = channels.filter(c => c._id !== activeChannel._id);
+      setChannels(remaining);
+      setActiveChannel(remaining[0] || null);
+      setIsEditChannelModalOpen(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete channel');
+    }
+  };
+
   const handleOpenChannelModal = () => {
     setNewChannelData({ name: '', description: '', isPrivate: false, members: [] });
     setIsChannelModalOpen(true);
@@ -779,6 +829,27 @@ const Chat = () => {
                 {activeChannel ? (activeChannel.members?.length || workspaceMembers.length) : activeDM ? 2 : 0}
               </span>
             </button>
+
+            {isChannelCreator && (
+              <>
+                <button 
+                  onClick={handleOpenEditChannel}
+                  className="p-1.5 px-2 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-accent-blue transition-colors flex items-center space-x-1 text-xs font-medium"
+                  title="Channel Settings & Members"
+                >
+                  <Edit2 size={15} />
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+                <button 
+                  onClick={handleDeleteChannel}
+                  className="p-1.5 px-2 rounded-lg text-text-secondary hover:bg-danger/10 hover:text-danger transition-colors flex items-center space-x-1 text-xs font-medium"
+                  title="Delete Channel"
+                >
+                  <Trash2 size={15} />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -1287,6 +1358,122 @@ const Chat = () => {
                   className="bg-accent-blue text-white px-5 py-2 rounded-xl hover:bg-accent-indigo transition-colors text-sm font-semibold shadow-sm">
                   Create Channel
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT CHANNEL MODAL */}
+      {isEditChannelModalOpen && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h3 className="text-lg font-bold text-text-primary">Edit #{editChannelData.name}</h3>
+                <p className="text-xs text-text-secondary">Update channel settings and member access.</p>
+              </div>
+              <button onClick={() => setIsEditChannelModalOpen(false)}
+                className="text-text-secondary hover:text-text-primary p-1.5 rounded-lg hover:bg-bg-primary transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateChannel} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Channel Name</label>
+                <div className="relative">
+                  <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                  <input
+                    type="text" required
+                    value={editChannelData.name}
+                    onChange={e => setEditChannelData({...editChannelData, name: e.target.value})}
+                    className="w-full bg-bg-primary border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Description</label>
+                <input
+                  type="text"
+                  value={editChannelData.description}
+                  onChange={e => setEditChannelData({...editChannelData, description: e.target.value})}
+                  className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
+                  placeholder="Channel topic or purpose"
+                />
+              </div>
+
+              <label className="flex items-center space-x-3 p-3 rounded-xl border border-border hover:bg-bg-primary cursor-pointer transition-colors">
+                <input
+                  type="checkbox"
+                  className="accent-accent-blue w-4 h-4"
+                  checked={editChannelData.isPrivate}
+                  onChange={e => setEditChannelData({...editChannelData, isPrivate: e.target.checked})}
+                />
+                <div>
+                  <p className="text-sm font-medium text-text-primary">Private channel</p>
+                  <p className="text-[11px] text-text-secondary">Only selected members can view this channel</p>
+                </div>
+              </label>
+
+              {editChannelData.isPrivate && (
+                <div>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Manage Members</label>
+                  <div className="max-h-40 overflow-y-auto border border-border rounded-xl bg-bg-primary custom-scrollbar">
+                    {workspace.members?.filter(m => m.user && String(m.user._id) !== String(user._id)).map(m => {
+                      const isSelected = editChannelData.members?.some(id => String(id?._id || id) === String(m.user._id));
+                      return (
+                        <label key={m.user._id} className="flex items-center space-x-3 px-3 py-2 hover:bg-bg-secondary cursor-pointer transition-colors">
+                          <input
+                            type="checkbox"
+                            className="accent-accent-blue"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setEditChannelData({
+                                  ...editChannelData,
+                                  members: [...(editChannelData.members || []), m.user._id]
+                                });
+                              } else {
+                                setEditChannelData({
+                                  ...editChannelData,
+                                  members: (editChannelData.members || []).filter(id => String(id?._id || id) !== String(m.user._id))
+                                });
+                              }
+                            }}
+                          />
+                          <Avatar user={m.user} size="w-6 h-6" textClass="text-[9px]" showStatus={false} />
+                          <div>
+                            <p className="text-sm font-medium text-text-primary leading-none">{m.user.name}</p>
+                            <p className="text-[10px] text-text-secondary mt-0.5 capitalize">{m.role?.replace('_', ' ')}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleDeleteChannel}
+                  className="px-3 py-2 text-danger hover:bg-danger/10 rounded-xl transition-colors text-xs font-semibold flex items-center space-x-1"
+                >
+                  <Trash2 size={14} />
+                  <span>Delete</span>
+                </button>
+                <div className="flex space-x-2">
+                  <button type="button" onClick={() => setIsEditChannelModalOpen(false)}
+                    className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-xl transition-colors text-sm font-medium">
+                    Cancel
+                  </button>
+                  <button type="submit"
+                    className="bg-accent-blue text-white px-5 py-2 rounded-xl hover:bg-accent-indigo transition-colors text-sm font-semibold shadow-sm">
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </form>
           </div>

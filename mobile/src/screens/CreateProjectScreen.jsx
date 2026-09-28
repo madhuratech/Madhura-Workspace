@@ -69,14 +69,14 @@ export default function CreateProjectScreen({ navigation }) {
   const requiredStages = [];
   if (hasSoftware) {
     requiredStages.push(
-      { key: 'uiux', label: 'UI/UX' },
-      { key: 'tech', label: 'TECH' },
-      { key: 'test', label: 'TEST' },
-      { key: 'devops', label: 'DEVOPS' }
+      { key: 'uiux', label: 'Team 1' },
+      { key: 'tech', label: 'Team 2' },
+      { key: 'test', label: 'Team 3' },
+      { key: 'devops', label: 'Team 4' }
     );
   }
-  if (hasDM) requiredStages.push({ key: 'digitalMarketing', label: 'DIGITAL MKTG' });
-  if (hasSEO) requiredStages.push({ key: 'seo', label: 'SEO' });
+  if (hasDM) requiredStages.push({ key: 'digitalMarketing', label: 'Team 5' });
+  if (hasSEO) requiredStages.push({ key: 'seo', label: 'Team 6' });
 
   const handleCreate = async () => {
     if (!name.trim()) {

@@ -115,6 +115,9 @@ export default function ChatScreen({ navigation }) {
   const [publicChannels, setPublicChannels] = useState([]);
   const [privateChannels, setPrivateChannels] = useState([]);
   const [members, setMembers] = useState([]);
+  const [memberLastActive, setMemberLastActive] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
   const [loading, setLoading] = useState(true);
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -128,16 +131,20 @@ export default function ChatScreen({ navigation }) {
       const ws = await cachedGet('/workspaces');
       if (ws.length > 0) {
         setWorkspace(ws[0]);
-        const [detail, chs] = await Promise.all([
+        const [detail, chs, dmRecent] = await Promise.all([
           cachedGet(`/workspaces/${ws[0]._id}`),
           cachedGet(`/workspaces/${ws[0]._id}/channels`),
+          cachedGet(`/workspaces/${ws[0]._id}/dms/activity/recent`).catch(() => ({}))
         ]);
+        if (dmRecent && typeof dmRecent === 'object') {
+          setMemberLastActive(dmRecent);
+        }
         if (detail?.members) {
-          setMembers(
-            detail.members
-              .filter(m => m.user && String(m.user._id) !== String(user._id))
-              .map(m => m.user)
-          );
+          const rawMembers = detail.members
+            .filter(m => m.user && String(m.user._id) !== String(user._id))
+            .map(m => m.user);
+          
+          setMembers(rawMembers);
         }
         const allChannels = (Array.isArray(chs) ? chs : []).filter(c => !c.name.startsWith('dm-'));
         setPublicChannels(allChannels.filter(c => !c.isPrivate));
@@ -152,6 +159,7 @@ export default function ChatScreen({ navigation }) {
       workspaceId: workspace._id,
       channelId: ch._id,
       channelName: ch.name,
+      channel: ch,
       isDM: false,
     });
   };
@@ -170,15 +178,60 @@ export default function ChatScreen({ navigation }) {
     } catch (e) { console.error(e); }
   };
 
+  const filteredPublicChannels = publicChannels.filter(c => 
+    !searchQuery.trim() || c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredPrivateChannels = privateChannels.filter(c => 
+    !searchQuery.trim() || c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredMembers = members
+    .filter(m => {
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase();
+      const name = m.name?.toLowerCase() || '';
+      const email = m.email?.toLowerCase() || '';
+      const designation = m.designation?.toLowerCase() || '';
+      return name.includes(q) || email.includes(q) || designation.includes(q);
+    })
+    .sort((a, b) => {
+      const timeA = memberLastActive[a._id] || 0;
+      const timeB = memberLastActive[b._id] || 0;
+      if (timeA !== timeB) return timeB - timeA;
+      return (a.name || a.email || '').localeCompare(b.name || b.email || '');
+    });
+
   return (
     <SafeAreaView style={styles.container}>
 
       {/* Header */}
       <Animated.View style={[styles.header, { opacity: fade }]}>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity style={styles.searchBtn}>
-          <Search color="#6B7280" size={18} strokeWidth={2} />
-        </TouchableOpacity>
+        {showSearch ? (
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search channels or people..."
+              placeholderTextColor="#9CA3AF"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            <TouchableOpacity 
+              style={{ marginLeft: 8, padding: 6 }} 
+              onPress={() => { setShowSearch(false); setSearchQuery(''); }}
+            >
+              <Text style={{ color: '#6B7280', fontWeight: '600', fontSize: 14 }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.headerTitle}>Messages</Text>
+            <TouchableOpacity style={styles.searchBtn} onPress={() => setShowSearch(true)}>
+              <Search color="#6B7280" size={18} strokeWidth={2} />
+            </TouchableOpacity>
+          </>
+        )}
       </Animated.View>
 
       <ScrollView
@@ -189,19 +242,19 @@ export default function ChatScreen({ navigation }) {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Public Channels</Text>
           <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{publicChannels.length}</Text>
+            <Text style={styles.sectionBadgeText}>{filteredPublicChannels.length}</Text>
           </View>
         </View>
 
         {loading ? (
           [1, 2].map(i => <SkeletonRow key={i} />)
-        ) : publicChannels.length === 0 ? (
+        ) : filteredPublicChannels.length === 0 ? (
           <View style={styles.emptySection}>
             <Hash color="#E5E7EB" size={18} />
-            <Text style={styles.emptySectionText}>No public channels yet</Text>
+            <Text style={styles.emptySectionText}>No public channels found</Text>
           </View>
         ) : (
-          publicChannels.map((ch, i) => (
+          filteredPublicChannels.map((ch, i) => (
             <ChannelRow
               key={ch._id}
               channel={ch}
@@ -213,19 +266,19 @@ export default function ChatScreen({ navigation }) {
         )}
 
         {/* ── Private Channels ──────────────────────────── */}
-        {(!loading && privateChannels.length > 0) && (
+        {(!loading && (filteredPrivateChannels.length > 0 || privateChannels.length > 0)) && (
           <>
             <View style={[styles.sectionHeader, { marginTop: 8 }]}>
               <Text style={styles.sectionTitle}>Private Channels</Text>
               <View style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>{privateChannels.length}</Text>
+                <Text style={styles.sectionBadgeText}>{filteredPrivateChannels.length}</Text>
               </View>
             </View>
-            {privateChannels.map((ch, i) => (
+            {filteredPrivateChannels.map((ch, i) => (
               <ChannelRow
                 key={ch._id}
                 channel={ch}
-                idx={i + publicChannels.length}
+                idx={i + filteredPublicChannels.length}
                 delay={i * 40}
                 onPress={() => openChannel(ch)}
               />
@@ -237,19 +290,19 @@ export default function ChatScreen({ navigation }) {
         <View style={[styles.sectionHeader, { marginTop: 8 }]}>
           <Text style={styles.sectionTitle}>Direct Messages</Text>
           <View style={styles.sectionBadge}>
-            <Text style={styles.sectionBadgeText}>{members.length}</Text>
+            <Text style={styles.sectionBadgeText}>{filteredMembers.length}</Text>
           </View>
         </View>
 
         {loading ? (
           [1, 2, 3].map(i => <SkeletonRow key={i} />)
-        ) : members.length === 0 ? (
+        ) : filteredMembers.length === 0 ? (
           <View style={styles.emptySection}>
             <Users color="#E5E7EB" size={18} />
-            <Text style={styles.emptySectionText}>No team members</Text>
+            <Text style={styles.emptySectionText}>No team members found</Text>
           </View>
         ) : (
-          members.map((m, i) => (
+          filteredMembers.map((m, i) => (
             <DMRow
               key={m._id}
               member={m}
@@ -271,7 +324,7 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 16,
+    paddingHorizontal: 16, paddingVertical: 12,
     backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
   },
   headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
@@ -279,6 +332,15 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: '#F3F4F6',
     justifyContent: 'center', alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    height: 38,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#111827'
   },
 
   scroll: { paddingBottom: 40 },
