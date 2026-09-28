@@ -28,19 +28,23 @@ router.post('/', async (req, res) => {
       date: dateStr,
       reason,
       requestedLeaveTime,
-      status: 'pending_tl'
+      status: 'pending_hr'
     });
 
     await earlyLeave.save();
 
-    // Notify Team Leaders
+    // Notify only MD (Super Admin) and HR
     const workspace = await Workspace.findById(workspaceId).populate('members.user');
-    const tls = workspace.members.filter(m => m.role === 'team_leader');
+    const mdAndHrs = workspace.members.filter(m => 
+      m.user && 
+      ['super_admin', 'hr'].includes(m.role) && 
+      m.user._id.toString() !== req.user._id.toString()
+    );
     
-    for (const tl of tls) {
+    for (const admin of mdAndHrs) {
       await sendNotification(
         req,
-        tl.user._id,
+        admin.user._id,
         'alert',
         'Early Leave Request',
         `${req.user.name} has requested to leave early at ${requestedLeaveTime}. Reason: ${reason}`,
@@ -55,7 +59,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 2. Get early leave requests based on user role
+// 2. Get early leave requests based on user role (Only MD & HR see all; TL & Employees see only their own)
 router.get('/', async (req, res) => {
   try {
     const { workspaceId } = req.params;
@@ -67,27 +71,12 @@ router.get('/', async (req, res) => {
 
     let filter = { workspace: workspaceId };
     
-    if (member.role === 'employee') {
+    if (member.role === 'super_admin' || member.role === 'hr') {
+      // MD & HR see all requests
+      filter = { workspace: workspaceId };
+    } else {
+      // Employees and TLs only see their own requests
       filter.employee = req.user._id;
-    } else if (member.role === 'team_leader') {
-      // TL sees their own requests AND requests from employees pending their approval or approved by them
-      filter = {
-        $or: [
-          { employee: req.user._id },
-          { workspace: workspaceId, status: { $in: ['pending_tl', 'pending_hr', 'pending_md', 'approved', 'rejected'] } }
-        ]
-      };
-    } else if (member.role === 'hr') {
-      // HR sees their own + pending HR + further
-      filter = {
-        $or: [
-          { employee: req.user._id },
-          { workspace: workspaceId, status: { $in: ['pending_hr', 'pending_md', 'approved', 'rejected'] } }
-        ]
-      };
-    } else if (member.role === 'super_admin') {
-      // MD sees all pending MD + further
-      filter = { workspace: workspaceId }; 
     }
 
     const requests = await EarlyLeave.find(filter)
@@ -101,7 +90,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 3. Approve early leave (Role based logic)
+// 3. Approve early leave (MD and HR can approve)
 router.put('/:id/approve', async (req, res) => {
   try {
     const { workspaceId, id } = req.params;
@@ -112,40 +101,22 @@ router.put('/:id/approve', async (req, res) => {
 
     const workspace = await Workspace.findById(workspaceId);
     const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
-    const role = member.role;
+    const role = member ? member.role : 'employee';
 
-    if (role === 'team_leader' && earlyLeave.status === 'pending_tl') {
-      earlyLeave.status = 'pending_hr';
-      earlyLeave.tlApprovedBy = req.user._id;
-      earlyLeave.tlApprovedAt = new Date();
-      earlyLeave.tlNote = note;
-      
-      // Notify HR
-      const hrs = workspace.members.filter(m => m.role === 'hr');
-      for (const hr of hrs) {
-        await sendNotification(req, hr.user, 'alert', 'Early Leave Approval Pending', `TL approved early leave for ${earlyLeave.employee.name}. Waiting for your approval.`, `/attendance`);
-      }
-    } 
-    else if (role === 'hr' && ['pending_tl', 'pending_hr'].includes(earlyLeave.status)) {
-      earlyLeave.status = 'pending_md';
-      earlyLeave.hrApprovedBy = req.user._id;
-      earlyLeave.hrApprovedAt = new Date();
-      earlyLeave.hrNote = note;
-      
-      // Notify MD
-      const mds = workspace.members.filter(m => m.role === 'super_admin');
-      for (const md of mds) {
-        await sendNotification(req, md.user, 'alert', 'Early Leave Approval Pending', `HR approved early leave for ${earlyLeave.employee.name}. Waiting for MD approval.`, `/attendance`);
-      }
-    }
-    else if (role === 'super_admin' && ['pending_tl', 'pending_hr', 'pending_md'].includes(earlyLeave.status)) {
+    if (role === 'hr' || role === 'super_admin') {
       earlyLeave.status = 'approved';
-      earlyLeave.mdApprovedBy = req.user._id;
-      earlyLeave.mdApprovedAt = new Date();
-      earlyLeave.mdNote = note;
+      if (role === 'hr') {
+        earlyLeave.hrApprovedBy = req.user._id;
+        earlyLeave.hrApprovedAt = new Date();
+        earlyLeave.hrNote = note;
+      } else {
+        earlyLeave.mdApprovedBy = req.user._id;
+        earlyLeave.mdApprovedAt = new Date();
+        earlyLeave.mdNote = note;
+      }
       
       // Notify Employee
-      await sendNotification(req, earlyLeave.employee._id, 'success', 'Early Leave Approved', `Your early leave request has been approved by the MD. You can now punch out.`, `/attendance`);
+      await sendNotification(req, earlyLeave.employee._id, 'success', 'Early Leave Approved', `Your early leave request for ${earlyLeave.requestedLeaveTime} has been approved. You can now punch out.`, `/attendance`);
       
       // Mark attendance as earlyLeaveApproved
       const attendance = await Attendance.findOne({ workspace: workspaceId, user: earlyLeave.employee._id, date: earlyLeave.date });
@@ -155,8 +126,16 @@ router.put('/:id/approve', async (req, res) => {
         await attendance.save();
       }
     } else {
-      return res.status(400).json({ message: 'Invalid action for your role or request status' });
+      return res.status(403).json({ message: 'Only MD and HR are authorized to approve early leave requests' });
     }
+
+    await earlyLeave.save();
+    res.json(earlyLeave);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
     await earlyLeave.save();
     res.json(earlyLeave);

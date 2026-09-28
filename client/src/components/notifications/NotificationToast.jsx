@@ -31,15 +31,25 @@ const NotificationToast = () => {
   useEffect(() => {
     const handleInAppNotification = (e) => {
       const notification = e.detail;
+      if (!notification) return;
+
       setToasts(prev => {
-        // Prevent duplicate toasts
-        if (prev.find(t => t._id === notification._id)) return prev;
+        // Prevent duplicate toasts by _id
+        if (notification._id && prev.some(t => String(t._id) === String(notification._id))) {
+          return prev;
+        }
+
+        // Prevent duplicate by matching title & message
+        if (prev.some(t => t.title === notification.title && t.message === notification.message)) {
+          return prev;
+        }
+
         return [...prev, notification];
       });
 
       // Auto-remove after 5 seconds
       setTimeout(() => {
-        setToasts(prev => prev.filter(t => t._id !== notification._id));
+        setToasts(prev => prev.filter(t => t._id !== notification._id && (t.title !== notification.title || t.message !== notification.message)));
       }, 5000);
     };
 

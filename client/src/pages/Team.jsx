@@ -84,7 +84,17 @@ const Team = () => {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
   
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'employee', designation: '' });
+  const [searchMemberQuery, setSearchMemberQuery] = useState('');
+
+  const filteredMembers = members.filter(member => {
+    if (!searchMemberQuery.trim()) return true;
+    const q = searchMemberQuery.toLowerCase();
+    const name = member.user?.name?.toLowerCase() || '';
+    const email = member.user?.email?.toLowerCase() || '';
+    const designation = member.user?.designation?.toLowerCase() || '';
+    const role = member.role?.toLowerCase() || '';
+    return name.includes(q) || email.includes(q) || designation.includes(q) || role.includes(q);
+  });
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [newTeamName, setNewTeamName] = useState('');
 
@@ -319,10 +329,20 @@ const Team = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
             <input 
               type="text" 
-              placeholder="Search members..." 
+              value={searchMemberQuery}
+              onChange={(e) => setSearchMemberQuery(e.target.value)}
+              placeholder="Search members by name, email, designation..." 
               className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
             />
           </div>
+          {searchMemberQuery && (
+            <button
+              onClick={() => setSearchMemberQuery('')}
+              className="text-xs text-text-secondary hover:text-text-primary underline"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto flex-1">
@@ -331,53 +351,56 @@ const Team = () => {
               {/* Header Row */}
               <div className="flex items-center px-4 py-2 text-[10px] font-bold text-text-secondary uppercase tracking-wider hidden md:flex">
                 <div className="w-64">Member</div>
-                <div className="w-32">Status</div>
+                <div className="w-36">Status</div>
                 <div className="w-48">Designation</div>
                 <div className="flex-1">Role</div>
-                <div className="w-12 text-center"></div>
+                <div className="w-32 text-right pr-2">Actions</div>
               </div>
 
-              {members.map((member) => (
+              {filteredMembers.map((member) => (
                 <div 
                   key={member.user._id} 
                   onClick={() => setViewMember(member)}
-                  className="group flex flex-col md:flex-row md:items-center bg-bg-primary border border-border hover:border-accent-blue/50 p-4 rounded-xl shadow-sm transition-all cursor-pointer relative"
+                  className="group flex flex-col md:flex-row md:items-center justify-between bg-bg-primary border border-border hover:border-accent-blue/50 p-3.5 md:p-4 rounded-xl shadow-sm transition-all cursor-pointer relative"
                 >
-                  {/* Avatar & Name */}
-                  <div className="flex items-center w-64 mb-3 md:mb-0">
-                    <Avatar user={member.user} size="h-10 w-10" />
-                    <div className="ml-3 truncate">
-                      <p className="font-bold text-sm text-text-primary truncate">{member.user.name || 'Pending User'}</p>
-                      <p className="text-[11px] text-text-secondary truncate">{member.user.email}</p>
+                  {/* Left info sections */}
+                  <div className="flex flex-col md:flex-row md:items-center flex-1 min-w-0 pr-2">
+                    {/* Avatar & Name */}
+                    <div className="flex items-center w-full md:w-64 mb-2.5 md:mb-0 shrink-0">
+                      <Avatar user={member.user} size="h-10 w-10" />
+                      <div className="ml-3 truncate">
+                        <p className="font-bold text-sm text-text-primary truncate">{member.user.name || 'Pending User'}</p>
+                        <p className="text-[11px] text-text-secondary truncate">{member.user.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="w-full md:w-36 mb-2 md:mb-0 shrink-0">
+                      <StatusBadge status={member.user.presenceStatus || 'Active'} />
+                    </div>
+
+                    {/* Designation */}
+                    <div className="w-full md:w-48 mb-2 md:mb-0 shrink-0">
+                      <p className="text-xs text-text-secondary truncate">{member.user.designation || '-'}</p>
+                    </div>
+
+                    {/* Role */}
+                    <div className="flex-1 mb-2 md:mb-0">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm ${
+                        member.role === 'super_admin' ? 'text-purple-500 bg-purple-500/10 border border-purple-500/20' : 
+                        member.role === 'hr' ? 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20' :
+                        member.role === 'team_leader' ? 'text-orange-400 bg-orange-400/10 border border-orange-400/20' :
+                        'text-success bg-success/10 border border-success/20'
+                      }`}>
+                        {member.role.replace(/_/g, ' ')}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Status */}
-                  <div className="w-44 mb-3 md:mb-0">
-                    <StatusBadge status={member.user.presenceStatus || 'Active'} />
-                  </div>
-
-                  {/* Designation */}
-                  <div className="w-48 mb-3 md:mb-0">
-                    <p className="text-xs text-text-secondary">{member.user.designation || '-'}</p>
-                  </div>
-
-                  {/* Role */}
-                  <div className="flex-1 mb-3 md:mb-0">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm ${
-                      member.role === 'super_admin' ? 'text-purple-500 bg-purple-500/10 border border-purple-500/20' : 
-                      member.role === 'hr' ? 'text-accent-blue bg-accent-blue/10 border border-accent-blue/20' :
-                      member.role === 'team_leader' ? 'text-orange-400 bg-orange-400/10 border border-orange-400/20' :
-                      'text-success bg-success/10 border border-success/20'
-                    }`}>
-                      {member.role.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-
-                  {/* Actions (Three dots style) */}
-                  <div className="md:w-12 flex justify-end md:justify-center absolute top-4 right-4 md:static">
+                  {/* Actions Container - Fully Contained Inside Box */}
+                  <div className="w-full md:w-32 flex justify-end items-center pt-2 md:pt-0 border-t md:border-t-0 border-border/40 shrink-0">
                     {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-2">
+                      <div className="flex items-center space-x-1.5 opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleOpenResetPassword(member); }}
                           className="p-1.5 bg-bg-secondary hover:bg-amber-500 hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
@@ -404,10 +427,10 @@ const Team = () => {
                   </div>
                 </div>
               ))}
-              {members.length === 0 && (
+              {filteredMembers.length === 0 && (
                 <div className="text-center py-12 text-text-secondary bg-bg-primary rounded-xl border border-dashed border-border">
                   <UserPlus size={32} className="mx-auto mb-3 opacity-30" />
-                  <p>No members found. Invite someone!</p>
+                  <p>{searchMemberQuery ? 'No members match your search' : 'No members found. Invite someone!'}</p>
                 </div>
               )}
             </div>

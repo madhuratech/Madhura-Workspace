@@ -25,11 +25,12 @@ const Chat = () => {
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
-  const [uploadingFile, setUploadingFile] = useState(false);
   const [channelsCollapsed, setChannelsCollapsed] = useState(false);
   const [dmsCollapsed, setDmsCollapsed] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [dmSearchQuery, setDmSearchQuery] = useState('');
+  const [memberLastActive, setMemberLastActive] = useState({});
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const folderInputRef = useRef(null);
@@ -44,6 +45,14 @@ const Chat = () => {
   useEffect(() => {
     if (socket) {
       const handleNewMessage = (msg) => {
+        const senderId = String(msg.sender?._id || msg.sender);
+        const isDM = !!msg.dm;
+
+        // WhatsApp-style: update last active timestamp for direct messages
+        if (isDM && senderId && senderId !== String(user._id)) {
+          setMemberLastActive(prev => ({ ...prev, [senderId]: Date.now() }));
+        }
+
         if (activeChannel && msg.channel && String(msg.channel) === String(activeChannel._id)) {
           setMessages((prev) => {
             if (prev.find(m => String(m._id) === String(msg._id))) return prev;
@@ -57,10 +66,8 @@ const Chat = () => {
           });
         } else {
           // Message is not for the active view, increment unread badge if not sent by me
-          if (String(msg.sender._id || msg.sender) !== String(user._id)) {
-            const isDM = !!msg.dm;
+          if (senderId !== String(user._id)) {
             const channelKey = isDM ? msg.dm : (msg.channel?._id || msg.channel);
-            const senderId = String(msg.sender._id || msg.sender);
             
             setUnreadCounts(prev => {
               const newCounts = { ...prev };
@@ -175,7 +182,6 @@ const Chat = () => {
       const wsRes = await axios.get('/workspaces');
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
-        setWorkspace(ws);
         
         const [detailRes, channelsRes, unreadRes] = await Promise.all([
           axios.get(`/workspaces/${ws._id}`).catch(e => ({ error: true, data: e })),
@@ -183,11 +189,27 @@ const Chat = () => {
           axios.get(`/workspaces/${ws._id}/channels/unread`).catch(e => ({ error: true, data: e }))
         ]);
         
-        if (!detailRes.error && detailRes.data.members) {
-          const members = detailRes.data.members
-            .filter(m => m.user && String(m.user._id) !== String(user._id))
-            .map(m => m.user);
-          setWorkspaceMembers(members);
+        const fullWorkspace = (!detailRes.error && detailRes.data) ? detailRes.data : ws;
+        setWorkspace(fullWorkspace);
+
+        if (fullWorkspace.members) {
+          const memberMap = new Map();
+          
+          // Add all populated members
+          fullWorkspace.members.forEach(m => {
+            if (m.user && String(m.user._id) !== String(user._id)) {
+              memberMap.set(String(m.user._id), m.user);
+            }
+          });
+
+          // Also check owner
+          if (fullWorkspace.owner && typeof fullWorkspace.owner === 'object' && String(fullWorkspace.owner._id) !== String(user._id)) {
+            if (!memberMap.has(String(fullWorkspace.owner._id))) {
+              memberMap.set(String(fullWorkspace.owner._id), fullWorkspace.owner);
+            }
+          }
+
+          setWorkspaceMembers(Array.from(memberMap.values()));
         }
 
         if (!channelsRes.error) {
@@ -290,6 +312,7 @@ const Chat = () => {
       if (activeChannel) {
         await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages`, payload);
       } else if (activeDM) {
+        setMemberLastActive(prev => ({ ...prev, [activeDM.user._id]: Date.now() }));
         await axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages`, payload);
       }
     } catch (error) {
@@ -531,10 +554,10 @@ const Chat = () => {
 
           {/* ── DIRECT MESSAGES ── */}
           <div className="pt-3 pb-4">
-            <div className="px-4 mb-1">
+            <div className="px-4 mb-2 flex items-center justify-between">
               <button
                 onClick={() => setDmsCollapsed(d => !d)}
-                className="w-full flex items-center space-x-1 group"
+                className="flex items-center space-x-1 group"
               >
                 {dmsCollapsed
                   ? <ChevronRight size={11} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 transition-colors" />
@@ -543,24 +566,64 @@ const Chat = () => {
                 <span className="text-[10.5px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
                   Direct Messages
                 </span>
+                <span className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold ml-1">
+                  ({workspaceMembers.length})
+                </span>
               </button>
             </div>
 
-            <div className={`transition-all duration-200 ease-in-out overflow-hidden ${dmsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[600px] opacity-100'}`}>
-              <div className="px-2 mt-0.5 space-y-0.5">
-                {workspace.members && workspace.members
-                  .filter(m => m.user && m.user._id !== user?._id)
-                  .map(member => {
-                    const isOnline = onlineUsers.has(member.user._id);
-                    const isActiveDM = activeDM?.user?._id === member.user._id;
-                    const sortedIds = [user._id, member.user._id].sort();
+            <div className={`transition-all duration-200 ease-in-out ${dmsCollapsed ? 'hidden' : 'block'}`}>
+              {/* Direct Messages Search Input */}
+              <div className="px-3 mb-2">
+                <div className="relative">
+                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={dmSearchQuery}
+                    onChange={(e) => setDmSearchQuery(e.target.value)}
+                    placeholder="Search people..."
+                    className="w-full bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white pl-7 pr-6 py-1.5 rounded-lg text-xs placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-accent-blue border border-transparent dark:border-white/5 transition-all"
+                  />
+                  {dmSearchQuery && (
+                    <button
+                      onClick={() => setDmSearchQuery('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="px-2 space-y-0.5">
+                {workspaceMembers
+                  .filter(memberUser => {
+                    if (!dmSearchQuery.trim()) return true;
+                    const q = dmSearchQuery.toLowerCase();
+                    const name = memberUser.name?.toLowerCase() || '';
+                    const email = memberUser.email?.toLowerCase() || '';
+                    const designation = memberUser.designation?.toLowerCase() || '';
+                    return name.includes(q) || email.includes(q) || designation.includes(q);
+                  })
+                  .sort((a, b) => {
+                    const timeA = memberLastActive[a._id] || 0;
+                    const timeB = memberLastActive[b._id] || 0;
+                    if (timeA !== timeB) {
+                      return timeB - timeA; // WhatsApp style: newest message at top
+                    }
+                    return (a.name || a.email || '').localeCompare(b.name || b.email || '');
+                  })
+                  .map(memberUser => {
+                    const isOnline = onlineUsers.has(memberUser._id);
+                    const isActiveDM = activeDM?.user?._id === memberUser._id;
+                    const sortedIds = [user._id, memberUser._id].sort();
                     const dmName = `dm-${sortedIds[0]}-${sortedIds[1]}`;
-                    const dmUnread = unreadCounts[dmName] || (member.dmId && unreadCounts[member.dmId]) || unreadCounts[`user-${member.user._id}`] || 0;
+                    const dmUnread = unreadCounts[dmName] || unreadCounts[`user-${memberUser._id}`] || 0;
 
                     return (
                       <button
-                        key={member.user._id}
-                        onClick={() => handleDMClick(member.user)}
+                        key={memberUser._id}
+                        onClick={() => handleDMClick(memberUser)}
                         className={`w-full flex items-center justify-between px-2.5 py-[7px] text-[13px] transition-all ${
                           isActiveDM
                             ? 'bg-accent-blue/10 text-accent-blue font-bold border-l-4 border-accent-blue rounded-r-lg rounded-l-sm'
@@ -569,12 +632,12 @@ const Chat = () => {
                       >
                         <div className="flex items-center min-w-0">
                           <div className="relative mr-2.5 shrink-0">
-                            <Avatar user={member.user} size="w-6 h-6" textClass="text-[9px]" showStatus={false} />
+                            <Avatar user={memberUser} size="w-6 h-6" textClass="text-[9px]" showStatus={false} />
                             <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border-2 ${
                               isActiveDM ? 'border-blue-50' : 'border-white dark:border-[#1e2533]'
                             } ${isOnline ? 'bg-green-400' : 'bg-gray-300 dark:bg-gray-600'}`}></span>
                           </div>
-                          <span className="truncate font-medium">{member.user.name || member.user.email?.split('@')[0]}</span>
+                          <span className="truncate font-medium">{memberUser.name || memberUser.email?.split('@')[0]}</span>
                         </div>
                         {dmUnread > 0 && !isActiveDM && (
                           <span className="bg-danger text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">

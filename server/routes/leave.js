@@ -23,17 +23,12 @@ router.post('/', async (req, res) => {
 
     await leave.save();
 
-    // Send Notification to Admins/HR/TL
+    // Send Notification ONLY to MD (Super Admin) and HR
     const workspace = await Workspace.findById(workspaceId).populate('members.user');
-    const memberObj = workspace.members.find(m => m.user._id.toString() === req.user._id.toString());
-    const role = memberObj ? memberObj.role : 'employee';
 
     const notifRecipients = workspace.members.filter(m => {
-      if (m.user._id.toString() === req.user._id.toString()) return false;
-      if (role === 'employee' && (m.role === 'team_leader' || m.role === 'hr' || m.role === 'super_admin')) return true;
-      if (role === 'team_leader' && (m.role === 'hr' || m.role === 'super_admin')) return true;
-      if (role === 'hr' && m.role === 'super_admin') return true;
-      return false;
+      if (!m.user || m.user._id.toString() === req.user._id.toString()) return false;
+      return m.role === 'super_admin' || m.role === 'hr';
     });
 
     const Notification = require('../models/Notification');
@@ -67,7 +62,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get leaves
+// Get leaves (Only MD & HR see all; TL & Employees see only their own)
 router.get('/', async (req, res) => {
   try {
     const { workspaceId } = req.params;
@@ -85,24 +80,13 @@ router.get('/', async (req, res) => {
 
     let filteredLeaves = leaves;
 
-    if (member.role === 'employee') {
+    if (member.role === 'super_admin' || member.role === 'hr') {
+      // MD and HR see all leaves
+      filteredLeaves = leaves;
+    } else {
+      // Employees and Team Leaders see only their own leaves
       filteredLeaves = leaves.filter(l => l.user && l.user._id.toString() === req.user._id.toString());
-    } else if (member.role === 'team_leader') {
-      filteredLeaves = leaves.filter(l => {
-        if (!l.user) return false;
-        if (l.user._id.toString() === req.user._id.toString()) return true; // Own leaves
-        const lMember = workspace.members.find(m => m.user && m.user._id.toString() === l.user._id.toString());
-        return lMember && lMember.role === 'employee'; // Leaves of employees
-      });
-    } else if (member.role === 'hr') {
-      filteredLeaves = leaves.filter(l => {
-        if (!l.user) return false;
-        if (l.user._id.toString() === req.user._id.toString()) return true; // Own leaves
-        const lMember = workspace.members.find(m => m.user && m.user._id.toString() === l.user._id.toString());
-        return lMember && (lMember.role === 'employee' || lMember.role === 'team_leader'); // Leaves of employees & TLs
-      });
     }
-    // super_admin sees all
 
     res.json(filteredLeaves);
   } catch (error) {
@@ -111,7 +95,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Approve/Reject leave
+// Approve/Reject leave (MD and HR authorized)
 router.put('/:id/status', async (req, res) => {
   try {
     const { workspaceId, id } = req.params;
@@ -120,8 +104,8 @@ router.put('/:id/status', async (req, res) => {
     const workspace = await Workspace.findById(workspaceId);
     const member = workspace.members.find(m => m.user.toString() === req.user._id.toString());
     
-    if (!member || (member.role !== 'super_admin' && member.role !== 'hr' && member.role !== 'team_leader')) {
-      return res.status(403).json({ message: 'Not authorized to approve leaves' });
+    if (!member || (member.role !== 'super_admin' && member.role !== 'hr')) {
+      return res.status(403).json({ message: 'Only MD and HR are authorized to approve leaves' });
     }
 
     const leave = await Leave.findById(id);
