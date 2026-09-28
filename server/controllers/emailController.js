@@ -71,27 +71,9 @@ exports.getEmails = async (req, res) => {
 
       let q = '';
       let includeSpamTrash = false;
-      let targetLabelId = null;
+      let targetLabelId = 'INBOX';
 
-      if (folder === 'inbox') {
-        q = 'in:inbox';
-        targetLabelId = 'INBOX';
-      } else if (folder === 'primary') {
-        q = 'category:primary in:inbox';
-        targetLabelId = 'CATEGORY_PERSONAL';
-      } else if (folder === 'promotions') {
-        q = 'category:promotions in:inbox';
-        targetLabelId = 'CATEGORY_PROMOTIONS';
-      } else if (folder === 'social') {
-        q = 'category:social in:inbox';
-        targetLabelId = 'CATEGORY_SOCIAL';
-      } else if (folder === 'updates') {
-        q = 'category:updates in:inbox';
-        targetLabelId = 'CATEGORY_UPDATES';
-      } else if (folder === 'starred') {
-        q = 'is:starred';
-        targetLabelId = 'STARRED';
-      } else if (folder === 'sent') {
+      if (folder === 'sent') {
         q = 'in:sent';
         targetLabelId = 'SENT';
       } else if (folder === 'drafts') {
@@ -101,22 +83,17 @@ exports.getEmails = async (req, res) => {
         q = 'in:trash';
         includeSpamTrash = true;
         targetLabelId = 'TRASH';
-      } else if (folder === 'important') {
-        q = 'is:important';
-        targetLabelId = 'IMPORTANT';
-      } else if (folder === 'snoozed') {
-        q = 'label:snoozed';
-      } else if (folder === 'chats') {
-        q = 'is:chat';
-        includeSpamTrash = true;
-      } else if (folder === 'scheduled') {
-        q = 'label:scheduled';
       } else if (folder === 'spam') {
         q = 'in:spam';
         includeSpamTrash = true;
         targetLabelId = 'SPAM';
-      } else if (folder === 'all') {
-        q = '-in:trash -in:spam';
+      } else if (folder === 'starred') {
+        q = 'is:starred';
+        targetLabelId = 'STARRED';
+      } else {
+        // default: inbox
+        q = 'in:inbox';
+        targetLabelId = 'INBOX';
       }
 
       if (search && search.trim()) {
@@ -152,22 +129,12 @@ exports.getEmails = async (req, res) => {
             }
           }
         } catch (labelErr) {
-          if (targetLabelId === 'CATEGORY_PERSONAL') {
-            try {
-              const inboxRes = await gmail.users.labels.get({ userId: 'me', id: 'INBOX' });
-              if (inboxRes.data && typeof inboxRes.data.messagesTotal === 'number') {
-                exactTotal = inboxRes.data.messagesTotal;
-              }
-              if (inboxRes.data && typeof inboxRes.data.messagesUnread === 'number') {
-                unreadCount = inboxRes.data.messagesUnread;
-              }
-            } catch (e) {}
-          }
+          console.error('Label fetch error:', labelErr.message);
         }
       }
 
-      // Also get unread count for INBOX if not already fetched
-      if (unreadCount === 0 && folder !== 'inbox' && folder !== 'primary') {
+      // Also fetch INBOX unread count for badge if not on inbox
+      if (folder !== 'inbox' && !search.trim()) {
         try {
           const inboxRes = await gmail.users.labels.get({ userId: 'me', id: 'INBOX' });
           if (inboxRes.data && typeof inboxRes.data.messagesUnread === 'number') {
@@ -176,13 +143,7 @@ exports.getEmails = async (req, res) => {
         } catch (e) {}
       }
 
-      let response = await gmail.users.messages.list(listParams);
-
-      // If category:primary returned no messages (fallback to in:inbox if needed)
-      if ((!response.data.messages || response.data.messages.length === 0) && folder === 'primary' && !search.trim()) {
-        listParams.q = 'in:inbox';
-        response = await gmail.users.messages.list(listParams);
-      }
+      const response = await gmail.users.messages.list(listParams);
 
       if (!response.data.messages || response.data.messages.length === 0) {
         return res.status(200).json({

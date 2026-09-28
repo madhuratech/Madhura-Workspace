@@ -22,7 +22,6 @@ const Email = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFolder, setActiveFolder] = useState('inbox');
-  const [inboxCategory, setInboxCategory] = useState('primary'); // primary, promotions, social, updates
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   
@@ -30,7 +29,6 @@ const Email = () => {
   
   // Collapsible sidebar
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
-  const [moreFoldersOpen, setMoreFoldersOpen] = useState(false);
 
   // Pagination states
   const [pageSize, setPageSize] = useState(20);
@@ -58,14 +56,6 @@ const Email = () => {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [authRequired, setAuthRequired] = useState(false);
 
-  // Helper to determine active category/folder parameter
-  const getEffectiveFolder = (folder = activeFolder, category = inboxCategory) => {
-    if (folder === 'inbox') {
-      return category || 'primary';
-    }
-    return folder;
-  };
-
   // Close menus on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -89,7 +79,7 @@ const Email = () => {
         const detailRes = await axios.get(`/workspaces/${wsId}`);
         const ws = detailRes.data;
         setWorkspace(ws);
-        fetchFolderEmails(ws, 'primary', 1, '', '');
+        fetchFolderEmails(ws, 'inbox', 1, '', '');
       }
     } catch (error) {
       console.error('Failed to fetch workspace', error);
@@ -110,7 +100,7 @@ const Email = () => {
   };
 
   // Main Email Fetcher
-  const fetchFolderEmails = async (ws, folder, page, token, search, isManual = false) => {
+  const fetchFolderEmails = async (ws, folder = activeFolder, page = 1, token = '', search = debouncedSearch, isManual = false) => {
     const currentWs = ws || workspace;
     if (!currentWs) return;
 
@@ -176,10 +166,10 @@ const Email = () => {
       if (searchQuery !== debouncedSearch) {
         setDebouncedSearch(searchQuery);
         setCurrentPage(1);
+        setNextPageToken(null);
         tokenMapRef.current = { 1: '' };
         if (workspace) {
-          const effective = getEffectiveFolder(activeFolder, inboxCategory);
-          fetchFolderEmails(workspace, effective, 1, '', searchQuery);
+          fetchFolderEmails(workspace, activeFolder, 1, '', searchQuery);
         }
       }
     }, 400);
@@ -189,30 +179,13 @@ const Email = () => {
   // Folder Selection
   const handleSelectFolder = (folderId) => {
     setActiveFolder(folderId);
-    let targetFolder = folderId;
-    if (folderId === 'inbox') {
-      setInboxCategory('primary');
-      targetFolder = 'primary';
-    }
     setCurrentPage(1);
     setNextPageToken(null);
     tokenMapRef.current = { 1: '' };
     setSearchQuery('');
     setDebouncedSearch('');
     setViewingEmail(null);
-    fetchFolderEmails(workspace, targetFolder, 1, '', '');
-  };
-
-  // Category Tab Selection (Primary, Promotions, Social, Updates)
-  const handleSelectCategory = (categoryId) => {
-    setInboxCategory(categoryId);
-    setCurrentPage(1);
-    setNextPageToken(null);
-    tokenMapRef.current = { 1: '' };
-    setSearchQuery('');
-    setDebouncedSearch('');
-    setViewingEmail(null);
-    fetchFolderEmails(workspace, categoryId, 1, '', debouncedSearch);
+    fetchFolderEmails(workspace, folderId, 1, '', '');
   };
 
   // Next Page
@@ -221,8 +194,7 @@ const Email = () => {
     const nextPage = currentPage + 1;
     const token = tokenMapRef.current[nextPage] || nextPageToken;
     setCurrentPage(nextPage);
-    const effective = getEffectiveFolder(activeFolder, inboxCategory);
-    fetchFolderEmails(workspace, effective, nextPage, token, debouncedSearch);
+    fetchFolderEmails(workspace, activeFolder, nextPage, token, debouncedSearch);
   };
 
   // Prev Page
@@ -231,8 +203,7 @@ const Email = () => {
     const prevPage = currentPage - 1;
     const token = tokenMapRef.current[prevPage] || '';
     setCurrentPage(prevPage);
-    const effective = getEffectiveFolder(activeFolder, inboxCategory);
-    fetchFolderEmails(workspace, effective, prevPage, token, debouncedSearch);
+    fetchFolderEmails(workspace, activeFolder, prevPage, token, debouncedSearch);
   };
 
   // Open Full Email
@@ -298,8 +269,7 @@ const Email = () => {
       showToast(`${targets.length} email(s) archived`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      const effective = getEffectiveFolder(activeFolder, inboxCategory);
-      fetchFolderEmails(workspace, effective, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch);
+      fetchFolderEmails(workspace, activeFolder, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch);
     } catch (err) {
       showToast('Failed to archive', 'error');
     }
@@ -315,8 +285,7 @@ const Email = () => {
       showToast(`${targets.length} email(s) moved to Trash`, 'success');
       setSelectedEmails([]);
       if (viewingEmail) setViewingEmail(null);
-      const effective = getEffectiveFolder(activeFolder, inboxCategory);
-      fetchFolderEmails(workspace, effective, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch);
+      fetchFolderEmails(workspace, activeFolder, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch);
     } catch (err) {
       showToast('Failed to delete', 'error');
     }
@@ -383,8 +352,7 @@ const Email = () => {
       showToast('Email sent successfully!', 'success');
       setIsComposing(false);
       setComposeData({ to: '', cc: '', bcc: '', subject: '', body: '' });
-      const effective = getEffectiveFolder(activeFolder, inboxCategory);
-      fetchFolderEmails(workspace, effective, 1, '', debouncedSearch, true);
+      fetchFolderEmails(workspace, activeFolder, 1, '', debouncedSearch, true);
     } catch (err) {
       showToast('Failed to send email', 'error');
     }
@@ -401,27 +369,24 @@ const Email = () => {
     return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
-  // Folders definition
-  const primaryFolders = [
+  // Folders definition - Compose, Inbox, Sent, Drafts
+  const folders = [
     { 
       id: 'inbox', 
       label: 'Inbox', 
       icon: Inbox, 
-      count: inboxUnreadCount || (activeFolder === 'inbox' ? emails.filter(e => !e.isRead).length : 0) 
+      count: inboxUnreadCount 
     },
-    { id: 'starred', label: 'Starred', icon: Star },
-    { id: 'snoozed', label: 'Snoozed', icon: Clock },
-    { id: 'sent', label: 'Sent', icon: Send },
-    { id: 'drafts', label: 'Drafts', icon: File },
-  ];
-
-  const secondaryFolders = [
-    { id: 'important', label: 'Important', icon: AlertCircle },
-    { id: 'chats', label: 'Chats', icon: MessageCircle },
-    { id: 'scheduled', label: 'Scheduled', icon: Calendar },
-    { id: 'all', label: 'All Mail', icon: Mail },
-    { id: 'spam', label: 'Spam', icon: AlertTriangle },
-    { id: 'trash', label: 'Trash', icon: Trash2 },
+    { 
+      id: 'sent', 
+      label: 'Sent', 
+      icon: Send 
+    },
+    { 
+      id: 'drafts', 
+      label: 'Drafts', 
+      icon: File 
+    },
   ];
 
   const startIndex = emails.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
@@ -453,8 +418,8 @@ const Email = () => {
             <Menu size={20} />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center font-bold">
-              <Mail size={18} className="text-red-500" />
+            <div className="w-8 h-8 rounded-lg bg-accent-blue/10 text-accent-blue flex items-center justify-center font-bold">
+              <Mail size={18} className="text-accent-blue" />
             </div>
             <span className="text-lg font-bold text-text-primary tracking-tight font-outfit">Gmail</span>
           </div>
@@ -509,9 +474,9 @@ const Email = () => {
             {sidebarExpanded && <span>Compose</span>}
           </button>
 
-          {/* Folder List */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-0.5 pr-1 w-full">
-            {primaryFolders.map(folder => {
+          {/* Folder List: Inbox, Sent, Drafts */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-1 pr-1 w-full">
+            {folders.map(folder => {
               const Icon = folder.icon;
               const isActive = activeFolder === folder.id && !viewingEmail;
               return (
@@ -522,53 +487,18 @@ const Email = () => {
                     sidebarExpanded ? 'px-4 py-2.5' : 'p-3 justify-center rounded-xl'
                   } ${
                     isActive 
-                      ? 'bg-red-500/10 text-red-600 font-bold dark:bg-red-500/20 dark:text-red-400' 
+                      ? 'bg-accent-blue/15 text-accent-blue font-bold dark:bg-accent-blue/25' 
                       : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
                   }`}
                   title={folder.label}
                 >
                   <div className="flex items-center gap-4">
-                    <Icon size={18} className={isActive ? 'text-red-600 dark:text-red-400' : 'text-text-secondary'} />
+                    <Icon size={18} className={isActive ? 'text-accent-blue' : 'text-text-secondary'} />
                     {sidebarExpanded && <span>{folder.label}</span>}
                   </div>
                   {sidebarExpanded && folder.count > 0 && (
-                    <span className="text-[11px] font-bold text-text-primary">{folder.count}</span>
+                    <span className="text-[11px] font-bold text-accent-blue px-2 py-0.5 rounded-full bg-accent-blue/10">{folder.count}</span>
                   )}
-                </button>
-              );
-            })}
-
-            {/* More / Less Toggle */}
-            <button
-              onClick={() => setMoreFoldersOpen(!moreFoldersOpen)}
-              className={`w-full flex items-center gap-4 rounded-r-full text-xs font-medium text-text-secondary hover:bg-bg-secondary hover:text-text-primary transition-all cursor-pointer ${
-                sidebarExpanded ? 'px-4 py-2' : 'p-3 justify-center rounded-xl'
-              }`}
-            >
-              {moreFoldersOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-              {sidebarExpanded && <span>{moreFoldersOpen ? 'Less' : 'More'}</span>}
-            </button>
-
-            {moreFoldersOpen && secondaryFolders.map(folder => {
-              const Icon = folder.icon;
-              const isActive = activeFolder === folder.id && !viewingEmail;
-              return (
-                <button
-                  key={folder.id}
-                  onClick={() => handleSelectFolder(folder.id)}
-                  className={`w-full flex items-center justify-between rounded-r-full text-xs font-medium transition-all cursor-pointer ${
-                    sidebarExpanded ? 'px-4 py-2.5' : 'p-3 justify-center rounded-xl'
-                  } ${
-                    isActive 
-                      ? 'bg-red-500/10 text-red-600 font-bold dark:bg-red-500/20 dark:text-red-400' 
-                      : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
-                  }`}
-                  title={folder.label}
-                >
-                  <div className="flex items-center gap-4">
-                    <Icon size={18} className={isActive ? 'text-red-600 dark:text-red-400' : 'text-text-secondary'} />
-                    {sidebarExpanded && <span>{folder.label}</span>}
-                  </div>
                 </button>
               );
             })}
@@ -748,8 +678,7 @@ const Email = () => {
                   {/* Refresh */}
                   <button 
                     onClick={() => {
-                      const effective = getEffectiveFolder(activeFolder, inboxCategory);
-                      fetchFolderEmails(workspace, effective, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch, true);
+                      fetchFolderEmails(workspace, activeFolder, currentPage, tokenMapRef.current[currentPage] || '', debouncedSearch, true);
                     }}
                     className="p-2 hover:bg-bg-secondary rounded-full text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
                     title="Refresh"
@@ -804,40 +733,11 @@ const Email = () => {
                 </div>
               </div>
 
-              {/* ── GMAIL CATEGORY TABS (For Inbox) ── */}
-              {activeFolder === 'inbox' && (
-                <div className="flex items-center border-b border-border bg-bg-primary px-2 text-xs font-bold shrink-0">
-                  {[
-                    { id: 'primary', label: 'Primary', icon: Inbox, color: 'text-red-500 border-red-500' },
-                    { id: 'promotions', label: 'Promotions', icon: Tag, color: 'text-emerald-500 border-emerald-500' },
-                    { id: 'social', label: 'Social', icon: MessageCircle, color: 'text-blue-500 border-blue-500' },
-                    { id: 'updates', label: 'Updates', icon: Info, color: 'text-amber-500 border-amber-500' },
-                  ].map(tab => {
-                    const Icon = tab.icon;
-                    const isTabActive = inboxCategory === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => handleSelectCategory(tab.id)}
-                        className={`flex items-center gap-3 px-6 py-3 border-b-2 transition-all cursor-pointer ${
-                          isTabActive 
-                            ? `${tab.color} bg-bg-secondary/40 font-bold` 
-                            : 'border-transparent text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
-                        }`}
-                      >
-                        <Icon size={16} />
-                        <span>{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* ── GMAIL EMAIL LIST ROWS ── */}
+              {/* ── GMAIL EMAIL LIST ROWS (Clean list with no category tabs) ── */}
               <div className="flex-1 overflow-y-auto custom-scrollbar divide-y divide-border/50">
                 {authRequired ? (
                   <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-                    <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mb-4">
+                    <div className="w-16 h-16 bg-accent-blue/10 text-accent-blue rounded-2xl flex items-center justify-center mb-4">
                       <Mail size={32} />
                     </div>
                     <h3 className="text-lg font-bold text-text-primary mb-2">Connect Gmail Account</h3>
@@ -879,9 +779,9 @@ const Email = () => {
                           onClick={() => openEmail(email)}
                           className={`group flex items-center px-4 py-2 hover:shadow-md transition-all cursor-pointer select-none text-xs border-l-3 ${
                             isSelected 
-                              ? 'bg-blue-500/10 border-accent-blue' 
+                              ? 'bg-accent-blue/10 border-accent-blue' 
                               : isUnread 
-                                ? 'bg-bg-secondary/70 border-red-500 font-bold' 
+                                ? 'bg-bg-secondary/70 border-accent-blue font-bold' 
                                 : 'bg-transparent border-transparent hover:bg-bg-secondary/40'
                           }`}
                         >
