@@ -6,7 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   FileText, Users, Settings, ChevronRight,
-  CalendarDays, Mail, Clock, LogOut, User, BarChart3, LifeBuoy, Megaphone, StickyNote
+  CalendarDays, Mail, Clock, LogOut, User, BarChart3, LifeBuoy, Megaphone, StickyNote, CheckSquare
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 
@@ -56,6 +56,7 @@ export default function MoreScreen({ navigation }) {
     {
       section: 'Workspace',
       items: [
+        { icon: CheckSquare,  label: 'My Tasks',          sub: 'Assigned tasks & to-dos',         route: 'Tasks',           iconBg: '#EEF2FF', iconColor: '#4F46E5'   },
         ...(role === 'super_admin' || role === 'hr' ? [
           { icon: FileText,     label: 'Documents',         sub: 'Files and attachments',          route: 'Documents',       iconBg: '#EEF2FF', iconColor: PRIMARY      }
         ] : []),

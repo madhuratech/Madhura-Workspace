@@ -1,4 +1,6 @@
 const Notification = require('../models/Notification');
+const User = require('../models/User');
+const axios = require('axios');
 
 // @desc    Get all notifications for a user
 // @route   GET /api/notifications
@@ -112,6 +114,35 @@ const sendNotification = async (req, recipientId, type, title, message, link) =>
         } else if (typeof socketIds === 'string') {
           // Fallback if server.js hasn't been restarted and still uses string map
           req.io.to(socketIds).emit('new_notification', populatedNotification || notification);
+        }
+      }
+    }
+
+    // 3. Dispatch Expo Push Notification (for background / closed app)
+    const recipientUser = await User.findById(recipientId).select('pushToken notificationSettings');
+    if (recipientUser && recipientUser.pushToken) {
+      const isMuted = recipientUser.notificationSettings?.muteAll || 
+        (recipientUser.notificationSettings?.mutedUntil && new Date(recipientUser.notificationSettings.mutedUntil) > new Date());
+      
+      if (!isMuted) {
+        try {
+          await axios.post('https://exp.host/--/api/v2/push/send', {
+            to: recipientUser.pushToken,
+            sound: 'default',
+            title: title || 'Madhura Workspace',
+            body: message,
+            data: { link, type, notificationId: notification._id },
+            priority: 'high',
+            channelId: 'default',
+          }, {
+            headers: {
+              'Accept': 'application/json',
+              'Accept-Encoding': 'gzip, deflate',
+              'Content-Type': 'application/json',
+            }
+          });
+        } catch (pushErr) {
+          console.error('[PUSH NOTIFICATION] Error sending Expo push notification:', pushErr.message);
         }
       }
     }

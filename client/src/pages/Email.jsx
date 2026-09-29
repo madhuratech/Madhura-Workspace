@@ -8,7 +8,7 @@ import {
   MoreVertical, Trash2, Archive, Menu, ChevronDown, ChevronRight, 
   ChevronLeft, RotateCw, Reply, Forward, CheckCheck, Tag, 
   Maximize2, Minimize2, Minus, ExternalLink, Sparkles, SlidersHorizontal,
-  Info, CornerUpLeft, CornerUpRight
+  Info, CornerUpLeft, CornerUpRight, LogOut
 } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
@@ -24,6 +24,9 @@ const Email = () => {
   const [activeFolder, setActiveFolder] = useState('inbox');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [signingOut, setSigningOut] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
   
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0);
   
@@ -65,6 +68,7 @@ const Email = () => {
     const handleClickOutside = (e) => {
       if (selectMenuRef.current && !selectMenuRef.current.contains(e.target)) setShowSelectMenu(false);
       if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) setShowMoreMenu(false);
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) setShowProfileMenu(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -100,6 +104,31 @@ const Email = () => {
     } catch (err) {
       console.error('Failed to get Google Auth URL', err);
       showToast('Failed to start Google sign-in', 'error');
+    }
+  };
+
+  // Disconnect / Sign Out Google Gmail account
+  const handleSignOutGmail = async () => {
+    if (!window.confirm('Are you sure you want to sign out and disconnect your Gmail account from Madhura Workspace?')) return;
+    setSigningOut(true);
+    try {
+      await axios.delete('/auth/google/revoke');
+      folderCacheRef.current = {};
+      setEmails([]);
+      setTotalCount(0);
+      setInboxUnreadCount(0);
+      setViewingEmail(null);
+      setAuthRequired(true);
+      setShowProfileMenu(false);
+      showToast('Signed out of Gmail successfully', 'success');
+      if (workspace) {
+        fetchFolderEmails(workspace, 'inbox', 1, '', '');
+      }
+    } catch (err) {
+      console.error('Failed to disconnect Gmail', err);
+      showToast(err.response?.data?.message || 'Failed to sign out of Gmail', 'error');
+    } finally {
+      setSigningOut(false);
     }
   };
 
@@ -489,13 +518,57 @@ const Email = () => {
           </div>
         </div>
 
-        {/* Right: Workspace Badge / Avatar */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="hidden sm:flex flex-col text-right">
-            <span className="text-xs font-bold text-text-primary leading-tight">{user?.name}</span>
-            <span className="text-[11px] text-text-secondary leading-tight">{user?.email}</span>
-          </div>
-          <Avatar user={user} size="w-8 h-8" textClass="text-xs font-bold" showStatus={false} />
+        {/* Right: Workspace Badge / Avatar & Sign Out Action */}
+        <div className="flex items-center gap-2.5 shrink-0 relative" ref={profileMenuRef}>
+          {/* Direct Sign Out Button */}
+          <button 
+            onClick={handleSignOutGmail}
+            disabled={signingOut}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-danger bg-danger/10 hover:bg-danger/20 border border-danger/20 transition-all cursor-pointer disabled:opacity-50"
+            title="Sign out of Gmail"
+          >
+            <LogOut size={13} />
+            <span>{signingOut ? 'Signing out...' : 'Sign Out'}</span>
+          </button>
+
+          {/* User Profile Info */}
+          <button 
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="flex items-center gap-2 p-1 rounded-lg hover:bg-bg-secondary transition-colors cursor-pointer text-left"
+            title="Account options"
+          >
+            <div className="hidden sm:flex flex-col text-right">
+              <span className="text-xs font-bold text-text-primary leading-tight">{user?.name}</span>
+              <span className="text-[11px] text-text-secondary leading-tight">{user?.email}</span>
+            </div>
+            <Avatar user={user} size="w-8 h-8" textClass="text-xs font-bold" showStatus={false} />
+          </button>
+
+          {/* Profile Dropdown Popover */}
+          {showProfileMenu && (
+            <div className="absolute right-0 top-11 w-72 bg-bg-primary rounded-xl shadow-xl border border-border p-4 z-50 animate-fadeIn">
+              <div className="flex items-center gap-3 mb-3 pb-3 border-b border-border/60">
+                <Avatar user={user} size="w-10 h-10" textClass="text-sm font-bold" showStatus={false} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-text-primary truncate">{user?.name}</p>
+                  <p className="text-[11px] text-text-secondary truncate">{user?.email}</p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Gmail Connected</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleSignOutGmail}
+                disabled={signingOut}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-danger/10 hover:bg-danger/20 text-danger text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+              >
+                <LogOut size={14} />
+                <span>{signingOut ? 'Disconnecting...' : 'Sign Out of Gmail'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

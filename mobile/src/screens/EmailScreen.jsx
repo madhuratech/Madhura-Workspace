@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, Linking,
+  ActivityIndicator, Linking, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Mail, Star, Inbox, Send, AlertCircle } from 'lucide-react-native';
+import { ArrowLeft, Mail, Star, Inbox, Send, AlertCircle, LogOut } from 'lucide-react-native';
 import axios from 'axios';
+import Toast from 'react-native-toast-message';
 
 const FOLDERS = [
   { key: 'inbox',   label: 'Inbox',   Icon: Inbox  },
@@ -115,6 +116,34 @@ export default function EmailScreen({ navigation }) {
     }
   };
 
+  const handleDisconnectGmail = () => {
+    Alert.alert(
+      'Sign Out of Gmail',
+      'Are you sure you want to disconnect your Gmail account from Madhura Workspace?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await axios.delete('/auth/google/revoke');
+              setEmails([]);
+              setAuthRequired(true);
+              Toast.show({
+                type: 'success',
+                text1: 'Signed Out',
+                text2: 'Disconnected Gmail account.',
+              });
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const isSent = activeFolder === 'sent';
   const unreadCount = emails.filter(e => !e.isRead).length;
 
@@ -125,12 +154,21 @@ export default function EmailScreen({ navigation }) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <ArrowLeft color="#1b2b4c" size={22} />
         </TouchableOpacity>
-        <View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
           <Text style={styles.headerTitle}>Email</Text>
           {unreadCount > 0 && !isSent && (
             <Text style={styles.headerSub}>{unreadCount} unread</Text>
           )}
         </View>
+        {!authRequired && (
+          <TouchableOpacity 
+            style={styles.disconnectBtn} 
+            onPress={handleDisconnectGmail}
+            activeOpacity={0.7}
+          >
+            <LogOut color="#EF4444" size={18} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Folder Tabs */}
@@ -200,7 +238,12 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     width: 38, height: 38, borderRadius: 12, backgroundColor: '#F1F5F9',
-    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  disconnectBtn: {
+    width: 38, height: 38, borderRadius: 12, backgroundColor: '#FEF2F2',
+    borderWidth: 1, borderColor: '#FECACA',
+    justifyContent: 'center', alignItems: 'center',
   },
   headerTitle: { fontSize: 22, fontWeight: '700', color: '#1b2b4c' },
   headerSub: { fontSize: 12, color: '#1b2b4c', fontWeight: '600', marginTop: 1 },

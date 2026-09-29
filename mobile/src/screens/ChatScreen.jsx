@@ -319,6 +319,8 @@ export default function ChatScreen({ navigation }) {
       return (a.name || a.email || '').localeCompare(b.name || b.email || '');
     });
 
+  const canCreateChannel = ['super_admin', 'hr', 'team_leader'].includes(user?.role);
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ExpoStatusBar style="dark" />
@@ -347,14 +349,16 @@ export default function ChatScreen({ navigation }) {
           <>
             <Text style={styles.headerTitle}>Messages</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <TouchableOpacity 
-                style={styles.createBtn} 
-                onPress={() => setIsCreateModalOpen(true)}
-                activeOpacity={0.7}
-              >
-                <Plus color="#FFFFFF" size={18} strokeWidth={2.5} />
-                <Text style={styles.createBtnText}>Channel</Text>
-              </TouchableOpacity>
+              {canCreateChannel && (
+                <TouchableOpacity 
+                  style={styles.createBtn} 
+                  onPress={() => setIsCreateModalOpen(true)}
+                  activeOpacity={0.7}
+                >
+                  <Plus color="#FFFFFF" size={18} strokeWidth={2.5} />
+                  <Text style={styles.createBtnText}>Channel</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity style={styles.searchBtn} onPress={() => setShowSearch(true)}>
                 <Search color="#6B7280" size={18} strokeWidth={2} />
               </TouchableOpacity>
@@ -373,15 +377,17 @@ export default function ChatScreen({ navigation }) {
           <View style={styles.sectionBadge}>
             <Text style={styles.sectionBadgeText}>{filteredPublicChannels.length}</Text>
           </View>
-          <TouchableOpacity 
-            style={{ marginLeft: 'auto', padding: 4 }}
-            onPress={() => {
-              setNewChannelIsPrivate(false);
-              setIsCreateModalOpen(true);
-            }}
-          >
-            <Plus color="#6B7280" size={16} />
-          </TouchableOpacity>
+          {canCreateChannel && (
+            <TouchableOpacity 
+              style={{ marginLeft: 'auto', padding: 4 }}
+              onPress={() => {
+                setNewChannelIsPrivate(false);
+                setIsCreateModalOpen(true);
+              }}
+            >
+              <Plus color="#6B7280" size={16} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {loading ? (
@@ -409,15 +415,17 @@ export default function ChatScreen({ navigation }) {
           <View style={styles.sectionBadge}>
             <Text style={styles.sectionBadgeText}>{filteredPrivateChannels.length}</Text>
           </View>
-          <TouchableOpacity 
-            style={{ marginLeft: 'auto', padding: 4 }}
-            onPress={() => {
-              setNewChannelIsPrivate(true);
-              setIsCreateModalOpen(true);
-            }}
-          >
-            <Plus color="#6B7280" size={16} />
-          </TouchableOpacity>
+          {canCreateChannel && (
+            <TouchableOpacity 
+              style={{ marginLeft: 'auto', padding: 4 }}
+              onPress={() => {
+                setNewChannelIsPrivate(true);
+                setIsCreateModalOpen(true);
+              }}
+            >
+              <Plus color="#6B7280" size={16} />
+            </TouchableOpacity>
+          )}
         </View>
         {loading ? (
           <SkeletonRow />

@@ -81,7 +81,12 @@ const UserSchema = new mongoose.Schema({
     taskReminders: { type: Boolean, default: true },
     leaveUpdates: { type: Boolean, default: true },
     announcements: { type: Boolean, default: true },
-    meetings: { type: Boolean, default: true }
+    meetings: { type: Boolean, default: true },
+    mutedUntil: { type: Date, default: null }
+  },
+  pushToken: {
+    type: String,
+    default: ''
   }
 }, { timestamps: true });
 

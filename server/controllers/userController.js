@@ -58,6 +58,69 @@ const updateNotificationSettings = async (req, res) => {
   }
 };
 
+// @desc    Register or update user Expo push token
+// @route   PUT /api/users/push-token
+// @access  Private
+const updatePushToken = async (req, res) => {
+  try {
+    const { pushToken } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { pushToken: pushToken || '' },
+      { new: true }
+    ).select('-password');
+    
+    res.status(200).json({ message: 'Push token updated successfully', pushToken: user.pushToken });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Mute or unmute notifications (8h, 24h, 1w, always, unmute)
+// @route   PUT /api/users/mute-notifications
+// @access  Private
+const muteNotifications = async (req, res) => {
+  try {
+    const { duration } = req.body; // '8h', '24h', '1w', 'always', 'unmute'
+    let mutedUntil = null;
+    let muteAll = false;
+
+    const now = new Date();
+    if (duration === '8h') {
+      mutedUntil = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+      muteAll = true;
+    } else if (duration === '24h') {
+      mutedUntil = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      muteAll = true;
+    } else if (duration === '1w') {
+      mutedUntil = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      muteAll = true;
+    } else if (duration === 'always') {
+      mutedUntil = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      muteAll = true;
+    } else if (duration === 'unmute') {
+      mutedUntil = null;
+      muteAll = false;
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.notificationSettings = user.notificationSettings || {};
+    user.notificationSettings.mutedUntil = mutedUntil;
+    user.notificationSettings.muteAll = muteAll;
+    await user.save();
+
+    res.status(200).json({
+      message: muteAll ? `Notifications muted successfully` : 'Notifications unmuted',
+      mutedUntil,
+      muteAll
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Update user role
 // @route   PUT /api/users/:id/role
 // @access  Private/SuperAdmin
@@ -216,5 +279,7 @@ module.exports = {
   changePassword,
   resetUserPassword,
   getUserById,
-  updateAvatar
+  updateAvatar,
+  updatePushToken,
+  muteNotifications
 };

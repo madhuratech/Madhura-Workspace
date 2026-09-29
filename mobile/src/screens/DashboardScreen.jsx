@@ -5,17 +5,126 @@ import {
 } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { StatusBar } from 'react-native';
+import Svg, { Path, Circle, Defs, LinearGradient, Stop, G, Line } from 'react-native-svg';
 import { AuthContext } from '../context/AuthContext';
 import { SocketContext } from '../context/SocketContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Bell, CheckSquare, FolderKanban, Calendar, ArrowRight,
   Plus, Users, ChevronRight, Clock, Sparkles, MessageSquare,
-  Award, Flame, CheckCircle2, Circle
+  Award, Flame, CheckCircle2, Circle as CircleIcon, Video,
+  FileText, HelpCircle, CornerDownRight
 } from 'lucide-react-native';
 import { cachedGet } from '../utils/api';
 
 const { width } = Dimensions.get('window');
+
+// ── Workday Arc Gauge Component ─────────────────────────────────────────────
+const WorkdayArcGauge = ({ currentTimeStr, workdayPercent, progressRatio }) => {
+  const svgWidth = 260;
+  const svgHeight = 145;
+  const cx = 130;
+  const cy = 130;
+  const r = 100;
+  const totalLength = Math.PI * r; // ~314.16
+
+  // Progress ratio clamped [0, 1]
+  const clampedRatio = Math.min(Math.max(progressRatio, 0.02), 0.98);
+  const strokeDashoffset = totalLength * (1 - clampedRatio);
+
+  // Knob indicator calculation (from angle π down to 0)
+  const angleRad = Math.PI * (1 - clampedRatio);
+  const knobX = cx + r * Math.cos(angleRad);
+  const knobY = cy - r * Math.sin(angleRad);
+
+  // Segment markers at 0%, 25%, 50%, 75%, 100%
+  const segments = [0.2, 0.4, 0.6, 0.8];
+
+  return (
+    <View style={styles.gaugeContainer}>
+      <View style={{ width: svgWidth, height: svgHeight, alignItems: 'center', justifyContent: 'center' }}>
+        <Svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
+          <Defs>
+            <LinearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <Stop offset="0%" stopColor="#3B82F6" />
+              <Stop offset="100%" stopColor="#2563EB" />
+            </LinearGradient>
+            <LinearGradient id="knobGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#60A5FA" />
+              <Stop offset="100%" stopColor="#1D4ED8" />
+            </LinearGradient>
+          </Defs>
+
+          {/* Background Arc Track */}
+          <Path
+            d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+            fill="none"
+            stroke="#E2E8F0"
+            strokeWidth={14}
+            strokeLinecap="round"
+          />
+
+          {/* Segment ticks/dividers on track */}
+          {segments.map((seg, idx) => {
+            const segAngle = Math.PI * (1 - seg);
+            const x1 = cx + (r - 7) * Math.cos(segAngle);
+            const y1 = cy - (r - 7) * Math.sin(segAngle);
+            const x2 = cx + (r + 7) * Math.cos(segAngle);
+            const y2 = cy - (r + 7) * Math.sin(segAngle);
+            return (
+              <Line
+                key={idx}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="#CBD5E1"
+                strokeWidth={2}
+              />
+            );
+          })}
+
+          {/* Active Colored Arc Track */}
+          <Path
+            d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+            fill="none"
+            stroke="url(#arcGrad)"
+            strokeWidth={14}
+            strokeLinecap="round"
+            strokeDasharray={totalLength}
+            strokeDashoffset={strokeDashoffset}
+          />
+
+          {/* Animated Indicator Knob */}
+          <Circle
+            cx={knobX}
+            cy={knobY}
+            r={14}
+            fill="url(#knobGlow)"
+            stroke="#FFFFFF"
+            strokeWidth={3.5}
+          />
+          <Circle
+            cx={knobX}
+            cy={knobY}
+            r={5}
+            fill="#FFFFFF"
+          />
+        </Svg>
+
+        {/* Digital Time Inside Center of Arc */}
+        <View style={styles.gaugeCenterContent}>
+          <Text style={styles.gaugeTimeText}>{currentTimeStr}</Text>
+        </View>
+      </View>
+
+      {/* Progress Label */}
+      <Text style={styles.gaugeSubText}>
+        Your workday is <Text style={styles.gaugePercentHighlight}>{workdayPercent}%</Text> complete
+      </Text>
+    </View>
+  );
+};
 
 // ── Skeleton Loader Component ──────────────────────────────────────────────
 const Skel = ({ w, h, r = 8, style }) => {
@@ -71,7 +180,49 @@ export default function DashboardScreen({ navigation }) {
   const [meetings, setMeetings] = useState([]);
   const [todayAttendances, setTodayAttendances] = useState([]);
 
+  // Live Workday Clock & Progress State
+  const [currentTimeStr, setCurrentTimeStr] = useState('12:31');
+  const [workdayPercent, setWorkdayPercent] = useState(39);
+  const [progressRatio, setProgressRatio] = useState(0.39);
+
   const fade = useRef(new Animated.Value(0)).current;
+
+  // Real-time Workday Clock calculation
+  useEffect(() => {
+    const updateWorkdayTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+
+      // Format digital time 12:31
+      const hours12 = hours % 12 || 12;
+      const minsStr = minutes < 10 ? `0${minutes}` : `${minutes}`;
+      setCurrentTimeStr(`${hours12}:${minsStr}`);
+
+      // Shift window: default 9:00 AM (540m) to 6:00 PM (1080m) -> 9 hours (540 min)
+      const currentMinutesInDay = hours * 60 + minutes;
+      const shiftStart = 9 * 60; // 9:00 AM
+      const shiftEnd = 18 * 60;  // 6:00 PM
+      const totalShiftMinutes = shiftEnd - shiftStart; // 540m
+
+      let ratio = 0;
+      if (currentMinutesInDay <= shiftStart) {
+        ratio = 0.05;
+      } else if (currentMinutesInDay >= shiftEnd) {
+        ratio = 1.0;
+      } else {
+        ratio = (currentMinutesInDay - shiftStart) / totalShiftMinutes;
+      }
+
+      const percent = Math.round(ratio * 100);
+      setWorkdayPercent(percent);
+      setProgressRatio(ratio);
+    };
+
+    updateWorkdayTime();
+    const interval = setInterval(updateWorkdayTime, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
@@ -135,9 +286,9 @@ export default function DashboardScreen({ navigation }) {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'GOOD MORNING';
+    if (hour < 17) return 'GOOD AFTERNOON';
+    return 'GOOD EVENING';
   };
 
   const getFormattedDate = () => {
@@ -146,6 +297,7 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Member';
+  const fullName = user?.name ? user.name.toUpperCase() : 'MEMBER';
   const initial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
   const workspaceName = workspaces.length > 0 ? workspaces[0].name : 'Madhura Workspace';
 
@@ -161,48 +313,174 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
+  // ── Dynamic Resolution for Thread Card 1 (Upcoming Meeting or Priority Task) ──
+  const getDynamicCard1 = () => {
+    if (meetings && meetings.length > 0) {
+      const m = meetings[0];
+      let timeLabel = 'UPCOMING';
+      if (m.date || m.startTime) {
+        const meetingDate = new Date(m.date || m.startTime);
+        const diffMin = Math.round((meetingDate - new Date()) / 60000);
+        if (diffMin > 0 && diffMin <= 60) {
+          timeLabel = `IN ${diffMin} MIN • ${meetingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        } else if (diffMin > 60 && diffMin <= 1440) {
+          timeLabel = `TODAY • ${meetingDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        } else if (diffMin <= 0 && diffMin >= -60) {
+          timeLabel = 'HAPPENING NOW';
+        } else {
+          timeLabel = `SCHEDULED • ${meetingDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+        }
+      }
+
+      const attendeesCount = (m.attendees?.length || 0);
+      const orgName = m.organizer?.name ? m.organizer.name.split(' ')[0] : 'Team';
+      const subtitle = attendeesCount > 0 
+        ? `${orgName} + ${attendeesCount} attendee${attendeesCount > 1 ? 's' : ''}` 
+        : `${orgName} scheduled this session`;
+
+      return {
+        badge: timeLabel,
+        title: m.title || m.topic || 'Team Meeting',
+        sub: subtitle,
+        btn1: 'Join',
+        btn2: 'Prep',
+        onBtn1: () => navigation.navigate('Menu', { screen: 'Meetings' }),
+        onBtn2: () => navigation.navigate('Menu', { screen: 'Meetings' }),
+        onCard: () => navigation.navigate('Menu', { screen: 'Meetings' }),
+      };
+    }
+
+    if (tasks && tasks.length > 0) {
+      const t = tasks[0];
+      const p = t.priority?.toUpperCase() || 'NORMAL';
+      const projectTitle = t.project?.title ? `in ${t.project.title}` : 'Assigned to you';
+      return {
+        badge: `PRIORITY TASK • ${p}`,
+        title: t.title,
+        sub: `Due ${t.dueDate ? new Date(t.dueDate).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Soon'} • ${projectTitle}`,
+        btn1: 'View Task',
+        btn2: 'Details',
+        onBtn1: () => navigation.navigate('Tasks'),
+        onBtn2: () => navigation.navigate('Tasks'),
+        onCard: () => navigation.navigate('Tasks'),
+      };
+    }
+
+    return {
+      badge: 'ALL CAUGHT UP • TODAY',
+      title: 'No pending meetings or urgent tasks',
+      sub: "You're all set! Check back later for new assignments.",
+      btn1: 'New Task',
+      btn2: 'Schedule',
+      onBtn1: () => navigation.navigate('Tasks'),
+      onBtn2: () => navigation.navigate('Menu', { screen: 'Meetings' }),
+      onCard: () => navigation.navigate('Tasks'),
+    };
+  };
+
+  // ── Dynamic Resolution for Thread Card 2 ("WAITING ON YOU" / Pending Direct Action) ──
+  const getDynamicCard2 = () => {
+    const unreadNotif = notifications.find(n => !n.isRead);
+    if (unreadNotif) {
+      return {
+        tag: 'NEW ALERT',
+        title: unreadNotif.title,
+        quote: `"${unreadNotif.message}"`,
+        onCard: () => navigation.navigate('Notifications'),
+      };
+    }
+
+    if (tasks && tasks.length > 0) {
+      const t = tasks[0];
+      const assigner = t.assignedBy?.name ? t.assignedBy.name.split(' ')[0] : 'Team Leader';
+      return {
+        tag: 'WAITING ON YOU',
+        title: `${assigner} assigned a task`,
+        quote: `"${t.title}${t.description ? `: ${t.description.length > 60 ? t.description.slice(0, 60) + '...' : t.description}` : ''}"`,
+        onCard: () => navigation.navigate('Tasks'),
+      };
+    }
+
+    if (projects && projects.length > 0) {
+      const p = projects[0];
+      return {
+        tag: 'ACTIVE PROJECT',
+        title: p.title || 'Workspace Project',
+        quote: `"${p.description || 'Sprint and deliverables in progress.'}"`,
+        onCard: () => navigation.navigate('Projects'),
+      };
+    }
+
+    return {
+      tag: 'ALL CLEAR',
+      title: 'No pending requests',
+      quote: '"You are up to date on all messages, tasks, and notifications."',
+      onCard: () => navigation.navigate('Tasks'),
+    };
+  };
+
+  const card1 = getDynamicCard1();
+  const card2 = getDynamicCard2();
+
   return (
     <View style={styles.container}>
-      <ExpoStatusBar style="dark" />
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <ExpoStatusBar style="light" />
+      <StatusBar barStyle="light-content" backgroundColor="#1b2b4c" />
 
-      {/* ── Top App Bar ── */}
-      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 12) }]}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.dateText}>{getFormattedDate()}</Text>
-          <Text style={styles.greetingText}>
-            {getGreeting()}, <Text style={styles.greetingName}>{firstName}</Text>
-          </Text>
+      {/* ── Top App Bar Banner (Rich Deep Navy with Gold Accents) ── */}
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top + 8, 20) }]}>
+        <View style={styles.topBarRow}>
+          <View style={styles.headerLeft}>
+            <View style={styles.dateBadge}>
+              <Text style={styles.dateText}>{getFormattedDate()}</Text>
+            </View>
+            <Text style={styles.greetingText}>
+              {getGreeting()}, <Text style={styles.greetingName}>{firstName}</Text>
+            </Text>
+          </View>
+
+          <View style={styles.headerRight}>
+            {/* Notifications Button */}
+            <TouchableOpacity 
+              style={styles.iconBtn} 
+              onPress={() => navigation.navigate('Notifications')}
+              activeOpacity={0.7}
+            >
+              <Bell color="#FFFFFF" size={19} strokeWidth={2} />
+              {metrics.unreads > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadBadgeText}>
+                    {metrics.unreads > 9 ? '9+' : metrics.unreads}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            {/* User Profile Avatar */}
+            <TouchableOpacity 
+              style={styles.profileBtn} 
+              onPress={() => navigation.navigate('Menu', { screen: 'Settings' })}
+              activeOpacity={0.8}
+            >
+              <View style={styles.profileAvatar}>
+                <Text style={styles.profileAvatarText}>{initial}</Text>
+              </View>
+              <View style={styles.statusDot} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.headerRight}>
-          {/* Notifications Button */}
-          <TouchableOpacity 
-            style={styles.iconBtn} 
-            onPress={() => navigation.navigate('Notifications')}
-            activeOpacity={0.7}
-          >
-            <Bell color="#475569" size={20} strokeWidth={2} />
-            {metrics.unreads > 0 && (
-              <View style={styles.unreadBadge}>
-                <Text style={styles.unreadBadgeText}>
-                  {metrics.unreads > 9 ? '9+' : metrics.unreads}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-
-          {/* User Profile Avatar */}
-          <TouchableOpacity 
-            style={styles.profileBtn} 
-            onPress={() => navigation.navigate('Menu', { screen: 'Settings' })}
-            activeOpacity={0.8}
-          >
-            <View style={styles.profileAvatar}>
-              <Text style={styles.profileAvatarText}>{initial}</Text>
-            </View>
-            <View style={styles.statusDot} />
-          </TouchableOpacity>
+        {/* Integrated Workspace Banner */}
+        <View style={styles.workspaceBannerRow}>
+          <View style={styles.workspaceDot} />
+          <Text style={styles.workspaceBannerText} numberOfLines={1}>
+            {workspaceName}
+          </Text>
+          <View style={styles.workspaceRoleBadgeWrap}>
+            <Text style={styles.workspaceRoleBadgeText}>
+              {user?.role ? user.role.replace(/_/g, ' ') : 'Employee'}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -218,18 +496,143 @@ export default function DashboardScreen({ navigation }) {
         >
           <Animated.View style={{ opacity: fade }}>
 
-            {/* Workspace Banner */}
-            <View style={styles.workspacePill}>
-              <View style={styles.workspaceDot} />
-              <Text style={styles.workspacePillText} numberOfLines={1}>
-                {workspaceName}
-              </Text>
-              <Text style={styles.workspaceRoleBadge}>
-                {user?.role ? user.role.replace(/_/g, ' ') : 'Enterprise'}
-              </Text>
+            {/* ── 1. Workday Arc Progress Gauge (Dynamic Semi-Circle Meter) ── */}
+            <WorkdayArcGauge 
+              currentTimeStr={currentTimeStr}
+              workdayPercent={workdayPercent}
+              progressRatio={progressRatio}
+            />
+
+            {/* ── 2. YOUR THREAD TODAY (Dynamic Activity & Meeting Timeline) ── */}
+            <View style={styles.threadSection}>
+              <View style={styles.threadHeaderRow}>
+                <View style={styles.threadHeaderDot} />
+                <Text style={styles.threadHeaderTitle}>YOUR THREAD TODAY</Text>
+              </View>
+
+              <View style={styles.threadTimelineContainer}>
+                {/* Vertical Timeline Guide Line */}
+                <View style={styles.timelineVerticalLine} />
+
+                {/* Thread Card 1: Active / Upcoming Event (Vibrant Blue Card) */}
+                <View style={styles.threadItemRow}>
+                  <View style={styles.timelineNodeActive}>
+                    <View style={styles.timelineNodeActiveInner} />
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.meetingHighlightCard}
+                    activeOpacity={0.85}
+                    onPress={card1.onCard}
+                  >
+                    <View style={styles.meetingCardTop}>
+                      <Text style={styles.meetingCardBadge}>
+                        {card1.badge}
+                      </Text>
+                    </View>
+
+                    <Text style={styles.meetingCardTitle} numberOfLines={1}>
+                      {card1.title}
+                    </Text>
+
+                    <Text style={styles.meetingCardSub} numberOfLines={1}>
+                      {card1.sub}
+                    </Text>
+
+                    {/* Action Buttons: Join & Prep / View */}
+                    <View style={styles.meetingActionRow}>
+                      <TouchableOpacity 
+                        style={styles.joinBtn}
+                        activeOpacity={0.8}
+                        onPress={card1.onBtn1}
+                      >
+                        <Text style={styles.joinBtnText}>{card1.btn1}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        style={styles.prepBtn}
+                        activeOpacity={0.8}
+                        onPress={card1.onBtn2}
+                      >
+                        <Text style={styles.prepBtnText}>{card1.btn2}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Thread Card 2: WAITING ON YOU / Pending Question or Task (Dark Sleek Card) */}
+                <View style={[styles.threadItemRow, { marginTop: 14 }]}>
+                  <View style={styles.timelineNodeWaiting}>
+                    <View style={styles.timelineNodeWaitingInner} />
+                  </View>
+
+                  <TouchableOpacity 
+                    style={styles.waitingCard}
+                    activeOpacity={0.85}
+                    onPress={card2.onCard}
+                  >
+                    <Text style={styles.waitingTagText}>
+                      {card2.tag}
+                    </Text>
+
+                    <Text style={styles.waitingTitle} numberOfLines={1}>
+                      {card2.title}
+                    </Text>
+
+                    <Text style={styles.waitingQuote} numberOfLines={2}>
+                      {card2.quote}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
 
-            {/* ── Minimalist KPI Metrics Grid (2x2) ── */}
+            {/* ── 3. Quick Action Pills ── */}
+            <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickActionsList}>
+              <TouchableOpacity 
+                style={styles.quickPill} 
+                onPress={() => navigation.navigate('Projects')}
+                activeOpacity={0.7}
+              >
+                <FolderKanban color="#1E293B" size={16} strokeWidth={2.2} />
+                <Text style={styles.quickPillText}>Projects</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.quickPill} 
+                onPress={() => navigation.navigate('Chat')}
+                activeOpacity={0.7}
+              >
+                <MessageSquare color="#1E293B" size={16} strokeWidth={2.2} />
+                <Text style={styles.quickPillText}>Team Chat</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.quickPill} 
+                onPress={() => navigation.navigate('Attendance')}
+                activeOpacity={0.7}
+              >
+                <Clock color="#1E293B" size={16} strokeWidth={2.2} />
+                <Text style={styles.quickPillText}>Attendance</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.quickPill} 
+                onPress={() => navigation.navigate('Menu', { screen: 'Meetings' })}
+                activeOpacity={0.7}
+              >
+                <Calendar color="#1E293B" size={16} strokeWidth={2.2} />
+                <Text style={styles.quickPillText}>Schedule</Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            {/* ── 4. Minimalist KPI Metrics Grid (2x2) ── */}
+            <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
+              <Text style={styles.sectionTitle}>Overview</Text>
+            </View>
             <View style={styles.kpiGrid}>
               {/* Tasks Due */}
               <TouchableOpacity
@@ -287,48 +690,6 @@ export default function DashboardScreen({ navigation }) {
                 <Text style={styles.kpiSub}>Unread</Text>
               </TouchableOpacity>
             </View>
-
-            {/* ── Quick Action Pills ── */}
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickActionsList}>
-              <TouchableOpacity 
-                style={styles.quickPill} 
-                onPress={() => navigation.navigate('Tasks')}
-                activeOpacity={0.7}
-              >
-                <Plus color="#1E293B" size={16} strokeWidth={2.5} />
-                <Text style={styles.quickPillText}>New Task</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.quickPill} 
-                onPress={() => navigation.navigate('Chat')}
-                activeOpacity={0.7}
-              >
-                <MessageSquare color="#1E293B" size={16} strokeWidth={2.2} />
-                <Text style={styles.quickPillText}>Team Chat</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.quickPill} 
-                onPress={() => navigation.navigate('Menu', { screen: 'AttendanceLeave' })}
-                activeOpacity={0.7}
-              >
-                <Clock color="#1E293B" size={16} strokeWidth={2.2} />
-                <Text style={styles.quickPillText}>Attendance</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.quickPill} 
-                onPress={() => navigation.navigate('Menu', { screen: 'Meetings' })}
-                activeOpacity={0.7}
-              >
-                <Calendar color="#1E293B" size={16} strokeWidth={2.2} />
-                <Text style={styles.quickPillText}>Schedule</Text>
-              </TouchableOpacity>
-            </ScrollView>
 
             {/* ── My Priority Tasks ── */}
             <View style={[styles.sectionHeaderRow, { marginTop: 22 }]}>
@@ -550,33 +911,86 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFB',
   },
   topBar: {
+    paddingHorizontal: 20,
+    paddingBottom: 22,
+    backgroundColor: '#1b2b4c',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: '#1b2b4c',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  topBarRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    marginBottom: 16,
+  },
+  workspaceBannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  workspaceDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ffca22',
+    marginRight: 8,
+  },
+  workspaceBannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  workspaceRoleBadgeWrap: {
+    backgroundColor: 'rgba(255, 202, 34, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 202, 34, 0.4)',
+  },
+  workspaceRoleBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ffca22',
+    textTransform: 'capitalize',
   },
   headerLeft: {
     flex: 1,
   },
+  dateBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
   dateText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ffca22',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
+    letterSpacing: 0.8,
   },
   greetingText: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
   greetingName: {
-    color: '#1b2b4c',
+    color: '#ffca22',
   },
   headerRight: {
     flexDirection: 'row',
@@ -584,66 +998,68 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   iconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   unreadBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -3,
+    right: -3,
     backgroundColor: '#EF4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 3,
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#1b2b4c',
   },
   unreadBadgeText: {
     color: '#FFFFFF',
     fontSize: 9,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   profileBtn: {
     position: 'relative',
   },
   profileAvatar: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: 14,
-    backgroundColor: '#1b2b4c',
+    backgroundColor: 'rgba(255, 202, 34, 0.2)',
+    borderWidth: 1.5,
+    borderColor: '#ffca22',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1b2b4c',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   profileAvatarText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
+    color: '#ffca22',
+    fontSize: 16,
+    fontWeight: '800',
   },
   statusDot: {
     position: 'absolute',
     bottom: -1,
     right: -1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
     backgroundColor: '#10B981',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: '#1b2b4c',
   },
 
   scrollContent: {
@@ -980,6 +1396,223 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '700',
     marginTop: 1,
+  },
+
+  // ── Workday Arc Gauge ──
+  gaugeContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#1b2b4c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  gaugeCenterContent: {
+    position: 'absolute',
+    bottom: 8,
+    alignItems: 'center',
+  },
+  gaugeTimeText: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -1,
+  },
+  gaugeSubText: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  gaugePercentHighlight: {
+    color: '#2563EB',
+    fontWeight: '800',
+  },
+
+  // ── Thread Section (YOUR THREAD TODAY) ──
+  threadSection: {
+    marginBottom: 16,
+  },
+  threadHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  threadHeaderDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#2563EB',
+  },
+  threadHeaderTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 1.2,
+  },
+  threadTimelineContainer: {
+    position: 'relative',
+    paddingLeft: 22,
+  },
+  timelineVerticalLine: {
+    position: 'absolute',
+    left: 8,
+    top: 14,
+    bottom: 24,
+    width: 2,
+    backgroundColor: '#CBD5E1',
+    borderStyle: 'dashed',
+  },
+  threadItemRow: {
+    position: 'relative',
+  },
+  timelineNodeActive: {
+    position: 'absolute',
+    left: -22,
+    top: 16,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#DBEAFE',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timelineNodeActiveInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#2563EB',
+  },
+  timelineNodeWaiting: {
+    position: 'absolute',
+    left: -22,
+    top: 16,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+  },
+  timelineNodeWaitingInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#3B82F6',
+  },
+
+  // Highlight Meeting Card (Royal Blue)
+  meetingHighlightCard: {
+    backgroundColor: '#2563EB',
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  meetingCardTop: {
+    marginBottom: 8,
+  },
+  meetingCardBadge: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  meetingCardTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  meetingCardSub: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontWeight: '500',
+    marginBottom: 14,
+  },
+  meetingActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  joinBtn: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  joinBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1D4ED8',
+  },
+  prepBtn: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  prepBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Waiting Card (Dark Sleek Card)
+  waitingCard: {
+    backgroundColor: '#1b2b4c',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#1b2b4c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  waitingTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 1,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  waitingTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  waitingQuote: {
+    fontSize: 13,
+    color: '#CBD5E1',
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
 
   // ── Empty Card ──

@@ -3,10 +3,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
-import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet, Image, Easing } from 'react-native';
+import { ActivityIndicator, View, Text, Platform, Animated, TouchableOpacity, StyleSheet, Image, Easing, Dimensions } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare } from 'lucide-react-native';
+import { Home, FolderKanban, CheckSquare, MoreHorizontal, MessageSquare, Clock } from 'lucide-react-native';
 import { SocketProvider } from './src/context/SocketContext';
 import Toast from 'react-native-toast-message';
 
@@ -64,6 +64,8 @@ function MoreNavigator() {
   return (
     <MoreStack.Navigator screenOptions={{ headerShown: false }}>
       <MoreStack.Screen name="MoreMenu" component={MoreScreen} />
+      <MoreStack.Screen name="Tasks" component={MyTasksScreen} />
+      <MoreStack.Screen name="MyTasks" component={MyTasksScreen} />
       <MoreStack.Screen name="Documents" component={DocumentsScreen} />
       <MoreStack.Screen name="Team" component={TeamScreen} />
       <MoreStack.Screen name="Email" component={EmailScreen} />
@@ -81,11 +83,11 @@ function MoreNavigator() {
 
 // ─── Custom Tab Bar ────────────────────────────────────────────────────────
 const TAB_CONFIG = [
-  { name: 'Dashboard', label: 'Home',     Icon: Home },
-  { name: 'Tasks',     label: 'Tasks',    Icon: CheckSquare },
-  { name: 'Projects',  label: 'Projects', Icon: FolderKanban },
-  { name: 'Chat',      label: 'Chat',     Icon: MessageSquare },
-  { name: 'Menu',      label: 'More',     Icon: MoreHorizontal },
+  { name: 'Dashboard',  label: 'Home',       Icon: Home },
+  { name: 'Attendance', label: 'Attendance', Icon: Clock },
+  { name: 'Projects',   label: 'Projects',   Icon: FolderKanban },
+  { name: 'Chat',       label: 'Chat',       Icon: MessageSquare },
+  { name: 'Menu',       label: 'More',       Icon: MoreHorizontal },
 ];
 
 function CustomTabBar({ state, descriptors, navigation }) {
@@ -177,9 +179,7 @@ function TabNavigator() {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      {user?.role !== 'super_admin' && (
-        <Tab.Screen name="Tasks" component={MyTasksScreen} />
-      )}
+      <Tab.Screen name="Attendance" component={AttendanceLeaveScreen} />
       <Tab.Screen
         name="Projects"
         component={ProjectsNavigator}
@@ -264,34 +264,38 @@ const AnimatedSplashScreen = ({ onFinish }) => {
   );
 };
 
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const splashStyles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    flex: 1,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 9999,
+    alignSelf: 'center',
   },
   logoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 28,
+    width: 104,
+    height: 104,
+    borderRadius: 30,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#1b2b4c',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
     elevation: 8,
     borderWidth: 1.5,
     borderColor: '#F1F5F9',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   logo: {
-    width: 76,
-    height: 76,
-    borderRadius: 20,
+    width: 80,
+    height: 80,
+    borderRadius: 22,
   },
   textContainer: {
     alignItems: 'center',
@@ -304,7 +308,7 @@ const splashStyles = StyleSheet.create({
   },
   tagContainer: {
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 12,
   },
   tagText: {
     fontSize: 11,
@@ -314,9 +318,50 @@ const splashStyles = StyleSheet.create({
   }
 });
 
+import * as Notifications from 'expo-notifications';
+import { registerForPushNotificationsAsync } from './src/utils/notifications';
+
+const navigationRef = React.createRef();
+
 // ─── Root ──────────────────────────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (user) {
+      // 1. Prompt and register for push notifications
+      registerForPushNotificationsAsync();
+
+      // 2. Listener for when notification is received while app is foregrounded
+      const receivedSubscription = Notifications.addNotificationReceivedListener(notification => {
+        console.log('[PUSH] Received foreground notification:', notification.request.content.title);
+      });
+
+      // 3. Listener for when user taps on a notification (foreground, background or killed)
+      const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+        console.log('[PUSH] User tapped notification:', response.notification.request.content.data);
+        const data = response.notification.request.content.data || {};
+        if (data.screen) {
+          if (navigationRef.current?.isReady()) {
+            navigationRef.current.navigate(data.screen, data.params || {});
+          }
+        } else if (data.type === 'chat' || data.link === '/chat') {
+          if (navigationRef.current?.isReady()) {
+            navigationRef.current.navigate('MainTabs', { screen: 'Chat' });
+          }
+        } else {
+          if (navigationRef.current?.isReady()) {
+            navigationRef.current.navigate('Notifications');
+          }
+        }
+      });
+
+      return () => {
+        receivedSubscription.remove();
+        responseSubscription.remove();
+      };
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -332,6 +377,8 @@ function RootNavigator() {
         <>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
+          <Stack.Screen name="Tasks" component={MyTasksScreen} />
+          <Stack.Screen name="MyTasks" component={MyTasksScreen} />
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -348,12 +395,15 @@ export default function App() {
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <AuthProvider>
         <SocketProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
-          {!splashFinished && (
-            <AnimatedSplashScreen onFinish={() => setSplashFinished(true)} />
-          )}
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+            {splashFinished ? (
+              <NavigationContainer ref={navigationRef}>
+                <RootNavigator />
+              </NavigationContainer>
+            ) : (
+              <AnimatedSplashScreen onFinish={() => setSplashFinished(true)} />
+            )}
+          </View>
           <Toast />
         </SocketProvider>
       </AuthProvider>
