@@ -183,7 +183,7 @@ const deleteWorkspace = async (req, res) => {
 // @access  Private
 const addMember = async (req, res) => {
   try {
-    const { email, role, name, password, designation } = req.body;
+    const { email, role, name, password, designation, shiftStartTime, shiftEndTime } = req.body;
 
     const workspace = await Workspace.findById(req.params.id);
 
@@ -216,7 +216,9 @@ const addMember = async (req, res) => {
         email,
         password,
         role: role || 'employee',   // ← Set global role so backend filters work
-        designation: designation || ''
+        designation: designation || '',
+        shiftStartTime: shiftStartTime || '09:40',
+        shiftEndTime: shiftEndTime || '18:00',
       });
       
       if (resend) {
@@ -264,11 +266,11 @@ const addMember = async (req, res) => {
         }
       }
     } else {
-      // If user exists, sync their global role too
-      userToAdd.role = role || 'employee';
-      if (designation !== undefined) {
-        userToAdd.designation = designation;
-      }
+      // If user exists, sync their global role and details
+      if (role) userToAdd.role = role;
+      if (designation !== undefined) userToAdd.designation = designation;
+      if (shiftStartTime !== undefined) userToAdd.shiftStartTime = shiftStartTime;
+      if (shiftEndTime !== undefined) userToAdd.shiftEndTime = shiftEndTime;
       await userToAdd.save();
     }
 
@@ -292,7 +294,7 @@ const addMember = async (req, res) => {
 // @access  Private
 const updateMember = async (req, res) => {
   try {
-    const { role, action, designation } = req.body;
+    const { role, action, designation, name, shiftStartTime, shiftEndTime } = req.body;
     const workspace = await Workspace.findById(req.params.id);
 
     if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
@@ -340,11 +342,19 @@ const updateMember = async (req, res) => {
         { $unset: { coordinator: 1 } }
       );
     } else {
-      workspace.members[memberIndex].role = role;
-      // Sync global User role so backend filters (tasks, projects) work correctly
-      const updateData = { role };
+      if (role) {
+        workspace.members[memberIndex].role = role;
+      }
+      
+      // Sync global User model data (role, designation, name, shift times)
+      const updateData = {};
+      if (role) updateData.role = role;
       if (designation !== undefined) updateData.designation = designation;
-      await User.findByIdAndUpdate(req.params.userId, updateData);
+      if (name !== undefined && name.trim()) updateData.name = name.trim();
+      if (shiftStartTime !== undefined) updateData.shiftStartTime = shiftStartTime;
+      if (shiftEndTime !== undefined) updateData.shiftEndTime = shiftEndTime;
+
+      await User.findByIdAndUpdate(req.params.userId, updateData, { new: true });
 
       if (role === 'employee') {
         // Remove as team leader if downgraded to employee
@@ -355,15 +365,21 @@ const updateMember = async (req, res) => {
         );
       }
 
-      sendNotification(
-        req,
-        req.params.userId,
-        'role_changed',
-        'Role Updated',
-        `Your role in the workspace has been updated to ${role.replace('_', ' ')}.`,
-        '/team'
-      );
+      if (role) {
+        sendNotification(
+          req,
+          req.params.userId,
+          'role_changed',
+          'Role Updated',
+          `Your role in the workspace has been updated to ${role.replace('_', ' ')}.`,
+          '/team'
+        );
+      }
     }
+
+    await workspace.save();
+
+    res.status(200).json(workspace);
 
     await workspace.save();
 

@@ -106,11 +106,18 @@ export default function AttendanceLeaveScreen({ navigation }) {
   };
 
   const handleCheckOut = async () => {
-    // Check time for early leave
+    // Check time for early leave against employee's specific shiftEndTime
     const now = new Date();
-    const isBefore6PM = now.getHours() < 18;
+    const userShiftEnd = user?.shiftEndTime || '18:00';
+    const [endHStr, endMStr] = userShiftEnd.split(':');
+    const endH = parseInt(endHStr, 10) || 18;
+    const endM = parseInt(endMStr, 10) || 0;
+
+    const currentTotalMin = now.getHours() * 60 + now.getMinutes();
+    const shiftEndTotalMin = endH * 60 + endM;
+    const isBeforeShiftEnd = currentTotalMin < shiftEndTotalMin;
     
-    if (isBefore6PM) {
+    if (isBeforeShiftEnd) {
       const todayStr = now.toISOString().split('T')[0];
       const todayEarlyLeave = earlyLeaves.find(el => 
         String(el.user?._id || el.user) === String(user._id) && 
@@ -225,6 +232,9 @@ export default function AttendanceLeaveScreen({ navigation }) {
                           {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
                         </Text>
                       </View>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#6366F1', marginTop: 3 }}>
+                        Shift: {user?.shiftStartTime || '09:40'} - {user?.shiftEndTime || '18:00'}
+                      </Text>
                     </View>
 
                     {isCheckedIn ? (

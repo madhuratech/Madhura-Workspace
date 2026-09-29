@@ -2,8 +2,9 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
   ActivityIndicator, KeyboardAvoidingView, Platform, Image,
-  Keyboard, Linking, ScrollView, Alert, Modal, Switch,
+  Keyboard, Linking, ScrollView, Alert, Modal, Switch, StatusBar,
 } from 'react-native';
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ArrowLeft, Send, Check, CheckCheck, Smile,
@@ -13,6 +14,7 @@ import {
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext, API_URL } from '../context/AuthContext';
+import { SocketContext } from '../context/SocketContext';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
@@ -59,6 +61,7 @@ const emojiStyles = StyleSheet.create({
 export default function ChatWindowScreen({ route, navigation }) {
   const { workspaceId, channelId, channelName, isDM, channel } = route.params;
   const { user } = useContext(AuthContext);
+  const { socket: globalSocket } = useContext(SocketContext);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -82,29 +85,19 @@ export default function ChatWindowScreen({ route, navigation }) {
   );
   const [isSavingChannel, setIsSavingChannel] = useState(false);
 
-  const socketRef = useRef(null);
   const flatListRef = useRef(null);
 
   useEffect(() => {
     fetchMessages();
     fetchWorkspaceMembers();
-    setupSocket();
+    
+    const socket = globalSocket || io(API_URL.replace('/api', ''));
+    if (user?._id) {
+      socket.emit('user_connected', user._id);
+    }
 
-    const kbListener = Keyboard.addListener('keyboardDidShow', () => {
-      setShowEmojiPicker(false);
-      setShowAttachMenu(false);
-    });
-    return () => {
-      socketRef.current?.disconnect();
-      kbListener.remove();
-    };
-  }, []);
-
-  const setupSocket = () => {
-    const socket = io(API_URL.replace('/api', ''));
-    socketRef.current = socket;
-
-    socket.on('new_message', (msg) => {
+    const onNewMessage = (msg) => {
+      if (!msg) return;
       const getObjId = (obj) => obj ? String(obj._id || obj) : null;
       const msgChannelId = getObjId(msg.channel) || getObjId(msg.dm);
       if (msgChannelId === String(channelId)) {
@@ -112,27 +105,31 @@ export default function ChatWindowScreen({ route, navigation }) {
           if (prev.find((m) => String(m._id) === String(msg._id))) return prev;
           return [...prev, msg];
         });
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
       }
-    });
+    };
 
-    socket.on('message_updated', (msg) => {
-      if (
-        (msg.channel && String(msg.channel) === String(channelId)) ||
-        (msg.dm && String(msg.dm) === String(channelId))
-      ) {
+    const onMessageUpdated = (msg) => {
+      if (!msg) return;
+      const getObjId = (obj) => obj ? String(obj._id || obj) : null;
+      const msgChannelId = getObjId(msg.channel) || getObjId(msg.dm);
+      if (msgChannelId === String(channelId)) {
         setMessages((prev) =>
           prev.map((m) => (String(m._id) === String(msg._id) ? msg : m))
         );
       }
-    });
+    };
 
-    socket.on('message_deleted', ({ messageId, channelId: ch }) => {
-      if (String(ch) === String(channelId)) {
+    const onMessageDeleted = ({ messageId, channelId: ch, dmId }) => {
+      const targetId = String(ch || dmId || '');
+      if (targetId === String(channelId) || !targetId) {
         setMessages((prev) => prev.filter((m) => String(m._id) !== String(messageId)));
       }
-    });
+    };
 
-    socket.on('messages_read', ({ channelId: readChId, userId }) => {
+    const onMessagesRead = ({ channelId: readChId, userId }) => {
       if (!isDM && String(readChId) === String(channelId)) {
         setMessages((prev) => prev.map(m => {
           if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
@@ -141,9 +138,9 @@ export default function ChatWindowScreen({ route, navigation }) {
           return m;
         }));
       }
-    });
+    };
 
-    socket.on('dm_messages_read', ({ dmId, userId }) => {
+    const onDmMessagesRead = ({ dmId, userId }) => {
       if (isDM && String(dmId) === String(channelId)) {
         setMessages((prev) => prev.map(m => {
           if (m.sender && String(m.sender._id || m.sender) !== String(userId) && (!m.readBy || !m.readBy.includes(userId))) {
@@ -152,8 +149,32 @@ export default function ChatWindowScreen({ route, navigation }) {
           return m;
         }));
       }
+    };
+
+    socket.on('new_message', onNewMessage);
+    socket.on('message_updated', onMessageUpdated);
+    socket.on('message_deleted', onMessageDeleted);
+    socket.on('messages_read', onMessagesRead);
+    socket.on('dm_messages_read', onDmMessagesRead);
+
+    const kbListener = Keyboard.addListener('keyboardDidShow', () => {
+      setShowEmojiPicker(false);
+      setShowAttachMenu(false);
+      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 150);
     });
-  };
+
+    return () => {
+      socket.off('new_message', onNewMessage);
+      socket.off('message_updated', onMessageUpdated);
+      socket.off('message_deleted', onMessageDeleted);
+      socket.off('messages_read', onMessagesRead);
+      socket.off('dm_messages_read', onDmMessagesRead);
+      if (!globalSocket) {
+        socket.disconnect();
+      }
+      kbListener.remove();
+    };
+  }, [channelId, globalSocket, user?._id]);
 
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [showMentionMenu, setShowMentionMenu] = useState(false);
@@ -228,13 +249,27 @@ export default function ChatWindowScreen({ route, navigation }) {
         const endpoint = isDM
           ? `/workspaces/${workspaceId}/dms/${channelId}/messages/${editingMessageId}`
           : `/workspaces/${workspaceId}/channels/${channelId}/messages/${editingMessageId}`;
-        await axios.put(endpoint, { text });
+        const res = await axios.put(endpoint, { text });
+        if (res.data) {
+          setMessages((prev) =>
+            prev.map((m) => (String(m._id) === String(res.data._id) ? res.data : m))
+          );
+        }
         setEditingMessageId(null);
       } else {
         const endpoint = isDM
           ? `/workspaces/${workspaceId}/dms/${channelId}/messages`
           : `/workspaces/${workspaceId}/channels/${channelId}/messages`;
-        await axios.post(endpoint, { text, attachment });
+        const res = await axios.post(endpoint, { text, attachment });
+        if (res.data) {
+          setMessages((prev) => {
+            if (prev.find((m) => String(m._id) === String(res.data._id))) return prev;
+            return [...prev, res.data];
+          });
+          setTimeout(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }, 60);
+        }
       }
     } catch (err) {
       console.error('Send error:', err);
@@ -504,6 +539,8 @@ export default function ChatWindowScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ExpoStatusBar style="dark" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>

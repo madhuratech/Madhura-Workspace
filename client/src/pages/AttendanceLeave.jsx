@@ -162,9 +162,12 @@ const AttendanceLeave = () => {
 
   const handleCheckOut = async () => {
     const now = new Date();
-    const currentHour = now.getHours();
+    const shiftEndTime = user?.shiftEndTime || '18:00';
+    const [shiftEndHour, shiftEndMin] = shiftEndTime.split(':').map(Number);
+    const currentTotalMin = now.getHours() * 60 + now.getMinutes();
+    const shiftEndTotalMin = (shiftEndHour || 18) * 60 + (shiftEndMin || 0);
     
-    if (currentHour < 18 && todayEarlyLeaveStatus !== 'approved') {
+    if (currentTotalMin < shiftEndTotalMin && todayEarlyLeaveStatus !== 'approved') {
       const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
       setEarlyLeaveData({ ...earlyLeaveData, requestedLeaveTime: timeStr });
       setIsEarlyLeaveModalOpen(true);
@@ -485,11 +488,17 @@ const AttendanceLeave = () => {
                 <DigitalClock className="w-32 h-24 shadow-md bg-bg-primary/80" />
                 <div>
                   <h3 className="font-outfit text-2xl font-black text-text-primary mb-1">Timecard</h3>
-                  <p className="text-sm font-medium text-text-secondary flex items-center">
-                    <CalendarIcon size={14} className="mr-1.5" />
-                    {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
-                  <div className="mt-4">
+                  <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                    <p className="text-sm font-medium text-text-secondary flex items-center">
+                      <CalendarIcon size={14} className="mr-1.5" />
+                      {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                    </p>
+                    <div className="flex items-center text-xs font-semibold text-accent-blue bg-accent-blue/10 px-2.5 py-0.5 rounded-full border border-accent-blue/20">
+                      <Clock size={12} className="mr-1.5" />
+                      Shift: {user?.shiftStartTime || '09:40'} - {user?.shiftEndTime || '18:00'}
+                    </div>
+                  </div>
+                  <div className="mt-3">
                     {isCheckedIn ? (
                       <div className="flex items-center space-x-2 text-sm font-bold bg-success/10 text-success px-3 py-1.5 rounded-lg w-fit border border-success/20 shadow-sm">
                         <span className="w-2.5 h-2.5 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>

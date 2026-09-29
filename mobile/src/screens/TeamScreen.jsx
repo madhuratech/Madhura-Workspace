@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  TouchableOpacity, ActivityIndicator, Animated, Alert, Modal, TextInput
+  TouchableOpacity, ActivityIndicator, Animated, Alert, Modal, TextInput, ScrollView
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, ArrowLeft, Users, UserPlus, Key } from 'lucide-react-native';
+import { Mail, ArrowLeft, Users, UserPlus, Key, Edit3, Clock, Briefcase, Shield, User as UserIcon } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
@@ -20,7 +20,14 @@ const ROLE_CONFIG = {
   employee:    { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', label: 'Employee'    },
 };
 
-const MemberCard = ({ member, delay, colorIdx, currentUserRole, onResetPassword }) => {
+const SHIFT_PRESETS = [
+  { label: '9:40 AM - 6:00 PM', start: '09:40', end: '18:00' },
+  { label: '10:00 AM - 5:00 PM', start: '10:00', end: '17:00' },
+  { label: '9:40 AM - 5:30 PM', start: '09:40', end: '17:30' },
+  { label: '9:00 AM - 5:00 PM', start: '09:00', end: '17:00' },
+];
+
+const MemberCard = ({ member, delay, colorIdx, currentUserRole, onResetPassword, onEditMember }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(16)).current;
 
@@ -35,6 +42,8 @@ const MemberCard = ({ member, delay, colorIdx, currentUserRole, onResetPassword 
   const name = memberUser?.name || 'Unknown';
   const email = memberUser?.email || '';
   const role = member.role || memberUser?.role || 'employee';
+  const shiftStart = memberUser?.shiftStartTime || '09:40';
+  const shiftEnd = memberUser?.shiftEndTime || '18:00';
   const initial = name.charAt(0).toUpperCase();
   const color = AVATAR_COLORS[colorIdx % AVATAR_COLORS.length];
   const roleCfg = ROLE_CONFIG[role] || ROLE_CONFIG.employee;
@@ -49,25 +58,39 @@ const MemberCard = ({ member, delay, colorIdx, currentUserRole, onResetPassword 
       {/* Info */}
       <View style={styles.info}>
         <Text style={styles.name}>{name}</Text>
-        {memberUser?.designation && (
+        {memberUser?.designation ? (
           <Text style={styles.designation}>{memberUser.designation}</Text>
-        )}
-        {/* Role badge */}
-        <View style={[styles.roleBadge, { backgroundColor: roleCfg.bg, borderColor: roleCfg.border }]}>
-          <Text style={[styles.roleText, { color: roleCfg.text }]}>{roleCfg.label}</Text>
+        ) : null}
+
+        <View style={styles.badgeRow}>
+          {/* Role badge */}
+          <View style={[styles.roleBadge, { backgroundColor: roleCfg.bg, borderColor: roleCfg.border }]}>
+            <Text style={[styles.roleText, { color: roleCfg.text }]}>{roleCfg.label}</Text>
+          </View>
+
+          {/* Shift time badge */}
+          <View style={styles.shiftBadge}>
+            <Clock size={11} color="#64748B" style={{ marginRight: 3 }} />
+            <Text style={styles.shiftText}>{shiftStart} - {shiftEnd}</Text>
+          </View>
         </View>
       </View>
 
       {/* Actions */}
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {currentUserRole === 'super_admin' && (
-          <TouchableOpacity style={styles.actionBtn} onPress={() => onResetPassword(memberUser?._id)}>
-            <Key color="#94A3B8" size={18} strokeWidth={1.6} />
-          </TouchableOpacity>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {['super_admin', 'hr'].includes(currentUserRole) && (
+          <>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => onEditMember(member)} title="Edit Employee">
+              <Edit3 color="#475569" size={16} strokeWidth={1.8} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => onResetPassword(memberUser?._id)} title="Reset Password">
+              <Key color="#475569" size={16} strokeWidth={1.8} />
+            </TouchableOpacity>
+          </>
         )}
         {email ? (
           <TouchableOpacity style={styles.actionBtn}>
-            <Mail color="#94A3B8" size={18} strokeWidth={1.6} />
+            <Mail color="#94A3B8" size={16} strokeWidth={1.8} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -77,10 +100,24 @@ const MemberCard = ({ member, delay, colorIdx, currentUserRole, onResetPassword 
 
 export default function TeamScreen({ navigation }) {
   const { user } = React.useContext(AuthContext);
+  const [workspace, setWorkspace] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState('employee');
   const [resetModal, setResetModal] = useState({ isVisible: false, userId: null, newPassword: '', loading: false });
+
+  // Edit Member Modal State
+  const [editModal, setEditModal] = useState({
+    isVisible: false,
+    member: null,
+    name: '',
+    designation: '',
+    role: 'employee',
+    shiftStartTime: '09:40',
+    shiftEndTime: '18:00',
+    loading: false
+  });
+
   const headerFade = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -93,6 +130,7 @@ export default function TeamScreen({ navigation }) {
       const wsRes = await axios.get('/workspaces');
       if (wsRes.data.length > 0) {
         const ws = wsRes.data[0];
+        setWorkspace(ws);
         const detailRes = await axios.get(`/workspaces/${ws._id}`);
         const memberList = detailRes.data.members || [];
         setMembers(memberList);
@@ -128,6 +166,48 @@ export default function TeamScreen({ navigation }) {
     }
   };
 
+  const handleOpenEditMember = (member) => {
+    const mUser = member.user || member;
+    setEditModal({
+      isVisible: true,
+      member,
+      name: mUser?.name || '',
+      designation: mUser?.designation || '',
+      role: member.role || mUser?.role || 'employee',
+      shiftStartTime: mUser?.shiftStartTime || '09:40',
+      shiftEndTime: mUser?.shiftEndTime || '18:00',
+      loading: false,
+    });
+  };
+
+  const submitEditMember = async () => {
+    if (!editModal.name.trim()) {
+      Alert.alert('Error', 'Please provide a name');
+      return;
+    }
+    if (!workspace) return;
+
+    setEditModal(prev => ({ ...prev, loading: true }));
+    const memberUserId = editModal.member.user?._id || editModal.member.user;
+
+    try {
+      await axios.put(`/workspaces/${workspace._id}/members/${memberUserId}`, {
+        name: editModal.name.trim(),
+        designation: editModal.designation.trim(),
+        role: editModal.role,
+        shiftStartTime: editModal.shiftStartTime.trim() || '09:40',
+        shiftEndTime: editModal.shiftEndTime.trim() || '18:00',
+      });
+
+      setEditModal(prev => ({ ...prev, isVisible: false, loading: false }));
+      Alert.alert('Success', 'Employee details and shift hours updated!');
+      fetchTeam();
+    } catch (err) {
+      setEditModal(prev => ({ ...prev, loading: false }));
+      Alert.alert('Error', err.response?.data?.message || 'Failed to update employee details');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Animated.View style={[styles.header, { opacity: headerFade }]}>
@@ -160,6 +240,7 @@ export default function TeamScreen({ navigation }) {
               colorIdx={index} 
               currentUserRole={currentUserRole}
               onResetPassword={handleResetPassword}
+              onEditMember={handleOpenEditMember}
             />
           )}
           contentContainerStyle={styles.listContent}
@@ -172,6 +253,132 @@ export default function TeamScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Edit Member Modal */}
+      <Modal visible={editModal.isVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Employee Details</Text>
+              <TouchableOpacity 
+                onPress={() => setEditModal(prev => ({ ...prev, isVisible: false }))} 
+                style={styles.modalCloseBtn}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ marginVertical: 8 }}>
+              {/* Full Name */}
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <View style={styles.inputContainer}>
+                <UserIcon size={18} color="#94A3B8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  value={editModal.name}
+                  onChangeText={(t) => setEditModal(prev => ({ ...prev, name: t }))}
+                />
+              </View>
+
+              {/* Designation */}
+              <Text style={styles.inputLabel}>Designation</Text>
+              <View style={styles.inputContainer}>
+                <Briefcase size={18} color="#94A3B8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Senior Developer"
+                  value={editModal.designation}
+                  onChangeText={(t) => setEditModal(prev => ({ ...prev, designation: t }))}
+                />
+              </View>
+
+              {/* Shift Presets */}
+              <Text style={styles.inputLabel}>Shift Working Hours</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                {SHIFT_PRESETS.map((preset, idx) => {
+                  const isSelected = editModal.shiftStartTime === preset.start && editModal.shiftEndTime === preset.end;
+                  return (
+                    <TouchableOpacity
+                      key={idx}
+                      style={[styles.presetChip, isSelected && styles.presetChipActive]}
+                      onPress={() => {
+                        setEditModal(prev => ({
+                          ...prev,
+                          shiftStartTime: preset.start,
+                          shiftEndTime: preset.end
+                        }));
+                      }}
+                    >
+                      <Text style={[styles.presetText, isSelected && styles.presetTextActive]}>
+                        {preset.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              {/* Shift Start & End inputs */}
+              <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.subInputLabel}>Start Time (HH:MM)</Text>
+                  <View style={styles.timeInputBox}>
+                    <TextInput
+                      style={styles.timeInput}
+                      placeholder="09:40"
+                      value={editModal.shiftStartTime}
+                      onChangeText={(t) => setEditModal(prev => ({ ...prev, shiftStartTime: t }))}
+                    />
+                  </View>
+                </View>
+
+                <View style={{ width: 12 }} />
+
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.subInputLabel}>End Time (HH:MM)</Text>
+                  <View style={styles.timeInputBox}>
+                    <TextInput
+                      style={styles.timeInput}
+                      placeholder="18:00"
+                      value={editModal.shiftEndTime}
+                      onChangeText={(t) => setEditModal(prev => ({ ...prev, shiftEndTime: t }))}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              {/* Role Selection */}
+              <Text style={styles.inputLabel}>Access Role</Text>
+              <View style={styles.roleBtnRow}>
+                {['employee', 'team_leader', 'hr'].map((r) => (
+                  <TouchableOpacity
+                    key={r}
+                    style={[styles.roleBtn, editModal.role === r && styles.roleBtnActive]}
+                    onPress={() => setEditModal(prev => ({ ...prev, role: r }))}
+                  >
+                    <Text style={[styles.roleBtnText, editModal.role === r && styles.roleBtnTextActive]}>
+                      {r.replace('_', ' ').toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity 
+              style={[styles.saveBtn, editModal.loading && { opacity: 0.7 }]} 
+              activeOpacity={0.8}
+              onPress={submitEditMember}
+              disabled={editModal.loading}
+            >
+              {editModal.loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.saveBtnText}>Save Changes</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Reset Password Modal */}
       <Modal visible={resetModal.isVisible} animationType="slide" transparent>
@@ -255,14 +462,21 @@ const styles = StyleSheet.create({
   info: { flex: 1 },
   name: { fontSize: 16, fontWeight: '700', color: '#1b2b4c', marginBottom: 2 },
   designation: { fontSize: 12, color: '#64748B', marginBottom: 6 },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   roleBadge: {
-    alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3,
+    paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 20, borderWidth: 1,
   },
   roleText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
+  shiftBadge: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F1F5F9', paddingHorizontal: 7, paddingVertical: 3,
+    borderRadius: 8,
+  },
+  shiftText: { fontSize: 10, fontWeight: '600', color: '#475569' },
 
   actionBtn: {
-    width: 36, height: 36, borderRadius: 10, backgroundColor: '#F8FAFC',
+    width: 34, height: 34, borderRadius: 10, backgroundColor: '#F8FAFC',
     borderWidth: 1, borderColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center',
   },
 
@@ -290,16 +504,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center'
   },
   modalCloseText: { fontSize: 16, color: '#64748B', fontWeight: 'bold' },
+  inputLabel: { fontSize: 12, fontWeight: '700', color: '#334155', marginBottom: 6, textTransform: 'uppercase' },
+  subInputLabel: { fontSize: 11, fontWeight: '600', color: '#64748B', marginBottom: 4 },
   inputContainer: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC',
     borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0',
-    marginBottom: 20, paddingHorizontal: 14, height: 50
+    marginBottom: 14, paddingHorizontal: 14, height: 48
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 15, color: '#1b2b4c' },
+  input: { flex: 1, fontSize: 14, color: '#1b2b4c' },
+
+  presetChip: {
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16,
+    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0',
+    marginRight: 6,
+  },
+  presetChipActive: { backgroundColor: '#1b2b4c', borderColor: '#1b2b4c' },
+  presetText: { fontSize: 11, fontWeight: '600', color: '#64748B' },
+  presetTextActive: { color: '#FFFFFF' },
+
+  timeInputBox: {
+    height: 44, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC', justifyContent: 'center', paddingHorizontal: 12,
+  },
+  timeInput: { fontSize: 14, color: '#1b2b4c', fontWeight: '700' },
+
+  roleBtnRow: { flexDirection: 'row', gap: 6, marginBottom: 18 },
+  roleBtn: {
+    flex: 1, height: 40, borderWidth: 1, borderColor: '#E2E8F0',
+    borderRadius: 8, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+  },
+  roleBtnActive: { backgroundColor: '#1b2b4c', borderColor: '#1b2b4c' },
+  roleBtnText: { fontSize: 11, fontWeight: '700', color: '#64748B' },
+  roleBtnTextActive: { color: '#FFFFFF' },
+
   saveBtn: {
     backgroundColor: '#1b2b4c', borderRadius: 12, height: 50,
-    justifyContent: 'center', alignItems: 'center'
+    justifyContent: 'center', alignItems: 'center', marginTop: 4,
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

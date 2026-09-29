@@ -209,10 +209,10 @@ function TabNavigator() {
 }
 
 const AnimatedSplashScreen = ({ onFinish }) => {
-  const logoScale = useRef(new Animated.Value(0.6)).current;
+  const logoScale = useRef(new Animated.Value(0.7)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(0)).current;
-  const textTranslateY = useRef(new Animated.Value(20)).current;
+  const textTranslateY = useRef(new Animated.Value(15)).current;
   const tagOpacity = useRef(new Animated.Value(0)).current;
   const containerOpacity = useRef(new Animated.Value(1)).current;
 
@@ -220,27 +220,27 @@ const AnimatedSplashScreen = ({ onFinish }) => {
     // 1. Logo scale & fade in
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(logoOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.spring(logoScale, { toValue: 1, friction: 6, tension: 45, useNativeDriver: true })
+        Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.spring(logoScale, { toValue: 1, friction: 6, tension: 50, useNativeDriver: true })
       ]),
       // 2. Text slide and fade in
       Animated.parallel([
-        Animated.timing(textOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.spring(textTranslateY, { toValue: 0, friction: 6, tension: 50, useNativeDriver: true })
+        Animated.timing(textOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
+        Animated.spring(textTranslateY, { toValue: 0, friction: 6, tension: 60, useNativeDriver: true })
       ]),
       // 3. Tagline fade in
-      Animated.timing(tagOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-      // 4. Hold briefly for a smooth look
-      Animated.delay(600),
-      // 5. Fade out splash
-      Animated.timing(containerOpacity, { toValue: 0, duration: 400, useNativeDriver: true })
+      Animated.timing(tagOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+      // 4. Hold briefly for a smooth clean look
+      Animated.delay(400),
+      // 5. Fade out splash cleanly
+      Animated.timing(containerOpacity, { toValue: 0, duration: 300, useNativeDriver: true })
     ]).start(() => {
       if (onFinish) onFinish();
     });
   }, []);
 
   return (
-    <Animated.View style={[splashStyles.container, { opacity: containerOpacity }]} pointerEvents="none">
+    <Animated.View style={[splashStyles.container, { opacity: containerOpacity }]}>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <Animated.View style={[splashStyles.logoContainer, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
         <Image 
@@ -258,7 +258,7 @@ const AnimatedSplashScreen = ({ onFinish }) => {
 
       <Animated.View style={[splashStyles.tagContainer, { opacity: tagOpacity }]}>
         <Text style={splashStyles.tagText}>ENTERPRISE WORKSPACE</Text>
-        <ActivityIndicator size="small" color="#1b2b4c" style={{ marginTop: 20 }} />
+        <ActivityIndicator size="small" color="#1b2b4c" style={{ marginTop: 16 }} />
       </Animated.View>
     </Animated.View>
   );

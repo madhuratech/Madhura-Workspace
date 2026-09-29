@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
       filter.user = req.user._id;
     }
 
-    const records = await Attendance.find(filter).populate('user', 'name email').sort({ date: -1 });
+    const records = await Attendance.find(filter).populate('user', 'name email designation shiftStartTime shiftEndTime').sort({ date: -1 });
     res.json(records);
   } catch (error) {
     console.error(error);
@@ -45,7 +45,7 @@ router.post('/checkin', async (req, res) => {
       return res.status(400).json({ message: 'Already checked in today' });
     }
 
-    // Calculate Late from 9:40 AM (IST)
+    // Calculate Late based on employee's custom shiftStartTime (defaults to 09:40 AM IST)
     let isLate = false;
     let lateMinutes = 0;
     
@@ -55,12 +55,17 @@ router.post('/checkin', async (req, res) => {
     const checkInHour = istDate.getHours();
     const checkInMinute = istDate.getMinutes();
 
-    // 9:40 AM is the cutoff
-    if (checkInHour > 9 || (checkInHour === 9 && checkInMinute > 40)) {
+    const userShiftStart = req.user.shiftStartTime || '09:40';
+    const [startHourStr, startMinStr] = userShiftStart.split(':');
+    const targetStartHour = parseInt(startHourStr, 10) || 9;
+    const targetStartMin = parseInt(startMinStr, 10) || 40;
+
+    const totalCheckInMinutes = checkInHour * 60 + checkInMinute;
+    const totalShiftStartMinutes = targetStartHour * 60 + targetStartMin;
+
+    if (totalCheckInMinutes > totalShiftStartMinutes) {
       isLate = true;
-      // Calculate minutes late from 9:40 AM
-      const lateTimeInMinutes = (checkInHour * 60 + checkInMinute) - (9 * 60 + 40);
-      lateMinutes = lateTimeInMinutes > 0 ? lateTimeInMinutes : 0;
+      lateMinutes = totalCheckInMinutes - totalShiftStartMinutes;
     }
 
     const record = new Attendance({
@@ -87,9 +92,9 @@ router.post('/checkin', async (req, res) => {
           if (isLate) {
             const h = Math.floor(lateMinutes / 60);
             const m = lateMinutes % 60;
-            if (h > 0 && m > 0) lateString = ` (Late by ${h} hour ${m} mins)`;
-            else if (h > 0) lateString = ` (Late by ${h} hour)`;
-            else lateString = ` (Late by ${m} mins)`;
+            if (h > 0 && m > 0) lateString = ` (Late by ${h} hour ${m} mins based on ${userShiftStart} shift)`;
+            else if (h > 0) lateString = ` (Late by ${h} hour based on ${userShiftStart} shift)`;
+            else lateString = ` (Late by ${m} mins based on ${userShiftStart} shift)`;
           }
 
           await sendNotification(
@@ -129,15 +134,24 @@ router.put('/checkout', async (req, res) => {
       return res.status(400).json({ message: 'Already checked out today' });
     }
 
-    // Check early leave: Before 18:00 (6:00 PM) (IST)
+    // Check early leave based on employee's custom shiftEndTime (defaults to 18:00 IST)
     const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
     const istDate = new Date(istString);
     const checkOutHour = istDate.getHours();
+    const checkOutMinute = istDate.getMinutes();
+
+    const userShiftEnd = req.user.shiftEndTime || '18:00';
+    const [endHourStr, endMinStr] = userShiftEnd.split(':');
+    const targetEndHour = parseInt(endHourStr, 10) || 18;
+    const targetEndMin = parseInt(endMinStr, 10) || 0;
+
+    const totalCheckOutMinutes = checkOutHour * 60 + checkOutMinute;
+    const totalShiftEndMinutes = targetEndHour * 60 + targetEndMin;
     
-    // If it's before 18:00 (6 PM) and they haven't been approved for early leave
-    if (checkOutHour < 18 && !record.earlyLeaveApproved) {
+    // If it's before shift end time and they haven't been approved for early leave
+    if (totalCheckOutMinutes < totalShiftEndMinutes && !record.earlyLeaveApproved) {
       return res.status(400).json({ 
-        message: 'It is before 6:00 PM. Please request early leave permission first.',
+        message: `It is before your shift end time (${userShiftEnd}). Please request early leave permission first.`,
         requiresEarlyLeave: true 
       });
     }

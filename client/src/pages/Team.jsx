@@ -205,10 +205,26 @@ const Team = () => {
   const handleOpenModal = (item = null) => {
     if (item) {
       setEditItem(item);
-      setFormData({ name: item.user.name, email: item.user.email, password: '', role: item.role, designation: item.user.designation || '' });
+      setFormData({
+        name: item.user?.name || '',
+        email: item.user?.email || '',
+        password: '',
+        role: item.role || 'employee',
+        designation: item.user?.designation || '',
+        shiftStartTime: item.user?.shiftStartTime || '09:40',
+        shiftEndTime: item.user?.shiftEndTime || '18:00',
+      });
     } else {
       setEditItem(null);
-      setFormData({ name: '', email: '', password: '', role: 'employee', designation: '' });
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'employee',
+        designation: '',
+        shiftStartTime: '09:40',
+        shiftEndTime: '18:00',
+      });
       setSelectedTeamMembers([]);
       setNewTeamName('');
     }
@@ -227,16 +243,24 @@ const Team = () => {
     setIsSubmittingMember(true);
     try {
       if (editItem) {
-        // Update role and designation
-        await axios.put(`/workspaces/${workspace._id}/members/${editItem.user._id}`, { role: formData.role, designation: formData.designation });
+        // Update role, designation, name and shift hours
+        await axios.put(`/workspaces/${workspace._id}/members/${editItem.user._id}`, {
+          name: formData.name,
+          role: formData.role,
+          designation: formData.designation,
+          shiftStartTime: formData.shiftStartTime || '09:40',
+          shiftEndTime: formData.shiftEndTime || '18:00',
+        });
         showToast('Member updated successfully!', 'success');
       } else {
-        // Send email invitation
+        // Send email invitation with role and shift hours
         console.log('[DEBUG FRONTEND] Sending invitation to:', formData.email);
         const res = await axios.post(`/invitations`, {
           email: formData.email,
           role: formData.role,
           designation: formData.designation,
+          shiftStartTime: formData.shiftStartTime || '09:40',
+          shiftEndTime: formData.shiftEndTime || '18:00',
           workspaceId: workspace._id
         });
         console.log('[DEBUG FRONTEND] Server responded successfully:', res.data);
@@ -386,8 +410,15 @@ const Team = () => {
                     </div>
 
                     {/* Designation */}
-                    <div className="w-full md:w-48 mb-2 md:mb-0 shrink-0">
+                    <div className="w-full md:w-40 mb-2 md:mb-0 shrink-0">
                       <p className="text-xs text-text-secondary truncate">{member.user.designation || '-'}</p>
+                    </div>
+
+                    {/* Shift Timing */}
+                    <div className="w-full md:w-36 mb-2 md:mb-0 shrink-0">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-bg-secondary text-text-secondary border border-border">
+                        {member.user.shiftStartTime || '09:40'} - {member.user.shiftEndTime || '18:00'}
+                      </span>
                     </div>
 
                     {/* Role */}
@@ -559,6 +590,20 @@ const Team = () => {
             <div className="p-6 overflow-y-auto custom-scrollbar">
             
             <form onSubmit={handleSubmit} className="space-y-4">
+              {editItem && (
+                <div>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Full Name</label>
+                  <input 
+                    type="text" 
+                    value={formData.name} 
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
+                    placeholder="Full Name"
+                    required
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Email Address</label>
                 <div className="relative">
@@ -583,6 +628,56 @@ const Team = () => {
                   placeholder="e.g. Full Stack Developer, BDM"
                 />
               </div>
+
+              {/* Working Shift Hours Presets */}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-1.5">Working Shift Hours</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {[
+                    { label: '9:40 AM - 6:00 PM', start: '09:40', end: '18:00' },
+                    { label: '10:00 AM - 5:00 PM', start: '10:00', end: '17:00' },
+                    { label: '9:40 AM - 5:30 PM', start: '09:40', end: '17:30' },
+                    { label: '9:00 AM - 5:00 PM', start: '09:00', end: '17:00' },
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, shiftStartTime: preset.start, shiftEndTime: preset.end })}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
+                        formData.shiftStartTime === preset.start && formData.shiftEndTime === preset.end
+                          ? 'bg-accent-blue text-white border-accent-blue font-medium'
+                          : 'bg-bg-primary text-text-secondary border-border hover:border-accent-blue/50'
+                      }`}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-text-secondary mb-1">Start Time (HH:MM)</label>
+                    <input 
+                      type="text"
+                      value={formData.shiftStartTime}
+                      onChange={e => setFormData({...formData, shiftStartTime: e.target.value})}
+                      placeholder="09:40"
+                      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-blue font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-text-secondary mb-1">End Time (HH:MM)</label>
+                    <input 
+                      type="text"
+                      value={formData.shiftEndTime}
+                      onChange={e => setFormData({...formData, shiftEndTime: e.target.value})}
+                      placeholder="18:00"
+                      className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-blue font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Access Role</label>
                 <div className="relative">
@@ -771,6 +866,13 @@ const Team = () => {
                     }`}>
                   {viewMember.role.replace(/_/g, ' ')}
                 </span>
+              </div>
+              <div>
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1">Shift Hours</p>
+                <div className="flex items-center text-xs font-semibold text-accent-blue bg-accent-blue/10 px-2.5 py-1.5 rounded-lg border border-accent-blue/20 w-fit">
+                  <Clock size={13} className="mr-1.5" />
+                  {viewMember.user?.shiftStartTime || '09:40'} — {viewMember.user?.shiftEndTime || '18:00'}
+                </div>
               </div>
               <div>
                 <p className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1">Teams</p>

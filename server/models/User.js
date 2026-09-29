@@ -39,6 +39,14 @@ const UserSchema = new mongoose.Schema({
     enum: ['Active', 'Busy', 'Break', 'Lunch', 'Away', 'Leave'],
     default: 'Active'
   },
+  shiftStartTime: {
+    type: String,
+    default: '09:40' // e.g. "09:40", "10:00"
+  },
+  shiftEndTime: {
+    type: String,
+    default: '18:00' // e.g. "18:00", "17:00", "17:30"
+  },
   googleAccessToken: {
     type: String
   },

@@ -10,6 +10,10 @@ import { io } from 'socket.io-client';
 import { cachedGet } from '../utils/api';
 import { AuthContext, API_URL } from '../context/AuthContext';
 
+import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { StatusBar, Platform } from 'react-native';
+import { SocketContext } from '../context/SocketContext';
+
 const PRIMARY = '#1b2b4c';
 
 const CHANNEL_COLORS = [PRIMARY, '#059669', '#D97706', '#DC2626', '#7C3AED', '#0891B2'];
@@ -73,18 +77,20 @@ const ChannelRow = ({ channel, onPress, idx, delay }) => {
 };
 
 // ── DM Row ─────────────────────────────────────────────────────────────────
-const DMRow = ({ member, onPress, idx, delay }) => {
+const DMRow = ({ member, isOnline, onPress, idx, delay }) => {
   const fade = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.timing(fade, { toValue: 1, duration: 320, delay, useNativeDriver: true }).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.5, duration: 1200, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
+    if (isOnline) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulse, { toValue: 1.4, duration: 1200, useNativeDriver: true }),
+          Animated.timing(pulse, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        ])
+      ).start();
+    }
+  }, [isOnline]);
 
   const color = CHANNEL_COLORS[idx % CHANNEL_COLORS.length];
   const initials = getInitials(member.name || member.email?.split('@')[0]);
@@ -96,13 +102,22 @@ const DMRow = ({ member, onPress, idx, delay }) => {
           <View style={[styles.dmAvatar, { backgroundColor: color + '15' }]}>
             <Text style={[styles.dmAvatarText, { color }]}>{initials}</Text>
           </View>
-          {/* Pulsing online indicator */}
-          <Animated.View style={[styles.onlineRing, { transform: [{ scale: pulse }] }]} />
-          <View style={styles.onlineDot} />
+          {/* Real-time online indicator */}
+          {isOnline && (
+            <>
+              <Animated.View style={[styles.onlineRing, { transform: [{ scale: pulse }] }]} />
+              <View style={styles.onlineDot} />
+            </>
+          )}
         </View>
 
         <View style={styles.rowInfo}>
-          <Text style={styles.rowTitle}>{member.name || member.email?.split('@')[0]}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={styles.rowTitle}>{member.name || member.email?.split('@')[0]}</Text>
+            {isOnline && (
+              <Text style={styles.onlineText}>Online</Text>
+            )}
+          </View>
           <Text style={styles.rowSub} numberOfLines={1}>
             {member.designation || (member.role?.replace(/_/g, ' ') || 'Team member')}
           </Text>
@@ -114,6 +129,7 @@ const DMRow = ({ member, onPress, idx, delay }) => {
 
 export default function ChatScreen({ navigation }) {
   const { user } = useContext(AuthContext);
+  const { socket: globalSocket, isUserOnline } = useContext(SocketContext);
   const [workspace, setWorkspace] = useState(null);
   const [publicChannels, setPublicChannels] = useState([]);
   const [privateChannels, setPrivateChannels] = useState([]);
@@ -136,9 +152,12 @@ export default function ChatScreen({ navigation }) {
     Animated.timing(fade, { toValue: 1, duration: 400, useNativeDriver: true }).start();
     load();
 
-    const socket = io(API_URL.replace('/api', ''));
+    const socket = globalSocket || io(API_URL.replace('/api', ''));
+    if (user?._id) {
+      socket.emit('user_connected', user._id);
+    }
     
-    socket.on('channel_created', (newChan) => {
+    const onChanCreated = (newChan) => {
       setPublicChannels(prev => {
         if (newChan.isPrivate || prev.some(c => c._id === newChan._id)) return prev;
         return [...prev, newChan];
@@ -148,9 +167,9 @@ export default function ChatScreen({ navigation }) {
         const hasAccess = newChan.members?.some(m => String(m._id || m) === String(user?._id)) || String(newChan.createdBy) === String(user?._id);
         return hasAccess ? [...prev, newChan] : prev;
       });
-    });
+    };
 
-    socket.on('channel_updated', (upChan) => {
+    const onChanUpdated = (upChan) => {
       setPublicChannels(prev => {
         if (upChan.isPrivate) return prev.filter(c => c._id !== upChan._id);
         if (prev.some(c => c._id === upChan._id)) return prev.map(c => c._id === upChan._id ? upChan : c);
@@ -162,17 +181,26 @@ export default function ChatScreen({ navigation }) {
         if (prev.some(c => c._id === upChan._id)) return prev.map(c => c._id === upChan._id ? upChan : c);
         return [...prev, upChan];
       });
-    });
+    };
 
-    socket.on('channel_deleted', ({ channelId }) => {
+    const onChanDeleted = ({ channelId }) => {
       setPublicChannels(prev => prev.filter(c => c._id !== channelId));
       setPrivateChannels(prev => prev.filter(c => c._id !== channelId));
-    });
+    };
+
+    socket.on('channel_created', onChanCreated);
+    socket.on('channel_updated', onChanUpdated);
+    socket.on('channel_deleted', onChanDeleted);
 
     return () => {
-      socket.disconnect();
+      socket.off('channel_created', onChanCreated);
+      socket.off('channel_updated', onChanUpdated);
+      socket.off('channel_deleted', onChanDeleted);
+      if (!globalSocket) {
+        socket.disconnect();
+      }
     };
-  }, [user?._id]);
+  }, [user?._id, globalSocket]);
 
   const load = async () => {
     try {
@@ -293,6 +321,8 @@ export default function ChatScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ExpoStatusBar style="dark" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header */}
       <Animated.View style={[styles.header, { opacity: fade }]}>
@@ -428,6 +458,7 @@ export default function ChatScreen({ navigation }) {
             <DMRow
               key={m._id}
               member={m}
+              isOnline={isUserOnline(m._id)}
               idx={i}
               delay={i * 40}
               onPress={() => openDM(m)}
@@ -622,6 +653,11 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, right: 0,
     width: 10, height: 10, borderRadius: 5,
     backgroundColor: '#10B981', borderWidth: 2, borderColor: '#fff',
+  },
+  onlineText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#10B981',
   },
 
   // Modal

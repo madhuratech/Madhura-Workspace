@@ -17,8 +17,17 @@ export default function RegisterMemberScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('employee');
   const [designation, setDesignation] = useState('');
+  const [shiftStartTime, setShiftStartTime] = useState('09:40');
+  const [shiftEndTime, setShiftEndTime] = useState('18:00');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const SHIFT_PRESETS = [
+    { label: '9:40 AM - 6:00 PM', start: '09:40', end: '18:00' },
+    { label: '10:00 AM - 5:00 PM', start: '10:00', end: '17:00' },
+    { label: '9:40 AM - 5:30 PM', start: '09:40', end: '17:30' },
+    { label: '9:00 AM - 5:00 PM', start: '09:00', end: '17:00' },
+  ];
 
   const handleRegister = async () => {
     if (!name || !email || !password) {
@@ -38,13 +47,19 @@ export default function RegisterMemberScreen({ navigation }) {
       const workspaceId = wsRes.data[0]._id;
 
       await axios.post(`/workspaces/${workspaceId}/members`, {
-        name, email, password, role, designation
+        name,
+        email,
+        password,
+        role,
+        designation,
+        shiftStartTime: shiftStartTime.trim() || '09:40',
+        shiftEndTime: shiftEndTime.trim() || '18:00',
       });
 
       Toast.show({
         type: 'success',
         text1: 'Member Registered',
-        text2: 'The credentials have been created successfully.',
+        text2: 'The credentials and shift hours have been created.',
       });
       navigation.goBack();
     } catch (err) {
@@ -66,8 +81,8 @@ export default function RegisterMemberScreen({ navigation }) {
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.subtitle}>Create credentials for a new employee or team leader to give them access.</Text>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Text style={styles.subtitle}>Create credentials and custom working hours for the employee.</Text>
 
           {error ? (
             <View style={styles.errorBox}>
@@ -76,7 +91,7 @@ export default function RegisterMemberScreen({ navigation }) {
           ) : null}
 
           <View style={styles.form}>
-            <Text style={styles.label}>Full Name</Text>
+            <Text style={styles.label}>Full Name *</Text>
             <View style={styles.inputContainer}>
               <UserPlus color="#9CA3AF" size={18} style={styles.inputIcon} />
               <TextInput
@@ -88,7 +103,7 @@ export default function RegisterMemberScreen({ navigation }) {
               />
             </View>
 
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Email Address *</Text>
             <View style={styles.inputContainer}>
               <Mail color="#9CA3AF" size={18} style={styles.inputIcon} />
               <TextInput
@@ -102,7 +117,7 @@ export default function RegisterMemberScreen({ navigation }) {
               />
             </View>
 
-            <Text style={styles.label}>Temporary Password</Text>
+            <Text style={styles.label}>Temporary Password *</Text>
             <View style={styles.inputContainer}>
               <Lock color="#9CA3AF" size={18} style={styles.inputIcon} />
               <TextInput
@@ -124,6 +139,58 @@ export default function RegisterMemberScreen({ navigation }) {
                 value={designation}
                 onChangeText={setDesignation}
               />
+            </View>
+
+            {/* Shift Working Hours */}
+            <Text style={styles.label}>Working Shift Hours</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.presetScroll}>
+              {SHIFT_PRESETS.map((preset, idx) => {
+                const isSelected = shiftStartTime === preset.start && shiftEndTime === preset.end;
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[styles.presetChip, isSelected && styles.presetChipActive]}
+                    onPress={() => {
+                      setShiftStartTime(preset.start);
+                      setShiftEndTime(preset.end);
+                    }}
+                  >
+                    <Text style={[styles.presetText, isSelected && styles.presetTextActive]}>
+                      {preset.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.timeRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.subLabel}>Shift Start (HH:MM)</Text>
+                <View style={styles.timeInputBox}>
+                  <TextInput
+                    style={styles.timeInput}
+                    placeholder="09:40"
+                    placeholderTextColor="#9CA3AF"
+                    value={shiftStartTime}
+                    onChangeText={setShiftStartTime}
+                  />
+                </View>
+              </View>
+
+              <View style={{ width: 14 }} />
+
+              <View style={{ flex: 1 }}>
+                <Text style={styles.subLabel}>Shift End (HH:MM)</Text>
+                <View style={styles.timeInputBox}>
+                  <TextInput
+                    style={styles.timeInput}
+                    placeholder="18:00"
+                    placeholderTextColor="#9CA3AF"
+                    value={shiftEndTime}
+                    onChangeText={setShiftEndTime}
+                  />
+                </View>
+              </View>
             </View>
 
             <Text style={styles.label}>Role</Text>
@@ -193,6 +260,25 @@ const styles = StyleSheet.create({
   roleBtnActive: { backgroundColor: PRIMARY, borderColor: PRIMARY },
   roleBtnText: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
   roleBtnTextActive: { color: '#FFFFFF' },
+
+  presetScroll: { gap: 8, paddingBottom: 12 },
+  presetChip: {
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0',
+  },
+  presetChipActive: {
+    backgroundColor: '#1b2b4c', borderColor: '#1b2b4c',
+  },
+  presetText: { fontSize: 12, fontWeight: '600', color: '#64748B' },
+  presetTextActive: { color: '#FFFFFF' },
+
+  timeRow: { flexDirection: 'row', marginBottom: 18 },
+  subLabel: { fontSize: 11, fontWeight: '600', color: '#64748B', marginBottom: 6 },
+  timeInputBox: {
+    height: 46, borderRadius: 8, borderWidth: 1, borderColor: BORDER,
+    backgroundColor: '#F8FAFC', justifyContent: 'center', paddingHorizontal: 12,
+  },
+  timeInput: { fontSize: 14, color: '#111827', fontWeight: '600' },
 
   submitBtn: {
     backgroundColor: PRIMARY, borderRadius: 8, height: 52,
