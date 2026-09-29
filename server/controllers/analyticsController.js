@@ -14,7 +14,7 @@ const getWorkspaceAnalytics = async (req, res) => {
 
     // 1. Fetch Workspace with populated member info using lean() for speed
     const workspace = await Workspace.findById(workspaceId)
-      .populate('members.user', 'name email avatar role designation presenceStatus')
+      .populate('members.user', 'name email avatar role designation presenceStatus shiftStartTime shiftEndTime')
       .lean();
 
     if (!workspace) {

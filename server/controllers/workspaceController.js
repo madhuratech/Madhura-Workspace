@@ -15,7 +15,7 @@ const getWorkspaces = async (req, res) => {
     })
       .select('name description owner members createdAt')
       .populate('owner', 'name email')
-      .populate('members.user', 'name email avatar designation presenceStatus')
+      .populate('members.user', 'name email avatar designation presenceStatus shiftStartTime shiftEndTime')
       .lean();
 
     res.status(200).json(workspaces);
@@ -84,7 +84,7 @@ const getWorkspace = async (req, res) => {
     const workspace = await Workspace.findById(req.params.id)
       .select('name description owner members createdAt')
       .populate('owner', 'name email')
-      .populate('members.user', 'name email avatar designation presenceStatus')
+      .populate('members.user', 'name email avatar designation presenceStatus shiftStartTime shiftEndTime')
       .lean();
 
     if (!workspace) {
@@ -376,10 +376,6 @@ const updateMember = async (req, res) => {
         );
       }
     }
-
-    await workspace.save();
-
-    res.status(200).json(workspace);
 
     await workspace.save();
 

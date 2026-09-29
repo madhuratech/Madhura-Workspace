@@ -87,6 +87,8 @@ const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         presenceStatus: user.presenceStatus,
+        shiftStartTime: user.shiftStartTime || '09:40',
+        shiftEndTime: user.shiftEndTime || '18:00',
         token: generateToken(user._id),
       });
     } else {

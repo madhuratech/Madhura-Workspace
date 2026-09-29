@@ -67,8 +67,16 @@ const Team = () => {
   const [workspace, setWorkspace] = useState(null);
   const [members, setMembers] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [activeTab, setActiveTab] = useState('org_chart'); // 'members', 'teams', 'org_chart'
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || localStorage.getItem('team_active_tab') || 'members';
+  });
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    localStorage.setItem('team_active_tab', tab);
+  };
   const [currentUserRole, setCurrentUserRole] = useState('employee');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -329,19 +337,19 @@ const Team = () => {
       {/* Tabs */}
       <div className="flex border-b border-border mb-6 overflow-x-auto no-scrollbar whitespace-nowrap">
         <button 
-          onClick={() => setActiveTab('members')}
+          onClick={() => handleTabChange('members')}
           className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'members' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
         >
           All Members
         </button>
         <button 
-          onClick={() => setActiveTab('teams')}
+          onClick={() => handleTabChange('teams')}
           className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'teams' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
         >
           Teams
         </button>
         <button 
-          onClick={() => setActiveTab('org_chart')}
+          onClick={() => handleTabChange('org_chart')}
           className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${activeTab === 'org_chart' ? 'border-accent-blue text-accent-blue' : 'border-transparent text-text-secondary hover:text-text-primary'}`}
         >
           Organization Chart
@@ -573,21 +581,23 @@ const Team = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-md shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-xl md:max-w-2xl shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
               <div>
                 <h3 className="text-xl font-bold text-text-primary flex items-center mb-1">
                   <Shield className="text-accent-blue mr-2" size={20}/>
-                  {editItem ? 'Edit Member Role' : 'Send Invitation'}
+                  {editItem ? 'Edit Member Details' : 'Send Invitation'}
                 </h3>
-                <p className="text-xs text-text-secondary">Invite a new member to join the workspace.</p>
+                <p className="text-xs text-text-secondary">
+                  {editItem ? 'Update member role, job title, and shift working hours.' : 'Invite a new member to join the workspace.'}
+                </p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
                 <X size={18} />
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto custom-scrollbar">
+            <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar">
             
             <form onSubmit={handleSubmit} className="space-y-4">
               {editItem && (
@@ -723,7 +733,7 @@ const Team = () => {
       {/* TEAM CREATION / EDIT MODAL */}
       {isTeamModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-md shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-xl shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden">
             <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center">
               <div>
                 <h3 className="text-xl font-bold text-text-primary mb-1">{editTeamItem ? 'Edit Team' : 'Create Team'}</h3>

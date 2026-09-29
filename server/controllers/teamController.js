@@ -7,8 +7,8 @@ const Workspace = require('../models/Workspace');
 const getTeams = async (req, res) => {
   try {
     const teams = await Team.find({ workspace: req.params.workspaceId })
-      .populate('leader', 'name email avatar')
-      .populate('members', 'name email avatar')
+      .populate('leader', 'name email avatar designation shiftStartTime shiftEndTime')
+      .populate('members', 'name email avatar designation shiftStartTime shiftEndTime')
       .lean();
 
     res.status(200).json(teams);
