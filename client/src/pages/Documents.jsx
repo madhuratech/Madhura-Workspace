@@ -257,7 +257,7 @@ const Documents = () => {
                     <td className="py-4 px-5 text-right">
                       <div className="flex items-center justify-end gap-2 transition-opacity">
                         {doc.fileUrl && (
-                          <a href={`${API_URL}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md" title="Download">
+                          <a href={doc.fileUrl.startsWith('http') ? doc.fileUrl : `${API_URL}${doc.fileUrl}`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-gray-400 hover:text-accent-blue hover:bg-blue-50 rounded-md" title="Download">
                             <Download size={18} />
                           </a>
                         )}
@@ -413,7 +413,7 @@ const Documents = () => {
                       </div>
                       <div className="text-gray-500 text-xs flex justify-between items-center">
                         <span className="truncate max-w-[150px] font-medium" title={ver.originalName}>{ver.originalName}</span>
-                        <a href={`${API_URL}${ver.fileUrl}`} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline font-semibold flex items-center gap-1">
+                        <a href={ver.fileUrl.startsWith('http') ? ver.fileUrl : `${API_URL}${ver.fileUrl}`} target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline font-semibold flex items-center gap-1">
                           <Download size={12}/> Get
                         </a>
                       </div>

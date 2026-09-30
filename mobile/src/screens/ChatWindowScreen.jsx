@@ -408,6 +408,11 @@ export default function ChatWindowScreen({ route, navigation }) {
       ) !== String(item.sender?._id || item.sender);
 
     const baseUrl = API_URL.replace('/api', '');
+    const getMediaUrl = (url) => {
+      if (!url) return '';
+      if (url.startsWith('http://') || url.startsWith('https://')) return url;
+      return `${baseUrl}${url}`;
+    };
 
     return (
       <View
@@ -454,7 +459,7 @@ export default function ChatWindowScreen({ route, navigation }) {
             <View style={styles.attachmentContainer}>
               {item.attachment.fileType?.startsWith('image/') ? (
                 <Image
-                  source={{ uri: `${baseUrl}${item.attachment.url}` }}
+                  source={{ uri: getMediaUrl(item.attachment.url) }}
                   style={styles.attachmentImg}
                   resizeMode="cover"
                 />
@@ -469,7 +474,7 @@ export default function ChatWindowScreen({ route, navigation }) {
                 <TouchableOpacity
                   style={styles.fileCard}
                   onPress={() =>
-                    Linking.openURL(`${baseUrl}${item.attachment.url}`)
+                    Linking.openURL(getMediaUrl(item.attachment.url))
                   }
                 >
                   <File color={isMine ? '#fff' : '#1b2b4c'} size={22} />

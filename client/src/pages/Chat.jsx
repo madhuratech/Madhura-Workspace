@@ -1028,16 +1028,16 @@ const Chat = () => {
                               <div className="p-1">
                                 {msg.attachment.fileType?.startsWith('image/') ? (
                                   <img
-                                    src={`${API_URL}${msg.attachment.url}`}
+                                    src={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`}
                                     alt={msg.attachment.fileName}
                                     className="max-w-[280px] rounded-xl cursor-pointer hover:opacity-90 transition-opacity block"
-                                    onClick={() => setFullScreenImage(`${API_URL}${msg.attachment.url}`)}
+                                    onClick={() => setFullScreenImage(msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`)}
                                   />
                                 ) : msg.attachment.fileType?.startsWith('video/') ? (
-                                  <video src={`${API_URL}${msg.attachment.url}`} controls className="max-w-[280px] rounded-xl block" />
+                                  <video src={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`} controls className="max-w-[280px] rounded-xl block" />
                                 ) : (
                                   <a
-                                    href={`${API_URL}${msg.attachment.url}`}
+                                    href={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`}
                                     target="_blank" rel="noopener noreferrer"
                                     className="flex items-center space-x-2 px-3 py-2 text-sm hover:underline"
                                   >
