@@ -1,9 +1,12 @@
 const mongoose = require('mongoose');
+const { encryptText, decryptText } = require('../utils/crypto');
 
 const MessageSchema = new mongoose.Schema({
   text: {
     type: String,
-    default: ''
+    default: '',
+    set: (val) => encryptText(val),
+    get: (val) => decryptText(val)
   },
   attachment: {
     url: String,
@@ -43,6 +46,10 @@ const MessageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }]
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
 
 module.exports = mongoose.model('Message', MessageSchema);

@@ -191,10 +191,14 @@ const AttendanceLeave = () => {
   const submitEarlyLeave = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`/workspaces/${workspace._id}/early-leaves`, earlyLeaveData);
+      const payload = {
+        ...earlyLeaveData,
+        requestedLeaveTime: earlyLeaveData.requestedLeaveTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false })
+      };
+      await axios.post(`/workspaces/${workspace._id}/early-leaves`, payload);
       showToast('Early leave request submitted', 'success');
       setIsEarlyLeaveModalOpen(false);
-      setTodayEarlyLeaveStatus('pending_tl');
+      setTodayEarlyLeaveStatus('pending_hr');
       fetchEarlyLeaves(workspace._id);
     } catch (error) {
       showToast(error.response?.data?.message || 'Error submitting request', 'error');

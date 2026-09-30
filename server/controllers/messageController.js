@@ -1,6 +1,7 @@
 const Message = require('../models/Message');
 const Channel = require('../models/Channel');
 const { sendNotification } = require('./notificationController');
+const { decryptText } = require('../utils/crypto');
 
 exports.getChannels = async (req, res) => {
   try {
@@ -158,7 +159,13 @@ exports.getMessages = async (req, res) => {
       .populate('mentions', 'name')
       .sort({ createdAt: 1 })
       .lean();
-    res.status(200).json(messages);
+
+    const formattedMessages = messages.map(msg => ({
+      ...msg,
+      text: decryptText(msg.text)
+    }));
+
+    res.status(200).json(formattedMessages);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -5,7 +5,10 @@ const earlyLeaveSchema = new mongoose.Schema({
   employee: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: String, required: true }, // YYYY-MM-DD
   reason: { type: String, required: true },
-  requestedLeaveTime: { type: String, required: true }, // HH:MM (24h)
+  requestedLeaveTime: { 
+    type: String, 
+    default: () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+  }, // HH:MM (24h)
 
   // Approval chain: employee → tl → hr → md
   // Status flow: pending_tl → pending_hr → pending_md → approved | rejected

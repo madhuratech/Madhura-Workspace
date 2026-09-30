@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Animated, TextInput, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Animated, TextInput, Modal, Platform, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, CheckCircle, LogOut, LogIn, Calendar, Clock, X, Plus, AlertTriangle, Check, XCircle } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
@@ -120,7 +120,7 @@ export default function AttendanceLeaveScreen({ navigation }) {
     if (isBeforeShiftEnd) {
       const todayStr = now.toISOString().split('T')[0];
       const todayEarlyLeave = earlyLeaves.find(el => 
-        String(el.user?._id || el.user) === String(user._id) && 
+        String(el.user?._id || el.user || el.employee?._id || el.employee) === String(user._id) && 
         new Date(el.date).toISOString().split('T')[0] === todayStr
       );
 
@@ -146,7 +146,12 @@ export default function AttendanceLeaveScreen({ navigation }) {
       return;
     }
     try {
-      await axios.post(`/workspaces/${workspace._id}/early-leaves`, { reason: earlyLeaveReason });
+      const now = new Date();
+      const requestedLeaveTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      await axios.post(`/workspaces/${workspace._id}/early-leaves`, { 
+        reason: earlyLeaveReason.trim(),
+        requestedLeaveTime
+      });
       setIsEarlyLeaveModalOpen(false);
       setEarlyLeaveReason('');
       fetchEarlyLeaves(workspace._id);
@@ -414,102 +419,120 @@ export default function AttendanceLeaveScreen({ navigation }) {
       )}
 
       {/* Normal Leave Modal */}
-      <Modal visible={isLeaveModalOpen} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Apply Leave</Text>
-              <TouchableOpacity onPress={() => setIsLeaveModalOpen(false)}>
-                <X color="#111827" size={24} />
-              </TouchableOpacity>
-            </View>
+      <Modal visible={isLeaveModalOpen} transparent animationType="fade" onRequestClose={() => setIsLeaveModalOpen(false)}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlayTouch}>
+              <View style={styles.modalContent}>
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" bounces={false}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Apply Leave</Text>
+                    <TouchableOpacity onPress={() => setIsLeaveModalOpen(false)}>
+                      <X color="#111827" size={24} />
+                    </TouchableOpacity>
+                  </View>
 
-            <Text style={styles.label}>Leave Type</Text>
-            <View style={styles.typeContainer}>
-              {['Sick', 'Casual', 'Earned'].map(t => (
-                <TouchableOpacity 
-                  key={t}
-                  style={[styles.typeBtn, leaveData.type === t && { borderColor: PRIMARY, backgroundColor: PRIMARY + '15' }]}
-                  onPress={() => setLeaveData({...leaveData, type: t})}
-                >
-                  <Text style={[styles.typeBtnText, leaveData.type === t && { color: PRIMARY }]}>{t}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  <Text style={styles.label}>Leave Type</Text>
+                  <View style={styles.typeContainer}>
+                    {['Sick', 'Casual', 'Earned'].map(t => (
+                      <TouchableOpacity 
+                        key={t}
+                        style={[styles.typeBtn, leaveData.type === t && { borderColor: PRIMARY, backgroundColor: PRIMARY + '15' }]}
+                        onPress={() => setLeaveData({...leaveData, type: t})}
+                      >
+                        <Text style={[styles.typeBtnText, leaveData.type === t && { color: PRIMARY }]}>{t}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
 
-            <View style={styles.dateRow}>
-              <View style={{flex: 1, marginRight: 8}}>
-                <Text style={styles.label}>Start Date (YYYY-MM-DD)</Text>
-                <TextInput 
-                  style={styles.input} 
-                  value={leaveData.startDate}
-                  onChangeText={(t) => setLeaveData({...leaveData, startDate: t})}
-                  placeholder="2024-01-01"
-                  placeholderTextColor="#94A3B8"
-                />
+                  <View style={styles.dateRow}>
+                    <View style={{flex: 1, marginRight: 8}}>
+                      <Text style={styles.label}>Start Date (YYYY-MM-DD)</Text>
+                      <TextInput 
+                        style={styles.input} 
+                        value={leaveData.startDate}
+                        onChangeText={(t) => setLeaveData({...leaveData, startDate: t})}
+                        placeholder="2024-01-01"
+                        placeholderTextColor="#94A3B8"
+                      />
+                    </View>
+                    <View style={{flex: 1, marginLeft: 8}}>
+                      <Text style={styles.label}>End Date (YYYY-MM-DD)</Text>
+                      <TextInput 
+                        style={styles.input} 
+                        value={leaveData.endDate}
+                        onChangeText={(t) => setLeaveData({...leaveData, endDate: t})}
+                        placeholder="2024-01-02"
+                        placeholderTextColor="#94A3B8"
+                      />
+                    </View>
+                  </View>
+
+                  <Text style={styles.label}>Reason</Text>
+                  <TextInput 
+                    style={[styles.input, { height: 80 }]} 
+                    value={leaveData.reason}
+                    onChangeText={(t) => setLeaveData({...leaveData, reason: t})}
+                    multiline
+                    placeholder="Why are you taking leave?"
+                    placeholderTextColor="#94A3B8"
+                  />
+
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleApplyLeave}>
+                    <Text style={styles.submitBtnText}>Submit Request</Text>
+                  </TouchableOpacity>
+                </ScrollView>
               </View>
-              <View style={{flex: 1, marginLeft: 8}}>
-                <Text style={styles.label}>End Date (YYYY-MM-DD)</Text>
-                <TextInput 
-                  style={styles.input} 
-                  value={leaveData.endDate}
-                  onChangeText={(t) => setLeaveData({...leaveData, endDate: t})}
-                  placeholder="2024-01-02"
-                  placeholderTextColor="#94A3B8"
-                />
-              </View>
             </View>
-
-            <Text style={styles.label}>Reason</Text>
-            <TextInput 
-              style={[styles.input, { height: 80 }]} 
-              value={leaveData.reason}
-              onChangeText={(t) => setLeaveData({...leaveData, reason: t})}
-              multiline
-              placeholder="Why are you taking leave?"
-              placeholderTextColor="#94A3B8"
-            />
-
-            <TouchableOpacity style={styles.submitBtn} onPress={handleApplyLeave}>
-              <Text style={styles.submitBtnText}>Submit Request</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Early Leave Modal */}
-      <Modal visible={isEarlyLeaveModalOpen} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Early Checkout</Text>
-              <TouchableOpacity onPress={() => setIsEarlyLeaveModalOpen(false)}>
-                <X color="#111827" size={24} />
-              </TouchableOpacity>
+      <Modal visible={isEarlyLeaveModalOpen} transparent animationType="fade" onRequestClose={() => setIsEarlyLeaveModalOpen(false)}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+          style={styles.modalOverlay}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlayTouch}>
+              <View style={styles.modalContent}>
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" bounces={false}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Early Checkout</Text>
+                    <TouchableOpacity onPress={() => setIsEarlyLeaveModalOpen(false)}>
+                      <X color="#111827" size={24} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F59E0B20', padding: 12, borderRadius: 8, marginBottom: 20 }}>
+                    <AlertTriangle color="#F59E0B" size={20} style={{ marginRight: 12 }} />
+                    <Text style={{ flex: 1, fontSize: 13, color: '#64748B', lineHeight: 18 }}>
+                      It's before 6:00 PM. Checking out now requires an Early Leave request.
+                    </Text>
+                  </View>
+
+                  <Text style={styles.label}>Reason for Early Leave</Text>
+                  <TextInput 
+                    style={[styles.input, { height: 100 }]} 
+                    value={earlyLeaveReason}
+                    onChangeText={setEarlyLeaveReason}
+                    multiline
+                    placeholder="Please explain why you are leaving early..."
+                    placeholderTextColor="#94A3B8"
+                  />
+
+                  <TouchableOpacity style={styles.submitBtn} onPress={submitEarlyLeave}>
+                    <Text style={styles.submitBtnText}>Submit Early Leave Request</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
             </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F59E0B20', padding: 12, borderRadius: 8, marginBottom: 20 }}>
-              <AlertTriangle color="#F59E0B" size={20} style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 13, color: '#64748B', lineHeight: 18 }}>
-                It's before 6:00 PM. Checking out now requires an Early Leave request.
-              </Text>
-            </View>
-
-            <Text style={styles.label}>Reason for Early Leave</Text>
-            <TextInput 
-              style={[styles.input, { height: 100 }]} 
-              value={earlyLeaveReason}
-              onChangeText={setEarlyLeaveReason}
-              multiline
-              placeholder="Please explain why you are leaving early..."
-              placeholderTextColor="#94A3B8"
-            />
-
-            <TouchableOpacity style={styles.submitBtn} onPress={submitEarlyLeave}>
-              <Text style={styles.submitBtnText}>Submit Early Leave Request</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
     </SafeAreaView>
@@ -697,9 +720,10 @@ const styles = StyleSheet.create({
   actionBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
   actionBtnText: { fontSize: 12, fontWeight: '600' },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(17,24,39,0.5)', justifyContent: 'flex-end' },
-  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, backgroundColor: '#ffffff' },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(17,24,39,0.5)' },
+  modalOverlayTouch: { flex: 1, justifyContent: 'flex-end' },
+  modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40, backgroundColor: '#ffffff', maxHeight: '85%' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   modalTitle: { fontSize: 20, fontWeight: '700', color: '#111827' },
   label: { fontSize: 13, fontWeight: '600', marginBottom: 8, color: '#64748B' },
   typeContainer: { flexDirection: 'row', marginBottom: 16 },

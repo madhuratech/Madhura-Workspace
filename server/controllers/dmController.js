@@ -1,6 +1,7 @@
 const DM = require('../models/DM');
 const DMMessage = require('../models/DMMessage');
 const Workspace = require('../models/Workspace');
+const { decryptText } = require('../utils/crypto');
 
 // @desc    Get or create a DM thread between current user and another user
 // @route   GET /api/workspaces/:workspaceId/dms/:otherUserId
@@ -55,7 +56,12 @@ exports.getDMMessages = async (req, res) => {
       .sort({ createdAt: 1 })
       .lean();
 
-    res.status(200).json(messages);
+    const formattedMessages = messages.map(msg => ({
+      ...msg,
+      text: decryptText(msg.text)
+    }));
+
+    res.status(200).json(formattedMessages);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
