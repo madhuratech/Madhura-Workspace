@@ -19,6 +19,7 @@ export default function AttendanceLeaveScreen({ navigation }) {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isCheckedOut, setIsCheckedOut] = useState(false);
+  const [todayRecord, setTodayRecord] = useState(null);
 
   const [leaveRecords, setLeaveRecords] = useState([]);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
@@ -73,10 +74,26 @@ export default function AttendanceLeaveScreen({ navigation }) {
       const res = await axios.get(`/workspaces/${wsId}/attendance`);
       setAttendanceRecords(res.data);
       const todayStr = new Date().toISOString().split('T')[0];
-      const todayRecord = res.data.find(r => r.date === todayStr && String(r.user?._id || r.user) === String(user._id));
-      if (todayRecord) {
+      const foundToday = res.data.find(r => r.date === todayStr && String(r.user?._id || r.user) === String(user._id));
+      setTodayRecord(foundToday || null);
+      if (foundToday) {
         setIsCheckedIn(true);
-        if (todayRecord.checkOut) setIsCheckedOut(true);
+        if (foundToday.checkOut) {
+          setIsCheckedOut(true);
+        } else {
+          const now = new Date();
+          const [endH, endM] = (user?.shiftEndTime || '18:00').split(':').map(Number);
+          const currentMins = now.getHours() * 60 + now.getMinutes();
+          const shiftEndMins = (endH || 18) * 60 + (endM || 0);
+          if (currentMins >= shiftEndMins && (!foundToday.overtimeMinutes || foundToday.overtimeMinutes === 0)) {
+            setIsCheckedOut(true);
+          } else {
+            setIsCheckedOut(false);
+          }
+        }
+      } else {
+        setIsCheckedIn(false);
+        setIsCheckedOut(false);
       }
     } catch (error) {}
   };
@@ -282,7 +299,11 @@ export default function AttendanceLeaveScreen({ navigation }) {
                     ) : (
                       <View style={styles.completedBadge}>
                         <CheckCircle color="#10B981" size={16} style={{ marginRight: 6 }} />
-                        <Text style={styles.completedText}>Punched Out for Today</Text>
+                        <Text style={styles.completedText}>
+                          {todayRecord?.overtimeMinutes > 0 
+                            ? `Shift & OT Done (+${todayRecord.overtimeHours || +(todayRecord.overtimeMinutes / 60).toFixed(1)}h)` 
+                            : 'Shift Completed (Auto Shift End)'}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -313,6 +334,11 @@ export default function AttendanceLeaveScreen({ navigation }) {
                       <View style={styles.timesWrapper}>
                         <Text style={styles.timeText}>IN: {record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</Text>
                         <Text style={styles.timeText}>OUT: {record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</Text>
+                        {record.overtimeMinutes > 0 && (
+                          <Text style={{ fontSize: 11, color: '#D97706', fontWeight: 'bold', marginTop: 2 }}>
+                            +{record.overtimeHours || +(record.overtimeMinutes / 60).toFixed(1)}h OT
+                          </Text>
+                        )}
                       </View>
                     </View>
                   ))

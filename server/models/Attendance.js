@@ -41,6 +41,29 @@ const attendanceSchema = new mongoose.Schema({
   earlyLeaveApproved: {
     type: Boolean,
     default: false
+  },
+  isAutoCheckOut: {
+    type: Boolean,
+    default: false
+  },
+  overtimeMinutes: {
+    type: Number,
+    default: 0
+  },
+  overtimeHours: {
+    type: Number,
+    default: 0
+  },
+  overtimeReason: {
+    type: String,
+    default: ''
+  },
+  overtimeApprovedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  overtimeApprovedAt: {
+    type: Date
   }
 }, { timestamps: true });
 

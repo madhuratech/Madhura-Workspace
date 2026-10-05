@@ -40,7 +40,7 @@ const formatMinutes = (totalMinutes) => {
 };
 
 const AttendanceLeave = () => {
-  const { user } = useContext(AuthContext);
+  const { user, socket } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   const [logView, setLogView] = useState('mine');
   const [workspace, setWorkspace] = useState(null);
@@ -52,6 +52,18 @@ const AttendanceLeave = () => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isCheckedOut, setIsCheckedOut] = useState(false);
+  const [todayAttendance, setTodayAttendance] = useState(null);
+
+  // Overtime State (Managed by Managing Director & HR)
+  const [isOvertimeModalOpen, setIsOvertimeModalOpen] = useState(false);
+  const [overtimeSaving, setOvertimeSaving] = useState(false);
+  const [overtimeData, setOvertimeData] = useState({
+    userId: '',
+    date: new Date().toISOString().split('T')[0],
+    hours: 1,
+    minutes: 0,
+    reason: ''
+  });
 
   // Calendar State
   const today = new Date();
@@ -72,9 +84,38 @@ const AttendanceLeave = () => {
   const [earlyLeaveData, setEarlyLeaveData] = useState({ reason: '', requestedLeaveTime: '' });
   const [todayEarlyLeaveStatus, setTodayEarlyLeaveStatus] = useState(null);
 
+  const isMDorHR = currentUserRole === 'super_admin' || currentUserRole === 'hr' || user?.role === 'super_admin' || user?.role === 'hr';
+
   useEffect(() => {
     fetchWorkspaceData();
   }, []);
+
+  // Listen for real-time attendance & overtime updates via socket
+  useEffect(() => {
+    if (!socket || !workspace) return;
+    const handleAttendanceUpdate = () => {
+      fetchAttendance(workspace._id);
+    };
+    socket.on('attendance_updated', handleAttendanceUpdate);
+    return () => {
+      socket.off('attendance_updated', handleAttendanceUpdate);
+    };
+  }, [socket, workspace]);
+
+  // Periodic check if current time reached employee's shift end time
+  useEffect(() => {
+    if (!isCheckedIn || isCheckedOut || !workspace) return;
+    const timer = setInterval(() => {
+      const now = new Date();
+      const [endH, endM] = (user?.shiftEndTime || '18:00').split(':').map(Number);
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      const shiftEndMins = (endH || 18) * 60 + (endM || 0);
+      if (currentMins >= shiftEndMins) {
+        fetchAttendance(workspace._id);
+      }
+    }, 20000);
+    return () => clearInterval(timer);
+  }, [isCheckedIn, isCheckedOut, workspace, user]);
 
   const fetchWorkspaceData = async () => {
     try {
@@ -109,19 +150,105 @@ const AttendanceLeave = () => {
       setAttendanceRecords(res.data);
       
       const todayStr = new Date().toISOString().split('T')[0];
-      const todayRecord = res.data.find(r => r.date === todayStr && r.user?._id === user._id);
+      const todayRecord = res.data.find(r => r.date === todayStr && (r.user?._id === user._id || r.user === user._id));
       
+      setTodayAttendance(todayRecord || null);
       if (todayRecord) {
         setIsCheckedIn(true);
         if (todayRecord.checkOut) {
           setIsCheckedOut(true);
+        } else {
+          // If past shift end and no overtime pending, mark as completed
+          const now = new Date();
+          const [endH, endM] = (user?.shiftEndTime || '18:00').split(':').map(Number);
+          const currentMins = now.getHours() * 60 + now.getMinutes();
+          const shiftEndMins = (endH || 18) * 60 + (endM || 0);
+          if (currentMins >= shiftEndMins && (!todayRecord.overtimeMinutes || todayRecord.overtimeMinutes === 0)) {
+            setIsCheckedOut(true);
+          } else {
+            setIsCheckedOut(false);
+          }
         }
         if (todayRecord.earlyLeaveApproved) {
           setTodayEarlyLeaveStatus('approved');
         }
+      } else {
+        setIsCheckedIn(false);
+        setIsCheckedOut(false);
       }
     } catch (error) {
       console.error('Error fetching attendance:', error);
+    }
+  };
+
+  const openOvertimeModal = (targetUser = null, targetDate = null) => {
+    const defaultUser = targetUser || selectedTeamMember || (teamMembers.length > 0 ? teamMembers[0].user : null);
+    const dateStr = targetDate || new Date().toISOString().split('T')[0];
+    
+    let existingHours = 1;
+    let existingMins = 0;
+    let existingReason = '';
+    
+    if (defaultUser) {
+      const existing = attendanceRecords.find(r => (r.user?._id === defaultUser._id || r.user === defaultUser._id) && r.date === dateStr);
+      if (existing && existing.overtimeMinutes > 0) {
+        existingHours = Math.floor(existing.overtimeMinutes / 60);
+        existingMins = existing.overtimeMinutes % 60;
+        existingReason = existing.overtimeReason || '';
+      }
+    }
+
+    setOvertimeData({
+      userId: defaultUser ? defaultUser._id : '',
+      date: dateStr,
+      hours: existingHours,
+      minutes: existingMins,
+      reason: existingReason
+    });
+    setIsOvertimeModalOpen(true);
+  };
+
+  const handleSaveOvertime = async (e) => {
+    e.preventDefault();
+    if (!workspace) return;
+    if (!overtimeData.userId) {
+      showToast('Please select a team member', 'error');
+      return;
+    }
+    const totalMinutes = (parseInt(overtimeData.hours, 10) || 0) * 60 + (parseInt(overtimeData.minutes, 10) || 0);
+    if (totalMinutes <= 0) {
+      showToast('Please enter an overtime duration greater than 0 minutes', 'error');
+      return;
+    }
+
+    setOvertimeSaving(true);
+    try {
+      const res = await axios.post(`/workspaces/${workspace._id}/attendance/overtime`, {
+        userId: overtimeData.userId,
+        date: overtimeData.date,
+        overtimeMinutes: totalMinutes,
+        overtimeHours: +(totalMinutes / 60).toFixed(2),
+        reason: overtimeData.reason
+      });
+      showToast(res.data.message || 'Overtime recorded successfully!', 'success');
+      setIsOvertimeModalOpen(false);
+      fetchAttendance(workspace._id);
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to record overtime', 'error');
+    } finally {
+      setOvertimeSaving(false);
+    }
+  };
+
+  const handleRemoveOvertime = async (recordId) => {
+    if (!window.confirm('Are you sure you want to remove this overtime record?')) return;
+    try {
+      const res = await axios.delete(`/workspaces/${workspace._id}/attendance/${recordId}/overtime`);
+      showToast(res.data.message || 'Overtime removed', 'success');
+      fetchAttendance(workspace._id);
+      setSelectedDateRecord(null);
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to remove overtime', 'error');
     }
   };
 
@@ -320,6 +447,11 @@ const AttendanceLeave = () => {
               <p className="text-[10px] font-medium text-text-secondary truncate bg-bg-secondary px-1.5 py-0.5 rounded shadow-sm border border-border/40">
                 Out: {record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
               </p>
+              {record.overtimeMinutes > 0 && (
+                <p className="text-[9px] font-bold text-amber-500 truncate bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                  +{record.overtimeHours || +(record.overtimeMinutes / 60).toFixed(1)}h OT
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -385,10 +517,23 @@ const AttendanceLeave = () => {
               <div className="text-center py-8">
                 <FileText size={32} className="mx-auto text-text-secondary opacity-30 mb-3" />
                 <p className="text-text-primary font-bold">No Records Found</p>
-                <p className="text-xs text-text-secondary mt-1">There is no attendance data for this date.</p>
+                <p className="text-xs text-text-secondary mt-1 mb-4">There is no attendance data for this date.</p>
+                {isMDorHR && (
+                  <button
+                    onClick={() => {
+                      const target = selectedTeamMember || user;
+                      setSelectedDateRecord(null);
+                      openOvertimeModal(target, date);
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
+                  >
+                    <Clock size={14} className="mr-1.5" />
+                    + Enter Overtime for Date
+                  </button>
+                )}
               </div>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-text-secondary">Status</span>
                   <span className={`px-3 py-1 rounded text-xs font-bold ${
@@ -407,22 +552,64 @@ const AttendanceLeave = () => {
                   </div>
                   <div className="w-px h-8 bg-border/80"></div>
                   <div className="flex flex-col text-right">
-                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Check Out</span>
+                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+                      Check Out {record.isAutoCheckOut ? '(Auto Shift)' : ''}
+                    </span>
                     <span className="font-bold text-text-primary">{record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
                   </div>
                 </div>
+
+                {record.overtimeMinutes > 0 && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-1.5 shadow-sm">
+                    <div className="flex items-center justify-between text-amber-500 font-bold text-xs">
+                      <span className="flex items-center"><Clock size={14} className="mr-1.5" /> Overtime: {formatMinutes(record.overtimeMinutes)}</span>
+                      <span className="text-[9px] uppercase tracking-wider bg-amber-500/20 px-2 py-0.5 rounded-full font-bold">Approved</span>
+                    </div>
+                    {record.overtimeReason && (
+                      <p className="text-xs text-text-secondary italic">"{record.overtimeReason}"</p>
+                    )}
+                    <p className="text-[10px] text-text-secondary">
+                      Recorded by: <span className="font-semibold text-text-primary">{record.overtimeApprovedBy?.name || 'Managing Director (MD) / HR'}</span>
+                    </p>
+                  </div>
+                )}
                 
                 {(record.isLate || record.isEarlyLeave) && (
-                  <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 space-y-2">
+                  <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-3.5 space-y-2">
                     {record.isLate && (
-                      <div className="flex items-center text-sm font-semibold text-danger">
-                        <Clock size={14} className="mr-2" /> Late by {formatMinutes(record.lateMinutes)}
+                      <div className="flex items-center text-xs font-semibold text-danger">
+                        <Clock size={13} className="mr-1.5" /> Late by {formatMinutes(record.lateMinutes)}
                       </div>
                     )}
                     {record.isEarlyLeave && (
-                      <div className="flex items-center text-sm font-semibold text-orange-600">
-                        <Clock size={14} className="mr-2" /> Punched out early
+                      <div className="flex items-center text-xs font-semibold text-orange-600">
+                        <Clock size={13} className="mr-1.5" /> Punched out early
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {isMDorHR && (
+                  <div className="pt-2 flex gap-2">
+                    <button
+                      onClick={() => {
+                        const targetUser = selectedTeamMember || record.user;
+                        setSelectedDateRecord(null);
+                        openOvertimeModal(targetUser, date);
+                      }}
+                      className="flex-1 py-2.5 px-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-lg text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center active:scale-95 shadow-sm"
+                    >
+                      <Clock size={14} className="mr-1.5" />
+                      {record.overtimeMinutes > 0 ? 'Edit Overtime' : '+ Enter Overtime'}
+                    </button>
+                    {record.overtimeMinutes > 0 && (
+                      <button
+                        onClick={() => handleRemoveOvertime(record._id)}
+                        className="py-2.5 px-3 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center active:scale-95"
+                        title="Remove Overtime"
+                      >
+                        <X size={14} />
+                      </button>
                     )}
                   </div>
                 )}
@@ -451,6 +638,16 @@ const AttendanceLeave = () => {
             <p className="text-text-secondary text-sm mt-1">Manage your attendance and leave requests.</p>
           </div>
           <div className="flex space-x-4 items-center">
+            {isMDorHR && activeTab === 'attendance' && (
+              <button 
+                onClick={() => openOvertimeModal()} 
+                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-amber-500/25 transition-all text-sm font-bold flex items-center shadow-md active:scale-95"
+              >
+                <Clock size={16} className="mr-2" />
+                <span>+ Log Overtime</span>
+                <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">MD / HR</span>
+              </button>
+            )}
             {activeTab === 'leave' && currentUserRole !== 'super_admin' && (
               <button onClick={() => setIsLeaveModalOpen(true)} className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all text-sm font-semibold flex items-center shadow-md">
                 <span>Apply Leave</span>
@@ -504,10 +701,17 @@ const AttendanceLeave = () => {
                   </div>
                   <div className="mt-3">
                     {isCheckedIn ? (
-                      <div className="flex items-center space-x-2 text-sm font-bold bg-success/10 text-success px-3 py-1.5 rounded-lg w-fit border border-success/20 shadow-sm">
-                        <span className="w-2.5 h-2.5 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
-                        <span>Currently On the Clock</span>
-                      </div>
+                      isCheckedOut ? (
+                        <div className="flex items-center space-x-2 text-sm font-bold bg-success/10 text-success px-3 py-1.5 rounded-lg w-fit border border-success/20 shadow-sm">
+                          <CheckCircle size={16} className="text-success" />
+                          <span>Shift Completed {todayAttendance?.overtimeMinutes > 0 ? `(+${todayAttendance.overtimeHours || +(todayAttendance.overtimeMinutes / 60).toFixed(1)}h OT)` : ''}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2 text-sm font-bold bg-success/10 text-success px-3 py-1.5 rounded-lg w-fit border border-success/20 shadow-sm">
+                          <span className="w-2.5 h-2.5 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                          <span>Currently On the Clock</span>
+                        </div>
+                      )
                     ) : (
                       <div className="flex items-center space-x-2 text-sm font-bold bg-bg-primary text-text-secondary px-3 py-1.5 rounded-lg w-fit border border-border shadow-sm">
                         <span className="w-2.5 h-2.5 rounded-full bg-text-secondary"></span>
@@ -532,14 +736,30 @@ const AttendanceLeave = () => {
                           <LogOut size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" />
                           Punch Out
                         </button>
+                        <p className="text-[11px] text-text-secondary mt-2 font-medium">Automatic logout at shift schedule ({user?.shiftEndTime || '18:00'}).</p>
                       </>
                     ) : (
-                      <div className="bg-success/10 border border-success/20 px-6 py-3 rounded-xl text-success font-bold flex items-center shadow-inner text-sm">
-                        <CheckCircle size={18} className="mr-2" />
-                        Shift Completed
+                      <div className="flex flex-col items-end">
+                        <div className="bg-success/10 border border-success/20 px-6 py-3 rounded-xl text-success font-bold flex items-center shadow-inner text-sm">
+                          <CheckCircle size={18} className="mr-2" />
+                          {todayAttendance?.overtimeMinutes > 0 ? (
+                            <span>Shift & Overtime Completed ({todayAttendance.overtimeHours || +(todayAttendance.overtimeMinutes / 60).toFixed(1)}h OT)</span>
+                          ) : (
+                            <span>Shift Completed (Auto Logged Out at {user?.shiftEndTime || '18:00'})</span>
+                          )}
+                        </div>
+                        {todayAttendance?.overtimeMinutes > 0 ? (
+                          <p className="text-[11px] text-amber-500 mt-2 font-semibold flex items-center">
+                            <Clock size={12} className="mr-1" />
+                            Overtime of {formatMinutes(todayAttendance.overtimeMinutes)} recorded by {todayAttendance.overtimeApprovedBy?.name || 'Managing Director (MD) / HR'}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-text-secondary mt-2 font-medium">
+                            Automatically logged out at shift schedule ({user?.shiftEndTime || '18:00'}).
+                          </p>
+                        )}
                       </div>
                     )}
-                    <p className="text-[11px] text-text-secondary mt-2 font-medium">Don't forget to punch out before leaving.</p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-end">
@@ -950,6 +1170,172 @@ const AttendanceLeave = () => {
                 </button>
               </div>
             </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overtime Modal (MD & HR Only) */}
+      {isOvertimeModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-3xl w-full max-w-lg shadow-[0_32px_64px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent px-8 py-6 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-sm">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black text-text-primary mb-0.5 font-outfit">Log Overtime</h3>
+                  <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">MD & HR Authorization</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsOvertimeModalOpen(false)} 
+                className="text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors p-2.5 rounded-full border border-border/50 shadow-sm bg-bg-secondary"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-8 overflow-y-auto custom-scrollbar bg-bg-secondary">
+              <form onSubmit={handleSaveOvertime} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">Team Member</label>
+                  <select
+                    value={overtimeData.userId}
+                    onChange={(e) => setOvertimeData({ ...overtimeData, userId: e.target.value })}
+                    className="premium-input text-sm font-semibold text-text-primary"
+                    required
+                  >
+                    <option value="">Select Employee...</option>
+                    {teamMembers.map(m => (
+                      <option key={m.user._id} value={m.user._id}>
+                        {m.user.name} ({m.user.designation || m.role}) — Shift: {m.user.shiftStartTime || '09:40'} - {m.user.shiftEndTime || '18:00'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={overtimeData.date}
+                    onChange={(e) => setOvertimeData({ ...overtimeData, date: e.target.value })}
+                    className="premium-input text-sm font-semibold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">
+                    Overtime Duration
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {[
+                      { label: '+30m', h: 0, m: 30 },
+                      { label: '+1h', h: 1, m: 0 },
+                      { label: '+1.5h', h: 1, m: 30 },
+                      { label: '+2h', h: 2, m: 0 },
+                      { label: '+2.5h', h: 2, m: 30 },
+                      { label: '+3h', h: 3, m: 0 },
+                      { label: '+4h', h: 4, m: 0 }
+                    ].map(preset => {
+                      const isSelected = Number(overtimeData.hours) === preset.h && Number(overtimeData.minutes) === preset.m;
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setOvertimeData({ ...overtimeData, hours: preset.h, minutes: preset.m })}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                            isSelected 
+                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm' 
+                              : 'bg-bg-primary text-text-secondary border-border hover:border-amber-500/50 hover:text-text-primary'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[11px] text-text-secondary font-semibold">Hours</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="12"
+                        value={overtimeData.hours}
+                        onChange={(e) => setOvertimeData({ ...overtimeData, hours: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                        className="premium-input text-sm font-semibold mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-text-secondary font-semibold">Minutes</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        step="5"
+                        value={overtimeData.minutes}
+                        onChange={(e) => setOvertimeData({ ...overtimeData, minutes: Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)) })}
+                        className="premium-input text-sm font-semibold mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Calculation summary */}
+                  {(() => {
+                    const selUser = teamMembers.find(m => m.user._id === overtimeData.userId)?.user;
+                    const shiftEnd = selUser?.shiftEndTime || '18:00';
+                    const [endH, endM] = shiftEnd.split(':').map(Number);
+                    const totalM = (parseInt(overtimeData.hours, 10) || 0) * 60 + (parseInt(overtimeData.minutes, 10) || 0);
+                    const finalMinutes = (endH || 18) * 60 + (endM || 0) + totalM;
+                    const finalH = Math.floor(finalMinutes / 60) % 24;
+                    const finalM = finalMinutes % 60;
+                    const timeFormatted = `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
+                    
+                    return (
+                      <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500 flex items-center justify-between font-medium">
+                        <span>Shift End: <strong>{shiftEnd}</strong></span>
+                        <span>Adjusted Checkout: <strong>{timeFormatted} (+{formatMinutes(totalM)})</strong></span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">
+                    Reason / Overtime Work Description
+                  </label>
+                  <textarea
+                    rows="3"
+                    required
+                    value={overtimeData.reason}
+                    onChange={(e) => setOvertimeData({ ...overtimeData, reason: e.target.value })}
+                    placeholder="e.g., Extended work for client release, Critical bug triage, Deployment..."
+                    className="premium-input resize-none text-sm"
+                  ></textarea>
+                </div>
+
+                <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-border/50">
+                  <button
+                    type="button"
+                    onClick={() => setIsOvertimeModalOpen(false)}
+                    className="px-6 py-3 text-text-secondary font-bold hover:bg-bg-primary hover:text-text-primary rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={overtimeSaving}
+                    className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-3 rounded-xl hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 font-bold shadow-md shadow-amber-500/20 disabled:opacity-60"
+                  >
+                    {overtimeSaving ? 'Recording...' : 'Record Overtime'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
