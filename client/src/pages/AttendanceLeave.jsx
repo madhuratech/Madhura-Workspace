@@ -560,10 +560,10 @@ const AttendanceLeave = () => {
                 </div>
 
                 {record.overtimeMinutes > 0 && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 space-y-1.5 shadow-sm">
-                    <div className="flex items-center justify-between text-amber-500 font-bold text-xs">
+                  <div className="bg-accent-blue/10 border border-accent-blue/20 rounded-xl p-3.5 space-y-1.5 shadow-sm">
+                    <div className="flex items-center justify-between text-accent-blue font-bold text-xs">
                       <span className="flex items-center"><Clock size={14} className="mr-1.5" /> Overtime: {formatMinutes(record.overtimeMinutes)}</span>
-                      <span className="text-[9px] uppercase tracking-wider bg-amber-500/20 px-2 py-0.5 rounded-full font-bold">Approved</span>
+                      <span className="text-[9px] uppercase tracking-wider bg-accent-blue/20 px-2 py-0.5 rounded-full font-bold">Approved</span>
                     </div>
                     {record.overtimeReason && (
                       <p className="text-xs text-text-secondary italic">"{record.overtimeReason}"</p>
@@ -597,7 +597,7 @@ const AttendanceLeave = () => {
                         setSelectedDateRecord(null);
                         openOvertimeModal(targetUser, date);
                       }}
-                      className="flex-1 py-2.5 px-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-lg text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center active:scale-95 shadow-sm"
+                      className="flex-1 py-2.5 px-3 bg-accent-blue hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center active:scale-95 shadow-sm"
                     >
                       <Clock size={14} className="mr-1.5" />
                       {record.overtimeMinutes > 0 ? 'Edit Overtime' : '+ Enter Overtime'}
@@ -641,11 +641,11 @@ const AttendanceLeave = () => {
             {isMDorHR && activeTab === 'attendance' && (
               <button 
                 onClick={() => openOvertimeModal()} 
-                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-amber-500/25 transition-all text-sm font-bold flex items-center shadow-md active:scale-95"
+                className="bg-accent-blue text-white px-4 py-2.5 rounded-xl hover:opacity-90 transition-all text-sm font-semibold flex items-center shadow-md active:scale-95"
               >
                 <Clock size={16} className="mr-2" />
                 <span>+ Log Overtime</span>
-                <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">MD / HR</span>
+                <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">MD / HR</span>
               </button>
             )}
             {activeTab === 'leave' && currentUserRole !== 'super_admin' && (
@@ -1177,60 +1177,106 @@ const AttendanceLeave = () => {
 
       {/* Overtime Modal (MD & HR Only) */}
       {isOvertimeModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-3xl w-full max-w-lg shadow-[0_32px_64px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col">
-            <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent px-8 py-6 border-b border-white/10 flex justify-between items-center shrink-0">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-2xl max-h-[88vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-bg-secondary shrink-0">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-sm">
-                  <Clock size={20} />
+                <div className="w-9 h-9 rounded-xl bg-accent-blue/10 border border-accent-blue/20 flex items-center justify-center text-accent-blue shadow-sm">
+                  <Clock size={18} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-text-primary mb-0.5 font-outfit">Log Overtime</h3>
-                  <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">MD & HR Authorization</p>
+                  <h3 className="text-lg font-bold text-text-primary font-outfit">Log Employee Overtime</h3>
+                  <p className="text-xs text-text-secondary font-medium">Authorized for Managing Director (MD) & HR</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsOvertimeModalOpen(false)} 
-                className="text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors p-2.5 rounded-full border border-border/50 shadow-sm bg-bg-secondary"
+                className="text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors p-2 rounded-xl"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-8 overflow-y-auto custom-scrollbar bg-bg-secondary">
-              <form onSubmit={handleSaveOvertime} className="space-y-5">
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">Team Member</label>
-                  <select
-                    value={overtimeData.userId}
-                    onChange={(e) => setOvertimeData({ ...overtimeData, userId: e.target.value })}
-                    className="premium-input text-sm font-semibold text-text-primary"
-                    required
-                  >
-                    <option value="">Select Employee...</option>
-                    {teamMembers.map(m => (
-                      <option key={m.user._id} value={m.user._id}>
-                        {m.user.name} ({m.user.designation || m.role}) — Shift: {m.user.shiftStartTime || '09:40'} - {m.user.shiftEndTime || '18:00'}
-                      </option>
-                    ))}
-                  </select>
+            {/* Modal Form */}
+            <form onSubmit={handleSaveOvertime} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                {/* 2-Column: Team Member & Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+                      Team Member
+                    </label>
+                    <select
+                      value={overtimeData.userId}
+                      onChange={(e) => setOvertimeData({ ...overtimeData, userId: e.target.value })}
+                      className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors font-medium"
+                      required
+                    >
+                      <option value="">Select Employee...</option>
+                      {teamMembers.map(m => (
+                        <option key={m.user._id} value={m.user._id}>
+                          {m.user.name} ({m.user.designation || m.role}) — {m.user.shiftStartTime || '09:40'} to {m.user.shiftEndTime || '18:00'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+                      Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={overtimeData.date}
+                      onChange={(e) => setOvertimeData({ ...overtimeData, date: e.target.value })}
+                      className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors font-medium"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={overtimeData.date}
-                    onChange={(e) => setOvertimeData({ ...overtimeData, date: e.target.value })}
-                    className="premium-input text-sm font-semibold"
-                  />
-                </div>
+                {/* Shift & Live Calculation Banner */}
+                {(() => {
+                  const selUser = teamMembers.find(m => m.user._id === overtimeData.userId)?.user;
+                  const shiftStart = selUser?.shiftStartTime || '09:40';
+                  const shiftEnd = selUser?.shiftEndTime || '18:00';
+                  const [endH, endM] = shiftEnd.split(':').map(Number);
+                  const totalM = (parseInt(overtimeData.hours, 10) || 0) * 60 + (parseInt(overtimeData.minutes, 10) || 0);
+                  const finalMinutes = (endH || 18) * 60 + (endM || 0) + totalM;
+                  const finalH = Math.floor(finalMinutes / 60) % 24;
+                  const finalM = finalMinutes % 60;
+                  const timeFormatted = `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
+                  
+                  return (
+                    <div className="bg-bg-primary border border-border/80 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-text-secondary font-medium">Scheduled Shift:</span>
+                        <span className="font-bold text-text-primary bg-bg-secondary px-2.5 py-1 rounded-lg border border-border">
+                          {shiftStart} - {shiftEnd}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-text-secondary font-medium">Final Punch-Out:</span>
+                        <span className="font-bold text-accent-blue bg-accent-blue/10 px-2.5 py-1 rounded-lg border border-accent-blue/20">
+                          {timeFormatted} (+{formatMinutes(totalM)})
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
+                {/* Overtime Duration with Presets & Inputs */}
                 <div>
-                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">
-                    Overtime Duration
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">
+                      Overtime Duration
+                    </label>
+                    <span className="text-xs font-semibold text-text-secondary">
+                      Total Added: <strong className="text-accent-blue font-bold">{formatMinutes((parseInt(overtimeData.hours, 10) || 0) * 60 + (parseInt(overtimeData.minutes, 10) || 0))}</strong>
+                    </span>
+                  </div>
+
                   <div className="flex flex-wrap gap-2 mb-3">
                     {[
                       { label: '+30m', h: 0, m: 30 },
@@ -1249,8 +1295,8 @@ const AttendanceLeave = () => {
                           onClick={() => setOvertimeData({ ...overtimeData, hours: preset.h, minutes: preset.m })}
                           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
                             isSelected 
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm' 
-                              : 'bg-bg-primary text-text-secondary border-border hover:border-amber-500/50 hover:text-text-primary'
+                              ? 'bg-accent-blue text-white border-accent-blue shadow-sm' 
+                              : 'bg-bg-primary text-text-secondary border-border hover:border-accent-blue/50 hover:text-text-primary'
                           }`}
                         >
                           {preset.label}
@@ -1261,18 +1307,18 @@ const AttendanceLeave = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[11px] text-text-secondary font-semibold">Hours</label>
+                      <label className="block text-[11px] text-text-secondary font-medium mb-1">Hours</label>
                       <input
                         type="number"
                         min="0"
                         max="12"
                         value={overtimeData.hours}
                         onChange={(e) => setOvertimeData({ ...overtimeData, hours: Math.max(0, parseInt(e.target.value, 10) || 0) })}
-                        className="premium-input text-sm font-semibold mt-1"
+                        className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors font-medium"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-text-secondary font-semibold">Minutes</label>
+                      <label className="block text-[11px] text-text-secondary font-medium mb-1">Minutes</label>
                       <input
                         type="number"
                         min="0"
@@ -1280,63 +1326,46 @@ const AttendanceLeave = () => {
                         step="5"
                         value={overtimeData.minutes}
                         onChange={(e) => setOvertimeData({ ...overtimeData, minutes: Math.max(0, Math.min(59, parseInt(e.target.value, 10) || 0)) })}
-                        className="premium-input text-sm font-semibold mt-1"
+                        className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors font-medium"
                       />
                     </div>
                   </div>
-
-                  {/* Calculation summary */}
-                  {(() => {
-                    const selUser = teamMembers.find(m => m.user._id === overtimeData.userId)?.user;
-                    const shiftEnd = selUser?.shiftEndTime || '18:00';
-                    const [endH, endM] = shiftEnd.split(':').map(Number);
-                    const totalM = (parseInt(overtimeData.hours, 10) || 0) * 60 + (parseInt(overtimeData.minutes, 10) || 0);
-                    const finalMinutes = (endH || 18) * 60 + (endM || 0) + totalM;
-                    const finalH = Math.floor(finalMinutes / 60) % 24;
-                    const finalM = finalMinutes % 60;
-                    const timeFormatted = `${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
-                    
-                    return (
-                      <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500 flex items-center justify-between font-medium">
-                        <span>Shift End: <strong>{shiftEnd}</strong></span>
-                        <span>Adjusted Checkout: <strong>{timeFormatted} (+{formatMinutes(totalM)})</strong></span>
-                      </div>
-                    );
-                  })()}
                 </div>
 
+                {/* Reason / Work Description */}
                 <div>
-                  <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-widest">
+                  <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
                     Reason / Overtime Work Description
                   </label>
                   <textarea
-                    rows="3"
+                    rows="2"
                     required
                     value={overtimeData.reason}
                     onChange={(e) => setOvertimeData({ ...overtimeData, reason: e.target.value })}
-                    placeholder="e.g., Extended work for client release, Critical bug triage, Deployment..."
-                    className="premium-input resize-none text-sm"
+                    placeholder="e.g., Client deliverable deployment, Critical bug triage, Production release..."
+                    className="w-full bg-bg-primary border border-border rounded-xl p-3 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors resize-none font-medium custom-scrollbar"
                   ></textarea>
                 </div>
+              </div>
 
-                <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-border/50">
-                  <button
-                    type="button"
-                    onClick={() => setIsOvertimeModalOpen(false)}
-                    className="px-6 py-3 text-text-secondary font-bold hover:bg-bg-primary hover:text-text-primary rounded-xl transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={overtimeSaving}
-                    className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-3 rounded-xl hover:opacity-90 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 font-bold shadow-md shadow-amber-500/20 disabled:opacity-60"
-                  >
-                    {overtimeSaving ? 'Recording...' : 'Record Overtime'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-border bg-bg-primary/50 flex justify-end space-x-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsOvertimeModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={overtimeSaving}
+                  className="bg-accent-blue text-white px-6 py-2.5 rounded-xl hover:opacity-90 font-bold text-sm shadow-sm transition-all disabled:opacity-60 flex items-center"
+                >
+                  {overtimeSaving ? 'Recording...' : 'Record Overtime'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
