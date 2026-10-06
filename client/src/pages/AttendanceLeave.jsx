@@ -480,7 +480,7 @@ const AttendanceLeave = () => {
         <div 
           key={dateStr} 
           onClick={() => setSelectedDateRecord({ date: dateStr, record, day })}
-          className={`relative min-h-[64px] md:min-h-[112px] md:h-28 p-1.5 md:p-2 flex flex-col justify-between border ${borderClass} rounded-xl md:rounded-2xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-md ${isToday ? 'ring-2 ring-accent-blue border-accent-blue shadow-sm' : ''}`}
+          className={`relative min-h-[70px] md:min-h-[116px] md:h-28 p-2 flex flex-col justify-between border ${borderClass} rounded-xl md:rounded-2xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-md ${isToday ? 'ring-2 ring-accent-blue border-accent-blue shadow-sm' : ''}`}
         >
           {/* Header: Day number & Status Dot */}
           <div className="flex justify-between items-center mb-1">
@@ -490,38 +490,48 @@ const AttendanceLeave = () => {
             {dot}
           </div>
 
-          {/* Desktop/Tablet Attendance Data */}
+          {/* Desktop/Tablet Attendance Data: Unified Modern Card */}
           {record && (
             <div className="mt-auto space-y-1 w-full overflow-hidden hidden md:block">
-              {/* Check In Row */}
-              <div className="flex items-center justify-between text-[10px] bg-bg-secondary/90 px-1.5 py-0.5 rounded-md border border-border/40 whitespace-nowrap shadow-2xs">
-                <span className="text-[8px] font-bold text-success uppercase tracking-wider shrink-0">IN</span>
-                {inTime ? (
-                  <span className="font-bold text-text-primary tabular-nums text-[10px] flex items-baseline gap-0.5 shrink-0 whitespace-nowrap">
-                    {inTime.time}
-                    <span className="text-[8px] font-semibold text-text-secondary">{inTime.period}</span>
+              <div className="bg-bg-secondary/90 hover:bg-bg-secondary rounded-lg px-2 py-1.5 border border-border/50 text-[10px] space-y-1 shadow-2xs transition-colors">
+                {/* Check In Row */}
+                <div className="flex items-center justify-between text-[10px] leading-tight">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider">In</span>
+                  </div>
+                  <span className="font-bold text-text-primary tabular-nums text-[10px] whitespace-nowrap pl-2">
+                    {inTime ? (
+                      <>
+                        {inTime.time} <span className="text-[8px] font-semibold text-text-secondary">{inTime.period}</span>
+                      </>
+                    ) : (
+                      <span className="text-text-secondary font-medium">—</span>
+                    )}
                   </span>
-                ) : (
-                  <span className="text-text-secondary font-bold text-[10px]">—</span>
-                )}
-              </div>
+                </div>
 
-              {/* Check Out Row */}
-              <div className="flex items-center justify-between text-[10px] bg-bg-secondary/90 px-1.5 py-0.5 rounded-md border border-border/40 whitespace-nowrap shadow-2xs">
-                <span className="text-[8px] font-bold text-accent-blue uppercase tracking-wider shrink-0">OUT</span>
-                {outTime ? (
-                  <span className="font-bold text-text-primary tabular-nums text-[10px] flex items-baseline gap-0.5 shrink-0 whitespace-nowrap">
-                    {outTime.time}
-                    <span className="text-[8px] font-semibold text-text-secondary">{outTime.period}</span>
+                {/* Check Out Row */}
+                <div className="flex items-center justify-between text-[10px] leading-tight">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-blue shrink-0"></span>
+                    <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider">Out</span>
+                  </div>
+                  <span className="font-bold text-text-primary tabular-nums text-[10px] whitespace-nowrap pl-2">
+                    {outTime ? (
+                      <>
+                        {outTime.time} <span className="text-[8px] font-semibold text-text-secondary">{outTime.period}</span>
+                      </>
+                    ) : (
+                      <span className="text-text-secondary font-medium">—</span>
+                    )}
                   </span>
-                ) : (
-                  <span className="text-text-secondary font-bold text-[10px]">—</span>
-                )}
+                </div>
               </div>
 
               {/* Overtime Badge */}
               {record.overtimeMinutes > 0 && (
-                <div className="flex items-center justify-center py-0.5 px-1 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-[9px] border border-amber-500/25 whitespace-nowrap leading-none shadow-2xs">
+                <div className="flex items-center justify-center py-0.5 px-1.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-[9px] border border-amber-500/25 whitespace-nowrap leading-none shadow-2xs">
                   +{record.overtimeHours || +(record.overtimeMinutes / 60).toFixed(1)}h OT
                 </div>
               )}
@@ -877,9 +887,9 @@ const AttendanceLeave = () => {
                 </div>
               ) : (
                 // Split View for Team Logs
-                <div className="w-full flex gap-6">
+                <div className="w-full flex gap-4">
                   {/* Left Sidebar: Team Members List */}
-                  <div className="w-72 shrink-0 bg-bg-secondary border border-border/60 rounded-2xl p-4 flex flex-col shadow-sm overflow-hidden">
+                  <div className="w-64 shrink-0 bg-bg-secondary border border-border/60 rounded-2xl p-4 flex flex-col shadow-sm overflow-hidden">
                     <h3 className="text-sm font-bold text-text-primary uppercase tracking-widest mb-4 px-2">Team Members</h3>
                     <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
                       {teamMembers.filter(m => m.user._id !== user._id).map(member => (
