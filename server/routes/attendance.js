@@ -32,12 +32,9 @@ const autoCheckOutPendingRecords = async (io = null) => {
       const userShiftEnd = record.user.shiftEndTime || '18:00';
       const shiftEndDate = getShiftDateTime(record.date, userShiftEnd);
       
-      const effectiveEndDate = record.overtimeMinutes > 0
-        ? new Date(shiftEndDate.getTime() + record.overtimeMinutes * 60 * 1000)
-        : shiftEndDate;
-
-      if (now >= effectiveEndDate) {
-        record.checkOut = effectiveEndDate;
+      // Auto-checkout occurs when current time reaches the employee's scheduled shift end time
+      if (now >= shiftEndDate) {
+        record.checkOut = shiftEndDate;
         record.isAutoCheckOut = true;
         await record.save();
 
@@ -86,6 +83,18 @@ router.get('/', async (req, res) => {
       .populate('user', 'name email designation shiftStartTime shiftEndTime avatar')
       .populate('overtimeApprovedBy', 'name email designation role')
       .sort({ date: -1 });
+
+    // Ensure auto-shift checkOut reflects the actual shift end time (not shift end + OT)
+    for (const record of records) {
+      if (record.isAutoCheckOut && record.user && record.checkOut) {
+        const userShiftEnd = record.user.shiftEndTime || '18:00';
+        const expectedShiftEnd = getShiftDateTime(record.date, userShiftEnd);
+        if (new Date(record.checkOut).getTime() > expectedShiftEnd.getTime()) {
+          record.checkOut = expectedShiftEnd;
+          await Attendance.updateOne({ _id: record._id }, { checkOut: expectedShiftEnd });
+        }
+      }
+    }
 
     res.json(records);
   } catch (error) {
@@ -279,7 +288,6 @@ router.post('/overtime', async (req, res) => {
     const calculatedHours = +(totalMinutes / 60).toFixed(2);
     const userShiftEnd = employee.shiftEndTime || '18:00';
     const shiftEndDate = getShiftDateTime(date, userShiftEnd);
-    const newCheckOut = new Date(shiftEndDate.getTime() + totalMinutes * 60 * 1000);
 
     let record = await Attendance.findOne({ workspace: workspaceId, user: userId, date });
     if (!record) {
@@ -291,7 +299,7 @@ router.post('/overtime', async (req, res) => {
         date,
         status: 'Present',
         checkIn: shiftStartDate,
-        checkOut: newCheckOut,
+        checkOut: shiftEndDate,
         isAutoCheckOut: true,
         overtimeMinutes: totalMinutes,
         overtimeHours: calculatedHours,
@@ -305,8 +313,11 @@ router.post('/overtime', async (req, res) => {
       record.overtimeReason = reason || record.overtimeReason || 'Overtime entered by MD/HR';
       record.overtimeApprovedBy = req.user._id;
       record.overtimeApprovedAt = new Date();
-      record.checkOut = newCheckOut;
-      record.isAutoCheckOut = true;
+      // Keep checkOut as the actual shift end time for auto checkouts
+      if (!record.checkOut || record.isAutoCheckOut) {
+        record.checkOut = shiftEndDate;
+        record.isAutoCheckOut = true;
+      }
     }
 
     await record.save();

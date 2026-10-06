@@ -401,6 +401,26 @@ const AttendanceLeave = () => {
     return map;
   };
 
+  const getCleanCheckOut = (rec) => {
+    if (!rec || !rec.checkOut) return null;
+    if (rec.isAutoCheckOut) {
+      // Auto shift checkout reflects the user's scheduled shift end time
+      const shiftEndStr = rec.user?.shiftEndTime || (selectedTeamMember?._id === rec.user?._id ? selectedTeamMember?.shiftEndTime : null) || user?.shiftEndTime || '18:00';
+      const [hStr, mStr] = shiftEndStr.split(':');
+      const h = parseInt(hStr, 10) || 18;
+      const m = parseInt(mStr, 10) || 0;
+      const d = new Date(rec.checkOut);
+      d.setHours(h, m, 0, 0);
+      return d;
+    }
+    return new Date(rec.checkOut);
+  };
+
+  const formatDisplayTime = (d) => {
+    if (!d) return '--:--';
+    return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   const renderCalendar = (targetUserId) => {
     const daysInMonth = getDaysInMonth(currentYear, currentMonth);
     const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
@@ -420,37 +440,47 @@ const AttendanceLeave = () => {
 
       if (record) {
         if (record.status === 'Present') {
-          dot = <span className="w-2 h-2 rounded-full bg-success"></span>;
-          if (record.isLate) dot = <span className="w-2 h-2 rounded-full bg-danger"></span>;
-          if (record.isEarlyLeave) dot = <span className="w-2 h-2 rounded-full bg-orange-500"></span>;
+          dot = <span className="w-2 h-2 rounded-full bg-success shadow-[0_0_6px_rgba(16,185,129,0.5)]"></span>;
+          if (record.isLate) dot = <span className="w-2 h-2 rounded-full bg-danger shadow-[0_0_6px_rgba(239,68,68,0.5)]"></span>;
+          if (record.isEarlyLeave) dot = <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.5)]"></span>;
         } else if (record.status === 'Absent') {
           dot = <span className="w-2 h-2 rounded-full bg-danger"></span>;
           bgColorClass = 'bg-danger/5';
         }
       }
 
+      const cleanCheckOut = record ? getCleanCheckOut(record) : null;
+
       return (
         <div 
           key={dateStr} 
           onClick={() => setSelectedDateRecord({ date: dateStr, record, day })}
-          className={`relative h-12 md:h-24 p-1 md:p-2 flex flex-col border ${borderClass} rounded-lg md:rounded-xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-sm ${isToday ? 'ring-2 ring-accent-blue/50' : ''}`}
+          className={`relative min-h-[58px] md:min-h-[105px] md:h-28 p-1.5 md:p-2.5 flex flex-col justify-between border ${borderClass} rounded-xl md:rounded-2xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-md ${isToday ? 'ring-2 ring-accent-blue shadow-sm' : ''}`}
         >
-          <div className="flex justify-between items-start">
-            <span className={`text-sm font-bold ${isToday ? 'text-accent-blue' : 'text-text-primary'}`}>{day}</span>
+          <div className="flex justify-between items-center mb-1">
+            <span className={`text-xs md:text-sm font-bold ${isToday ? 'text-accent-blue font-black' : 'text-text-primary'}`}>{day}</span>
             {dot}
           </div>
           {record && (
             <div className="mt-auto space-y-1 hidden md:block">
-              <p className="text-[10px] font-medium text-text-secondary truncate bg-bg-secondary px-1.5 py-0.5 rounded shadow-sm border border-border/40">
-                In: {record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-              </p>
-              <p className="text-[10px] font-medium text-text-secondary truncate bg-bg-secondary px-1.5 py-0.5 rounded shadow-sm border border-border/40">
-                Out: {record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
-              </p>
+              <div className="bg-bg-secondary/80 backdrop-blur-xs rounded-lg px-2 py-1 border border-border/50 text-[10px] space-y-0.5 shadow-2xs">
+                <div className="flex items-center justify-between leading-tight text-text-secondary">
+                  <span className="text-[9px] font-bold text-text-secondary/70 uppercase">In</span>
+                  <span className="font-semibold text-text-primary text-[10px] tabular-nums">
+                    {record.checkIn ? formatDisplayTime(record.checkIn) : '—'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between leading-tight text-text-secondary">
+                  <span className="text-[9px] font-bold text-text-secondary/70 uppercase">Out</span>
+                  <span className="font-semibold text-text-primary text-[10px] tabular-nums">
+                    {cleanCheckOut ? formatDisplayTime(cleanCheckOut) : '—'}
+                  </span>
+                </div>
+              </div>
               {record.overtimeMinutes > 0 && (
-                <p className="text-[9px] font-bold text-amber-500 truncate bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                <div className="flex items-center justify-center py-0.5 px-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[9px] border border-amber-500/25 leading-none shadow-2xs">
                   +{record.overtimeHours || +(record.overtimeMinutes / 60).toFixed(1)}h OT
-                </p>
+                </div>
               )}
             </div>
           )}
@@ -498,13 +528,14 @@ const AttendanceLeave = () => {
     if (!selectedDateRecord) return null;
     const { date, record, day } = selectedDateRecord;
     const dateObj = new Date(date);
+    const cleanCheckOut = record ? getCleanCheckOut(record) : null;
 
     return (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
         <div className="bg-bg-secondary border border-border shadow-xl rounded-2xl w-full max-w-sm overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
           <div className="bg-bg-primary/50 px-6 py-4 border-b border-border/50 flex justify-between items-center">
             <div>
-              <h3 className="text-lg font-bold text-text-primary">Log Details</h3>
+              <h3 className="text-lg font-bold text-text-primary font-outfit">Log Details</h3>
               <p className="text-xs text-text-secondary font-medium">{dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</p>
             </div>
             <button onClick={() => setSelectedDateRecord(null)} className="text-text-secondary hover:text-danger hover:bg-danger/10 p-2 rounded-full transition-colors">
@@ -517,20 +548,13 @@ const AttendanceLeave = () => {
               <div className="text-center py-8">
                 <FileText size={32} className="mx-auto text-text-secondary opacity-30 mb-3" />
                 <p className="text-text-primary font-bold">No Records Found</p>
-                <p className="text-xs text-text-secondary mt-1 mb-4">There is no attendance data for this date.</p>
-                {isMDorHR && (
-                  <button
-                    onClick={() => {
-                      const target = selectedTeamMember || user;
-                      setSelectedDateRecord(null);
-                      openOvertimeModal(target, date);
-                    }}
-                    className="inline-flex items-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
-                  >
-                    <Clock size={14} className="mr-1.5" />
-                    + Enter Overtime for Date
-                  </button>
-                )}
+                <p className="text-xs text-text-secondary mt-1 mb-6">There is no attendance data for this date.</p>
+                <button
+                  onClick={() => setSelectedDateRecord(null)}
+                  className="w-full py-2.5 px-4 bg-bg-primary hover:bg-bg-secondary text-text-secondary hover:text-text-primary rounded-xl text-xs font-semibold border border-border/60 transition-all shadow-sm active:scale-95"
+                >
+                  Close
+                </button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -548,14 +572,18 @@ const AttendanceLeave = () => {
                 <div className="bg-bg-primary rounded-xl p-4 border border-border/50 flex items-center justify-between shadow-sm">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Check In</span>
-                    <span className="font-bold text-text-primary">{record.checkIn ? new Date(record.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                    <span className="font-bold text-text-primary text-base tabular-nums">
+                      {record.checkIn ? formatDisplayTime(record.checkIn) : '--:--'}
+                    </span>
                   </div>
                   <div className="w-px h-8 bg-border/80"></div>
                   <div className="flex flex-col text-right">
                     <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
                       Check Out {record.isAutoCheckOut ? '(Auto Shift)' : ''}
                     </span>
-                    <span className="font-bold text-text-primary">{record.checkOut ? new Date(record.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                    <span className="font-bold text-text-primary text-base tabular-nums">
+                      {cleanCheckOut ? formatDisplayTime(cleanCheckOut) : '--:--'}
+                    </span>
                   </div>
                 </div>
 
@@ -589,30 +617,14 @@ const AttendanceLeave = () => {
                   </div>
                 )}
 
-                {isMDorHR && (
-                  <div className="pt-2 flex gap-2">
-                    <button
-                      onClick={() => {
-                        const targetUser = selectedTeamMember || record.user;
-                        setSelectedDateRecord(null);
-                        openOvertimeModal(targetUser, date);
-                      }}
-                      className="flex-1 py-2.5 px-3 bg-accent-blue hover:opacity-90 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center active:scale-95 shadow-sm"
-                    >
-                      <Clock size={14} className="mr-1.5" />
-                      {record.overtimeMinutes > 0 ? 'Edit Overtime' : '+ Enter Overtime'}
-                    </button>
-                    {record.overtimeMinutes > 0 && (
-                      <button
-                        onClick={() => handleRemoveOvertime(record._id)}
-                        className="py-2.5 px-3 bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center active:scale-95"
-                        title="Remove Overtime"
-                      >
-                        <X size={14} />
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className="pt-2">
+                  <button
+                    onClick={() => setSelectedDateRecord(null)}
+                    className="w-full py-2.5 px-4 bg-bg-primary hover:bg-bg-secondary text-text-secondary hover:text-text-primary rounded-xl text-xs font-semibold border border-border/60 transition-all flex items-center justify-center active:scale-95 shadow-sm"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             )}
           </div>
