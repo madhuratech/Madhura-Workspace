@@ -416,9 +416,30 @@ const AttendanceLeave = () => {
     return new Date(rec.checkOut);
   };
 
+  const formatTimeParts = (val) => {
+    if (!val) return null;
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return null;
+    
+    let hours = d.getHours();
+    const minutes = d.getMinutes();
+    const period = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    
+    const hStr = String(hours).padStart(2, '0');
+    const mStr = String(minutes).padStart(2, '0');
+    
+    return {
+      time: `${hStr}:${mStr}`,
+      period
+    };
+  };
+
   const formatDisplayTime = (d) => {
-    if (!d) return '--:--';
-    return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const parts = formatTimeParts(d);
+    if (!parts) return '--:--';
+    return `${parts.time} ${parts.period}`;
   };
 
   const renderCalendar = (targetUserId) => {
@@ -426,7 +447,9 @@ const AttendanceLeave = () => {
     const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
     const recordsMap = getCalendarRecordsMap(targetUserId);
 
-    const blanks = Array.from({ length: firstDay }, (_, i) => <div key={`blank-${i}`} className="p-2 border border-transparent"></div>);
+    const blanks = Array.from({ length: firstDay }, (_, i) => (
+      <div key={`blank-${i}`} className="p-1 md:p-2 border border-transparent min-h-[60px] md:min-h-[110px]"></div>
+    ));
     
     const days = Array.from({ length: daysInMonth }, (_, i) => {
       const day = i + 1;
@@ -435,7 +458,7 @@ const AttendanceLeave = () => {
       const isToday = dateStr === today.toISOString().split('T')[0];
 
       let bgColorClass = 'bg-bg-primary hover:bg-bg-secondary';
-      let borderClass = 'border-border/50';
+      let borderClass = 'border-border/60';
       let dot = null;
 
       if (record) {
@@ -444,43 +467,75 @@ const AttendanceLeave = () => {
           if (record.isLate) dot = <span className="w-2 h-2 rounded-full bg-danger shadow-[0_0_6px_rgba(239,68,68,0.5)]"></span>;
           if (record.isEarlyLeave) dot = <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.5)]"></span>;
         } else if (record.status === 'Absent') {
-          dot = <span className="w-2 h-2 rounded-full bg-danger"></span>;
-          bgColorClass = 'bg-danger/5';
+          dot = <span className="w-2 h-2 rounded-full bg-danger shadow-[0_0_6px_rgba(239,68,68,0.5)]"></span>;
+          bgColorClass = 'bg-danger/5 hover:bg-danger/10';
         }
       }
 
       const cleanCheckOut = record ? getCleanCheckOut(record) : null;
+      const inTime = record?.checkIn ? formatTimeParts(record.checkIn) : null;
+      const outTime = cleanCheckOut ? formatTimeParts(cleanCheckOut) : null;
 
       return (
         <div 
           key={dateStr} 
           onClick={() => setSelectedDateRecord({ date: dateStr, record, day })}
-          className={`relative min-h-[58px] md:min-h-[105px] md:h-28 p-1.5 md:p-2.5 flex flex-col justify-between border ${borderClass} rounded-xl md:rounded-2xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-md ${isToday ? 'ring-2 ring-accent-blue shadow-sm' : ''}`}
+          className={`relative min-h-[64px] md:min-h-[112px] md:h-28 p-1.5 md:p-2 flex flex-col justify-between border ${borderClass} rounded-xl md:rounded-2xl ${bgColorClass} cursor-pointer transition-all duration-200 group hover:border-accent-blue/50 hover:shadow-md ${isToday ? 'ring-2 ring-accent-blue border-accent-blue shadow-sm' : ''}`}
         >
+          {/* Header: Day number & Status Dot */}
           <div className="flex justify-between items-center mb-1">
-            <span className={`text-xs md:text-sm font-bold ${isToday ? 'text-accent-blue font-black' : 'text-text-primary'}`}>{day}</span>
+            <span className={`text-xs md:text-sm font-bold font-outfit ${isToday ? 'text-accent-blue font-extrabold' : 'text-text-primary'}`}>
+              {day}
+            </span>
             {dot}
           </div>
+
+          {/* Desktop/Tablet Attendance Data */}
           {record && (
-            <div className="mt-auto space-y-1 hidden md:block">
-              <div className="bg-bg-secondary/80 backdrop-blur-xs rounded-lg px-2 py-1 border border-border/50 text-[10px] space-y-0.5 shadow-2xs">
-                <div className="flex items-center justify-between leading-tight text-text-secondary">
-                  <span className="text-[9px] font-bold text-text-secondary/70 uppercase">In</span>
-                  <span className="font-semibold text-text-primary text-[10px] tabular-nums">
-                    {record.checkIn ? formatDisplayTime(record.checkIn) : '—'}
+            <div className="mt-auto space-y-1 w-full overflow-hidden hidden md:block">
+              {/* Check In Row */}
+              <div className="flex items-center justify-between text-[10px] bg-bg-secondary/90 px-1.5 py-0.5 rounded-md border border-border/40 whitespace-nowrap shadow-2xs">
+                <span className="text-[8px] font-bold text-success uppercase tracking-wider shrink-0">IN</span>
+                {inTime ? (
+                  <span className="font-bold text-text-primary tabular-nums text-[10px] flex items-baseline gap-0.5 shrink-0 whitespace-nowrap">
+                    {inTime.time}
+                    <span className="text-[8px] font-semibold text-text-secondary">{inTime.period}</span>
                   </span>
-                </div>
-                <div className="flex items-center justify-between leading-tight text-text-secondary">
-                  <span className="text-[9px] font-bold text-text-secondary/70 uppercase">Out</span>
-                  <span className="font-semibold text-text-primary text-[10px] tabular-nums">
-                    {cleanCheckOut ? formatDisplayTime(cleanCheckOut) : '—'}
-                  </span>
-                </div>
+                ) : (
+                  <span className="text-text-secondary font-bold text-[10px]">—</span>
+                )}
               </div>
+
+              {/* Check Out Row */}
+              <div className="flex items-center justify-between text-[10px] bg-bg-secondary/90 px-1.5 py-0.5 rounded-md border border-border/40 whitespace-nowrap shadow-2xs">
+                <span className="text-[8px] font-bold text-accent-blue uppercase tracking-wider shrink-0">OUT</span>
+                {outTime ? (
+                  <span className="font-bold text-text-primary tabular-nums text-[10px] flex items-baseline gap-0.5 shrink-0 whitespace-nowrap">
+                    {outTime.time}
+                    <span className="text-[8px] font-semibold text-text-secondary">{outTime.period}</span>
+                  </span>
+                ) : (
+                  <span className="text-text-secondary font-bold text-[10px]">—</span>
+                )}
+              </div>
+
+              {/* Overtime Badge */}
               {record.overtimeMinutes > 0 && (
-                <div className="flex items-center justify-center py-0.5 px-1.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[9px] border border-amber-500/25 leading-none shadow-2xs">
+                <div className="flex items-center justify-center py-0.5 px-1 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-[9px] border border-amber-500/25 whitespace-nowrap leading-none shadow-2xs">
                   +{record.overtimeHours || +(record.overtimeMinutes / 60).toFixed(1)}h OT
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Mobile Attendance Indicator */}
+          {record && (
+            <div className="md:hidden mt-auto flex items-center justify-center gap-1">
+              <span className="text-[9px] font-bold text-text-secondary">
+                {inTime?.time || '✓'}
+              </span>
+              {record.overtimeMinutes > 0 && (
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
               )}
             </div>
           )}
@@ -491,7 +546,7 @@ const AttendanceLeave = () => {
     return (
       <div className="flex-1 flex flex-col h-full">
         {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-6 shrink-0">
+        <div className="flex items-center justify-between mb-4 shrink-0">
           <h2 className="text-xl font-bold text-text-primary font-outfit">
             {new Date(currentYear, currentMonth).toLocaleDateString('default', { month: 'long', year: 'numeric' })}
           </h2>
@@ -509,14 +564,14 @@ const AttendanceLeave = () => {
         </div>
         
         {/* Days of week */}
-        <div className="grid grid-cols-7 gap-1 md:gap-3 mb-1 md:mb-3">
+        <div className="grid grid-cols-7 gap-1.5 md:gap-2 mb-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <div key={d} className="text-center text-[9px] md:text-xs font-bold text-text-secondary uppercase tracking-widest">{d.substring(0,3)}</div>
+            <div key={d} className="text-center text-[10px] md:text-xs font-bold text-text-secondary uppercase tracking-widest py-0.5">{d}</div>
           ))}
         </div>
         
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1 md:gap-3">
+        <div className="grid grid-cols-7 gap-1.5 md:gap-2">
           {blanks}
           {days}
         </div>
@@ -529,6 +584,8 @@ const AttendanceLeave = () => {
     const { date, record, day } = selectedDateRecord;
     const dateObj = new Date(date);
     const cleanCheckOut = record ? getCleanCheckOut(record) : null;
+    const inTime = record?.checkIn ? formatTimeParts(record.checkIn) : null;
+    const outTime = cleanCheckOut ? formatTimeParts(cleanCheckOut) : null;
 
     return (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
@@ -572,17 +629,25 @@ const AttendanceLeave = () => {
                 <div className="bg-bg-primary rounded-xl p-4 border border-border/50 flex items-center justify-between shadow-sm">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Check In</span>
-                    <span className="font-bold text-text-primary text-base tabular-nums">
-                      {record.checkIn ? formatDisplayTime(record.checkIn) : '--:--'}
+                    <span className="font-bold text-text-primary text-base tabular-nums flex items-baseline gap-1">
+                      {inTime ? (
+                        <>
+                          {inTime.time} <span className="text-xs font-semibold text-text-secondary">{inTime.period}</span>
+                        </>
+                      ) : '--:--'}
                     </span>
                   </div>
-                  <div className="w-px h-8 bg-border/80"></div>
+                  <div className="w-px h-10 bg-border/80"></div>
                   <div className="flex flex-col text-right">
                     <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
                       Check Out {record.isAutoCheckOut ? '(Auto Shift)' : ''}
                     </span>
-                    <span className="font-bold text-text-primary text-base tabular-nums">
-                      {cleanCheckOut ? formatDisplayTime(cleanCheckOut) : '--:--'}
+                    <span className="font-bold text-text-primary text-base tabular-nums flex items-baseline gap-1 justify-end">
+                      {outTime ? (
+                        <>
+                          {outTime.time} <span className="text-xs font-semibold text-text-secondary">{outTime.period}</span>
+                        </>
+                      ) : '--:--'}
                     </span>
                   </div>
                 </div>
