@@ -721,7 +721,9 @@ const Team = () => {
           )}
         </div>
       </div>
-          {isModalOpen && (
+      )}
+
+      {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
           <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-xl md:max-w-2xl shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
@@ -1064,6 +1066,7 @@ const Team = () => {
                 {isUploadingBulk && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
                 <span>Upload & Import {parsedEmployees.length > 0 ? `(${parsedEmployees.length})` : ''}</span>
               </button>
+            </div>
           </div>
         </div>
       )}
