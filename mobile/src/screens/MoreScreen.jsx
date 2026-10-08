@@ -57,9 +57,7 @@ export default function MoreScreen({ navigation }) {
       section: 'Workspace',
       items: [
         { icon: CheckSquare,  label: 'My Tasks',          sub: 'Assigned tasks & to-dos',         route: 'Tasks',           iconBg: '#EEF2FF', iconColor: '#4F46E5'   },
-        ...(role === 'super_admin' || role === 'hr' ? [
-          { icon: FileText,     label: 'Documents',         sub: 'Files and attachments',          route: 'Documents',       iconBg: '#EEF2FF', iconColor: PRIMARY      }
-        ] : []),
+        { icon: FileText,     label: 'Documents',         sub: 'Files and attachments',          route: 'Documents',       iconBg: '#EEF2FF', iconColor: PRIMARY      },
         { icon: Users,        label: 'Team Directory',    sub: 'Colleagues and roles',            route: 'Team',            iconBg: '#F5F3FF', iconColor: '#7C3AED'   },
       ],
     },

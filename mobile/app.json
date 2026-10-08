@@ -21,12 +21,12 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png"
       },
-      "package": "com.muthu18steam.mobile",
-      "statusBar": {
-        "barStyle": "dark-content",
-        "backgroundColor": "#FFFFFF",
-        "translucent": true
-      }
+      "package": "com.muthu18steam.mobile"
+    },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#FFFFFF",
+      "translucent": true
     },
     "web": {
       "favicon": "./assets/favicon.png"

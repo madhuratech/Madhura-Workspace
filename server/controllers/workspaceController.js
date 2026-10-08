@@ -385,6 +385,97 @@ const updateMember = async (req, res) => {
   }
 };
 
+// @desc    Bulk add/upload members to workspace
+// @route   POST /api/workspaces/:id/members/bulk
+// @access  Private (Super Admin / HR / Owner)
+const addBulkMembers = async (req, res) => {
+  try {
+    const { members } = req.body;
+    if (!members || !Array.isArray(members) || members.length === 0) {
+      return res.status(400).json({ message: 'No employee records provided for upload' });
+    }
+
+    const workspace = await Workspace.findById(req.params.id);
+    if (!workspace) {
+      return res.status(404).json({ message: 'Workspace not found' });
+    }
+
+    // Check auth: only owner, super_admin, or hr
+    const currentMember = workspace.members.find(m => m.user && m.user.toString() === req.user._id.toString());
+    const isAuthorized = workspace.owner.toString() === req.user._id.toString() || 
+                        (currentMember && ['super_admin', 'hr'].includes(currentMember.role));
+    
+    if (!isAuthorized) {
+      return res.status(403).json({ message: 'Only MD (Super Admin) and HR can bulk upload employees' });
+    }
+
+    let addedCount = 0;
+    let existingCount = 0;
+    const errors = [];
+
+    for (let i = 0; i < members.length; i++) {
+      const emp = members[i];
+      const email = emp.email ? emp.email.trim().toLowerCase() : '';
+      const name = emp.name ? emp.name.trim() : '';
+      const password = emp.password ? emp.password.trim() : 'Welcome@123';
+      const role = emp.role && ['super_admin', 'hr', 'team_leader', 'employee'].includes(emp.role.toLowerCase().replace(' ', '_')) 
+                   ? emp.role.toLowerCase().replace(' ', '_') 
+                   : 'employee';
+      const designation = emp.designation ? emp.designation.trim() : '';
+      const shiftStartTime = emp.shiftStartTime ? emp.shiftStartTime.trim() : '09:40';
+      const shiftEndTime = emp.shiftEndTime ? emp.shiftEndTime.trim() : '18:00';
+
+      if (!email || !name) {
+        errors.push({ row: i + 1, email: email || 'N/A', error: 'Name and email are required' });
+        continue;
+      }
+
+      try {
+        let userObj = await User.findOne({ email });
+        if (!userObj) {
+          userObj = await User.create({
+            name,
+            email,
+            password,
+            role,
+            designation,
+            shiftStartTime,
+            shiftEndTime
+          });
+        } else {
+          // Update profile if missing designation or shift
+          if (designation && !userObj.designation) userObj.designation = designation;
+          if (shiftStartTime) userObj.shiftStartTime = shiftStartTime;
+          if (shiftEndTime) userObj.shiftEndTime = shiftEndTime;
+          await userObj.save();
+        }
+
+        const alreadyInWs = workspace.members.some(m => m.user && m.user.toString() === userObj._id.toString());
+        if (!alreadyInWs) {
+          workspace.members.push({ user: userObj._id, role });
+          addedCount++;
+        } else {
+          existingCount++;
+        }
+      } catch (rowErr) {
+        errors.push({ row: i + 1, email, error: rowErr.message });
+      }
+    }
+
+    await workspace.save();
+
+    return res.status(200).json({
+      message: `Employee upload completed: ${addedCount} added, ${existingCount} already present.`,
+      addedCount,
+      existingCount,
+      errors
+    });
+  } catch (error) {
+    console.error('Error in addBulkMembers:', error);
+    res.status(500).json({ message: error.message || 'Server error during employee upload' });
+  }
+};
+
 module.exports = {
   getWorkspaces,
   createWorkspace,
@@ -392,5 +483,6 @@ module.exports = {
   updateWorkspace,
   deleteWorkspace,
   addMember,
+  addBulkMembers,
   updateMember
 };

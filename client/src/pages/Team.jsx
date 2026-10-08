@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import { Search, Plus, UserPlus, Shield, X, Mail, Users, KeyRound, RefreshCw, Eye, EyeOff, Copy, Check, Clock } from 'lucide-react';
+import { Search, Plus, UserPlus, Shield, X, Mail, Users, KeyRound, RefreshCw, Eye, EyeOff, Copy, Check, Clock, UploadCloud, Download, FileSpreadsheet, AlertCircle, FileText } from 'lucide-react';
 import Avatar from '../components/Avatar';
 import OrgChart from '../components/OrgChart';
 
@@ -109,6 +109,16 @@ const Team = () => {
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [newTeamName, setNewTeamName] = useState('');
 
+  // Bulk Employee Upload State (Super Admin & HR)
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [parsedEmployees, setParsedEmployees] = useState([]);
+  const [isUploadingBulk, setIsUploadingBulk] = useState(false);
+  const [uploadStats, setUploadStats] = useState(null);
+
+  // Single Member Mode: 'direct' or 'invite'
+  const [memberAddMode, setMemberAddMode] = useState('direct');
+
   useEffect(() => {
     fetchWorkspaceData();
   }, []);
@@ -177,6 +187,109 @@ const Team = () => {
     setTimeout(() => setCopiedPassword(false), 2000);
   };
 
+  const downloadCsvTemplate = () => {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Name,Email,Password,Role,Designation,ShiftStartTime,ShiftEndTime\n" +
+      "John Doe,john@example.com,Welcome@123,employee,Frontend Developer,09:40,18:00\n" +
+      "Priya Sharma,priya@example.com,Welcome@123,employee,UI/UX Designer,09:40,18:00\n" +
+      "Rahul Verma,rahul@example.com,Welcome@123,team_leader,Backend Engineer,09:40,18:00\n";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "employee_upload_template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleCsvFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadFile(file);
+    setUploadStats(null);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target.result;
+        const lines = text.split(/\r\n|\n/).filter(line => line.trim().length > 0);
+        if (lines.length <= 1) {
+          showToast('CSV file is empty or missing data rows', 'error');
+          setParsedEmployees([]);
+          return;
+        }
+
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+        const nameIdx = headers.findIndex(h => h.includes('name'));
+        const emailIdx = headers.findIndex(h => h.includes('email'));
+        const passIdx = headers.findIndex(h => h.includes('password') || h.includes('pass'));
+        const roleIdx = headers.findIndex(h => h.includes('role'));
+        const desigIdx = headers.findIndex(h => h.includes('designation') || h.includes('title') || h.includes('job'));
+        const startIdx = headers.findIndex(h => h.includes('start') || h.includes('in'));
+        const endIdx = headers.findIndex(h => h.includes('end') || h.includes('out'));
+
+        const parsed = [];
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+          if (row.length === 0 || !row[nameIdx !== -1 ? nameIdx : 0]) continue;
+
+          const empName = (nameIdx !== -1 ? row[nameIdx] : row[0]) || '';
+          const empEmail = (emailIdx !== -1 ? row[emailIdx] : row[1]) || '';
+          const empPass = (passIdx !== -1 ? row[passIdx] : row[2]) || 'Welcome@123';
+          const empRoleRaw = (roleIdx !== -1 ? row[roleIdx] : row[3]) || 'employee';
+          const empRole = ['super_admin', 'hr', 'team_leader', 'employee'].includes(empRoleRaw.toLowerCase().replace(' ', '_')) 
+            ? empRoleRaw.toLowerCase().replace(' ', '_') 
+            : 'employee';
+          const empDesig = (desigIdx !== -1 ? row[desigIdx] : row[4]) || '';
+          const empStart = (startIdx !== -1 ? row[startIdx] : row[5]) || '09:40';
+          const empEnd = (endIdx !== -1 ? row[endIdx] : row[6]) || '18:00';
+
+          if (empName && empEmail) {
+            parsed.push({
+              name: empName,
+              email: empEmail,
+              password: empPass,
+              role: empRole,
+              designation: empDesig,
+              shiftStartTime: empStart,
+              shiftEndTime: empEnd,
+              isValid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(empEmail)
+            });
+          }
+        }
+
+        setParsedEmployees(parsed);
+        if (parsed.length > 0) {
+          showToast(`Parsed ${parsed.length} employee records from CSV!`, 'success');
+        } else {
+          showToast('No valid employee records found in CSV', 'error');
+        }
+      } catch (err) {
+        console.error('Error parsing CSV:', err);
+        showToast('Failed to parse CSV file', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleBulkUploadSubmit = async () => {
+    if (!workspace || parsedEmployees.length === 0) return;
+    setIsUploadingBulk(true);
+    setUploadStats(null);
+    try {
+      const res = await axios.post(`/workspaces/${workspace._id}/members/bulk`, {
+        members: parsedEmployees
+      });
+      setUploadStats(res.data);
+      showToast(res.data.message || 'Employees uploaded successfully!', 'success');
+      fetchWorkspaceData();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Bulk employee upload failed', 'error');
+    } finally {
+      setIsUploadingBulk(false);
+    }
+  };
+
   const fetchWorkspaceData = async () => {
     try {
       setLoading(true);
@@ -224,10 +337,11 @@ const Team = () => {
       });
     } else {
       setEditItem(null);
+      setMemberAddMode('direct');
       setFormData({
         name: '',
         email: '',
-        password: '',
+        password: generateRandomPassword(),
         role: 'employee',
         designation: '',
         shiftStartTime: '09:40',
@@ -261,25 +375,38 @@ const Team = () => {
         });
         showToast('Member updated successfully!', 'success');
       } else {
-        // Send email invitation with role and shift hours
-        console.log('[DEBUG FRONTEND] Sending invitation to:', formData.email);
-        const res = await axios.post(`/invitations`, {
-          email: formData.email,
-          role: formData.role,
-          designation: formData.designation,
-          shiftStartTime: formData.shiftStartTime || '09:40',
-          shiftEndTime: formData.shiftEndTime || '18:00',
-          workspaceId: workspace._id
-        });
-        console.log('[DEBUG FRONTEND] Server responded successfully:', res.data);
-        showToast('Invitation sent successfully!', 'success');
+        if (memberAddMode === 'direct') {
+          // Direct account creation & adding member
+          await axios.post(`/workspaces/${workspace._id}/members`, {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password || generateRandomPassword(),
+            role: formData.role,
+            designation: formData.designation,
+            shiftStartTime: formData.shiftStartTime || '09:40',
+            shiftEndTime: formData.shiftEndTime || '18:00',
+          });
+          showToast(`Employee ${formData.name || formData.email} created and registered successfully!`, 'success');
+        } else {
+          // Send email invitation with role and shift hours
+          console.log('[DEBUG FRONTEND] Sending invitation to:', formData.email);
+          const res = await axios.post(`/invitations`, {
+            email: formData.email,
+            role: formData.role,
+            designation: formData.designation,
+            shiftStartTime: formData.shiftStartTime || '09:40',
+            shiftEndTime: formData.shiftEndTime || '18:00',
+            workspaceId: workspace._id
+          });
+          console.log('[DEBUG FRONTEND] Server responded successfully:', res.data);
+          showToast('Invitation sent successfully!', 'success');
+        }
       }
       fetchWorkspaceData();
       handleCloseModal();
     } catch (error) {
-      console.error('[DEBUG FRONTEND] Error sending invitation:', error);
-      console.error('[DEBUG FRONTEND] Server error message:', error.response?.data);
-      showToast(error.response?.data?.message || 'Error updating member', 'error');
+      console.error('[DEBUG FRONTEND] Error adding member:', error);
+      showToast(error.response?.data?.message || 'Error updating/adding member', 'error');
     } finally {
       setIsSubmittingMember(false);
     }
@@ -315,13 +442,30 @@ const Team = () => {
           <p className="text-text-secondary mt-1">Manage access and roles for {workspace.name}</p>
         </div>
         {(currentUserRole === 'super_admin' || currentUserRole === 'hr' || currentUserRole === 'team_leader') && activeTab === 'members' && (
-          <button 
-            onClick={() => handleOpenModal()}
-            className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2"
-          >
-            <UserPlus size={16} />
-            <span>Invite Member</span>
-          </button>
+          <div className="flex items-center gap-2.5">
+            {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
+              <button 
+                onClick={() => {
+                  setUploadFile(null);
+                  setParsedEmployees([]);
+                  setUploadStats(null);
+                  setIsUploadModalOpen(true);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg transition-all text-sm font-semibold flex items-center space-x-2 shadow-sm shadow-emerald-600/20 active:scale-95 cursor-pointer"
+                title="Bulk Upload Employees from CSV / Spreadsheet"
+              >
+                <UploadCloud size={16} />
+                <span>Upload Employees</span>
+              </button>
+            )}
+            <button 
+              onClick={() => handleOpenModal()}
+              className="bg-accent-blue text-accent-text px-4 py-2 rounded-lg hover:bg-accent-indigo transition-colors text-sm font-medium flex items-center space-x-2 cursor-pointer shadow-sm"
+            >
+              <UserPlus size={16} />
+              <span>Add Member</span>
+            </button>
+          </div>
         )}
         {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && activeTab === 'teams' && (
           <button 
@@ -577,45 +721,70 @@ const Team = () => {
           )}
         </div>
       </div>
-      )}
-
-      {isModalOpen && (
+          {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
           <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 p-0 rounded-2xl w-full max-w-xl md:max-w-2xl shadow-[0_16px_40px_rgba(0,0,0,0.4)] animate-in zoom-in-95 duration-300 overflow-hidden max-h-[90vh] flex flex-col">
             <div className="bg-gradient-to-r from-accent-blue/10 to-accent-indigo/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
               <div>
                 <h3 className="text-xl font-bold text-text-primary flex items-center mb-1">
                   <Shield className="text-accent-blue mr-2" size={20}/>
-                  {editItem ? 'Edit Member Details' : 'Send Invitation'}
+                  {editItem ? 'Edit Member Details' : 'Add / Invite Member'}
                 </h3>
                 <p className="text-xs text-text-secondary">
-                  {editItem ? 'Update member role, job title, and shift working hours.' : 'Invite a new member to join the workspace.'}
+                  {editItem ? 'Update member role, job title, and shift working hours.' : 'Register a new employee directly or send an email invitation.'}
                 </p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full">
+              <button onClick={() => setIsModalOpen(false)} className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full cursor-pointer">
                 <X size={18} />
               </button>
             </div>
             
             <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar">
             
+            {!editItem && (
+              <div className="flex bg-bg-primary p-1 rounded-xl border border-border mb-5">
+                <button
+                  type="button"
+                  onClick={() => setMemberAddMode('direct')}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                    memberAddMode === 'direct'
+                      ? 'bg-accent-blue text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Create Account Directly (Instant)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMemberAddMode('invite')}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                    memberAddMode === 'invite'
+                      ? 'bg-accent-blue text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                >
+                  Send Email Invitation
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {editItem && (
+              {(editItem || memberAddMode === 'direct') && (
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary mb-1">Full Name</label>
+                  <label className="block text-sm font-medium text-text-secondary mb-1">Full Name *</label>
                   <input 
                     type="text" 
                     value={formData.name} 
                     onChange={e => setFormData({...formData, name: e.target.value})}
                     className="w-full bg-bg-primary border border-border rounded-lg px-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue"
-                    placeholder="Full Name"
-                    required
+                    placeholder="e.g. John Doe"
+                    required={!editItem && memberAddMode === 'direct'}
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-1">Email Address</label>
+                <label className="block text-sm font-medium text-text-secondary mb-1">Email Address *</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-2.5 text-text-secondary" size={18} />
                   <input 
@@ -628,6 +797,32 @@ const Team = () => {
                   />
                 </div>
               </div>
+
+              {!editItem && memberAddMode === 'direct' && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-text-secondary">Password *</label>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, password: generateRandomPassword() })}
+                      className="text-xs text-accent-blue hover:underline font-semibold"
+                    >
+                      Generate Strong Password
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-2.5 text-text-secondary" size={18} />
+                    <input 
+                      type="text" 
+                      value={formData.password}
+                      onChange={e => setFormData({...formData, password: e.target.value})}
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-10 pr-4 py-2 text-text-primary focus:outline-none focus:border-accent-blue font-mono text-sm"
+                      placeholder="Enter or generate password"
+                      required={memberAddMode === 'direct'}
+                    />
+                  </div>
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Job Title / Designation</label>
@@ -668,7 +863,7 @@ const Team = () => {
                   <div>
                     <label className="block text-xs text-text-secondary mb-1">Start Time (HH:MM)</label>
                     <input 
-                      type="text"
+                      type="text" 
                       value={formData.shiftStartTime}
                       onChange={e => setFormData({...formData, shiftStartTime: e.target.value})}
                       placeholder="09:40"
@@ -678,7 +873,7 @@ const Team = () => {
                   <div>
                     <label className="block text-xs text-text-secondary mb-1">End Time (HH:MM)</label>
                     <input 
-                      type="text"
+                      type="text" 
                       value={formData.shiftEndTime}
                       onChange={e => setFormData({...formData, shiftEndTime: e.target.value})}
                       placeholder="18:00"
@@ -704,28 +899,171 @@ const Team = () => {
                 </div>
               </div>
 
-
-              
               <div className="flex justify-end space-x-3 mt-8 pt-4 border-t border-border/50">
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
                   disabled={isSubmittingMember}
-                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium"
+                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg transition-colors text-sm font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={isSubmittingMember}
-                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20 flex items-center space-x-2"
+                  className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2 rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity text-sm font-medium shadow-lg shadow-accent-blue/20 flex items-center space-x-2 cursor-pointer"
                 >
                   {isSubmittingMember && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
-                  <span>{editItem ? 'Save Changes' : 'Send Invite'}</span>
+                  <span>{editItem ? 'Save Changes' : memberAddMode === 'direct' ? 'Create Employee Account' : 'Send Invite'}</span>
                 </button>
               </div>
             </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK EMPLOYEE UPLOAD MODAL (Super Admin & HR) */}
+      {isUploadModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-emerald-600/20 to-teal-600/10 px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                  <UploadCloud size={22} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-text-primary">Bulk Employee Upload</h3>
+                  <p className="text-xs text-text-secondary mt-0.5">Upload multiple employee accounts via CSV spreadsheet</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsUploadModalOpen(false)}
+                className="text-text-secondary hover:text-danger p-2 rounded-full hover:bg-bg-primary transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto custom-scrollbar space-y-5">
+              {/* Template Download Card */}
+              <div className="bg-bg-primary/70 border border-border/80 rounded-xl p-4 flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-text-primary flex items-center">
+                    <FileSpreadsheet size={16} className="text-emerald-500 mr-2" />
+                    CSV Spreadsheet Template
+                  </h4>
+                  <p className="text-xs text-text-secondary mt-0.5">
+                    Download the pre-formatted CSV template with name, email, password, role & shift headers.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={downloadCsvTemplate}
+                  className="px-3.5 py-1.5 bg-bg-secondary hover:bg-emerald-500/10 hover:border-emerald-500/40 border border-border rounded-lg text-xs font-semibold text-text-primary flex items-center space-x-1.5 transition-all cursor-pointer shrink-0 ml-3 shadow-sm"
+                >
+                  <Download size={14} className="text-emerald-500" />
+                  <span>Download Template</span>
+                </button>
+              </div>
+
+              {/* Upload Drop Zone */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">
+                  Select CSV File
+                </label>
+                <label className="border-2 border-dashed border-border hover:border-emerald-500/50 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer bg-bg-primary/40 hover:bg-emerald-500/5 transition-all text-center">
+                  <UploadCloud size={36} className="text-emerald-500 mb-2" />
+                  <span className="text-sm font-medium text-text-primary">
+                    {uploadFile ? uploadFile.name : 'Click to select CSV file'}
+                  </span>
+                  <span className="text-xs text-text-secondary mt-1">
+                    Supports .csv files with columns: Name, Email, Password, Role, Designation, ShiftStartTime, ShiftEndTime
+                  </span>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={handleCsvFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* Parsed Preview */}
+              {parsedEmployees.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                      Preview ({parsedEmployees.length} employee{parsedEmployees.length !== 1 ? 's' : ''})
+                    </span>
+                    <span className="text-xs font-semibold text-emerald-500 flex items-center gap-1">
+                      <Check size={14} /> Ready to Import
+                    </span>
+                  </div>
+                  <div className="border border-border rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-bg-primary text-text-secondary font-semibold border-b border-border sticky top-0">
+                        <tr>
+                          <th className="p-2.5">Name</th>
+                          <th className="p-2.5">Email</th>
+                          <th className="p-2.5">Role</th>
+                          <th className="p-2.5">Designation</th>
+                          <th className="p-2.5">Shift</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {parsedEmployees.map((emp, i) => (
+                          <tr key={i} className="hover:bg-bg-primary/40">
+                            <td className="p-2.5 font-medium text-text-primary">{emp.name}</td>
+                            <td className="p-2.5 text-text-secondary">{emp.email}</td>
+                            <td className="p-2.5 uppercase font-mono text-[10px] text-accent-blue font-bold">{emp.role}</td>
+                            <td className="p-2.5 text-text-secondary">{emp.designation || '-'}</td>
+                            <td className="p-2.5 text-text-secondary font-mono">{emp.shiftStartTime}-{emp.shiftEndTime}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Result / Stats */}
+              {uploadStats && (
+                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
+                  <div className="font-bold text-sm mb-1">{uploadStats.message}</div>
+                  <div className="text-text-secondary">
+                    Added: <strong className="text-emerald-400 font-bold">{uploadStats.addedCount}</strong> | 
+                    Already in Workspace: <strong className="text-text-primary font-bold">{uploadStats.existingCount}</strong>
+                  </div>
+                  {uploadStats.errors && uploadStats.errors.length > 0 && (
+                    <div className="mt-2 text-danger">
+                      Failed rows: {uploadStats.errors.map(e => `Row ${e.row}: ${e.error}`).join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-bg-primary/50 px-6 py-4 border-t border-border flex justify-between items-center shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsUploadModalOpen(false)}
+                className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                disabled={parsedEmployees.length === 0 || isUploadingBulk}
+                onClick={handleBulkUploadSubmit}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+              >
+                {isUploadingBulk && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}
+                <span>Upload & Import {parsedEmployees.length > 0 ? `(${parsedEmployees.length})` : ''}</span>
+              </button>
           </div>
         </div>
       )}

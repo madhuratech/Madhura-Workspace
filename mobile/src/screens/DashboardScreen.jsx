@@ -621,6 +621,15 @@ export default function DashboardScreen({ navigation }) {
 
               <TouchableOpacity 
                 style={styles.quickPill} 
+                onPress={() => navigation.navigate('Documents')}
+                activeOpacity={0.7}
+              >
+                <FileText color="#1E293B" size={16} strokeWidth={2.2} />
+                <Text style={styles.quickPillText}>Documents</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.quickPill} 
                 onPress={() => navigation.navigate('Menu', { screen: 'Meetings' })}
                 activeOpacity={0.7}
               >

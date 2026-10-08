@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { isRunningInExpoGo } from 'expo';
 
 // Configure how notifications are presented when the app is open
 Notifications.setNotificationHandler({
@@ -18,6 +19,12 @@ Notifications.setNotificationHandler({
  */
 export async function registerForPushNotificationsAsync() {
   let token = null;
+
+  // In Expo Go on Android (SDK 53+), remote push notifications are not supported
+  if (isRunningInExpoGo() && Platform.OS === 'android') {
+    console.log('[NOTIFICATIONS] Android remote push notifications in Expo Go were removed in SDK 53+. Skipping push token registration in Expo Go.');
+    return null;
+  }
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {

@@ -7,6 +7,7 @@ const {
   updateWorkspace,
   deleteWorkspace,
   addMember,
+  addBulkMembers,
   updateMember
 } = require('../controllers/workspaceController');
 const { protect } = require('../middleware/auth');
@@ -43,6 +44,7 @@ router.get('/:workspaceId/analytics', protect, getWorkspaceAnalytics);
 router.route('/').get(protect, getWorkspaces).post(protect, createWorkspace);
 router.route('/:id').get(protect, getWorkspace).put(protect, updateWorkspace).delete(protect, deleteWorkspace);
 router.route('/:id/members').post(protect, addMember);
+router.route('/:id/members/bulk').post(protect, addBulkMembers);
 router.route('/:id/members/:userId').put(protect, updateMember);
 
 module.exports = router;

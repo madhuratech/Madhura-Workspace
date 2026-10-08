@@ -11,25 +11,31 @@ const getDocuments = async (req, res) => {
     if (req.query.workspaceId) query.workspace = req.query.workspaceId;
     
     const userRole = req.user.role;
+    const isManagement = userRole === 'super_admin' || userRole === 'hr' || 
+      (req.user.designation && ['managing director', 'md', 'hr', 'human resources'].some(d => req.user.designation.toLowerCase().includes(d)));
 
     const documents = await Document.find(query)
-      .populate('author', 'name email avatar role')
+      .populate('author', 'name email avatar role designation')
       .populate('lastUpdatedBy', 'name email avatar')
       .populate('versionHistory.updatedBy', 'name email avatar')
       .sort({ createdAt: -1 });
 
-    // Enforce privacy: Documents uploaded by TLs or Employees are only visible to MD, HR, and the author themselves.
-    // Documents uploaded by MD or HR are visible to everyone (subject to folder permissions above).
+    // Enforce privacy: Documents uploaded by TLs or Employees are visible to MD, HR, and the author themselves.
+    // Documents uploaded by MD or HR are visible to everyone (company-wide documents).
     let filteredDocuments = documents;
     
-    if (userRole !== 'super_admin' && userRole !== 'hr') {
+    if (!isManagement) {
       filteredDocuments = documents.filter(doc => {
         // Allow if the user is the author
         if (doc.author && doc.author._id.toString() === req.user._id.toString()) {
           return true;
         }
-        // Allow if the author is Management (super_admin or hr)
-        if (doc.author && (doc.author.role === 'super_admin' || doc.author.role === 'hr')) {
+        // Allow if the author is Management (super_admin, hr, or md designation)
+        if (doc.author && (
+          doc.author.role === 'super_admin' || 
+          doc.author.role === 'hr' || 
+          (doc.author.designation && ['managing director', 'md', 'hr'].some(d => doc.author.designation.toLowerCase().includes(d)))
+        )) {
           return true;
         }
         // If author is missing (legacy), hide it just to be safe
@@ -140,9 +146,12 @@ const deleteDocument = async (req, res) => {
        return res.status(404).json({ message: 'Document not found' });
     }
     
-    // Authorization check
-    if (req.user.role !== 'super_admin' && req.user.role !== 'hr') {
-       if (document.author.toString() !== req.user._id.toString()) {
+    // Authorization check: Management (MD/HR) can delete any document, authors can delete their own
+    const isManagement = req.user.role === 'super_admin' || req.user.role === 'hr' || 
+      (req.user.designation && ['managing director', 'md', 'hr', 'human resources'].some(d => req.user.designation.toLowerCase().includes(d)));
+
+    if (!isManagement) {
+       if (document.author && document.author.toString() !== req.user._id.toString()) {
            return res.status(403).json({ message: 'Not authorized to delete this document' });
        }
     }

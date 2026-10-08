@@ -319,6 +319,7 @@ const splashStyles = StyleSheet.create({
 });
 
 import * as Notifications from 'expo-notifications';
+import { isRunningInExpoGo } from 'expo';
 import { registerForPushNotificationsAsync } from './src/utils/notifications';
 
 const navigationRef = React.createRef();
@@ -330,35 +331,48 @@ function RootNavigator() {
   useEffect(() => {
     if (user) {
       // 1. Prompt and register for push notifications
-      registerForPushNotificationsAsync();
-
-      // 2. Listener for when notification is received while app is foregrounded
-      const receivedSubscription = Notifications.addNotificationReceivedListener(notification => {
-        console.log('[PUSH] Received foreground notification:', notification.request.content.title);
+      registerForPushNotificationsAsync().catch(err => {
+        console.log('[PUSH] Registration skipped or failed:', err?.message);
       });
 
-      // 3. Listener for when user taps on a notification (foreground, background or killed)
-      const responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
-        console.log('[PUSH] User tapped notification:', response.notification.request.content.data);
-        const data = response.notification.request.content.data || {};
-        if (data.screen) {
-          if (navigationRef.current?.isReady()) {
-            navigationRef.current.navigate(data.screen, data.params || {});
+      let receivedSubscription = null;
+      let responseSubscription = null;
+
+      try {
+        // 2. Listener for when notification is received while app is foregrounded
+        receivedSubscription = Notifications.addNotificationReceivedListener(notification => {
+          console.log('[PUSH] Received foreground notification:', notification.request.content.title);
+        });
+
+        // 3. Listener for when user taps on a notification (foreground, background or killed)
+        responseSubscription = Notifications.addNotificationResponseReceivedListener(response => {
+          console.log('[PUSH] User tapped notification:', response.notification.request.content.data);
+          const data = response.notification.request.content.data || {};
+          if (data.screen) {
+            if (navigationRef.current?.isReady()) {
+              navigationRef.current.navigate(data.screen, data.params || {});
+            }
+          } else if (data.type === 'chat' || data.link === '/chat') {
+            if (navigationRef.current?.isReady()) {
+              navigationRef.current.navigate('MainTabs', { screen: 'Chat' });
+            }
+          } else {
+            if (navigationRef.current?.isReady()) {
+              navigationRef.current.navigate('Notifications');
+            }
           }
-        } else if (data.type === 'chat' || data.link === '/chat') {
-          if (navigationRef.current?.isReady()) {
-            navigationRef.current.navigate('MainTabs', { screen: 'Chat' });
-          }
-        } else {
-          if (navigationRef.current?.isReady()) {
-            navigationRef.current.navigate('Notifications');
-          }
-        }
-      });
+        });
+      } catch (err) {
+        console.log('[PUSH] Listener setup skipped:', err?.message);
+      }
 
       return () => {
-        receivedSubscription.remove();
-        responseSubscription.remove();
+        if (receivedSubscription && typeof receivedSubscription.remove === 'function') {
+          receivedSubscription.remove();
+        }
+        if (responseSubscription && typeof responseSubscription.remove === 'function') {
+          responseSubscription.remove();
+        }
       };
     }
   }, [user]);
@@ -379,6 +393,7 @@ function RootNavigator() {
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
           <Stack.Screen name="Tasks" component={MyTasksScreen} />
           <Stack.Screen name="MyTasks" component={MyTasksScreen} />
+          <Stack.Screen name="Documents" component={DocumentsScreen} />
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />
