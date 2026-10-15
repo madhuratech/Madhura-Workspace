@@ -99,8 +99,44 @@ function verifyAttendanceSeal(doc) {
   };
 }
 
+/**
+ * Creates an encrypted AES-256 backup payload containing the true immutable punch-in state
+ */
+function createEncryptedVault(doc) {
+  if (!doc) return null;
+  const { encryptText } = require('./crypto');
+  const payload = {
+    workspace: extractId(doc.workspace),
+    user: extractId(doc.user),
+    date: doc.date ? String(doc.date).trim() : '',
+    checkIn: doc.checkIn ? new Date(doc.checkIn).toISOString() : null,
+    isLate: Boolean(doc.isLate),
+    lateMinutes: Number(doc.lateMinutes) || 0,
+    status: doc.status || 'Present'
+  };
+  return encryptText(JSON.stringify(payload));
+}
+
+/**
+ * Recovers the true immutable punch-in state from the encrypted vault
+ */
+function recoverFromVault(encryptedVault) {
+  if (!encryptedVault) return null;
+  try {
+    const { decryptText } = require('./crypto');
+    const jsonStr = decryptText(encryptedVault);
+    if (!jsonStr) return null;
+    return JSON.parse(jsonStr);
+  } catch (err) {
+    console.error('Failed to decrypt attendance vault:', err);
+    return null;
+  }
+}
+
 module.exports = {
   buildCanonicalPayload,
   generateAttendanceSeal,
-  verifyAttendanceSeal
+  verifyAttendanceSeal,
+  createEncryptedVault,
+  recoverFromVault
 };

@@ -85,6 +85,11 @@ const attendanceSchema = new mongoose.Schema({
   tamperReason: {
     type: String,
     default: ''
+  },
+  // ── Unforgeable AES-256 Encrypted Vault ────────────────────────────────────
+  encryptedVault: {
+    type: String, // Encrypted immutable backup of true punch-in state
+    default: null
   }
 }, { timestamps: true });
 
@@ -101,7 +106,7 @@ attendanceSchema.post('init', function () {
 
 // ── Pre-Save: Enforce Punch-In Immutability & Recompute Cryptographic HMAC Seal ─
 attendanceSchema.pre('save', function () {
-  const { generateAttendanceSeal } = require('../utils/attendanceSecurity');
+  const { generateAttendanceSeal, createEncryptedVault } = require('../utils/attendanceSecurity');
 
   if (!this.isNew) {
     // 1. Check-in cannot be edited once punched in
@@ -129,6 +134,10 @@ attendanceSchema.pre('save', function () {
   // 3. Mark punch in permanently locked
   if (this.checkIn) {
     this.isPunchInLocked = true;
+    // Lock original punch-in state inside encrypted vault if not already locked
+    if (!this.encryptedVault) {
+      this.encryptedVault = createEncryptedVault(this);
+    }
   }
 
   // 4. Compute cryptographic HMAC-SHA256 digital seal using server secret key

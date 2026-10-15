@@ -6,7 +6,7 @@ const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 const { protect } = require('../middleware/auth');
 const { sendNotification } = require('../controllers/notificationController');
-const { verifyAttendanceSeal, generateAttendanceSeal } = require('../utils/attendanceSecurity');
+const { verifyAttendanceSeal, generateAttendanceSeal, recoverFromVault } = require('../utils/attendanceSecurity');
 
 // ── Date & Time Helpers (Asia/Kolkata IST) ──────────────────────────────────
 const getISTDateString = (date = new Date()) => {
@@ -105,7 +105,40 @@ router.get('/', async (req, res) => {
 
       if (verification.isSealed && !verification.isValid) {
         recordObj.isTampered = true;
-        recordObj.tamperReason = '⚠️ Security Alert: Cryptographic signature mismatch! This attendance record was modified directly in MongoDB outside the application.';
+        recordObj.tamperReason = '⚠️ Security Alert: Cryptographic signature mismatch! Direct modification in MongoDB Cloud detected.';
+
+        // ── Self-Healing Auto-Revert: Restore authentic state from AES-256 Vault ──
+        const vault = recoverFromVault(record.encryptedVault);
+        if (vault && vault.checkIn) {
+          const originalCheckIn = new Date(vault.checkIn);
+          const currentCheckIn = record.checkIn ? new Date(record.checkIn) : null;
+          const wasCheckInAltered = !currentCheckIn || currentCheckIn.getTime() !== originalCheckIn.getTime();
+          const wasLateAltered = record.isLate !== vault.isLate || record.lateMinutes !== vault.lateMinutes;
+
+          if (wasCheckInAltered || wasLateAltered) {
+            console.warn(`[SECURITY] Auto-reverting tampered MongoDB record for user ${record.user?._id || record.user} on date ${record.date}`);
+            
+            // Revert record values in memory
+            recordObj.checkIn = originalCheckIn;
+            recordObj.isLate = vault.isLate;
+            recordObj.lateMinutes = vault.lateMinutes;
+            recordObj.status = vault.status || recordObj.status;
+            recordObj.tamperReason = `⚠️ Unauthorized MongoDB Cloud edit reverted back to real punch-in (${originalCheckIn.toLocaleTimeString('en-US')}).`;
+
+            // Overwrite tampered data in MongoDB with real original values
+            Attendance.updateOne(
+              { _id: record._id },
+              {
+                checkIn: originalCheckIn,
+                isLate: vault.isLate,
+                lateMinutes: vault.lateMinutes,
+                status: vault.status || record.status,
+                isTampered: true,
+                tamperReason: recordObj.tamperReason
+              }
+            ).catch(err => console.error('Failed to auto-revert tampered record in DB:', err));
+          }
+        }
 
         // Log high-severity audit log for administrative visibility
         AuditLog.create({
@@ -114,7 +147,7 @@ router.get('/', async (req, res) => {
           action: 'ATTENDANCE_TAMPER_DETECTED',
           entityType: 'Attendance',
           entityId: record._id,
-          details: `Direct MongoDB modification detected for ${record.user?.name || record.user} on ${record.date}. Expected seal: ${verification.expected?.slice(0, 8)}..., Stored seal: ${verification.actual?.slice(0, 8)}...`,
+          details: `Direct MongoDB Cloud modification detected for ${record.user?.name || record.user} on ${record.date}. Expected seal: ${verification.expected?.slice(0, 8)}..., Stored seal: ${verification.actual?.slice(0, 8)}... Action: Automatically reverted to encrypted vault backup.`,
           metadata: {
             recordId: record._id,
             date: record.date,
