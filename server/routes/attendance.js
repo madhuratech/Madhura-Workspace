@@ -3,8 +3,10 @@ const router = express.Router({ mergeParams: true });
 const Attendance = require('../models/Attendance');
 const Workspace = require('../models/Workspace');
 const User = require('../models/User');
+const AuditLog = require('../models/AuditLog');
 const { protect } = require('../middleware/auth');
 const { sendNotification } = require('../controllers/notificationController');
+const { verifyAttendanceSeal, generateAttendanceSeal } = require('../utils/attendanceSecurity');
 
 // ── Date & Time Helpers (Asia/Kolkata IST) ──────────────────────────────────
 const getISTDateString = (date = new Date()) => {
@@ -84,21 +86,89 @@ router.get('/', async (req, res) => {
       .populate('overtimeApprovedBy', 'name email designation role')
       .sort({ date: -1 });
 
-    // Ensure auto-shift checkOut reflects the actual shift end time (not shift end + OT)
+    // Process records: handle auto-shift corrections and verify cryptographic seals
+    const verifiedRecords = [];
     for (const record of records) {
       if (record.isAutoCheckOut && record.user && record.checkOut) {
         const userShiftEnd = record.user.shiftEndTime || '18:00';
         const expectedShiftEnd = getShiftDateTime(record.date, userShiftEnd);
         if (new Date(record.checkOut).getTime() > expectedShiftEnd.getTime()) {
           record.checkOut = expectedShiftEnd;
-          await Attendance.updateOne({ _id: record._id }, { checkOut: expectedShiftEnd });
+          await record.save();
         }
       }
+
+      // Cryptographic HMAC Verification:
+      // Detects if anyone accessed MongoDB directly (via MongoDB Atlas or Compass) and modified records
+      const verification = verifyAttendanceSeal(record);
+      const recordObj = record.toObject();
+
+      if (verification.isSealed && !verification.isValid) {
+        recordObj.isTampered = true;
+        recordObj.tamperReason = '⚠️ Security Alert: Cryptographic signature mismatch! This attendance record was modified directly in MongoDB outside the application.';
+
+        // Log high-severity audit log for administrative visibility
+        AuditLog.create({
+          workspace: record.workspace,
+          user: record.user?._id || record.user,
+          action: 'ATTENDANCE_TAMPER_DETECTED',
+          entityType: 'Attendance',
+          entityId: record._id,
+          details: `Direct MongoDB modification detected for ${record.user?.name || record.user} on ${record.date}. Expected seal: ${verification.expected?.slice(0, 8)}..., Stored seal: ${verification.actual?.slice(0, 8)}...`,
+          metadata: {
+            recordId: record._id,
+            date: record.date,
+            expectedSeal: verification.expected,
+            storedSeal: verification.actual
+          }
+        }).catch(err => console.error('Failed to log attendance tamper event:', err));
+      } else {
+        recordObj.isTampered = false;
+        recordObj.isSealed = verification.isSealed;
+      }
+
+      verifiedRecords.push(recordObj);
     }
 
-    res.json(records);
+    res.json(verifiedRecords);
   } catch (error) {
     console.error('Error fetching attendance records:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ── Seal legacy unsealed records (HR / Super Admin only) ────────────────────
+router.post('/seal-legacy', async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
+
+    const member = workspace.members.find(m => m.user && m.user.toString() === req.user._id.toString());
+    const isMDorHR = req.user.role === 'super_admin' || req.user.role === 'hr' ||
+                     (member && ['super_admin', 'hr'].includes(member.role));
+
+    if (!isMDorHR) {
+      return res.status(403).json({ message: 'Access denied: Only Super Admin and HR can seal legacy records.' });
+    }
+
+    const unsealedRecords = await Attendance.find({
+      workspace: workspaceId,
+      $or: [{ tamperSeal: null }, { tamperSeal: { $exists: false } }]
+    });
+
+    let sealedCount = 0;
+    for (const record of unsealedRecords) {
+      await record.save();
+      sealedCount++;
+    }
+
+    res.json({
+      message: `Successfully applied cryptographic tamper seals to ${sealedCount} legacy attendance records.`,
+      sealedCount
+    });
+  } catch (error) {
+    console.error('Error sealing legacy records:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

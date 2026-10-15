@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
-import { Calendar as CalendarIcon, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle, XCircle, FileText, Check, X, LogIn, LogOut, ChevronLeft, ChevronRight, User, ShieldCheck, AlertTriangle, Lock } from 'lucide-react';
 import Avatar from '../components/Avatar';
 
 const DigitalClock = ({ className = "" }) => {
@@ -535,6 +535,13 @@ const AttendanceLeave = () => {
                   +{record.overtimeHours || +(record.overtimeMinutes / 60).toFixed(1)}h OT
                 </div>
               )}
+
+              {/* Security: Tampered Badge */}
+              {record.isTampered && (
+                <div className="flex items-center justify-center py-0.5 px-1.5 rounded-md bg-red-500/20 text-red-600 dark:text-red-400 font-black text-[8px] border border-red-500/40 whitespace-nowrap leading-none animate-pulse">
+                  ⚠️ Tampered
+                </div>
+              )}
             </div>
           )}
 
@@ -625,6 +632,28 @@ const AttendanceLeave = () => {
               </div>
             ) : (
               <div className="space-y-4">
+                {/* Security & Tamper Detection Banner */}
+                {record.isTampered ? (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3.5 flex items-start gap-3 text-danger shadow-sm">
+                    <AlertTriangle size={20} className="shrink-0 mt-0.5 text-red-500 animate-pulse" />
+                    <div className="flex-1 text-xs">
+                      <span className="font-bold block text-red-600 dark:text-red-400 text-sm">Security Alert: Database Tampering Detected!</span>
+                      <span className="text-text-secondary mt-0.5 block leading-relaxed">
+                        {record.tamperReason || 'The cryptographic signature for this record failed. This attendance record was modified directly in MongoDB outside the application.'}
+                      </span>
+                    </div>
+                  </div>
+                ) : record.tamperSeal ? (
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs shadow-2xs">
+                    <span className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                      <ShieldCheck size={16} /> Cryptographically Sealed & Verified
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-text-secondary bg-bg-secondary px-2 py-0.5 rounded-md font-mono border border-border/50">
+                      <Lock size={10} /> Punch-In Locked
+                    </span>
+                  </div>
+                ) : null}
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-text-secondary">Status</span>
                   <span className={`px-3 py-1 rounded text-xs font-bold ${
