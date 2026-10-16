@@ -6,7 +6,7 @@ import {
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { StatusBar } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, G, Line } from 'react-native-svg';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext, getISTDateString } from '../context/AuthContext';
 import { SocketContext } from '../context/SocketContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -258,7 +258,7 @@ export default function DashboardScreen({ navigation }) {
 
       if (ws.length > 0) {
         const atts = await cachedGet(`/workspaces/${ws[0]._id}/attendance`).catch(() => []);
-        const today = new Date().toISOString().split('T')[0];
+        const today = getISTDateString();
         setTodayAttendances(Array.isArray(atts) ? atts.filter(a => a.date === today) : []);
       }
 

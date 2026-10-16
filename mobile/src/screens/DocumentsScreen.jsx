@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   FlatList,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Linking,
@@ -197,12 +198,20 @@ class DocumentErrorBoundary extends React.Component {
           <Text style={{ fontSize: 13, color: '#64748B', textAlign: 'center', marginBottom: 20 }}>
             Unable to load documents repository.
           </Text>
-          <TouchableOpacity
-            style={{ backgroundColor: '#1b2b4c', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 }}
-            onPress={() => this.props.navigation?.goBack?.()}
-          >
-            <Text style={{ color: '#ffffff', fontWeight: '700' }}>Go Back</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity
+              style={{ backgroundColor: '#1b2b4c', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 }}
+              onPress={() => this.setState({ hasError: false, error: null })}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '700' }}>Retry</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ backgroundColor: '#F1F5F9', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 }}
+              onPress={() => this.props.navigation?.goBack?.()}
+            >
+              <Text style={{ color: '#475569', fontWeight: '700' }}>Go Back</Text>
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       );
     }

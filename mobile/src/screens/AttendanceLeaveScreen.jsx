@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   ScrollView, 
+  RefreshControl,
   TouchableOpacity, 
   ActivityIndicator, 
   Animated, 
@@ -13,7 +14,8 @@ import {
   KeyboardAvoidingView, 
   TouchableWithoutFeedback, 
   Keyboard,
-  Dimensions
+  Dimensions,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -37,7 +39,9 @@ import {
   ChevronRight,
   Minus
 } from 'lucide-react-native';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext, getISTDateString } from '../context/AuthContext';
+import { loadWorkspaceCache } from '../utils/api';
+import { useFocusEffect } from '@react-navigation/native';
 import axios from 'axios';
 
 const PRIMARY = '#1b2b4c';
@@ -280,6 +284,8 @@ export default function AttendanceLeaveScreen({ navigation }) {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [isCheckedOut, setIsCheckedOut] = useState(false);
   const [todayRecord, setTodayRecord] = useState(null);
+  const [punchLoading, setPunchLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Overtime state (Managed only by MD & HR)
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
@@ -287,7 +293,7 @@ export default function AttendanceLeaveScreen({ navigation }) {
   const [overtimeSaving, setOvertimeSaving] = useState(false);
   const [overtimeData, setOvertimeData] = useState({
     userId: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getISTDateString(),
     hours: '1',
     minutes: '0',
     reason: ''
@@ -324,9 +330,17 @@ export default function AttendanceLeaveScreen({ navigation }) {
     };
   }, []);
 
+  // Fetch immediately on initial mount
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Also auto-refresh whenever the screen comes into focus in bottom tabs
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   useEffect(() => {
     fadeAnim.setValue(0);
@@ -337,57 +351,76 @@ export default function AttendanceLeaveScreen({ navigation }) {
     ]).start();
   }, [activeTab]);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
+
   const fetchData = async () => {
     try {
-      const wsRes = await axios.get('/workspaces');
-      if (wsRes.data.length > 0) {
-        const ws = wsRes.data[0];
-        setWorkspace(ws);
-        
-        const detailRes = await axios.get(`/workspaces/${ws._id}`);
-        const validMembers = (detailRes.data.members || []).filter(m => m.user);
-        setWorkspaceMembers(validMembers);
-        const me = validMembers.find(m => String(m.user._id || m.user) === String(user._id));
-        if (me) setCurrentUserRole(me.role);
+      let targetWs = workspace;
+      let wsList = [];
 
-        fetchAttendance(ws._id);
-        fetchLeaves(ws._id);
-        fetchEarlyLeaves(ws._id);
+      try {
+        const wsRes = await axios.get('/workspaces');
+        wsList = wsRes.data || [];
+      } catch (wsErr) {
+        // Fallback to cached workspace if available
+        const cached = await loadWorkspaceCache();
+        if (cached && cached.length > 0) {
+          wsList = cached;
+        }
+      }
+
+      if (wsList.length > 0) {
+        targetWs = wsList[0];
+        setWorkspace(targetWs);
+        
+        try {
+          const detailRes = await axios.get(`/workspaces/${targetWs._id}`);
+          const validMembers = (detailRes.data.members || []).filter(m => m.user);
+          setWorkspaceMembers(validMembers);
+          const me = validMembers.find(m => String(m.user._id || m.user) === String(user?._id));
+          if (me) setCurrentUserRole(me.role);
+        } catch (_) {}
+
+        await Promise.all([
+          fetchAttendance(targetWs._id),
+          fetchLeaves(targetWs._id),
+          fetchEarlyLeaves(targetWs._id)
+        ]);
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching attendance workspace data:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchAttendance = async (wsId) => {
+    if (!wsId) return;
     try {
       const res = await axios.get(`/workspaces/${wsId}/attendance`);
-      setAttendanceRecords(res.data);
-      const todayStr = new Date().toISOString().split('T')[0];
-      const foundToday = res.data.find(r => r.date === todayStr && String(r.user?._id || r.user) === String(user._id));
+      const records = Array.isArray(res.data) ? res.data : [];
+      setAttendanceRecords(records);
+      
+      const todayStr = getISTDateString();
+      const currentUid = String(user?._id || user?.id || '');
+      const foundToday = records.find(r => r.date === todayStr && String(r.user?._id || r.user) === currentUid);
+      
       setTodayRecord(foundToday || null);
       if (foundToday) {
         setIsCheckedIn(true);
-        if (foundToday.checkOut) {
-          setIsCheckedOut(true);
-        } else {
-          const now = new Date();
-          const [endH, endM] = (user?.shiftEndTime || '18:00').split(':').map(Number);
-          const currentMins = now.getHours() * 60 + now.getMinutes();
-          const shiftEndMins = (endH || 18) * 60 + (endM || 0);
-          if (currentMins >= shiftEndMins && (!foundToday.overtimeMinutes || foundToday.overtimeMinutes === 0)) {
-            setIsCheckedOut(true);
-          } else {
-            setIsCheckedOut(false);
-          }
-        }
+        // User is checked out if and only if server record contains a checkOut timestamp
+        setIsCheckedOut(Boolean(foundToday.checkOut));
       } else {
         setIsCheckedIn(false);
         setIsCheckedOut(false);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log('Error fetching attendance records:', error?.message);
+    }
   };
 
   const fetchLeaves = async (wsId) => {
@@ -404,17 +437,52 @@ export default function AttendanceLeaveScreen({ navigation }) {
     } catch (error) {}
   };
 
-  const handleCheckIn = async () => {
+  const getResolvedWorkspaceId = async () => {
+    if (workspace?._id) return workspace._id;
     try {
-      await axios.post(`/workspaces/${workspace._id}/attendance/checkin`);
+      const wsRes = await axios.get('/workspaces');
+      if (wsRes.data && wsRes.data.length > 0) {
+        setWorkspace(wsRes.data[0]);
+        return wsRes.data[0]._id;
+      }
+    } catch (_) {}
+    const cached = await loadWorkspaceCache();
+    if (cached && cached.length > 0) {
+      setWorkspace(cached[0]);
+      return cached[0]._id;
+    }
+    return null;
+  };
+
+  const handleCheckIn = async () => {
+    if (punchLoading) return;
+    setPunchLoading(true);
+    try {
+      const wsId = await getResolvedWorkspaceId();
+      if (!wsId) {
+        Alert.alert('Notice', 'No workspace found. Please make sure you are assigned to a workspace.');
+        return;
+      }
+
+      await axios.post(`/workspaces/${wsId}/attendance/checkin`);
       setIsCheckedIn(true);
-      fetchAttendance(workspace._id);
+      await fetchAttendance(wsId);
+      Alert.alert('Success', 'Punched in successfully!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Check-in failed');
+      const msg = error.response?.data?.message || error.message || 'Check-in failed';
+      if (msg.includes('Already checked in today')) {
+        setIsCheckedIn(true);
+        if (workspace?._id) fetchAttendance(workspace._id);
+      }
+      Alert.alert('Check-In', msg);
+    } finally {
+      setPunchLoading(false);
     }
   };
 
   const handleCheckOut = async () => {
+    if (punchLoading) return;
+
     // Check time for early leave against employee's specific shiftEndTime
     const now = new Date();
     const userShiftEnd = user?.shiftEndTime || '18:00';
@@ -427,10 +495,11 @@ export default function AttendanceLeaveScreen({ navigation }) {
     const isBeforeShiftEnd = currentTotalMin < shiftEndTotalMin;
     
     if (isBeforeShiftEnd) {
-      const todayStr = now.toISOString().split('T')[0];
+      const todayStr = getISTDateString();
+      const currentUid = String(user?._id || user?.id || '');
       const todayEarlyLeave = earlyLeaves.find(el => 
-        String(el.user?._id || el.user || el.employee?._id || el.employee) === String(user._id) && 
-        new Date(el.date).toISOString().split('T')[0] === todayStr
+        String(el.user?._id || el.user || el.employee?._id || el.employee) === currentUid && 
+        (el.date === todayStr || (el.date && new Date(el.date).toISOString().split('T')[0] === todayStr))
       );
 
       if (!todayEarlyLeave || todayEarlyLeave.status !== 'approved') {
@@ -440,12 +509,26 @@ export default function AttendanceLeaveScreen({ navigation }) {
       }
     }
 
+    setPunchLoading(true);
     try {
-      await axios.put(`/workspaces/${workspace._id}/attendance/checkout`);
+      const wsId = await getResolvedWorkspaceId();
+      if (!wsId) {
+        Alert.alert('Notice', 'No workspace found. Please try again.');
+        return;
+      }
+
+      await axios.put(`/workspaces/${wsId}/attendance/checkout`);
       setIsCheckedOut(true);
-      fetchAttendance(workspace._id);
+      await fetchAttendance(wsId);
+      Alert.alert('Success', 'Punched out successfully!');
     } catch (error) {
-      alert(error.response?.data?.message || 'Check-out failed');
+      if (error.response?.data?.requiresEarlyLeave) {
+        setIsEarlyLeaveModalOpen(true);
+      } else {
+        Alert.alert('Check-Out', error.response?.data?.message || error.message || 'Check-out failed');
+      }
+    } finally {
+      setPunchLoading(false);
     }
   };
 
@@ -680,7 +763,12 @@ export default function AttendanceLeaveScreen({ navigation }) {
           <ActivityIndicator size="large" color={PRIMARY} />
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[PRIMARY]} tintColor={PRIMARY} />
+          }
+        >
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             
             {activeTab === 'attendance' && (
@@ -722,21 +810,35 @@ export default function AttendanceLeaveScreen({ navigation }) {
                   <View style={styles.actionBtnContainer}>
                     {!isCheckedIn ? (
                       <TouchableOpacity 
-                        style={[styles.punchActionBtn, { backgroundColor: PRIMARY }]} 
+                        style={[styles.punchActionBtn, { backgroundColor: PRIMARY }, punchLoading && { opacity: 0.75 }]} 
                         onPress={handleCheckIn}
+                        disabled={punchLoading}
                         activeOpacity={0.8}
                       >
-                        <LogIn color="#ffffff" size={16} style={{ marginRight: 8 }} />
-                        <Text style={styles.punchActionBtnText}>Punch In</Text>
+                        {punchLoading ? (
+                          <ActivityIndicator color="#ffffff" size="small" style={{ marginRight: 8 }} />
+                        ) : (
+                          <LogIn color="#ffffff" size={16} style={{ marginRight: 8 }} />
+                        )}
+                        <Text style={styles.punchActionBtnText}>
+                          {punchLoading ? 'Punching In...' : 'Punch In'}
+                        </Text>
                       </TouchableOpacity>
                     ) : !isCheckedOut ? (
                       <TouchableOpacity 
-                        style={[styles.punchActionBtn, { backgroundColor: '#D97706' }]} 
+                        style={[styles.punchActionBtn, { backgroundColor: '#D97706' }, punchLoading && { opacity: 0.75 }]} 
                         onPress={handleCheckOut}
+                        disabled={punchLoading}
                         activeOpacity={0.8}
                       >
-                        <LogOut color="#ffffff" size={16} style={{ marginRight: 8 }} />
-                        <Text style={styles.punchActionBtnText}>Punch Out</Text>
+                        {punchLoading ? (
+                          <ActivityIndicator color="#ffffff" size="small" style={{ marginRight: 8 }} />
+                        ) : (
+                          <LogOut color="#ffffff" size={16} style={{ marginRight: 8 }} />
+                        )}
+                        <Text style={styles.punchActionBtnText}>
+                          {punchLoading ? 'Punching Out...' : 'Punch Out'}
+                        </Text>
                       </TouchableOpacity>
                     ) : (
                       <View style={styles.completedBadge}>
@@ -744,7 +846,7 @@ export default function AttendanceLeaveScreen({ navigation }) {
                         <Text style={styles.completedText}>
                           {todayRecord?.overtimeMinutes > 0 
                             ? `Shift & OT Done (+${todayRecord.overtimeHours || +(todayRecord.overtimeMinutes / 60).toFixed(1)}h)` 
-                            : 'Shift Completed (Auto Shift End)'}
+                            : 'Shift Completed'}
                         </Text>
                       </View>
                     )}
