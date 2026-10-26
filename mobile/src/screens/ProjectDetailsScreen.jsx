@@ -6,11 +6,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, CheckCircle2, Clock, Circle, Calendar, Check, X, Paperclip, Download, Flag } from 'lucide-react-native';
 import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext, API_URL } from '../context/AuthContext';
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.5:5000'; // Default, might need adjusting based on env
 
 const FILTERS = ['All', 'To Do', 'In Progress', 'Done'];
 
@@ -411,7 +409,7 @@ export default function ProjectDetailsScreen({ route, navigation }) {
                           <Text style={styles.deliverableDate}>{new Date(del.submittedAt).toLocaleDateString()}</Text>
                         </View>
                         {del.fileUrl && (
-                          <TouchableOpacity style={styles.deliverableBtn} onPress={() => Linking.openURL(`${API_URL}${del.fileUrl}`)}>
+                          <TouchableOpacity style={styles.deliverableBtn} onPress={() => Linking.openURL(del.fileUrl.startsWith('http') ? del.fileUrl : `${API_URL.replace('/api', '')}${del.fileUrl}`)}>
                             <Download size={14} color="#fff" />
                             <Text style={styles.deliverableBtnText} numberOfLines={1}>{del.fileName || 'Download File'}</Text>
                           </TouchableOpacity>

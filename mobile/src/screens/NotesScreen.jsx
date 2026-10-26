@@ -170,7 +170,7 @@ export default function NotesScreen({ navigation }) {
       activeOpacity={0.8}
     >
       {item.attachments && item.attachments.length > 0 && (
-        <Image source={{ uri: item.attachments[0].url.startsWith('http') ? item.attachments[0].url : `${API_URL}${item.attachments[0].url}` }} style={styles.cardImage} />
+        <Image source={{ uri: item.attachments[0].url.startsWith('http') ? item.attachments[0].url : `${API_URL.replace('/api', '')}${item.attachments[0].url}` }} style={styles.cardImage} />
       )}
       <View style={styles.cardContent}>
         {item.title ? <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text> : null}
@@ -266,7 +266,7 @@ export default function NotesScreen({ navigation }) {
             />
             {attachment && (
               <View style={styles.attachmentPreview}>
-                <Image source={{ uri: attachment.url?.startsWith('http') || attachment.url?.startsWith('file://') ? attachment.url : `${API_URL}${attachment.url}` }} style={styles.previewImg} />
+                <Image source={{ uri: attachment.url?.startsWith('http') || attachment.url?.startsWith('file://') ? attachment.url : `${API_URL.replace('/api', '')}${attachment.url}` }} style={styles.previewImg} />
                 <TouchableOpacity style={styles.removeImgBtn} onPress={() => setAttachment(null)}>
                   <X color="#fff" size={16} />
                 </TouchableOpacity>

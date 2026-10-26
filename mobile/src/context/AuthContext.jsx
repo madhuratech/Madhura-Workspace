@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 
 // NOTE: Use your local IP address instead of localhost for testing on a physical device.
 // e.g., 'http://192.168.1.100:5000/api'
-export const API_URL = 'https://madhura-workspace.onrender.com/api';
+export const API_URL = 'https://api.workspace.madhuratech.com/api';
 
 // Set global base URL
 axios.defaults.baseURL = API_URL;
