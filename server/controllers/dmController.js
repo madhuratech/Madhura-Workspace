@@ -154,6 +154,12 @@ exports.updateDMMessage = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized to edit this message' });
     }
     
+    // Check if message is older than 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    if (message.createdAt < fiveMinutesAgo) {
+      return res.status(403).json({ message: 'Messages can only be edited within 5 minutes of sending' });
+    }
+    
     message.text = req.body.text;
     message.isEdited = true;
     await message.save();
@@ -273,4 +279,75 @@ exports.getRecentDMActivity = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Toggle DM message reaction
+// @route   POST /api/workspaces/:workspaceId/dms/:dmId/messages/:messageId/react
+// @access  Private
+exports.toggleDMReaction = async (req, res) => {
+  try {
+    const { dmId, messageId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user._id || req.user.id;
+
+    if (!emoji) {
+      return res.status(400).json({ message: 'Emoji is required' });
+    }
+
+    const message = await DMMessage.findById(messageId);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    if (!message.reactions) {
+      message.reactions = [];
+    }
+
+    const reactionIndex = message.reactions.findIndex(r => r.emoji === emoji);
+
+    if (reactionIndex > -1) {
+      const userIndex = message.reactions[reactionIndex].users.findIndex(u => String(u) === String(userId));
+      if (userIndex > -1) {
+        message.reactions[reactionIndex].users.splice(userIndex, 1);
+        if (message.reactions[reactionIndex].users.length === 0) {
+          message.reactions.splice(reactionIndex, 1);
+        }
+      } else {
+        message.reactions[reactionIndex].users.push(userId);
+      }
+    } else {
+      message.reactions.push({
+        emoji,
+        users: [userId]
+      });
+    }
+
+    await message.save();
+
+    const payload = {
+      dmId,
+      messageId: message._id,
+      reactions: message.reactions
+    };
+
+    if (req.io && req.onlineUsers) {
+      const dm = await DM.findById(dmId);
+      if (dm) {
+        dm.participants.forEach(pId => {
+          const pIdStr = pId.toString();
+          if (req.onlineUsers.has(pIdStr)) {
+            req.onlineUsers.get(pIdStr).forEach(socketId => {
+              req.io.to(socketId).emit('message_reaction', payload);
+            });
+          }
+        });
+      }
+    }
+
+    res.status(200).json(payload);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 

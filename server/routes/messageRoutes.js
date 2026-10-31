@@ -12,7 +12,8 @@ const {
   updateMessage,
   deleteMessage,
   markMessagesRead,
-  getUnreadCounts
+  getUnreadCounts,
+  toggleReaction
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
 
@@ -43,5 +44,7 @@ router.route('/:channelId/messages/mark-read')
 router.route('/:channelId/messages/:messageId')
   .put(protect, updateMessage)
   .delete(protect, deleteMessage);
+
+router.post('/:channelId/messages/:messageId/react', protect, toggleReaction);
 
 module.exports = router;

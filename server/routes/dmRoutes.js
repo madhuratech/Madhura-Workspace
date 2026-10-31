@@ -8,7 +8,8 @@ const {
   markDMMessagesRead,
   updateDMMessage,
   deleteDMMessage,
-  getRecentDMActivity
+  getRecentDMActivity,
+  toggleDMReaction
 } = require('../controllers/dmController');
 
 router.use(protect);
@@ -24,5 +25,7 @@ router.post('/:dmId/messages/mark-read', markDMMessagesRead);
 router.route('/:dmId/messages/:messageId')
   .put(updateDMMessage)
   .delete(deleteDMMessage);
+
+router.post('/:dmId/messages/:messageId/react', toggleDMReaction);
 
 module.exports = router;

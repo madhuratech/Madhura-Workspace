@@ -92,10 +92,12 @@ const NotificationToast = () => {
                   getIconForType(toast.type)
                 )}
               </div>
-              {/* Type indicator badge */}
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-bg-secondary bg-bg-primary flex items-center justify-center shadow-sm">
-                {getIconForType(toast.type)}
-              </div>
+              {/* Type indicator badge - only display when avatar is present to avoid duplicate icon */}
+              {toast.sender?.avatar && (
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-bg-secondary bg-bg-primary flex items-center justify-center shadow-sm">
+                  {getIconForType(toast.type)}
+                </div>
+              )}
             </div>
 
             {/* Content Body */}

@@ -7,10 +7,14 @@ import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSqua
 import EmojiPicker from 'emoji-picker-react';
 import Avatar from '../components/Avatar';
 
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext) || {};
   const isSuperAdminOrHr = user?.role === 'super_admin' || user?.role === 'hr';
+
+  const [activeReactionPickerId, setActiveReactionPickerId] = useState(null);
 
   const [workspace, setWorkspace] = useState(() => {
     try {
@@ -172,6 +176,10 @@ const Chat = () => {
         setActiveChannel(prev => (prev && prev._id === channelId) ? null : prev);
       };
 
+      const handleMessageReaction = ({ messageId, reactions }) => {
+        setMessages((prev) => prev.map(m => String(m._id) === String(messageId) ? { ...m, reactions } : m));
+      };
+
       socket.on('channel_created', handleChannelCreated);
       socket.on('channel_updated', handleChannelUpdated);
       socket.on('channel_deleted', handleChannelDeleted);
@@ -179,6 +187,7 @@ const Chat = () => {
       socket.on('new_message', handleNewMessage);
       socket.on('message_updated', handleMessageUpdated);
       socket.on('message_deleted', handleMessageDeleted);
+      socket.on('message_reaction', handleMessageReaction);
 
       socket.on('messages_read', ({ channelId, userId }) => {
         if ((activeChannel && String(channelId) === String(activeChannel._id)) || 
@@ -223,6 +232,7 @@ const Chat = () => {
         socket.off('new_message', handleNewMessage);
         socket.off('message_updated', handleMessageUpdated);
         socket.off('message_deleted', handleMessageDeleted);
+        socket.off('message_reaction', handleMessageReaction);
         socket.off('messages_read');
         socket.off('dm_messages_read');
       };
@@ -353,6 +363,79 @@ const Chat = () => {
   const [mentionCursorIndex, setMentionCursorIndex] = useState(null);
   const mentionInputRef = useRef(null);
 
+  // Auto-expand chat input like WhatsApp
+  useEffect(() => {
+    if (mentionInputRef.current) {
+      mentionInputRef.current.style.height = 'auto';
+      const scrollHeight = mentionInputRef.current.scrollHeight;
+      mentionInputRef.current.style.height = `${Math.min(Math.max(scrollHeight, 40), 160)}px`;
+    }
+  }, [newMessage]);
+
+  // Close reaction picker on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (activeReactionPickerId && !e.target.closest('.reaction-picker-container')) {
+        setActiveReactionPickerId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activeReactionPickerId]);
+
+  // Handle clipboard paste (both multi-line text auto-expansion and image paste)
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            handleFileUpload({ target: { files: [file], value: '' } });
+            return;
+          }
+        }
+      }
+    }
+  };
+
+  const handleToggleReaction = async (msgId, emoji) => {
+    if (!workspace) return;
+    
+    // Optimistic UI update
+    setMessages(prev => prev.map(m => {
+      if (m._id !== msgId) return m;
+      let reactions = m.reactions ? JSON.parse(JSON.stringify(m.reactions)) : [];
+      const rIdx = reactions.findIndex(r => r.emoji === emoji);
+      if (rIdx > -1) {
+        const userIdx = reactions[rIdx].users.findIndex(u => String(u._id || u) === String(user?._id));
+        if (userIdx > -1) {
+          reactions[rIdx].users.splice(userIdx, 1);
+          if (reactions[rIdx].users.length === 0) {
+            reactions.splice(rIdx, 1);
+          }
+        } else {
+          reactions[rIdx].users.push(user?._id);
+        }
+      } else {
+        reactions.push({ emoji, users: [user?._id] });
+      }
+      return { ...m, reactions };
+    }));
+    setActiveReactionPickerId(null);
+
+    try {
+      if (activeChannel) {
+        await axios.post(`/workspaces/${workspace._id}/channels/${activeChannel._id}/messages/${msgId}/react`, { emoji });
+      } else if (activeDM) {
+        await axios.post(`/workspaces/${workspace._id}/dms/${activeDM.dmId}/messages/${msgId}/react`, { emoji });
+      }
+    } catch (error) {
+      console.error('Failed to toggle reaction', error);
+    }
+  };
+
   const handleInputChange = (e) => {
     const text = e.target.value;
     setNewMessage(text);
@@ -477,6 +560,9 @@ const Chat = () => {
       setEditMessageText('');
     } catch (error) {
       console.error(error);
+      const errMsg = error.response?.data?.message || 'Failed to edit message. Messages can only be edited within 5 minutes.';
+      if (showToast) showToast(errMsg, 'error');
+      else alert(errMsg);
     }
   };
 
@@ -1060,19 +1146,55 @@ const Chat = () => {
                     {/* Message bubble + actions */}
                     <div className="relative flex items-center gap-1.5 w-full">
 
+                      {/* WhatsApp Floating Reaction Bar Popup */}
+                      {activeReactionPickerId === msg._id && !msg.isDeleted && (
+                        <div className={`reaction-picker-container absolute z-40 -top-11 ${isMine ? 'right-0' : 'left-0'} flex items-center bg-white dark:bg-bg-secondary border border-border/80 shadow-2xl rounded-full px-2 py-1 gap-1 animate-in fade-in zoom-in-95 duration-150`}>
+                          {QUICK_REACTIONS.map((emoji) => {
+                            const userHasThis = msg.reactions?.some(r => r.emoji === emoji && r.users?.some(u => String(u._id || u) === String(user?._id)));
+                            return (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleReaction(msg._id, emoji);
+                                }}
+                                className={`text-xl hover:scale-135 active:scale-95 transition-transform duration-100 p-1.5 rounded-full leading-none cursor-pointer ${
+                                  userHasThis ? 'bg-accent-blue/20 ring-1 ring-accent-blue/50' : 'hover:bg-gray-100 dark:hover:bg-bg-primary'
+                                }`}
+                                title={emoji}
+                              >
+                                {emoji}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       {/* Hover action buttons — my messages (left of bubble) */}
                       {isMine && !msg.isDeleted && (
                         <div className="opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center space-x-1 order-first">
+                          {/* React button */}
+                          <button
+                            type="button"
+                            onClick={() => setActiveReactionPickerId(activeReactionPickerId === msg._id ? null : msg._id)}
+                            className="p-1.5 rounded-lg bg-bg-primary border border-border text-text-secondary hover:text-warning hover:border-warning/30 transition-all shadow-sm"
+                            title="React"
+                          >
+                            <Smile size={13} />
+                          </button>
                           {msg.text && (new Date() - new Date(msg.createdAt) < 5 * 60 * 1000) && (
                             <button
+                              type="button"
                               onClick={() => { setEditingMessageId(msg._id); setEditMessageText(msg.text); }}
                               className="p-1.5 rounded-lg bg-bg-primary border border-border text-text-secondary hover:text-accent-blue hover:border-accent-blue/30 transition-all shadow-sm"
-                              title="Edit"
+                              title="Edit (within 5 mins)"
                             >
                               <Edit2 size={13} />
                             </button>
                           )}
                           <button
+                            type="button"
                             onClick={() => handleDeleteMessage(msg._id)}
                             className="p-1.5 rounded-lg bg-bg-primary border border-border text-text-secondary hover:text-danger hover:border-danger/30 transition-all shadow-sm"
                             title="Delete"
@@ -1085,106 +1207,155 @@ const Chat = () => {
                       {/* THE BUBBLE */}
                       <div className={`relative ${isMine ? 'order-last' : ''}`}>
                         {editingMessageId === msg._id ? (
-                          <div className="flex flex-col space-y-2 min-w-[240px]">
-                            <input
-                              type="text" autoFocus
+                          <div className="flex flex-col space-y-2 min-w-[280px]">
+                            <textarea
+                              autoFocus
+                              rows="2"
                               value={editMessageText}
                               onChange={(e) => setEditMessageText(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleEditMessage(msg._id);
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleEditMessage(msg._id);
+                                }
                                 if (e.key === 'Escape') setEditingMessageId(null);
                               }}
-                              className="bg-bg-primary border border-accent-blue rounded-xl px-3 py-2 text-sm focus:outline-none w-full text-text-primary"
+                              className="bg-bg-primary border border-accent-blue rounded-xl px-3 py-2 text-sm focus:outline-none w-full text-text-primary resize-none custom-scrollbar"
                             />
-                            <div className="flex space-x-2 text-xs">
-                              <button onClick={() => handleEditMessage(msg._id)} className="text-accent-blue font-bold hover:underline">Save</button>
-                              <button onClick={() => setEditingMessageId(null)} className="text-text-secondary hover:text-text-primary">Cancel</button>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-[11px] text-text-secondary">Shift+Enter for newline, Enter to save</span>
+                              <div className="flex space-x-2">
+                                <button onClick={() => handleEditMessage(msg._id)} className="text-accent-blue font-bold hover:underline">Save</button>
+                                <button onClick={() => setEditingMessageId(null)} className="text-text-secondary hover:text-text-primary">Cancel</button>
+                              </div>
                             </div>
                           </div>
                         ) : (
-                          <div className={`relative rounded-2xl overflow-hidden shadow-sm ${
-                            isMine
-                              ? 'bg-accent-blue text-accent-text rounded-br-sm'
-                              : 'bg-bg-primary text-text-primary border border-border/60 rounded-bl-sm'
-                          }`}>
+                          <div className="flex flex-col">
+                            <div className={`relative rounded-2xl overflow-hidden shadow-sm ${
+                              isMine
+                                ? 'bg-accent-blue text-accent-text rounded-br-sm'
+                                : 'bg-bg-primary text-text-primary border border-border/60 rounded-bl-sm'
+                            }`}>
 
-                            {/* Attachment */}
-                            {msg.attachment && (
-                              <div className="p-1">
-                                {msg.attachment.fileType?.startsWith('image/') ? (
-                                  <img
-                                    src={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`}
-                                    alt={msg.attachment.fileName}
-                                    className="max-w-[280px] rounded-xl cursor-pointer hover:opacity-90 transition-opacity block"
-                                    onClick={() => setFullScreenImage(msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`)}
-                                  />
-                                ) : msg.attachment.fileType?.startsWith('video/') ? (
-                                  <video src={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`} controls className="max-w-[280px] rounded-xl block" />
-                                ) : (
-                                  <a
-                                    href={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`}
-                                    target="_blank" rel="noopener noreferrer"
-                                    className="flex items-center space-x-2 px-3 py-2 text-sm hover:underline"
-                                  >
-                                    <File size={15} />
-                                    <span className="truncate max-w-[200px]">{msg.attachment.fileName}</span>
-                                  </a>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Text, Deleted state, or File-only attachment */}
-                            {(msg.text || msg.isDeleted || (msg.attachment && !msg.text && !msg.attachment.fileType?.startsWith('image/') && !msg.attachment.fileType?.startsWith('video/'))) && (
-                              <div className="px-3 py-2 pt-0">
-                                {msg.isDeleted ? (
-                                  <div className={`italic text-[13.5px] flex items-center space-x-1.5 ${isMine ? 'text-accent-text/80' : 'text-text-secondary/80'}`}>
-                                    <Ban size={13} />
-                                    <span>This message was deleted</span>
-                                  </div>
-                                ) : msg.text ? (
-                                  <div className="whitespace-pre-wrap break-words text-[13.5px] leading-relaxed">
-                                    {msg.text.split(/(@\w+|https?:\/\/[^\s]+)/g).map((part, i) => {
-                                      if (!part) return null;
-                                      if (part.startsWith('@')) return (
-                                        <span key={i} className={`font-semibold px-1 rounded-sm ${isMine ? 'bg-accent-text/20' : 'text-accent-blue bg-accent-blue/10'}`}>{part}</span>
-                                      );
-                                      if (part.startsWith('http')) return (
-                                        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline break-all ${isMine ? 'text-accent-text/90' : 'text-accent-blue'}`}>{part}</a>
-                                      );
-                                      return <span key={i}>{part}</span>;
-                                    })}
-                                  </div>
-                                ) : null}
-                                {/* Time + read receipt */}
-                                <div className={`flex items-center justify-end space-x-1 mt-1 ${isMine ? 'text-accent-text/60' : 'text-text-secondary'}`}>
-                                  {msg.isEdited && !msg.isDeleted && <span className="text-[10px] italic mr-1">edited</span>}
-                                  <span className="text-[10px]">
-                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                  {isMine && (
-                                    isRead
-                                      ? <CheckCheck size={14} strokeWidth={2.5} className="text-sky-300 dark:text-gray-700" />
-                                      : isDelivered
-                                        ? <CheckCheck size={14} strokeWidth={2.5} className="text-accent-text/50" />
-                                        : <Check size={14} strokeWidth={2.5} className="text-accent-text/50" />
+                              {/* Attachment */}
+                              {msg.attachment && (
+                                <div className="p-1">
+                                  {msg.attachment.fileType?.startsWith('image/') ? (
+                                    <img
+                                      src={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`}
+                                      alt={msg.attachment.fileName}
+                                      className="max-w-[280px] rounded-xl cursor-pointer hover:opacity-90 transition-opacity block"
+                                      onClick={() => setFullScreenImage(msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`)}
+                                    />
+                                  ) : msg.attachment.fileType?.startsWith('video/') ? (
+                                    <video src={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`} controls className="max-w-[280px] rounded-xl block" />
+                                  ) : (
+                                    <a
+                                      href={msg.attachment.url?.startsWith('http') ? msg.attachment.url : `${API_URL}${msg.attachment.url}`}
+                                      target="_blank" rel="noopener noreferrer"
+                                      className="flex items-center space-x-2 px-3 py-2 text-sm hover:underline"
+                                    >
+                                      <File size={15} />
+                                      <span className="truncate max-w-[200px]">{msg.attachment.fileName}</span>
+                                    </a>
                                   )}
                                 </div>
-                              </div>
-                            )}
+                              )}
 
-                            {/* Time on image-only or video-only messages */}
-                            {msg.attachment && !msg.text && (msg.attachment.fileType?.startsWith('image/') || msg.attachment.fileType?.startsWith('video/')) && (
-                              <div className="absolute bottom-2 right-2 flex items-center space-x-1 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-                                <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                {isMine && (isRead
-                                  ? <CheckCheck size={12} strokeWidth={2.5} className="text-sky-300" />
-                                  : <Check size={12} strokeWidth={2.5} />
-                                )}
+                              {/* Text, Deleted state, or File-only attachment */}
+                              {(msg.text || msg.isDeleted || (msg.attachment && !msg.text && !msg.attachment.fileType?.startsWith('image/') && !msg.attachment.fileType?.startsWith('video/'))) && (
+                                <div className="px-3 py-2 pt-0">
+                                  {msg.isDeleted ? (
+                                    <div className={`italic text-[13.5px] flex items-center space-x-1.5 ${isMine ? 'text-accent-text/80' : 'text-text-secondary/80'}`}>
+                                      <Ban size={13} />
+                                      <span>This message was deleted</span>
+                                    </div>
+                                  ) : msg.text ? (
+                                    <div className="whitespace-pre-wrap break-words text-[13.5px] leading-relaxed">
+                                      {msg.text.split(/(@\w+|https?:\/\/[^\s]+)/g).map((part, i) => {
+                                        if (!part) return null;
+                                        if (part.startsWith('@')) return (
+                                          <span key={i} className={`font-semibold px-1 rounded-sm ${isMine ? 'bg-accent-text/20' : 'text-accent-blue bg-accent-blue/10'}`}>{part}</span>
+                                        );
+                                        if (part.startsWith('http')) return (
+                                          <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`underline break-all ${isMine ? 'text-accent-text/90' : 'text-accent-blue'}`}>{part}</a>
+                                        );
+                                        return <span key={i}>{part}</span>;
+                                      })}
+                                    </div>
+                                  ) : null}
+                                  {/* Time + read receipt */}
+                                  <div className={`flex items-center justify-end space-x-1 mt-1 ${isMine ? 'text-accent-text/60' : 'text-text-secondary'}`}>
+                                    {msg.isEdited && !msg.isDeleted && <span className="text-[10px] italic mr-1">edited</span>}
+                                    <span className="text-[10px]">
+                                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {isMine && (
+                                      isRead
+                                        ? <CheckCheck size={14} strokeWidth={2.5} className="text-sky-300 dark:text-gray-700" />
+                                        : isDelivered
+                                          ? <CheckCheck size={14} strokeWidth={2.5} className="text-accent-text/50" />
+                                          : <Check size={14} strokeWidth={2.5} className="text-accent-text/50" />
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Time on image-only or video-only messages */}
+                              {msg.attachment && !msg.text && (msg.attachment.fileType?.startsWith('image/') || msg.attachment.fileType?.startsWith('video/')) && (
+                                <div className="absolute bottom-2 right-2 flex items-center space-x-1 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                                  <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                  {isMine && (isRead
+                                    ? <CheckCheck size={12} strokeWidth={2.5} className="text-sky-300" />
+                                    : <Check size={12} strokeWidth={2.5} />
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* WhatsApp Reaction Badges */}
+                            {msg.reactions && msg.reactions.length > 0 && (
+                              <div className={`flex flex-wrap gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
+                                {msg.reactions.map((r, rIdx) => {
+                                  const hasReacted = r.users?.some(u => String(u._id || u) === String(user?._id));
+                                  return (
+                                    <button
+                                      key={rIdx}
+                                      type="button"
+                                      onClick={() => handleToggleReaction(msg._id, r.emoji)}
+                                      className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium border shadow-xs transition-all ${
+                                        hasReacted
+                                          ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue dark:bg-accent-blue/25'
+                                          : 'bg-white dark:bg-bg-secondary border-border text-text-secondary hover:border-accent-blue/30'
+                                      }`}
+                                      title={`${r.users?.length || 1} reaction${(r.users?.length || 1) > 1 ? 's' : ''}`}
+                                    >
+                                      <span className="text-[13px] leading-none">{r.emoji}</span>
+                                      <span className="text-[11px] font-semibold">{r.users?.length || 1}</span>
+                                    </button>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
                         )}
                       </div>
+
+                      {/* Hover action buttons — others' messages (right of bubble) */}
+                      {!isMine && !msg.isDeleted && (
+                        <div className="opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center space-x-1">
+                          {/* React button */}
+                          <button
+                            type="button"
+                            onClick={() => setActiveReactionPickerId(activeReactionPickerId === msg._id ? null : msg._id)}
+                            className="p-1.5 rounded-lg bg-bg-primary border border-border text-text-secondary hover:text-warning hover:border-warning/30 transition-all shadow-sm"
+                            title="React"
+                          >
+                            <Smile size={13} />
+                          </button>
+                        </div>
+                      )}
 
                       {/* Time shown right of bubble for my messages when hovered */}
                       {isMine && !editingMessageId && (
@@ -1301,14 +1472,15 @@ const Chat = () => {
               placeholder={`Message ${activeChannel ? `#${activeChannel.name}` : activeDM?.user?.name || '...'}`}
               value={newMessage}
               onChange={handleInputChange}
+              onPaste={handlePaste}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   handleSendMessage(e);
                 }
               }}
-              className="flex-1 bg-transparent border-0 outline-none resize-none py-3 px-2 text-sm text-gray-800 dark:text-text-primary placeholder:text-gray-400 dark:placeholder:text-text-secondary leading-relaxed"
-              style={{ minHeight: '40px', maxHeight: '140px' }}
+              className="flex-1 bg-transparent border-0 outline-none resize-none py-2.5 px-2 text-sm text-gray-800 dark:text-text-primary placeholder:text-gray-400 dark:placeholder:text-text-secondary leading-relaxed overflow-y-auto custom-scrollbar"
+              style={{ minHeight: '40px', maxHeight: '160px' }}
             />
 
             {/* Send button */}
