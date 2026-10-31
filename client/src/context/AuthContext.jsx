@@ -12,8 +12,8 @@ axios.interceptors.request.use((config) => {
   if (config.method === 'get') {
     const key = config.url;
     
-    // Skip caching for real-time endpoints (chat, notifications)
-    if (key && (key.includes('/messages') || key.includes('/notifications') || key.includes('/chat'))) {
+    // Skip caching for real-time endpoints (chat, notifications, channels, dms)
+    if (key && (key.includes('/messages') || key.includes('/notifications') || key.includes('/chat') || key.includes('/channels') || key.includes('/dms'))) {
       return config;
     }
 

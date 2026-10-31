@@ -5,13 +5,28 @@ const { decryptText } = require('../utils/crypto');
 
 exports.getChannels = async (req, res) => {
   try {
-    const channels = await Channel.find({ 
-      workspace: req.params.workspaceId,
-      $or: [
-        { isPrivate: false },
+    const isSuperAdminOrHr = ['super_admin', 'hr'].includes(req.user.role);
+    
+    // Super Admin & HR can see all channels in the workspace.
+    // Other members can see all Public Channels (isPrivate is false/null/undefined)
+    // plus any Private Channels they are a member of.
+    const query = { 
+      workspace: req.params.workspaceId
+    };
+
+    if (!isSuperAdminOrHr) {
+      query.$or = [
+        { isPrivate: { $ne: true } },
         { members: req.user._id }
-      ]
-    }).lean();
+      ];
+    }
+
+    const channels = await Channel.find(query)
+      .populate('createdBy', 'name email avatar role')
+      .populate('members', 'name email avatar role designation')
+      .sort({ createdAt: 1 })
+      .lean();
+
     res.status(200).json(channels);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -20,22 +35,82 @@ exports.getChannels = async (req, res) => {
 
 exports.createChannel = async (req, res) => {
   try {
-    let members = req.body.members || [];
-    if (!members.some(m => m.toString() === req.user._id.toString())) {
-      members.push(req.user._id);
+    const Workspace = require('../models/Workspace');
+    const workspace = await Workspace.findById(req.params.workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ message: 'Workspace not found' });
     }
-    const channel = await Channel.create({
-      name: req.body.name,
-      description: req.body.description,
+
+    const isPrivate = Boolean(req.body.isPrivate);
+    const isSuperAdminOrHr = ['super_admin', 'hr'].includes(req.user.role);
+
+    // Rule: Only Super Admin (MD) and HR can create Public Groups/Channels
+    if (!isPrivate && !isSuperAdminOrHr) {
+      return res.status(403).json({ message: 'Only Super Admin (MD) and HR can create public groups' });
+    }
+
+    // Role check: Only super_admin, hr, or team_leader can create channels
+    const allowedRoles = ['super_admin', 'hr', 'team_leader'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Not authorized to create channels' });
+    }
+
+    if (!req.body.name || !req.body.name.trim()) {
+      return res.status(400).json({ message: 'Channel name is required' });
+    }
+
+    const formattedName = req.body.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+    if (!formattedName) {
+      return res.status(400).json({ message: 'Please enter a valid channel name' });
+    }
+
+    // Check if channel with same name exists in workspace
+    const existingChannel = await Channel.findOne({
       workspace: req.params.workspaceId,
-      isPrivate: req.body.isPrivate || false,
+      name: formattedName
+    });
+    if (existingChannel) {
+      return res.status(400).json({ message: `A channel or group named #${formattedName} already exists in this workspace` });
+    }
+
+    let members = [];
+    if (isPrivate) {
+      // Private channel: explicitly specified members + creator
+      members = (req.body.members || []).map(m => (m && m._id ? m._id : m));
+      if (!members.some(m => m.toString() === req.user._id.toString())) {
+        members.push(req.user._id);
+      }
+    } else {
+      // Public channel: automatically include all members of the workspace
+      if (workspace.members && workspace.members.length > 0) {
+        members = workspace.members.map(m => (m.user ? m.user.toString() : null)).filter(Boolean);
+      }
+      if (workspace.owner && !members.some(m => m.toString() === workspace.owner.toString())) {
+        members.push(workspace.owner.toString());
+      }
+      if (!members.some(m => m.toString() === req.user._id.toString())) {
+        members.push(req.user._id.toString());
+      }
+    }
+
+    const channel = await Channel.create({
+      name: formattedName,
+      description: req.body.description || '',
+      workspace: req.params.workspaceId,
+      isPrivate: isPrivate,
       createdBy: req.user._id,
       members: members
     });
+
+    const populatedChannel = await Channel.findById(channel._id)
+      .populate('createdBy', 'name email avatar role')
+      .populate('members', 'name email avatar role designation')
+      .lean();
+
     if (req.io) {
-      req.io.emit('channel_created', channel);
+      req.io.emit('channel_created', populatedChannel);
     }
-    res.status(201).json(channel);
+    res.status(201).json(populatedChannel);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -52,11 +127,34 @@ exports.updateChannel = async (req, res) => {
       return res.status(403).json({ message: 'Only the channel creator, HR or Admin can edit this channel' });
     }
 
-    if (req.body.name) channel.name = req.body.name.toLowerCase().replace(/\s+/g, '-');
+    if (req.body.name) {
+      channel.name = req.body.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
+    }
     if (req.body.description !== undefined) channel.description = req.body.description;
-    if (req.body.isPrivate !== undefined) channel.isPrivate = req.body.isPrivate;
-    if (req.body.members) {
-      let members = req.body.members;
+    
+    if (req.body.isPrivate !== undefined) {
+      const willBePrivate = Boolean(req.body.isPrivate);
+      // Changing from private to public requires Super Admin or HR
+      if (!willBePrivate && !['super_admin', 'hr'].includes(req.user.role)) {
+        return res.status(403).json({ message: 'Only Super Admin and HR can make a group public' });
+      }
+      channel.isPrivate = willBePrivate;
+      if (!willBePrivate) {
+        // When making public, auto-include all workspace members
+        const Workspace = require('../models/Workspace');
+        const ws = await Workspace.findById(channel.workspace);
+        if (ws && ws.members) {
+          ws.members.forEach(m => {
+            if (m.user && !channel.members.some(id => id.toString() === m.user.toString())) {
+              channel.members.push(m.user);
+            }
+          });
+        }
+      }
+    }
+
+    if (req.body.members && Array.isArray(req.body.members)) {
+      let members = req.body.members.map(m => (m && m._id ? m._id : m));
       if (channel.createdBy && !members.some(m => m.toString() === channel.createdBy.toString())) {
         members.push(channel.createdBy);
       }
@@ -64,10 +162,16 @@ exports.updateChannel = async (req, res) => {
     }
 
     await channel.save();
+    
+    const populatedChannel = await Channel.findById(channel._id)
+      .populate('createdBy', 'name email avatar role')
+      .populate('members', 'name email avatar role designation')
+      .lean();
+
     if (req.io) {
-      req.io.emit('channel_updated', channel);
+      req.io.emit('channel_updated', populatedChannel);
     }
-    res.status(200).json(channel);
+    res.status(200).json(populatedChannel);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -116,12 +220,18 @@ exports.addChannelMembers = async (req, res) => {
         }
       });
       await channel.save();
-      if (req.io) {
-        req.io.emit('channel_updated', channel);
-      }
     }
 
-    res.status(200).json(channel);
+    const populatedChannel = await Channel.findById(channel._id)
+      .populate('createdBy', 'name email avatar role')
+      .populate('members', 'name email avatar role designation')
+      .lean();
+
+    if (req.io) {
+      req.io.emit('channel_updated', populatedChannel);
+    }
+
+    res.status(200).json(populatedChannel);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -198,13 +308,12 @@ exports.createMessage = async (req, res) => {
     try {
       const channelObj = await Channel.findById(req.params.channelId);
       if (channelObj) {
-        // If private channel, notify members. If public, we might not want to spam everyone, 
-        // but for this specific request, we notify everyone in the workspace for public channels.
+        // If private channel, notify only channel members. If public, notify all workspace members.
         let memberIdsToNotify = [];
-        if (channelObj.members && channelObj.members.length > 0) {
-          memberIdsToNotify = channelObj.members.filter(id => String(id) !== String(req.user._id));
+        if (channelObj.isPrivate) {
+          memberIdsToNotify = (channelObj.members || []).filter(id => String(id) !== String(req.user._id));
         } else {
-          // It's a public channel. Let's find all workspace members.
+          // It's a public channel. Notify all workspace members.
           const Workspace = require('../models/Workspace');
           const ws = await Workspace.findById(channelObj.workspace);
           if (ws && ws.members) {

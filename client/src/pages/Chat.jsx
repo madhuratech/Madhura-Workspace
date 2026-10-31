@@ -2,13 +2,22 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from '../context/AuthContext';
-import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft, ChevronDown, ChevronRight, Ban } from 'lucide-react';
+import { ToastContext } from '../context/ToastContext';
+import { Inbox, Star, Clock, Send, File, AlertCircle, MessageCircle, MessageSquare, Plus, Info, Link as LinkIcon, Smile, Folder, Calendar, Users, Mail, AlertTriangle, Paperclip, Check, CheckCheck, X, Search, MoreVertical, Trash2, Archive, Edit2, Hash, ImageIcon, Video, ArrowLeft, ChevronDown, ChevronRight, Ban, Lock, Globe, Shield, CheckSquare, Square } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 import Avatar from '../components/Avatar';
 
 const Chat = () => {
   const { user, socket, onlineUsers: contextOnlineUsers } = useContext(AuthContext);
-  const [workspace, setWorkspace] = useState(null);
+  const { showToast } = useContext(ToastContext) || {};
+  const isSuperAdminOrHr = user?.role === 'super_admin' || user?.role === 'hr';
+
+  const [workspace, setWorkspace] = useState(() => {
+    try {
+      const cached = localStorage.getItem('active_workspace');
+      return cached ? JSON.parse(cached) : null;
+    } catch { return null; }
+  });
   const [channels, setChannels] = useState([]);
   const [activeChannel, setActiveChannel] = useState(null);
   const [activeDM, setActiveDM] = useState(null);
@@ -24,6 +33,8 @@ const Chat = () => {
   const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
   const [isEditChannelModalOpen, setIsEditChannelModalOpen] = useState(false);
   const [editChannelData, setEditChannelData] = useState({ _id: '', name: '', description: '', isPrivate: false, members: [] });
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [channelMemberSearch, setChannelMemberSearch] = useState('');
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
@@ -127,7 +138,12 @@ const Chat = () => {
       const handleChannelCreated = (newChan) => {
         setChannels(prev => {
           if (prev.some(c => c._id === newChan._id)) return prev;
-          if (!newChan.isPrivate || newChan.members?.some(m => String(m._id || m) === String(user?._id)) || String(newChan.createdBy) === String(user?._id)) {
+          const isSuperAdminOrHr = ['super_admin', 'hr'].includes(user?.role);
+          const isMember = (newChan.members || []).some(m => String(m._id || m) === String(user?._id));
+          const isCreator = String(newChan.createdBy?._id || newChan.createdBy) === String(user?._id);
+          const isPublic = !newChan.isPrivate;
+
+          if (isPublic || isSuperAdminOrHr || isMember || isCreator) {
             return [...prev, newChan];
           }
           return prev;
@@ -136,7 +152,10 @@ const Chat = () => {
 
       const handleChannelUpdated = (updatedChan) => {
         setChannels(prev => {
-          const hasAccess = !updatedChan.isPrivate || updatedChan.members?.some(m => String(m._id || m) === String(user?._id)) || String(updatedChan.createdBy) === String(user?._id) || ['super_admin', 'hr'].includes(user?.role);
+          const isSuperAdminOrHr = ['super_admin', 'hr'].includes(user?.role);
+          const isMember = (updatedChan.members || []).some(m => String(m._id || m) === String(user?._id));
+          const isCreator = String(updatedChan.createdBy?._id || updatedChan.createdBy) === String(user?._id);
+          const hasAccess = !updatedChan.isPrivate || isSuperAdminOrHr || isMember || isCreator;
           if (!hasAccess) {
             return prev.filter(c => c._id !== updatedChan._id);
           }
@@ -244,7 +263,16 @@ const Chat = () => {
     try {
       const wsRes = await axios.get('/workspaces');
       if (wsRes.data.length > 0) {
-        const ws = wsRes.data[0];
+        let cachedWs = null;
+        try {
+          const stored = localStorage.getItem('active_workspace');
+          if (stored) cachedWs = JSON.parse(stored);
+        } catch {}
+
+        const ws = (cachedWs && wsRes.data.find(w => w._id === cachedWs._id)) || wsRes.data[0];
+        try {
+          localStorage.setItem('active_workspace', JSON.stringify(ws));
+        } catch {}
         
         const [detailRes, channelsRes, unreadRes, dmRecentRes] = await Promise.all([
           axios.get(`/workspaces/${ws._id}`).catch(e => ({ error: true, data: e })),
@@ -286,9 +314,9 @@ const Chat = () => {
           setWorkspaceMembers(Array.from(memberMap.values()));
         }
 
-        if (!channelsRes.error) {
+        if (!channelsRes.error && Array.isArray(channelsRes.data)) {
           setChannels(channelsRes.data);
-          if (channelsRes.data.length > 0) {
+          if (channelsRes.data.length > 0 && !activeChannel && !activeDM) {
             setActiveChannel(channelsRes.data[0]);
           }
         }
@@ -469,32 +497,49 @@ const Chat = () => {
 
   const handleCreateChannelSubmit = async (e) => {
     e.preventDefault();
-    if (!newChannelData.name || !workspace) return;
+    if (!newChannelData.name.trim() || !workspace) {
+      showToast?.('Please enter a channel name', 'error');
+      return;
+    }
+
+    if (!newChannelData.isPrivate && !isSuperAdminOrHr) {
+      showToast?.('Only Super Admin (MD) and HR can create public groups', 'error');
+      return;
+    }
+
     try {
-      const formattedName = newChannelData.name.toLowerCase().replace(/\s+/g, '-');
-      // Ensure the creator is in the members list if it's a private channel
+      const formattedName = newChannelData.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '');
       let finalMembers = newChannelData.members;
-      if (finalMembers.length > 0 && !finalMembers.includes(user._id)) {
-        finalMembers.push(user._id);
+      if (newChannelData.isPrivate) {
+        if (!finalMembers.includes(user._id)) {
+          finalMembers.push(user._id);
+        }
       }
-      
+
       const res = await axios.post(`/workspaces/${workspace._id}/channels`, { 
         name: formattedName, 
         description: newChannelData.description,
         isPrivate: newChannelData.isPrivate,
         members: finalMembers
       });
-      setChannels([...channels, res.data]);
+
+      setChannels(prev => {
+        if (prev.some(c => c._id === res.data._id)) return prev;
+        return [...prev, res.data];
+      });
       setActiveChannel(res.data);
+      setActiveDM(null);
       setIsChannelModalOpen(false);
       setNewChannelData({ name: '', description: '', isPrivate: false, members: [] });
+      setChannelMemberSearch('');
+      showToast?.(`${res.data.isPrivate ? 'Private' : 'Public'} group #${res.data.name} created successfully!`, 'success');
     } catch (error) {
-      alert('Failed to create channel');
+      showToast?.(error.response?.data?.message || 'Failed to create channel', 'error');
     }
   };
 
   const isChannelCreator = activeChannel && (
-    (activeChannel.createdBy && String(activeChannel.createdBy) === String(user?._id)) ||
+    (activeChannel.createdBy && String(activeChannel.createdBy?._id || activeChannel.createdBy) === String(user?._id)) ||
     user?.role === 'super_admin' ||
     user?.role === 'hr'
   );
@@ -506,8 +551,9 @@ const Chat = () => {
       name: activeChannel.name,
       description: activeChannel.description || '',
       isPrivate: !!activeChannel.isPrivate,
-      members: activeChannel.members || []
+      members: (activeChannel.members || []).map(m => (m && m._id ? m._id : m))
     });
+    setChannelMemberSearch('');
     setIsEditChannelModalOpen(true);
   };
 
@@ -523,8 +569,9 @@ const Chat = () => {
       setChannels(channels.map(c => c._id === res.data._id ? res.data : c));
       setActiveChannel(res.data);
       setIsEditChannelModalOpen(false);
+      showToast?.(`Group #${res.data.name} updated successfully`, 'success');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update channel');
+      showToast?.(err.response?.data?.message || 'Failed to update channel', 'error');
     }
   };
 
@@ -537,13 +584,20 @@ const Chat = () => {
       setChannels(remaining);
       setActiveChannel(remaining[0] || null);
       setIsEditChannelModalOpen(false);
+      showToast?.('Channel deleted successfully', 'success');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete channel');
+      showToast?.(err.response?.data?.message || 'Failed to delete channel', 'error');
     }
   };
 
   const handleOpenChannelModal = () => {
-    setNewChannelData({ name: '', description: '', isPrivate: false, members: [] });
+    setNewChannelData({ 
+      name: '', 
+      description: '', 
+      isPrivate: !isSuperAdminOrHr, 
+      members: [] 
+    });
+    setChannelMemberSearch('');
     setIsChannelModalOpen(true);
   };
 
@@ -629,35 +683,36 @@ const Chat = () => {
           {/* ── CHANNELS ── */}
           <div className="pt-4 pb-1">
             <div className="px-4 mb-1">
-              <button
-                onClick={() => setChannelsCollapsed(c => !c)}
-                className="w-full flex items-center justify-between group"
-              >
-                <div className="flex items-center space-x-1">
+              <div className="w-full flex items-center justify-between group">
+                <button
+                  onClick={() => setChannelsCollapsed(c => !c)}
+                  className="flex items-center space-x-1"
+                >
                   {channelsCollapsed
                     ? <ChevronRight size={11} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 transition-colors" />
                     : <ChevronDown size={11} className="text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200 transition-colors" />
                   }
                   <span className="text-[10.5px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
-                    Channels
+                    Channels & Groups
                   </span>
-                </div>
+                </button>
                 {(user?.role === 'super_admin' || user?.role === 'hr' || user?.role === 'team_leader') && (
-                  <span
+                  <button
                     onClick={(e) => { e.stopPropagation(); handleOpenChannelModal(); }}
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-accent-blue transition-all p-0.5 rounded"
-                    title="New channel"
+                    className="text-gray-400 hover:text-accent-blue hover:bg-gray-100 dark:hover:bg-white/10 transition-all p-1 rounded-md"
+                    title={isSuperAdminOrHr ? "Create Public Group or Private Channel" : "Create Private Channel"}
                   >
-                    <Plus size={13} />
-                  </span>
+                    <Plus size={14} />
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
 
-            <div className={`transition-all duration-200 ease-in-out overflow-hidden ${channelsCollapsed ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'}`}>
+            <div className={`transition-all duration-200 ease-in-out ${channelsCollapsed ? 'max-h-0 opacity-0 overflow-hidden' : 'max-h-[50vh] opacity-100 overflow-y-auto custom-scrollbar'}`}>
               <div className="px-2 mt-0.5 space-y-0.5">
                 {channels.filter(c => !c.name.startsWith('dm-')).map(channel => {
                   const isActive = activeChannel?._id === channel._id;
+                  const isPrivate = Boolean(channel.isPrivate);
                   return (
                     <button
                       key={channel._id}
@@ -669,14 +724,25 @@ const Chat = () => {
                       }`}
                     >
                       <div className="flex items-center min-w-0">
-                        <Hash size={14} className={`mr-2 shrink-0 ${isActive ? 'text-accent-blue' : 'text-gray-400'}`} />
+                        {isPrivate ? (
+                          <Lock size={13} className={`mr-2 shrink-0 ${isActive ? 'text-amber-500' : 'text-amber-500/70'}`} />
+                        ) : (
+                          <Hash size={14} className={`mr-2 shrink-0 ${isActive ? 'text-accent-blue' : 'text-gray-400'}`} />
+                        )}
                         <span className="truncate">{channel.name}</span>
                       </div>
-                      {unreadCounts[channel._id] > 0 && !isActive && (
-                        <span className="bg-danger text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shrink-0">
-                          {unreadCounts[channel._id]}
-                        </span>
-                      )}
+                      <div className="flex items-center space-x-1 shrink-0 ml-1">
+                        {!isPrivate && (
+                          <span className="text-[9px] font-semibold uppercase px-1 py-0.2 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded">
+                            Public
+                          </span>
+                        )}
+                        {unreadCounts[channel._id] > 0 && !isActive && (
+                          <span className="bg-danger text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                            {unreadCounts[channel._id]}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -804,13 +870,24 @@ const Chat = () => {
             {activeChannel ? (
               <>
                 <div className="flex items-center space-x-2 min-w-0">
-                  <Hash size={18} className="text-text-secondary shrink-0" />
+                  {activeChannel.isPrivate ? (
+                    <Lock size={16} className="text-amber-500 shrink-0" />
+                  ) : (
+                    <Hash size={18} className="text-text-secondary shrink-0" />
+                  )}
                   <span className="font-semibold text-text-primary text-[15px] truncate">{activeChannel.name}</span>
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 hidden sm:inline-block ${
+                    activeChannel.isPrivate 
+                      ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
+                      : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                  }`}>
+                    {activeChannel.isPrivate ? 'Private Group' : 'Public Group'}
+                  </span>
                 </div>
                 {activeChannel.description && (
                   <>
-                    <div className="w-px h-4 bg-border shrink-0 hidden sm:block"></div>
-                    <p className="text-xs text-text-secondary truncate hidden sm:block">{activeChannel.description}</p>
+                    <div className="w-px h-4 bg-border shrink-0 hidden md:block"></div>
+                    <p className="text-xs text-text-secondary truncate hidden md:block">{activeChannel.description}</p>
                   </>
                 )}
               </>
@@ -860,10 +937,18 @@ const Chat = () => {
               </button>
             )}
             
-            <button className="flex items-center space-x-1.5 p-1.5 px-2 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors" title="Members">
+            <button 
+              onClick={() => setIsMembersModalOpen(true)}
+              className="flex items-center space-x-1.5 p-1.5 px-2.5 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors border border-border/40 hover:border-border" 
+              title="View Channel Members"
+            >
               <Users size={16} />
               <span className="text-xs font-semibold">
-                {activeChannel ? (activeChannel.members?.length || workspaceMembers.length) : activeDM ? 2 : 0}
+                {activeChannel ? (
+                  activeChannel.isPrivate 
+                    ? (activeChannel.members?.length || 1) 
+                    : (workspaceMembers.length + 1)
+                ) : activeDM ? 2 : 0}
               </span>
             </button>
 
@@ -1309,21 +1394,31 @@ const Chat = () => {
 
       {/* â•â•â• Create Channel Modal â•â•â• */}
       {isChannelModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-              <div>
-                <h3 className="text-lg font-bold text-text-primary">Create a channel</h3>
-                <p className="text-xs text-text-secondary mt-0.5">Channels are where your team communicates.</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-bg-secondary shrink-0">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-accent-blue/10 flex items-center justify-center text-accent-blue">
+                  <MessageSquare size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-text-primary">Create a Channel / Group</h3>
+                  <p className="text-xs text-text-secondary mt-0.5">Start a public group or private conversation space</p>
+                </div>
               </div>
-              <button onClick={() => setIsChannelModalOpen(false)} className="p-2 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors">
+              <button 
+                onClick={() => setIsChannelModalOpen(false)} 
+                className="p-1.5 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors"
+              >
                 <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleCreateChannelSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleCreateChannelSubmit} className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
               <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Channel Name</label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
+                  Group / Channel Name <span className="text-danger">*</span>
+                </label>
                 <div className="relative">
                   <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
                   <input
@@ -1331,69 +1426,206 @@ const Chat = () => {
                     value={newChannelData.name}
                     onChange={e => setNewChannelData({...newChannelData, name: e.target.value})}
                     className="w-full bg-bg-primary border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
-                    placeholder="e.g. frontend-team"
+                    placeholder="e.g. general-team, announcements, dev-discussion"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Description <span className="font-normal normal-case">(optional)</span></label>
+                <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
+                  Description <span className="font-normal normal-case text-text-secondary/70">(optional)</span>
+                </label>
                 <input
                   type="text"
                   value={newChannelData.description}
                   onChange={e => setNewChannelData({...newChannelData, description: e.target.value})}
                   className="w-full bg-bg-primary border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors"
-                  placeholder="What is this channel about?"
+                  placeholder="What is this channel or group about?"
                 />
               </div>
 
-              <label className="flex items-center space-x-3 p-3 rounded-xl border border-border hover:bg-bg-primary cursor-pointer transition-colors">
-                <input
-                  type="checkbox" id="isPrivate"
-                  className="accent-accent-blue w-4 h-4"
-                  checked={newChannelData.isPrivate}
-                  onChange={e => setNewChannelData({...newChannelData, isPrivate: e.target.checked})}
-                />
-                <div>
-                  <p className="text-sm font-medium text-text-primary">Private channel</p>
-                  <p className="text-[11px] text-text-secondary">Only specific people can access</p>
-                </div>
-              </label>
-
-              {newChannelData.isPrivate && (
-                <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">Add Members</label>
-                  <div className="max-h-36 overflow-y-auto border border-border rounded-xl bg-bg-primary custom-scrollbar">
-                    {workspace.members?.filter(m => m.user && m.user._id !== user._id).map(m => (
-                      <label key={m.user._id} className="flex items-center space-x-3 px-3 py-2 hover:bg-bg-secondary cursor-pointer transition-colors">
-                        <input
-                          type="checkbox"
-                          className="accent-accent-blue"
-                          checked={newChannelData.members.includes(m.user._id)}
-                          onChange={(e) => {
-                            if (e.target.checked) setNewChannelData({...newChannelData, members: [...newChannelData.members, m.user._id]});
-                            else setNewChannelData({...newChannelData, members: newChannelData.members.filter(id => id !== m.user._id)});
-                          }}
-                        />
-                        <Avatar user={m.user} size="w-6 h-6" textClass="text-[9px]" showStatus={false} />
-                        <div>
-                          <p className="text-sm font-medium text-text-primary leading-none">{m.user.name}</p>
-                          <p className="text-[10px] text-text-secondary mt-0.5 capitalize">{m.role?.replace('_', ' ')}</p>
+              {/* Group Type Selector (Public vs Private) */}
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">
+                  Group Privacy & Access
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  
+                  {/* Public Group Option */}
+                  <div
+                    onClick={() => {
+                      if (isSuperAdminOrHr) {
+                        setNewChannelData({ ...newChannelData, isPrivate: false });
+                      }
+                    }}
+                    className={`relative p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                      !newChannelData.isPrivate 
+                        ? 'bg-accent-blue/5 border-accent-blue ring-1 ring-accent-blue shadow-sm' 
+                        : isSuperAdminOrHr
+                          ? 'border-border hover:bg-bg-primary'
+                          : 'opacity-50 cursor-not-allowed bg-bg-primary border-border'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-2.5">
+                      <div className={`p-2 rounded-lg shrink-0 ${!newChannelData.isPrivate ? 'bg-accent-blue text-white' : 'bg-gray-100 dark:bg-white/10 text-text-secondary'}`}>
+                        <Globe size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-1.5">
+                          <p className="text-sm font-bold text-text-primary">Public Group</p>
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                            Everyone
+                          </span>
                         </div>
-                      </label>
-                    ))}
+                        <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">
+                          Open to all employees in the workspace. All members are automatically added.
+                        </p>
+                      </div>
+                    </div>
+                    {!isSuperAdminOrHr && (
+                      <p className="text-[10px] text-amber-500 font-semibold mt-2 flex items-center">
+                        <Lock size={10} className="mr-1 shrink-0" /> Only MD & HR can create
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Private Group Option */}
+                  <div
+                    onClick={() => setNewChannelData({ ...newChannelData, isPrivate: true })}
+                    className={`relative p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
+                      newChannelData.isPrivate 
+                        ? 'bg-accent-blue/5 border-accent-blue ring-1 ring-accent-blue shadow-sm' 
+                        : 'border-border hover:bg-bg-primary'
+                    }`}
+                  >
+                    <div className="flex items-start space-x-2.5">
+                      <div className={`p-2 rounded-lg shrink-0 ${newChannelData.isPrivate ? 'bg-accent-blue text-white' : 'bg-gray-100 dark:bg-white/10 text-text-secondary'}`}>
+                        <Lock size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center space-x-1.5">
+                          <p className="text-sm font-bold text-text-primary">Private Group</p>
+                          <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            Invited Only
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-text-secondary mt-1 leading-relaxed">
+                          Restricted channel. Only specifically invited team members can see or join.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Public Group info banner */}
+              {!newChannelData.isPrivate ? (
+                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-start space-x-2.5">
+                  <Globe size={16} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                  <p className="leading-relaxed">
+                    <strong>Public Company Group:</strong> All <strong>{(workspace?.members?.length || 0)}</strong> current team members (plus any newly invited employees) will automatically belong to this group and can view messages.
+                  </p>
+                </div>
+              ) : (
+                /* Private Group Member Selector */
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                      Select Members ({newChannelData.members.length} selected)
+                    </label>
+                    <div className="flex items-center space-x-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allIds = (workspace?.members || []).map(m => m.user?._id).filter(Boolean);
+                          setNewChannelData({ ...newChannelData, members: allIds });
+                        }}
+                        className="text-accent-blue hover:underline font-semibold"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-border">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewChannelData({ ...newChannelData, members: [] })}
+                        className="text-text-secondary hover:underline"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                    <input
+                      type="text"
+                      value={channelMemberSearch}
+                      onChange={(e) => setChannelMemberSearch(e.target.value)}
+                      placeholder="Filter members..."
+                      className="w-full bg-bg-primary border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-accent-blue"
+                    />
+                  </div>
+
+                  <div className="max-h-40 overflow-y-auto border border-border rounded-xl bg-bg-primary custom-scrollbar divide-y divide-border/40">
+                    {(workspace?.members || [])
+                      .filter(m => {
+                        if (!m.user) return false;
+                        if (!channelMemberSearch.trim()) return true;
+                        const q = channelMemberSearch.toLowerCase();
+                        return (m.user.name?.toLowerCase() || '').includes(q) || (m.user.email?.toLowerCase() || '').includes(q);
+                      })
+                      .map(m => {
+                        const isSelected = newChannelData.members.includes(m.user._id);
+                        const isSelf = String(m.user._id) === String(user?._id);
+                        return (
+                          <label key={m.user._id} className="flex items-center justify-between px-3 py-2 hover:bg-bg-secondary cursor-pointer transition-colors">
+                            <div className="flex items-center space-x-2.5 min-w-0">
+                              <input
+                                type="checkbox"
+                                className="accent-accent-blue rounded w-3.5 h-3.5"
+                                checked={isSelected || isSelf}
+                                disabled={isSelf}
+                                onChange={(e) => {
+                                  if (isSelf) return;
+                                  if (e.target.checked) {
+                                    setNewChannelData({ ...newChannelData, members: [...newChannelData.members, m.user._id] });
+                                  } else {
+                                    setNewChannelData({ ...newChannelData, members: newChannelData.members.filter(id => id !== m.user._id) });
+                                  }
+                                }}
+                              />
+                              <Avatar user={m.user} size="w-6 h-6" textClass="text-[9px]" showStatus={false} />
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-text-primary truncate">
+                                  {m.user.name} {isSelf && <span className="text-[10px] text-text-secondary font-normal">(You)</span>}
+                                </p>
+                                <p className="text-[10px] text-text-secondary truncate">{m.user.email}</p>
+                              </div>
+                            </div>
+                            <span className="text-[10px] font-semibold text-text-secondary capitalize px-1.5 py-0.5 rounded bg-bg-secondary shrink-0">
+                              {m.role?.replace('_', ' ')}
+                            </span>
+                          </label>
+                        );
+                      })}
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={() => setIsChannelModalOpen(false)}
-                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-xl transition-colors text-sm font-medium">
+              <div className="flex justify-end space-x-3 pt-3 border-t border-border mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setIsChannelModalOpen(false)}
+                  className="px-4 py-2 text-text-secondary hover:bg-bg-primary rounded-xl transition-colors text-sm font-medium"
+                >
                   Cancel
                 </button>
-                <button type="submit"
-                  className="bg-accent-blue text-white px-5 py-2 rounded-xl hover:bg-accent-indigo transition-colors text-sm font-semibold shadow-sm">
-                  Create Channel
+                <button 
+                  type="submit"
+                  className="bg-accent-blue text-white px-5 py-2 rounded-xl hover:bg-accent-indigo transition-all text-sm font-semibold shadow-sm active:scale-95"
+                >
+                  Create {newChannelData.isPrivate ? 'Private Channel' : 'Public Group'}
                 </button>
               </div>
             </form>
@@ -1513,6 +1745,110 @@ const Chat = () => {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Channel Members Modal ── */}
+      {isMembersModalOpen && activeChannel && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+              <div className="flex items-center space-x-2.5">
+                <div className={`p-2 rounded-xl shrink-0 ${activeChannel.isPrivate ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                  {activeChannel.isPrivate ? <Lock size={18} /> : <Globe size={18} />}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-text-primary">
+                    #{activeChannel.name} Members
+                  </h3>
+                  <div className="flex items-center space-x-2 mt-0.5">
+                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                      activeChannel.isPrivate
+                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    }`}>
+                      {activeChannel.isPrivate ? 'Private Group' : 'Public Group'}
+                    </span>
+                    <span className="text-xs text-text-secondary">
+                      {activeChannel.isPrivate 
+                        ? `${activeChannel.members?.length || 1} members` 
+                        : `${(workspace?.members?.length || 0)} members`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsMembersModalOpen(false)}
+                className="p-1.5 rounded-lg text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-border bg-bg-primary/50">
+              {!activeChannel.isPrivate ? (
+                <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300">
+                  🌐 <strong>Public Group:</strong> Everyone in <strong>{workspace?.name}</strong> has access to this channel automatically.
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
+                  <span>🔒 Only invited members can view this channel.</span>
+                  {isChannelCreator && (
+                    <button
+                      onClick={() => {
+                        setIsMembersModalOpen(false);
+                        handleOpenEditChannel();
+                      }}
+                      className="text-accent-blue font-bold hover:underline shrink-0 ml-2"
+                    >
+                      Manage
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-1">
+              {(activeChannel.isPrivate 
+                ? (activeChannel.members || [])
+                : (workspace?.members || []).map(m => m.user).filter(Boolean)
+              ).map((member) => {
+                const memberObj = member && typeof member === 'object' ? member : null;
+                if (!memberObj) return null;
+                const isOnline = onlineUsers.has(memberObj._id);
+                return (
+                  <div key={memberObj._id} className="flex items-center justify-between p-2 rounded-xl hover:bg-bg-primary transition-colors">
+                    <div className="flex items-center space-x-3 min-w-0">
+                      <div className="relative shrink-0">
+                        <Avatar user={memberObj} size="w-8 h-8" textClass="text-xs" showStatus={false} />
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-bg-secondary ${
+                          isOnline ? 'bg-emerald-500' : 'bg-gray-400'
+                        }`} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-text-primary truncate">
+                          {memberObj.name} {String(memberObj._id) === String(user?._id) && '(You)'}
+                        </p>
+                        <p className="text-[10px] text-text-secondary truncate">{memberObj.email}</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-semibold text-text-secondary capitalize px-2 py-0.5 rounded bg-bg-primary border border-border/50 shrink-0">
+                      {memberObj.role?.replace('_', ' ') || 'Member'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-4 border-t border-border flex justify-end">
+              <button
+                onClick={() => setIsMembersModalOpen(false)}
+                className="px-4 py-2 bg-bg-primary hover:bg-bg-secondary border border-border rounded-xl text-xs font-semibold transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

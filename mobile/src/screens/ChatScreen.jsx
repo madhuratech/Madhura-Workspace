@@ -259,6 +259,10 @@ export default function ChatScreen({ navigation }) {
       Alert.alert('Required', 'Please enter a channel name');
       return;
     }
+    if (!newChannelIsPrivate && !['super_admin', 'hr'].includes(user?.role)) {
+      Alert.alert('Restricted', 'Only Super Admin (MD) and HR can create public groups.');
+      return;
+    }
     if (!workspace?._id) return;
     setIsCreatingChannel(true);
     try {

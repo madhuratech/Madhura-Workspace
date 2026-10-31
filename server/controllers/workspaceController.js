@@ -283,6 +283,17 @@ const addMember = async (req, res) => {
     workspace.members.push({ user: userToAdd._id, role: role || 'employee' });
     await workspace.save();
 
+    // Auto-add new member to all public channels in this workspace
+    try {
+      const Channel = require('../models/Channel');
+      await Channel.updateMany(
+        { workspace: workspace._id, isPrivate: { $ne: true } },
+        { $addToSet: { members: userToAdd._id } }
+      );
+    } catch (chErr) {
+      console.error('Error adding user to public channels:', chErr);
+    }
+
     res.status(200).json({ workspace, userId: userToAdd._id });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -379,6 +390,20 @@ const updateMember = async (req, res) => {
 
     await workspace.save();
 
+    // Auto-add all workspace members to all public channels in this workspace
+    try {
+      const Channel = require('../models/Channel');
+      const allMemberIds = workspace.members.map(m => m.user).filter(Boolean);
+      if (allMemberIds.length > 0) {
+        await Channel.updateMany(
+          { workspace: workspace._id, isPrivate: { $ne: true } },
+          { $addToSet: { members: { $each: allMemberIds } } }
+        );
+      }
+    } catch (chErr) {
+      console.error('Error updating public channels with new members:', chErr);
+    }
+
     res.status(200).json(workspace);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -463,6 +488,20 @@ const addBulkMembers = async (req, res) => {
     }
 
     await workspace.save();
+
+    // Auto-add all workspace members to all public channels in this workspace
+    try {
+      const Channel = require('../models/Channel');
+      const allMemberIds = workspace.members.map(m => m.user).filter(Boolean);
+      if (allMemberIds.length > 0) {
+        await Channel.updateMany(
+          { workspace: workspace._id, isPrivate: { $ne: true } },
+          { $addToSet: { members: { $each: allMemberIds } } }
+        );
+      }
+    } catch (chErr) {
+      console.error('Error updating public channels with new members:', chErr);
+    }
 
     return res.status(200).json({
       message: `Employee upload completed: ${addedCount} added, ${existingCount} already present.`,
