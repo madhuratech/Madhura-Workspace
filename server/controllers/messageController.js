@@ -267,6 +267,7 @@ exports.getMessages = async (req, res) => {
     const messages = await Message.find({ channel: req.params.channelId })
       .populate('sender', 'name email avatar')
       .populate('mentions', 'name')
+      .populate('reactions.users', 'name email avatar')
       .sort({ createdAt: 1 })
       .lean();
 
@@ -557,6 +558,7 @@ exports.toggleReaction = async (req, res) => {
     message.reactions = message.reactions.filter(r => r.users && r.users.length > 0);
 
     await message.save();
+    await message.populate('reactions.users', 'name email avatar');
 
     const payload = {
       channelId,

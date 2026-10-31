@@ -52,7 +52,8 @@ exports.getDMMessages = async (req, res) => {
     }
 
     const messages = await DMMessage.find({ dm: dmId })
-      .populate('sender', 'name email')
+      .populate('sender', 'name email avatar')
+      .populate('reactions.users', 'name email avatar')
       .sort({ createdAt: 1 })
       .lean();
 
@@ -329,6 +330,7 @@ exports.toggleDMReaction = async (req, res) => {
     message.reactions = message.reactions.filter(r => r.users && r.users.length > 0);
 
     await message.save();
+    await message.populate('reactions.users', 'name email avatar');
 
     const payload = {
       dmId,

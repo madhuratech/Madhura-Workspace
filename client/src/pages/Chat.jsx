@@ -15,6 +15,7 @@ const Chat = () => {
   const isSuperAdminOrHr = user?.role === 'super_admin' || user?.role === 'hr';
 
   const [activeReactionPickerId, setActiveReactionPickerId] = useState(null);
+  const [reactionsModalData, setReactionsModalData] = useState(null);
 
   const [workspace, setWorkspace] = useState(() => {
     try {
@@ -398,6 +399,14 @@ const Chat = () => {
         }
       }
     }
+  };
+
+  const resolveReactionUser = (u) => {
+    if (u && typeof u === 'object' && u.name) return u;
+    const id = typeof u === 'object' ? u._id : u;
+    if (String(id) === String(user?._id)) return user;
+    const member = workspaceMembers.find(m => String(m._id) === String(id));
+    return member || { _id: id, name: 'User', email: '' };
   };
 
   const handleToggleReaction = async (msgId, emoji) => {
@@ -1131,7 +1140,7 @@ const Chat = () => {
                        </div>
                     </div>
                   )}
-                  <div className={`flex w-full group/row ${isMine ? 'justify-end' : 'justify-start'} ${showHeader ? 'mt-4' : 'mt-0.5'}`}>
+                  <div className={`flex w-full group/row ${isMine ? 'justify-end' : 'justify-start'} ${showHeader ? 'mt-4' : 'mt-0.5'} ${msg.reactions?.length ? 'mb-2.5' : ''}`}>
 
                   {/* Avatar — only for others, only on first message in group */}
                   {!isMine && (
@@ -1329,17 +1338,25 @@ const Chat = () => {
                               <div className={`flex flex-wrap gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
                                 {msg.reactions.map((r, rIdx) => {
                                   const hasReacted = r.users?.some(u => String(u._id || u) === String(user?._id));
+                                  const userNames = (r.users || []).map(u => {
+                                    const ru = resolveReactionUser(u);
+                                    return String(ru._id) === String(user?._id) ? 'You' : (ru.name || 'User');
+                                  }).join(', ');
+
                                   return (
                                     <button
                                       key={rIdx}
                                       type="button"
-                                      onClick={() => handleToggleReaction(msg._id, r.emoji)}
-                                      className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium border shadow-xs transition-all ${
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setReactionsModalData({ messageId: msg._id, message: msg, activeTab: r.emoji });
+                                      }}
+                                      className={`flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium border shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer ${
                                         hasReacted
                                           ? 'bg-accent-blue/15 border-accent-blue/40 text-accent-blue dark:bg-accent-blue/25'
-                                          : 'bg-white dark:bg-bg-secondary border-border text-text-secondary hover:border-accent-blue/30'
+                                          : 'bg-white dark:bg-bg-secondary border-border/80 text-text-secondary hover:border-accent-blue/30'
                                       }`}
-                                      title={`${r.users?.length || 1} reaction${(r.users?.length || 1) > 1 ? 's' : ''}`}
+                                      title={`${userNames} (${r.users?.length || 1}) • Click to see who reacted`}
                                     >
                                       <span className="text-[13px] leading-none">{r.emoji}</span>
                                       <span className="text-[11px] font-semibold">{r.users?.length || 1}</span>
@@ -2024,6 +2041,143 @@ const Chat = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── WhatsApp-Style Reactions Details Modal ── */}
+      {reactionsModalData && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150"
+          onClick={() => setReactionsModalData(null)}
+        >
+          <div 
+            className="bg-white dark:bg-bg-secondary border border-border rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/70">
+              <h3 className="font-bold text-text-primary text-base">Reactions</h3>
+              <button
+                onClick={() => setReactionsModalData(null)}
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Content with dynamic tabs & user list */}
+            {(() => {
+              const currentMsg = messages.find(m => m._id === reactionsModalData.messageId) || reactionsModalData.message;
+              const reactions = currentMsg?.reactions || [];
+              const totalCount = reactions.reduce((sum, r) => sum + (r.users?.length || 0), 0);
+
+              if (totalCount === 0) {
+                return (
+                  <div className="p-8 text-center text-sm text-text-secondary">
+                    No reactions on this message.
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  {/* Tabs: All + Each reacted emoji */}
+                  <div className="flex items-center space-x-1 px-3 pt-2 pb-1 border-b border-border/50 overflow-x-auto custom-scrollbar">
+                    <button
+                      type="button"
+                      onClick={() => setReactionsModalData(prev => ({ ...prev, activeTab: 'all' }))}
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                        reactionsModalData.activeTab === 'all'
+                          ? 'bg-accent-blue/15 text-accent-blue'
+                          : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary'
+                      }`}
+                    >
+                      All {totalCount}
+                    </button>
+                    {reactions.map((r, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setReactionsModalData(prev => ({ ...prev, activeTab: r.emoji }))}
+                        className={`flex items-center space-x-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                          reactionsModalData.activeTab === r.emoji
+                            ? 'bg-accent-blue/15 text-accent-blue'
+                            : 'text-text-secondary hover:text-text-primary hover:bg-bg-primary'
+                        }`}
+                      >
+                        <span className="text-sm leading-none">{r.emoji}</span>
+                        <span>{r.users?.length || 0}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* List of Users */}
+                  <div className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar max-h-80">
+                    {(() => {
+                      let userEntries = [];
+                      reactions.forEach(r => {
+                        if (reactionsModalData.activeTab === 'all' || reactionsModalData.activeTab === r.emoji) {
+                          (r.users || []).forEach(u => {
+                            const resolvedUser = resolveReactionUser(u);
+                            userEntries.push({
+                              user: resolvedUser,
+                              emoji: r.emoji,
+                              isCurrentUser: String(resolvedUser._id) === String(user?._id)
+                            });
+                          });
+                        }
+                      });
+
+                      if (userEntries.length === 0) {
+                        return (
+                          <div className="py-8 text-center text-xs text-text-secondary">
+                            No reactions in this category
+                          </div>
+                        );
+                      }
+
+                      return userEntries.map((entry, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-bg-primary transition-colors"
+                        >
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <Avatar user={entry.user} size="w-9 h-9" textClass="text-xs" showStatus={false} />
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm font-semibold text-text-primary truncate flex items-center gap-1.5">
+                                {entry.isCurrentUser ? 'You' : (entry.user?.name || 'User')}
+                                {entry.isCurrentUser && (
+                                  <span className="text-[10px] text-accent-blue font-normal">(Click trash to remove)</span>
+                                )}
+                              </span>
+                              <span className="text-[11px] text-text-secondary truncate">
+                                {entry.user?.email || ''}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className="text-xl leading-none">{entry.emoji}</span>
+                            {entry.isCurrentUser && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleToggleReaction(reactionsModalData.messageId, entry.emoji);
+                                }}
+                                className="p-1 rounded-lg text-text-secondary hover:text-danger hover:bg-danger/10 transition-colors ml-1"
+                                title="Remove your reaction"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
