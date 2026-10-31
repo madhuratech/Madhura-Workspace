@@ -407,20 +407,30 @@ const Chat = () => {
     setMessages(prev => prev.map(m => {
       if (m._id !== msgId) return m;
       let reactions = m.reactions ? JSON.parse(JSON.stringify(m.reactions)) : [];
-      const rIdx = reactions.findIndex(r => r.emoji === emoji);
-      if (rIdx > -1) {
-        const userIdx = reactions[rIdx].users.findIndex(u => String(u._id || u) === String(user?._id));
-        if (userIdx > -1) {
-          reactions[rIdx].users.splice(userIdx, 1);
-          if (reactions[rIdx].users.length === 0) {
-            reactions.splice(rIdx, 1);
-          }
+
+      // Check if user already reacted with this exact emoji
+      const existingSameEmoji = reactions.some(r => 
+        r.emoji === emoji && r.users?.some(u => String(u._id || u) === String(user?._id))
+      );
+
+      // Remove current user from ALL reaction emojis on this message (single reaction per user like WhatsApp)
+      reactions.forEach(r => {
+        r.users = (r.users || []).filter(u => String(u._id || u) !== String(user?._id));
+      });
+
+      // If user had NOT already reacted with this emoji, add user's reaction for this emoji (replaces previous emoji)
+      if (!existingSameEmoji) {
+        const targetReaction = reactions.find(r => r.emoji === emoji);
+        if (targetReaction) {
+          targetReaction.users.push(user?._id);
         } else {
-          reactions[rIdx].users.push(user?._id);
+          reactions.push({ emoji, users: [user?._id] });
         }
-      } else {
-        reactions.push({ emoji, users: [user?._id] });
       }
+
+      // Filter out reaction groups with 0 users
+      reactions = reactions.filter(r => r.users && r.users.length > 0);
+
       return { ...m, reactions };
     }));
     setActiveReactionPickerId(null);
@@ -1355,13 +1365,6 @@ const Chat = () => {
                             <Smile size={13} />
                           </button>
                         </div>
-                      )}
-
-                      {/* Time shown right of bubble for my messages when hovered */}
-                      {isMine && !editingMessageId && (
-                        <span className="text-[10px] text-text-secondary opacity-0 group-hover/row:opacity-100 transition-opacity whitespace-nowrap self-end mb-1">
-                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
                       )}
                     </div>
                   </div>

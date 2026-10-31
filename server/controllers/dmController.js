@@ -302,24 +302,31 @@ exports.toggleDMReaction = async (req, res) => {
       message.reactions = [];
     }
 
-    const reactionIndex = message.reactions.findIndex(r => r.emoji === emoji);
+    // Check if user already reacted with this exact emoji
+    const existingSameEmoji = message.reactions.some(
+      r => r.emoji === emoji && r.users.some(u => String(u) === String(userId))
+    );
 
-    if (reactionIndex > -1) {
-      const userIndex = message.reactions[reactionIndex].users.findIndex(u => String(u) === String(userId));
-      if (userIndex > -1) {
-        message.reactions[reactionIndex].users.splice(userIndex, 1);
-        if (message.reactions[reactionIndex].users.length === 0) {
-          message.reactions.splice(reactionIndex, 1);
-        }
+    // Remove user from ALL reaction emojis on this message (single reaction per user like WhatsApp)
+    message.reactions.forEach(r => {
+      r.users = r.users.filter(u => String(u) !== String(userId));
+    });
+
+    // If user hadn't already reacted with this emoji, add the user (replaces previous emoji)
+    if (!existingSameEmoji) {
+      const targetReaction = message.reactions.find(r => r.emoji === emoji);
+      if (targetReaction) {
+        targetReaction.users.push(userId);
       } else {
-        message.reactions[reactionIndex].users.push(userId);
+        message.reactions.push({
+          emoji,
+          users: [userId]
+        });
       }
-    } else {
-      message.reactions.push({
-        emoji,
-        users: [userId]
-      });
     }
+
+    // Prune reactions that have 0 users
+    message.reactions = message.reactions.filter(r => r.users && r.users.length > 0);
 
     await message.save();
 
