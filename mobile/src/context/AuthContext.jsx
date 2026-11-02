@@ -12,6 +12,9 @@ export const API_URL = 'https://api.workspace.madhuratech.com/api';
 // Set global base URL
 axios.defaults.baseURL = API_URL;
 
+// Session lifetime: 2 days (48 hours in milliseconds)
+export const SESSION_LIFETIME_MS = 2 * 24 * 60 * 60 * 1000;
+
 /**
  * Robust date helper returning Asia/Kolkata (IST) date string YYYY-MM-DD
  * Used to ensure perfect sync with server attendance records across timezones
@@ -74,7 +77,7 @@ export const AuthProvider = ({ children }) => {
           !config.url?.includes('/auth/register')
         ) {
           console.warn('[AUTH] 401 Unauthorized detected. Clearing session.');
-          await AsyncStorage.multiRemove(['token', 'user', '@mw_workspace_cache']);
+          await AsyncStorage.multiRemove(['token', 'user', 'login_time', '@mw_workspace_cache']);
           delete axios.defaults.headers.common['Authorization'];
           setUser(null);
         }
@@ -93,6 +96,20 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = await AsyncStorage.getItem('token');
       const storedUser = await AsyncStorage.getItem('user');
+      const loginTime = await AsyncStorage.getItem('login_time');
+
+      // Check 2-day session expiration
+      if (loginTime) {
+        const elapsed = Date.now() - parseInt(loginTime, 10);
+        if (elapsed > SESSION_LIFETIME_MS) {
+          console.log('[AUTH] 2-day session expired on mobile. Logging out.');
+          await AsyncStorage.multiRemove(['token', 'user', 'login_time', '@mw_workspace_cache']);
+          delete axios.defaults.headers.common['Authorization'];
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+      }
 
       if (token && storedUser) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -113,7 +130,7 @@ export const AuthProvider = ({ children }) => {
           // If 401 Unauthorized, the stored token expired or was invalidated
           if (meErr.response?.status === 401) {
             console.log('[AUTH] Token in storage is expired. Logging out.');
-            await AsyncStorage.multiRemove(['token', 'user', '@mw_workspace_cache']);
+            await AsyncStorage.multiRemove(['token', 'user', 'login_time', '@mw_workspace_cache']);
             delete axios.defaults.headers.common['Authorization'];
             setUser(null);
           }
@@ -134,6 +151,7 @@ export const AuthProvider = ({ children }) => {
 
       await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.setItem('login_time', Date.now().toString());
 
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
@@ -155,6 +173,7 @@ export const AuthProvider = ({ children }) => {
 
       await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.setItem('login_time', Date.now().toString());
 
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
@@ -170,7 +189,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     stopKeepAlive();
-    await AsyncStorage.multiRemove(['token', 'user', '@mw_workspace_cache']);
+    await AsyncStorage.multiRemove(['token', 'user', 'login_time', '@mw_workspace_cache']);
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
   };

@@ -206,7 +206,7 @@ exports.acceptInvitation = async (req, res) => {
     await Invitation.findByIdAndDelete(invitation._id);
 
     // Return token for login
-    const jwtToken = require('jsonwebtoken').sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    const jwtToken = require('jsonwebtoken').sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '2d' });
     
     res.status(201).json({
       success: true,

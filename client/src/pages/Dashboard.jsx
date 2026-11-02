@@ -25,7 +25,13 @@ const Dashboard = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newWorkspaceData, setNewWorkspaceData] = useState({ name: '', description: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem('active_workspace');
+    } catch {
+      return true;
+    }
+  });
   const [stats, setStats] = useState({ tasks: 0, meetings: 0, members: 0 });
   const [myTasks, setMyTasks] = useState([]);
   const [upNext, setUpNext] = useState([]);
@@ -38,6 +44,7 @@ const Dashboard = () => {
 
   const fetchData = async (targetWorkspace = null) => {
     try {
+      if (!workspace) setLoading(true);
       const res = await axios.get('/workspaces');
       if (res.data && res.data.length > 0) {
         setAllWorkspaces(res.data);
@@ -148,6 +155,8 @@ const Dashboard = () => {
       }
     } catch (err) { 
       console.error('Error fetching dashboard data:', err); 
+    } finally {
+      setLoading(false); 
     }
   };
 

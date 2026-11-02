@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Eye, EyeOff, KeyRound, CheckCircle2, AlertCircle, X, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, CheckCircle2, AlertCircle, X, Loader2, Clock } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
 
@@ -10,6 +10,14 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('expired') === 'true';
+    } catch {
+      return false;
+    }
+  });
   
   // Forgot password modal state
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -95,6 +103,22 @@ const Login = () => {
 
           <h2 className="text-3xl font-bold text-text-primary tracking-tight mb-2">Welcome back</h2>
           <p className="text-text-secondary mb-8">Please enter your details to sign in.</p>
+
+          {sessionExpiredNotice && (
+            <div className="bg-accent-blue/10 border border-accent-blue/20 text-accent-blue px-4 py-3 rounded-xl mb-6 text-sm flex items-center justify-between animate-fade-in">
+              <div className="flex items-center gap-2">
+                <Clock size={16} className="shrink-0 text-accent-blue" />
+                <span>Your session expired after 2 days. Please sign in again.</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setSessionExpiredNotice(false)} 
+                className="text-text-secondary hover:text-text-primary ml-2 p-1 rounded"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
 
           {error && (
             <div className="bg-danger/10 text-danger px-4 py-3 rounded-lg mb-6 text-sm font-medium">
