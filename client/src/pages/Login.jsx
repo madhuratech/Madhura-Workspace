@@ -34,7 +34,8 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const success = await login(email, password);
+    const cleanEmail = email.trim().toLowerCase();
+    const success = await login(cleanEmail, password);
     if (success) {
       showToast('Login Successful! Welcome back.', 'success');
       navigate('/');

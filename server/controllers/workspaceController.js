@@ -204,7 +204,12 @@ const addMember = async (req, res) => {
       return res.status(403).json({ message: 'Team leaders can only add employees' });
     }
 
-    let userToAdd = await User.findOne({ email });
+    const cleanEmail = email ? email.trim().toLowerCase() : '';
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    let userToAdd = await User.findOne({ 
+      email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } 
+    });
 
     // If user does not exist, CREATE the user account instantly with global role!
     if (!userToAdd) {
@@ -212,9 +217,9 @@ const addMember = async (req, res) => {
         return res.status(400).json({ message: 'User does not exist. Please provide a Name and Password to create the account.' });
       }
       userToAdd = await User.create({
-        name,
-        email,
-        password,
+        name: name.trim(),
+        email: cleanEmail,
+        password: password.trim(),
         role: role || 'employee',   // ← Set global role so backend filters work
         designation: designation || '',
         shiftStartTime: shiftStartTime || '09:40',
@@ -227,13 +232,13 @@ const addMember = async (req, res) => {
           const senderEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
           const senderName = workspace.name || 'Madhura Workspace';
           
-          console.log(`[ADD_MEMBER DEBUG] Attempting to send password email to: ${email}`);
+          console.log(`[ADD_MEMBER DEBUG] Attempting to send password email to: ${cleanEmail}`);
           console.log(`[ADD_MEMBER DEBUG] Using sender email: ${senderEmail}`);
 
           console.log('[ADD_MEMBER DEBUG] Calling Resend API...');
           const resendResponse = await resend.emails.send({
             from: senderEmail,
-            to: email,
+            to: cleanEmail,
             subject: `Welcome to ${workspace.name}!`,
             html: `
               <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px;">
@@ -243,7 +248,7 @@ const addMember = async (req, res) => {
                 </p>
                 <div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;">
                   <p style="margin: 0 0 10px 0;"><strong>Login Details:</strong></p>
-                  <p style="margin: 0 0 5px 0;">Email: ${email}</p>
+                  <p style="margin: 0 0 5px 0;">Email: ${cleanEmail}</p>
                   <p style="margin: 0;">Password: ${password}</p>
                 </div>
                 <div style="margin: 30px 0; text-align: center;">
@@ -266,7 +271,11 @@ const addMember = async (req, res) => {
         }
       }
     } else {
-      // If user exists, sync their global role and details
+      // If user exists, sync their password, global role and details
+      if (password && password.trim()) {
+        userToAdd.password = password.trim();
+      }
+      if (name && name.trim()) userToAdd.name = name.trim();
       if (role) userToAdd.role = role;
       if (designation !== undefined) userToAdd.designation = designation;
       if (shiftStartTime !== undefined) userToAdd.shiftStartTime = shiftStartTime;
@@ -277,7 +286,14 @@ const addMember = async (req, res) => {
     // Check if user is already in the workspace
     const memberExists = workspace.members.find(m => m.user && m.user.toString() === userToAdd.id.toString());
     if (memberExists) {
-      return res.status(400).json({ message: 'User already in workspace' });
+      if (role && memberExists.role !== role) {
+        memberExists.role = role;
+        await workspace.save();
+      }
+      return res.status(200).json({ 
+        message: 'Member details and password updated successfully.',
+        user: { _id: userToAdd._id, name: userToAdd.name, email: userToAdd.email }
+      });
     }
 
     workspace.members.push({ user: userToAdd._id, role: role || 'employee' });

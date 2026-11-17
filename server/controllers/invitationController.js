@@ -17,6 +17,9 @@ exports.inviteUser = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
+    const cleanEmail = email.trim().toLowerCase();
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) {
       return res.status(404).json({ message: 'Workspace not found' });
@@ -36,7 +39,9 @@ exports.inviteUser = async (req, res) => {
     }
 
     // Check if user exists and is already in workspace
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ 
+      email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } 
+    });
     if (existingUser) {
       const alreadyInWorkspace = workspace.members.some(m => m.user && m.user.toString() === existingUser._id.toString());
       if (alreadyInWorkspace) {
@@ -50,7 +55,7 @@ exports.inviteUser = async (req, res) => {
 
     // Save invitation
     const invitation = await Invitation.create({
-      email,
+      email: cleanEmail,
       role: role || 'employee',
       designation: designation || '',
       workspace: workspaceId,
@@ -66,18 +71,23 @@ exports.inviteUser = async (req, res) => {
     const senderEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
     const senderName = workspace.name || 'Madhura Workspace';
 
-    console.log(`[INVITE DEBUG] Attempting to send invite to: ${email}`);
+    console.log(`[INVITE DEBUG] Attempting to send invite to: ${cleanEmail}`);
     console.log(`[INVITE DEBUG] Using sender email: ${senderEmail}`);
 
     try {
       if (!process.env.RESEND_API_KEY) {
         console.warn('[INVITE DEBUG] RESEND_API_KEY is not defined in the environment. Skipping actual email send. Invitation link:');
         console.log(inviteLink);
+        return res.status(200).json({
+          message: 'Invitation link generated! (RESEND_API_KEY not configured)',
+          inviteLink,
+          emailSent: false
+        });
       } else {
         console.log('[INVITE DEBUG] Calling Resend API...');
         const resendResponse = await resend.emails.send({
           from: senderEmail,
-          to: email,
+          to: cleanEmail,
           subject: `You've been invited to join ${workspace.name}!`,
           html: `
             <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; text-align: center;">
@@ -104,15 +114,23 @@ exports.inviteUser = async (req, res) => {
           throw new Error(resendResponse.error.message);
         }
         console.log('[INVITE DEBUG] Resend API responded with Success:', resendResponse);
+        return res.status(200).json({ 
+          message: 'Invitation email sent successfully!',
+          inviteLink,
+          emailSent: true
+        });
       }
     } catch (emailError) {
       console.error('[INVITE DEBUG] Resend Error:', emailError);
-      return res.status(500).json({ 
-        message: 'Failed to send email. If you used a custom Company Email, make sure its domain is verified in Resend.' 
+      // Even if Resend fails, the invitation record was created in the database.
+      // Return the inviteLink so the admin can copy and share it directly with the employee!
+      return res.status(200).json({ 
+        message: 'Invitation created! Note: Email delivery via Resend failed. Please copy the invitation link below and send it directly to the employee.',
+        inviteLink,
+        emailSent: false,
+        emailError: emailError.message || 'Resend delivery failed'
       });
     }
-
-    res.status(200).json({ message: 'Invitation sent successfully' });
 
   } catch (error) {
     console.error('Invite Error:', error);
@@ -171,7 +189,9 @@ exports.acceptInvitation = async (req, res) => {
     }
 
     // Check if user already exists
-    let user = await User.findOne({ email: invitation.email });
+    const cleanEmail = (invitation.email || '').trim().toLowerCase();
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let user = await User.findOne({ email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } });
 
     if (user) {
       // Just make sure name/password are updated if they want, but usually we just log them in 

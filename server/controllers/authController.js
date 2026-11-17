@@ -20,8 +20,13 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Please add all fields' });
     }
 
-    // Check if user exists
-    const userExists = await User.findOne({ email });
+    const cleanEmail = email.trim().toLowerCase();
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Check if user exists (case-insensitive)
+    const userExists = await User.findOne({ 
+      email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } 
+    });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -37,8 +42,8 @@ const registerUser = async (req, res) => {
 
     // Create initial Super Admin (password is hashed in pre-save hook)
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: cleanEmail,
       password,
       role: 'super_admin',
     });
@@ -67,8 +72,17 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check for user email
-    const user = await User.findOne({ email }).select('+password');
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
+    const cleanEmail = email.trim();
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    // Case-insensitive lookup so users can log in regardless of casing or extra spaces
+    const user = await User.findOne({ 
+      email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } 
+    }).select('+password');
 
     if (user && (await user.matchPassword(password))) {
       // Log login activity (workspace is null since it's a global action)

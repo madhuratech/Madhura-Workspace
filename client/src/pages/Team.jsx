@@ -119,6 +119,14 @@ const Team = () => {
   // Single Member Mode: 'direct' or 'invite'
   const [memberAddMode, setMemberAddMode] = useState('direct');
 
+  // Credentials modal state after direct account creation
+  const [createdCredentials, setCreatedCredentials] = useState(null);
+  const [copiedCreatedCreds, setCopiedCreatedCreds] = useState(false);
+
+  // Direct invite link modal state if Resend email fails
+  const [createdInviteLink, setCreatedInviteLink] = useState(null);
+  const [copiedInviteLink, setCopiedInviteLink] = useState(false);
+
   useEffect(() => {
     fetchWorkspaceData();
   }, []);
@@ -367,31 +375,44 @@ const Team = () => {
       if (editItem) {
         // Update role, designation, name and shift hours
         await axios.put(`/workspaces/${workspace._id}/members/${editItem.user._id}`, {
-          name: formData.name,
+          name: formData.name ? formData.name.trim() : '',
           role: formData.role,
           designation: formData.designation,
           shiftStartTime: formData.shiftStartTime || '09:40',
           shiftEndTime: formData.shiftEndTime || '18:00',
         });
         showToast('Member updated successfully!', 'success');
+        handleCloseModal();
       } else {
+        const cleanEmail = formData.email ? formData.email.trim().toLowerCase() : '';
+        const cleanName = formData.name ? formData.name.trim() : '';
+
         if (memberAddMode === 'direct') {
+          const directPassword = (formData.password && formData.password.trim()) || generateRandomPassword();
           // Direct account creation & adding member
           await axios.post(`/workspaces/${workspace._id}/members`, {
-            name: formData.name,
-            email: formData.email,
-            password: formData.password || generateRandomPassword(),
+            name: cleanName,
+            email: cleanEmail,
+            password: directPassword,
             role: formData.role,
             designation: formData.designation,
             shiftStartTime: formData.shiftStartTime || '09:40',
             shiftEndTime: formData.shiftEndTime || '18:00',
           });
-          showToast(`Employee ${formData.name || formData.email} created and registered successfully!`, 'success');
+          
+          handleCloseModal();
+          setCreatedCredentials({
+            name: cleanName,
+            email: cleanEmail,
+            password: directPassword,
+            role: formData.role,
+          });
+          showToast(`Employee ${cleanName || cleanEmail} created and registered successfully!`, 'success');
         } else {
           // Send email invitation with role and shift hours
-          console.log('[DEBUG FRONTEND] Sending invitation to:', formData.email);
+          console.log('[DEBUG FRONTEND] Sending invitation to:', cleanEmail);
           const res = await axios.post(`/invitations`, {
-            email: formData.email,
+            email: cleanEmail,
             role: formData.role,
             designation: formData.designation,
             shiftStartTime: formData.shiftStartTime || '09:40',
@@ -399,11 +420,19 @@ const Team = () => {
             workspaceId: workspace._id
           });
           console.log('[DEBUG FRONTEND] Server responded successfully:', res.data);
-          showToast('Invitation sent successfully!', 'success');
+          handleCloseModal();
+          if (res.data.inviteLink && !res.data.emailSent) {
+            setCreatedInviteLink({
+              email: cleanEmail,
+              link: res.data.inviteLink
+            });
+            showToast('Invitation link generated! You can copy it now.', 'info');
+          } else {
+            showToast('Invitation sent successfully!', 'success');
+          }
         }
       }
       fetchWorkspaceData();
-      handleCloseModal();
     } catch (error) {
       console.error('[DEBUG FRONTEND] Error adding member:', error);
       showToast(error.response?.data?.message || 'Error updating/adding member', 'error');
@@ -589,10 +618,10 @@ const Team = () => {
                   {/* Actions Container - Fully Contained Inside Box */}
                   <div className="w-full md:w-32 flex justify-end items-center pt-2 md:pt-0 border-t md:border-t-0 border-border/40 shrink-0">
                     {(currentUserRole === 'super_admin' || currentUserRole === 'hr') && (
-                      <div className="flex items-center space-x-1.5 opacity-90 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center space-x-1.5 opacity-90 md:opacity-70 md:hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleOpenResetPassword(member); }}
-                          className="p-1.5 bg-bg-secondary hover:bg-amber-500 hover:text-white border border-border rounded-lg text-text-secondary shadow-sm transition-colors"
+                          className="p-1.5 bg-bg-secondary hover:bg-amber-500 hover:text-white border border-border rounded-lg text-amber-500 md:text-text-secondary md:hover:text-white shadow-sm transition-colors"
                           title="Reset Password"
                         >
                           <KeyRound size={14} />
@@ -1387,6 +1416,144 @@ const Team = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Account Created Successfully Modal */}
+      {createdCredentials && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-transparent px-6 py-5 border-b border-white/10 flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-sm">
+                  <Check size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary leading-tight">Account Created!</h3>
+                  <p className="text-xs text-text-secondary">Employee login credentials are ready</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setCreatedCredentials(null)} 
+                className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-4 bg-bg-primary/70 rounded-xl border border-border space-y-3 font-mono text-xs">
+                <div>
+                  <span className="text-text-secondary block font-sans text-[11px] font-semibold mb-0.5">FULL NAME</span>
+                  <span className="text-text-primary font-bold text-sm font-sans">{createdCredentials.name || 'Team Member'}</span>
+                </div>
+                <div>
+                  <span className="text-text-secondary block font-sans text-[11px] font-semibold mb-0.5">LOGIN EMAIL</span>
+                  <span className="text-text-primary select-all text-sm">{createdCredentials.email}</span>
+                </div>
+                <div>
+                  <span className="text-text-secondary block font-sans text-[11px] font-semibold mb-0.5">TEMPORARY PASSWORD</span>
+                  <span className="text-emerald-400 select-all font-bold text-sm bg-bg-secondary px-2 py-1 rounded border border-border inline-block">
+                    {createdCredentials.password}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start space-x-2.5 text-xs text-text-secondary">
+                <span className="text-amber-500 text-sm font-bold">💡</span>
+                <span>
+                  Please copy and securely send these login credentials to the employee via WhatsApp, Slack, or SMS so they can log in right away at workspace.madhuratech.com/login.
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = `Madhura Workspace Login Credentials:\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}\nLogin URL: https://workspace.madhuratech.com/login`;
+                    navigator.clipboard.writeText(text);
+                    setCopiedCreatedCreds(true);
+                    showToast('Credentials copied to clipboard!', 'info');
+                    setTimeout(() => setCopiedCreatedCreds(false), 2000);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all shadow-lg shadow-emerald-600/20"
+                >
+                  {copiedCreatedCreds ? <Check size={15} /> : <Copy size={15} />}
+                  <span>{copiedCreatedCreds ? 'Copied to Clipboard!' : 'Copy Login Details'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreatedCredentials(null)}
+                  className="px-4 py-2.5 text-text-secondary hover:bg-bg-primary rounded-xl transition-colors text-xs font-medium border border-border"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invitation Link Modal (When Resend email delivery fails or is skipped) */}
+      {createdInviteLink && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-bg-secondary/95 backdrop-blur-xl border border-white/10 rounded-2xl w-full max-w-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-accent-blue/15 via-indigo-500/10 to-transparent px-6 py-5 border-b border-white/10 flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-accent-blue/20 border border-accent-blue/30 flex items-center justify-center text-accent-blue shadow-sm">
+                  <Mail size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary leading-tight">Invitation Link Ready</h3>
+                  <p className="text-xs text-text-secondary">Direct registration link for employee</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setCreatedInviteLink(null)} 
+                className="text-text-secondary hover:text-danger transition-colors bg-bg-primary/50 hover:bg-bg-primary p-2 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-3 bg-accent-blue/10 border border-accent-blue/20 rounded-xl text-xs text-text-secondary">
+                Email was not automatically delivered by Resend (domain verification required). You can copy the invitation link directly below and share it with <strong className="text-text-primary">{createdInviteLink.email}</strong>:
+              </div>
+
+              <div className="p-3 bg-bg-primary/80 border border-border rounded-xl">
+                <input
+                  type="text"
+                  readOnly
+                  value={createdInviteLink.link}
+                  className="w-full bg-transparent text-xs text-accent-blue font-mono select-all focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(createdInviteLink.link);
+                    setCopiedInviteLink(true);
+                    showToast('Invitation link copied to clipboard!', 'info');
+                    setTimeout(() => setCopiedInviteLink(false), 2000);
+                  }}
+                  className="flex-1 bg-accent-blue hover:bg-accent-blue/90 text-white font-medium py-2.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-2 transition-all shadow-lg shadow-accent-blue/20"
+                >
+                  {copiedInviteLink ? <Check size={15} /> : <Copy size={15} />}
+                  <span>{copiedInviteLink ? 'Copied to Clipboard!' : 'Copy Invite Link'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreatedInviteLink(null)}
+                  className="px-4 py-2.5 text-text-secondary hover:bg-bg-primary rounded-xl transition-colors text-xs font-medium border border-border"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
