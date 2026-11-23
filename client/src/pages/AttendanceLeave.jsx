@@ -503,17 +503,17 @@ const AttendanceLeave = () => {
 
   const getCleanCheckOut = (rec) => {
     if (!rec || !rec.checkOut) return null;
-    if (rec.isAutoCheckOut) {
-      // Auto shift checkout reflects the user's scheduled shift end time
-      const shiftEndStr = rec.user?.shiftEndTime || (selectedTeamMember?._id === rec.user?._id ? selectedTeamMember?.shiftEndTime : null) || user?.shiftEndTime || '18:00';
-      const [hStr, mStr] = shiftEndStr.split(':');
-      const h = parseInt(hStr, 10) || 18;
-      const m = parseInt(mStr, 10) || 0;
-      const d = new Date(rec.checkOut);
-      d.setHours(h, m, 0, 0);
-      return d;
+    if (rec.isManualPunchIn || !rec.isAutoCheckOut) {
+      return new Date(rec.checkOut);
     }
-    return new Date(rec.checkOut);
+    // Auto shift checkout reflects the user's scheduled shift end time only for unapproved auto checkouts
+    const shiftEndStr = rec.user?.shiftEndTime || (selectedTeamMember?._id === rec.user?._id ? selectedTeamMember?.shiftEndTime : null) || user?.shiftEndTime || '18:00';
+    const [hStr, mStr] = shiftEndStr.split(':');
+    const h = parseInt(hStr, 10) || 18;
+    const m = parseInt(mStr, 10) || 0;
+    const d = new Date(rec.checkOut);
+    d.setHours(h, m, 0, 0);
+    return d;
   };
 
   const formatTimeParts = (val) => {

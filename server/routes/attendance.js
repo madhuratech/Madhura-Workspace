@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
     // Process records: handle auto-shift corrections and verify cryptographic seals
     const verifiedRecords = [];
     for (const record of records) {
-      if (record.isAutoCheckOut && record.user && record.checkOut) {
+      if (record.isAutoCheckOut && !record.isManualPunchIn && record.user && record.checkOut) {
         const userShiftEnd = record.user.shiftEndTime || '18:00';
         const expectedShiftEnd = getShiftDateTime(record.date, userShiftEnd);
         if (new Date(record.checkOut).getTime() > expectedShiftEnd.getTime()) {
@@ -548,7 +548,8 @@ router.post('/manual-punch', async (req, res) => {
     // Parse optional punch-out time
     let checkOutDate = null;
     let isEarlyLeave = false;
-    let isAutoCheckOut = false;
+    let otMins = 0;
+    let otHours = 0;
     if (punchOutTime) {
       const [outHourStr, outMinStr] = punchOutTime.split(':');
       const outH = (parseInt(outHourStr, 10) || 0).toString().padStart(2, '0');
@@ -564,8 +565,9 @@ router.post('/manual-punch', async (req, res) => {
 
       if (totalCheckOutMinutes < totalShiftEndMinutes) {
         isEarlyLeave = true;
-      } else {
-        isAutoCheckOut = true;
+      } else if (totalCheckOutMinutes > totalShiftEndMinutes) {
+        otMins = totalCheckOutMinutes - totalShiftEndMinutes;
+        otHours = +(otMins / 60).toFixed(2);
       }
     }
 
@@ -583,18 +585,30 @@ router.post('/manual-punch', async (req, res) => {
         isLate,
         lateMinutes,
         isEarlyLeave,
-        isAutoCheckOut,
+        isAutoCheckOut: false,
         isManualPunchIn: true,
         manualPunchInBy: req.user._id,
         manualPunchInAt: new Date(),
-        manualPunchInReason: manualReason
+        manualPunchInReason: manualReason,
+        overtimeMinutes: otMins,
+        overtimeHours: otHours,
+        overtimeReason: otMins > 0 ? (reason || `Overtime from manual checkout at ${punchOutTime}`) : '',
+        overtimeApprovedBy: otMins > 0 ? req.user._id : undefined,
+        overtimeApprovedAt: otMins > 0 ? new Date() : undefined
       });
     } else {
       record.checkIn = checkInDate;
       if (checkOutDate) {
         record.checkOut = checkOutDate;
         record.isEarlyLeave = isEarlyLeave;
-        record.isAutoCheckOut = isAutoCheckOut;
+        record.isAutoCheckOut = false;
+        if (otMins > 0) {
+          record.overtimeMinutes = otMins;
+          record.overtimeHours = otHours;
+          record.overtimeReason = reason || record.overtimeReason || `Overtime from manual checkout at ${punchOutTime}`;
+          record.overtimeApprovedBy = req.user._id;
+          record.overtimeApprovedAt = new Date();
+        }
       }
       record.status = status || record.status || 'Present';
       record.isLate = isLate;
