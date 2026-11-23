@@ -65,6 +65,19 @@ const AttendanceLeave = () => {
     reason: ''
   });
 
+  // Manual Punch-In State (Managed only by Managing Director & HR)
+  const [isManualPunchModalOpen, setIsManualPunchModalOpen] = useState(false);
+  const [manualPunchSaving, setManualPunchSaving] = useState(false);
+  const [manualPunchData, setManualPunchData] = useState({
+    userId: '',
+    date: new Date().toISOString().split('T')[0],
+    punchInTime: '09:30',
+    includePunchOut: false,
+    punchOutTime: '18:00',
+    status: 'Present',
+    reason: 'Forgot to punch in'
+  });
+
   // Calendar State
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -249,6 +262,93 @@ const AttendanceLeave = () => {
       setSelectedDateRecord(null);
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to remove overtime', 'error');
+    }
+  };
+
+  const openManualPunchModal = (targetUser = null, targetDate = null) => {
+    if (!isMDorHR) {
+      showToast('Only Managing Director (MD) and HR are authorized to manually record punch-in.', 'error');
+      return;
+    }
+
+    const defaultUser = targetUser || selectedTeamMember || (user ? { _id: user._id, name: user.name } : null) || (teamMembers.length > 0 ? teamMembers[0].user : null);
+    const dateStr = targetDate || new Date().toISOString().split('T')[0];
+
+    let defaultInTime = '09:30';
+    let defaultOutTime = '18:00';
+    let hasOut = false;
+    let defaultStatus = 'Present';
+    let defaultReason = 'Forgot to punch in';
+
+    if (defaultUser) {
+      const uId = defaultUser._id || defaultUser;
+      const existing = attendanceRecords.find(r => (r.user?._id === uId || r.user === uId) && r.date === dateStr);
+      if (existing) {
+        if (existing.checkIn) {
+          const d = new Date(existing.checkIn);
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mm = String(d.getMinutes()).padStart(2, '0');
+          defaultInTime = `${hh}:${mm}`;
+        }
+        if (existing.checkOut) {
+          const d = new Date(existing.checkOut);
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mm = String(d.getMinutes()).padStart(2, '0');
+          defaultOutTime = `${hh}:${mm}`;
+          hasOut = true;
+        }
+        defaultStatus = existing.status || 'Present';
+        defaultReason = existing.manualPunchInReason || 'Forgot to punch in';
+      }
+    }
+
+    setManualPunchData({
+      userId: defaultUser ? (defaultUser._id || defaultUser) : (user ? user._id : ''),
+      date: dateStr,
+      punchInTime: defaultInTime,
+      includePunchOut: hasOut,
+      punchOutTime: defaultOutTime,
+      status: defaultStatus,
+      reason: defaultReason
+    });
+    setIsManualPunchModalOpen(true);
+  };
+
+  const handleSaveManualPunch = async (e) => {
+    e.preventDefault();
+    if (!isMDorHR) {
+      showToast('Access denied: Only MD and HR can record manual punch-in.', 'error');
+      return;
+    }
+    if (!workspace) return;
+    if (!manualPunchData.userId) {
+      showToast('Please select an employee / team member', 'error');
+      return;
+    }
+    if (!manualPunchData.punchInTime) {
+      showToast('Please specify punch-in time', 'error');
+      return;
+    }
+
+    setManualPunchSaving(true);
+    try {
+      const payload = {
+        userId: manualPunchData.userId,
+        date: manualPunchData.date,
+        punchInTime: manualPunchData.punchInTime,
+        punchOutTime: manualPunchData.includePunchOut && manualPunchData.punchOutTime ? manualPunchData.punchOutTime : null,
+        status: manualPunchData.status || 'Present',
+        reason: manualPunchData.reason || 'Forgot to punch in'
+      };
+
+      const res = await axios.post(`/workspaces/${workspace._id}/attendance/manual-punch`, payload);
+      showToast(res.data.message || 'Manual punch-in recorded successfully!', 'success');
+      setIsManualPunchModalOpen(false);
+      fetchAttendance(workspace._id);
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to record manual punch-in', 'error');
+    } finally {
+      setManualPunchSaving(false);
     }
   };
 
@@ -623,6 +723,19 @@ const AttendanceLeave = () => {
                 <FileText size={32} className="mx-auto text-text-secondary opacity-30 mb-3" />
                 <p className="text-text-primary font-bold">No Records Found</p>
                 <p className="text-xs text-text-secondary mt-1 mb-6">There is no attendance data for this date.</p>
+                {isMDorHR && (
+                  <button
+                    onClick={() => {
+                      const targetU = selectedTeamMember || user;
+                      setSelectedDateRecord(null);
+                      openManualPunchModal(targetU, date);
+                    }}
+                    className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 mb-3 flex items-center justify-center gap-1.5"
+                  >
+                    <LogIn size={14} />
+                    + Manual Punch In (Missed Punch)
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedDateRecord(null)}
                   className="w-full py-2.5 px-4 bg-bg-primary hover:bg-bg-secondary text-text-secondary hover:text-text-primary rounded-xl text-xs font-semibold border border-border/60 transition-all shadow-sm active:scale-95"
@@ -653,6 +766,19 @@ const AttendanceLeave = () => {
                     </span>
                   </div>
                 ) : null}
+
+                {/* Manual Punch-In Marker */}
+                {record.isManualPunchIn && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-xs text-emerald-600 dark:text-emerald-400">
+                    <div className="flex items-center font-bold gap-1.5 mb-1">
+                      <LogIn size={14} /> Manual Punch-In Recorded by HR / MD
+                    </div>
+                    <div className="text-[11px] text-text-secondary">
+                      Marked by <strong className="text-text-primary">{record.manualPunchInBy?.name || 'HR/MD'}</strong>
+                      {record.manualPunchInReason ? ` — "${record.manualPunchInReason}"` : ''}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-text-secondary">Status</span>
@@ -721,7 +847,19 @@ const AttendanceLeave = () => {
                   </div>
                 )}
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
+                  {isMDorHR && (
+                    <button
+                      onClick={() => {
+                        const targetU = selectedTeamMember || record.user || user;
+                        setSelectedDateRecord(null);
+                        openManualPunchModal(targetU, date);
+                      }}
+                      className="w-full py-2.5 px-4 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                    >
+                      <LogIn size={13} /> Edit / Manual Punch-In
+                    </button>
+                  )}
                   <button
                     onClick={() => setSelectedDateRecord(null)}
                     className="w-full py-2.5 px-4 bg-bg-primary hover:bg-bg-secondary text-text-secondary hover:text-text-primary rounded-xl text-xs font-semibold border border-border/60 transition-all flex items-center justify-center active:scale-95 shadow-sm"
@@ -753,16 +891,27 @@ const AttendanceLeave = () => {
             <h1 className="text-2xl font-bold text-text-primary tracking-wide font-outfit">Attendance & Leave</h1>
             <p className="text-text-secondary text-sm mt-1">Manage your attendance and leave requests.</p>
           </div>
-          <div className="flex space-x-4 items-center">
+          <div className="flex space-x-3 items-center flex-wrap gap-2">
             {isMDorHR && activeTab === 'attendance' && (
-              <button 
-                onClick={() => openOvertimeModal()} 
-                className="bg-accent-blue text-white px-4 py-2.5 rounded-xl hover:opacity-90 transition-all text-sm font-semibold flex items-center shadow-md active:scale-95"
-              >
-                <Clock size={16} className="mr-2" />
-                <span>+ Log Overtime</span>
-                <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">MD / HR</span>
-              </button>
+              <>
+                <button 
+                  onClick={() => openManualPunchModal()} 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl transition-all text-sm font-semibold flex items-center shadow-md active:scale-95"
+                  title="Manually enter missed punch-in for employee, TL, or yourself"
+                >
+                  <LogIn size={16} className="mr-2" />
+                  <span>+ Manual Punch In</span>
+                  <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">MD / HR Only</span>
+                </button>
+                <button 
+                  onClick={() => openOvertimeModal()} 
+                  className="bg-accent-blue text-white px-4 py-2.5 rounded-xl hover:opacity-90 transition-all text-sm font-semibold flex items-center shadow-md active:scale-95"
+                >
+                  <Clock size={16} className="mr-2" />
+                  <span>+ Log Overtime</span>
+                  <span className="ml-2 text-[10px] bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">MD / HR</span>
+                </button>
+              </>
             )}
             {activeTab === 'leave' && currentUserRole !== 'super_admin' && (
               <button onClick={() => setIsLeaveModalOpen(true)} className="bg-gradient-to-r from-accent-blue to-accent-indigo text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all text-sm font-semibold flex items-center shadow-md">
@@ -883,7 +1032,16 @@ const AttendanceLeave = () => {
                       <LogIn size={18} className="mr-2 group-hover:translate-x-1 transition-transform" />
                       Punch In
                     </button>
-                    <p className="text-[11px] text-text-secondary mt-2 font-medium">Ready to start your day?</p>
+                    {isMDorHR && (
+                      <button
+                        onClick={() => openManualPunchModal(user, new Date().toISOString().split('T')[0])}
+                        className="text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline mt-2 font-semibold flex items-center gap-1 transition-all"
+                        title="If you forgot to punch in earlier, manually record your punch-in"
+                      >
+                        <Clock size={12} /> Forgot earlier punch? Enter manual time
+                      </button>
+                    )}
+                    <p className="text-[11px] text-text-secondary mt-1 font-medium">Ready to start your day?</p>
                   </div>
                 )}
               </div>
@@ -1479,6 +1637,216 @@ const AttendanceLeave = () => {
                   className="bg-accent-blue text-white px-6 py-2.5 rounded-xl hover:opacity-90 font-bold text-sm shadow-sm transition-all disabled:opacity-60 flex items-center"
                 >
                   {overtimeSaving ? 'Recording...' : 'Record Overtime'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Punch-In Modal (MD & HR Only) */}
+      {isManualPunchModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-secondary border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-bg-secondary shrink-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-sm">
+                  <LogIn size={18} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary font-outfit">Manual Punch-In (Missed Punch)</h3>
+                  <p className="text-xs text-text-secondary font-medium">Authorized exclusively for Managing Director (MD) & HR</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsManualPunchModalOpen(false)} 
+                className="text-text-secondary hover:text-text-primary hover:bg-bg-primary transition-colors p-2 rounded-xl"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveManualPunch} className="flex flex-col flex-1 overflow-hidden">
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                {/* Authorization alert */}
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 flex items-start gap-2.5 text-xs text-emerald-700 dark:text-emerald-300">
+                  <ShieldCheck size={16} className="shrink-0 mt-0.5 text-emerald-500" />
+                  <div>
+                    <span className="font-bold">Official Management Override:</span> Use this form if an employee, team leader, or HR herself forgot to punch in. Cryptographic anti-tamper seals will be automatically generated with your audit trail.
+                  </div>
+                </div>
+
+                {/* 2-Column: Team Member & Date */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+                      Select Person *
+                    </label>
+                    <select
+                      value={manualPunchData.userId}
+                      onChange={(e) => setManualPunchData({ ...manualPunchData, userId: e.target.value })}
+                      className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors font-medium"
+                      required
+                    >
+                      <option value="">Select Employee / HR / TL...</option>
+                      {user && (
+                        <option value={user._id}>
+                          ⭐ {user.name} (You - {user.role === 'super_admin' ? 'MD' : user.role === 'hr' ? 'HR' : user.role}) — {user.shiftStartTime || '09:40'} to {user.shiftEndTime || '18:00'}
+                        </option>
+                      )}
+                      {teamMembers
+                        .filter(m => m.user._id !== user?._id)
+                        .map(m => (
+                          <option key={m.user._id} value={m.user._id}>
+                            {m.user.name} ({m.user.designation || m.role.replace('_', ' ')}) — {m.user.shiftStartTime || '09:40'} to {m.user.shiftEndTime || '18:00'}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+                      Attendance Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={manualPunchData.date}
+                      onChange={(e) => setManualPunchData({ ...manualPunchData, date: e.target.value })}
+                      className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Punch In Time & Quick Presets */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">
+                      Punch-In Time (IST) *
+                    </label>
+                    <span className="text-[11px] text-text-secondary">
+                      Standard shifts start at 09:40 AM
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-2.5">
+                    {['09:00', '09:30', '09:40', '10:00', '10:30', '11:00'].map(t => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setManualPunchData({ ...manualPunchData, punchInTime: t })}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                          manualPunchData.punchInTime === t
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                            : 'bg-bg-primary text-text-secondary border-border hover:border-emerald-500/50 hover:text-text-primary'
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+
+                  <input
+                    type="time"
+                    required
+                    value={manualPunchData.punchInTime}
+                    onChange={(e) => setManualPunchData({ ...manualPunchData, punchInTime: e.target.value })}
+                    className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue transition-colors font-medium"
+                  />
+                </div>
+
+                {/* Optional Punch-Out Time */}
+                <div className="bg-bg-primary/60 border border-border/80 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center space-x-2.5 cursor-pointer text-xs font-bold text-text-primary">
+                      <input
+                        type="checkbox"
+                        checked={manualPunchData.includePunchOut}
+                        onChange={(e) => setManualPunchData({ ...manualPunchData, includePunchOut: e.target.checked })}
+                        className="w-4 h-4 text-emerald-600 rounded border-border focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span>Also include Punch-Out Time (for completed / past days)</span>
+                    </label>
+                    <span className="text-[11px] text-text-secondary">Optional</span>
+                  </div>
+
+                  {manualPunchData.includePunchOut && (
+                    <div className="pt-2 border-t border-border/60">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {['17:00', '17:30', '18:00', '18:30', '19:00'].map(t => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setManualPunchData({ ...manualPunchData, punchOutTime: t })}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${
+                              manualPunchData.punchOutTime === t
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'bg-bg-primary text-text-secondary border-border hover:text-text-primary'
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                      <input
+                        type="time"
+                        value={manualPunchData.punchOutTime}
+                        onChange={(e) => setManualPunchData({ ...manualPunchData, punchOutTime: e.target.value })}
+                        className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2 text-sm text-text-primary focus:outline-none focus:border-accent-blue font-medium"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Status & Reason */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+                      Status
+                    </label>
+                    <select
+                      value={manualPunchData.status}
+                      onChange={(e) => setManualPunchData({ ...manualPunchData, status: e.target.value })}
+                      className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue font-medium"
+                    >
+                      <option value="Present">Present</option>
+                      <option value="Half-Day">Half-Day</option>
+                    </select>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wider">
+                      Reason / Authorization Note *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={manualPunchData.reason}
+                      onChange={(e) => setManualPunchData({ ...manualPunchData, reason: e.target.value })}
+                      placeholder="e.g. Forgot to punch in in the morning, Approved by HR..."
+                      className="w-full bg-bg-primary border border-border rounded-xl px-3.5 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent-blue font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-border bg-bg-primary/50 flex justify-end space-x-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsManualPunchModalOpen(false)}
+                  className="px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-bg-primary hover:text-text-primary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={manualPunchSaving}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all disabled:opacity-60 flex items-center"
+                >
+                  {manualPunchSaving ? 'Recording...' : 'Record Punch-In'}
                 </button>
               </div>
             </form>

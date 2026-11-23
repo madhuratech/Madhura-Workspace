@@ -300,6 +300,19 @@ export default function AttendanceLeaveScreen({ navigation }) {
   });
   const [editingOtRecordId, setEditingOtRecordId] = useState(null);
 
+  // Manual Punch In state (Managed only by MD & HR)
+  const [isManualPunchModalOpen, setIsManualPunchModalOpen] = useState(false);
+  const [manualPunchSaving, setManualPunchSaving] = useState(false);
+  const [manualPunchData, setManualPunchData] = useState({
+    userId: '',
+    date: getISTDateString(),
+    punchInTime: '09:30',
+    includePunchOut: false,
+    punchOutTime: '18:00',
+    status: 'Present',
+    reason: 'Forgot to punch in'
+  });
+
   const [leaveRecords, setLeaveRecords] = useState([]);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [leaveData, setLeaveData] = useState({ type: 'Sick', startDate: '', endDate: '', reason: '' });
@@ -722,6 +735,175 @@ export default function AttendanceLeaveScreen({ navigation }) {
     }
   };
 
+  const openManualPunchModal = (targetUserId = null, targetDate = null, record = null) => {
+    if (!isMDorHR) {
+      alert('Access denied: Manual punch-in can only be entered by Managing Director (MD) and HR.');
+      return;
+    }
+
+    const defaultUserId = targetUserId || user?._id || (workspaceMembers.length > 0 ? (workspaceMembers[0].user?._id || workspaceMembers[0].user) : '');
+    const dateStr = targetDate || getISTDateString();
+
+    let inTime = '09:30';
+    let outTime = '18:00';
+    let hasOut = false;
+    let st = 'Present';
+    let rsn = 'Forgot to punch in';
+
+    if (record) {
+      if (record.checkIn) {
+        const d = new Date(record.checkIn);
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        inTime = `${hh}:${mm}`;
+      }
+      if (record.checkOut) {
+        const d = new Date(record.checkOut);
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        outTime = `${hh}:${mm}`;
+        hasOut = true;
+      }
+      st = record.status || 'Present';
+      rsn = record.manualPunchInReason || 'Forgot to punch in';
+    } else {
+      const existing = attendanceRecords.find(r => 
+        String(r.user?._id || r.user) === String(defaultUserId) && r.date === dateStr
+      );
+      if (existing) {
+        if (existing.checkIn) {
+          const d = new Date(existing.checkIn);
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mm = String(d.getMinutes()).padStart(2, '0');
+          inTime = `${hh}:${mm}`;
+        }
+        if (existing.checkOut) {
+          const d = new Date(existing.checkOut);
+          const hh = String(d.getHours()).padStart(2, '0');
+          const mm = String(d.getMinutes()).padStart(2, '0');
+          outTime = `${hh}:${mm}`;
+          hasOut = true;
+        }
+        st = existing.status || 'Present';
+        rsn = existing.manualPunchInReason || 'Forgot to punch in';
+      }
+    }
+
+    setManualPunchData({
+      userId: String(defaultUserId || ''),
+      date: dateStr,
+      punchInTime: inTime,
+      includePunchOut: hasOut,
+      punchOutTime: outTime,
+      status: st,
+      reason: rsn
+    });
+    setIsManualPunchModalOpen(true);
+  };
+
+  const handleSelectManualPunchEmployee = (uId) => {
+    const existing = attendanceRecords.find(r => 
+      String(r.user?._id || r.user) === String(uId) && r.date === manualPunchData.date
+    );
+    let inTime = '09:30';
+    let outTime = '18:00';
+    let hasOut = false;
+    let st = 'Present';
+    let rsn = 'Forgot to punch in';
+    if (existing) {
+      if (existing.checkIn) {
+        const d = new Date(existing.checkIn);
+        inTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      }
+      if (existing.checkOut) {
+        const d = new Date(existing.checkOut);
+        outTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        hasOut = true;
+      }
+      st = existing.status || 'Present';
+      rsn = existing.manualPunchInReason || 'Forgot to punch in';
+    }
+    setManualPunchData({
+      ...manualPunchData,
+      userId: uId,
+      punchInTime: inTime,
+      includePunchOut: hasOut,
+      punchOutTime: outTime,
+      status: st,
+      reason: rsn
+    });
+  };
+
+  const handleSelectManualPunchDate = (newDate) => {
+    const existing = attendanceRecords.find(r => 
+      String(r.user?._id || r.user) === String(manualPunchData.userId) && r.date === newDate
+    );
+    let inTime = '09:30';
+    let outTime = '18:00';
+    let hasOut = false;
+    let st = 'Present';
+    let rsn = 'Forgot to punch in';
+    if (existing) {
+      if (existing.checkIn) {
+        const d = new Date(existing.checkIn);
+        inTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      }
+      if (existing.checkOut) {
+        const d = new Date(existing.checkOut);
+        outTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        hasOut = true;
+      }
+      st = existing.status || 'Present';
+      rsn = existing.manualPunchInReason || 'Forgot to punch in';
+    }
+    setManualPunchData({
+      ...manualPunchData,
+      date: newDate,
+      punchInTime: inTime,
+      includePunchOut: hasOut,
+      punchOutTime: outTime,
+      status: st,
+      reason: rsn
+    });
+  };
+
+  const handleSaveManualPunch = async () => {
+    if (!isMDorHR) {
+      alert('Access denied: Only MD and HR can record manual punch-in.');
+      return;
+    }
+    if (!workspace) return;
+    if (!manualPunchData.userId) {
+      alert('Please select an employee / team member.');
+      return;
+    }
+    if (!manualPunchData.punchInTime) {
+      alert('Please enter punch-in time.');
+      return;
+    }
+
+    setManualPunchSaving(true);
+    try {
+      const payload = {
+        userId: manualPunchData.userId,
+        date: manualPunchData.date,
+        punchInTime: manualPunchData.punchInTime,
+        punchOutTime: manualPunchData.includePunchOut && manualPunchData.punchOutTime ? manualPunchData.punchOutTime : null,
+        status: manualPunchData.status || 'Present',
+        reason: manualPunchData.reason.trim() || 'Forgot to punch in'
+      };
+
+      const res = await axios.post(`/workspaces/${workspace._id}/attendance/manual-punch`, payload);
+      alert(res.data.message || 'Manual punch-in recorded successfully!');
+      setIsManualPunchModalOpen(false);
+      fetchAttendance(workspace._id);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to record manual punch-in');
+    } finally {
+      setManualPunchSaving(false);
+    }
+  };
+
   const isManager = ['super_admin', 'hr', 'team_leader'].includes(currentUserRole);
   const myLeaves = leaveRecords.filter(l => String(l.user?._id || l.user) === String(user._id));
   const myEarlyLeaves = earlyLeaves.filter(l => String(l.user?._id || l.user) === String(user._id));
@@ -739,10 +921,16 @@ export default function AttendanceLeaveScreen({ navigation }) {
             <Plus color={PRIMARY} size={24} />
           </TouchableOpacity>
         ) : (activeTab === 'attendance' && isMDorHR) ? (
-          <TouchableOpacity onPress={() => openOvertimeModal()} style={styles.headerOtBtn} activeOpacity={0.8}>
-            <Clock color="#D97706" size={14} style={{ marginRight: 4 }} />
-            <Text style={styles.headerOtText}>+ OT</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TouchableOpacity onPress={() => openManualPunchModal()} style={styles.headerManualPunchBtn} activeOpacity={0.8}>
+              <LogIn color="#059669" size={13} style={{ marginRight: 3 }} />
+              <Text style={styles.headerManualPunchText}>+ Punch In</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => openOvertimeModal()} style={styles.headerOtBtn} activeOpacity={0.8}>
+              <Clock color="#D97706" size={13} style={{ marginRight: 3 }} />
+              <Text style={styles.headerOtText}>+ OT</Text>
+            </TouchableOpacity>
+          </View>
         ) : <View style={{width: 24}} />}
       </View>
 
@@ -809,21 +997,33 @@ export default function AttendanceLeaveScreen({ navigation }) {
                   
                   <View style={styles.actionBtnContainer}>
                     {!isCheckedIn ? (
-                      <TouchableOpacity 
-                        style={[styles.punchActionBtn, { backgroundColor: PRIMARY }, punchLoading && { opacity: 0.75 }]} 
-                        onPress={handleCheckIn}
-                        disabled={punchLoading}
-                        activeOpacity={0.8}
-                      >
-                        {punchLoading ? (
-                          <ActivityIndicator color="#ffffff" size="small" style={{ marginRight: 8 }} />
-                        ) : (
-                          <LogIn color="#ffffff" size={16} style={{ marginRight: 8 }} />
+                      <View style={{ width: '100%' }}>
+                        <TouchableOpacity 
+                          style={[styles.punchActionBtn, { backgroundColor: PRIMARY }, punchLoading && { opacity: 0.75 }]} 
+                          onPress={handleCheckIn}
+                          disabled={punchLoading}
+                          activeOpacity={0.8}
+                        >
+                          {punchLoading ? (
+                            <ActivityIndicator color="#ffffff" size="small" style={{ marginRight: 8 }} />
+                          ) : (
+                            <LogIn color="#ffffff" size={16} style={{ marginRight: 8 }} />
+                          )}
+                          <Text style={styles.punchActionBtnText}>
+                            {punchLoading ? 'Punching In...' : 'Punch In'}
+                          </Text>
+                        </TouchableOpacity>
+                        {isMDorHR && (
+                          <TouchableOpacity
+                            onPress={() => openManualPunchModal(user?._id, getISTDateString())}
+                            style={styles.forgotPunchBtn}
+                            activeOpacity={0.7}
+                          >
+                            <Clock color="#059669" size={12} style={{ marginRight: 4 }} />
+                            <Text style={styles.forgotPunchBtnText}>Forgot punch-in? Enter manual time</Text>
+                          </TouchableOpacity>
                         )}
-                        <Text style={styles.punchActionBtnText}>
-                          {punchLoading ? 'Punching In...' : 'Punch In'}
-                        </Text>
-                      </TouchableOpacity>
+                      </View>
                     ) : !isCheckedOut ? (
                       <TouchableOpacity 
                         style={[styles.punchActionBtn, { backgroundColor: '#D97706' }, punchLoading && { opacity: 0.75 }]} 
@@ -867,14 +1067,24 @@ export default function AttendanceLeaveScreen({ navigation }) {
                 <View style={styles.logHeaderRow}>
                   <Text style={styles.sectionTitle}>{logView === 'mine' ? 'My Recent Logs' : 'Team Recent Logs'}</Text>
                   {isMDorHR && (
-                    <TouchableOpacity 
-                      style={styles.addOtButton}
-                      onPress={() => openOvertimeModal()}
-                      activeOpacity={0.8}
-                    >
-                      <Clock color="#D97706" size={13} style={{ marginRight: 4 }} />
-                      <Text style={styles.addOtButtonText}>+ Log OT</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <TouchableOpacity 
+                        style={styles.addManualPunchButton}
+                        onPress={() => openManualPunchModal()}
+                        activeOpacity={0.8}
+                      >
+                        <LogIn color="#059669" size={12} style={{ marginRight: 3 }} />
+                        <Text style={styles.addManualPunchButtonText}>+ Punch In</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={styles.addOtButton}
+                        onPress={() => openOvertimeModal()}
+                        activeOpacity={0.8}
+                      >
+                        <Clock color="#D97706" size={12} style={{ marginRight: 3 }} />
+                        <Text style={styles.addOtButtonText}>+ Log OT</Text>
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
 
@@ -887,6 +1097,14 @@ export default function AttendanceLeaveScreen({ navigation }) {
                         {logView === 'team' && <Text style={styles.recordName}>{record.user?.name || 'Employee'}</Text>}
                         <Text style={styles.recordDate}>{new Date(record.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
                         <Text style={styles.recordStatus}>{record.status}</Text>
+                        {record.isManualPunchIn ? (
+                          <View style={styles.manualPunchBadge}>
+                            <LogIn color="#059669" size={10} style={{ marginRight: 3 }} />
+                            <Text style={styles.manualPunchBadgeText} numberOfLines={1}>
+                              Manual: {record.manualPunchInBy?.name || 'HR/MD'}
+                            </Text>
+                          </View>
+                        ) : null}
                         {record.overtimeReason ? (
                           <Text style={styles.recordOtReason} numberOfLines={1}>OT: {record.overtimeReason}</Text>
                         ) : null}
@@ -1404,6 +1622,261 @@ export default function AttendanceLeaveScreen({ navigation }) {
         </View>
       </Modal>
 
+      {/* Manual Punch-In Modal - Managed only by MD & HR */}
+      <Modal visible={isManualPunchModalOpen} transparent animationType="slide" statusBarTranslucent onRequestClose={() => setIsManualPunchModalOpen(false)}>
+        <View style={styles.modalOverlay}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={StyleSheet.absoluteFillObject} />
+          </TouchableWithoutFeedback>
+
+          <View style={[styles.modalBottomContainer, { paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }]}>
+            <KeyboardAvoidingView 
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+              style={{ width: '100%' }}
+            >
+              <View style={[
+                styles.modalContent,
+                keyboardHeight > 0 && { maxHeight: Math.max(340, SCREEN_HEIGHT - keyboardHeight - 40) }
+              ]}>
+                <View style={styles.modalDragHandle} />
+
+                <ScrollView 
+                  showsVerticalScrollIndicator={false} 
+                  keyboardShouldPersistTaps="handled" 
+                  keyboardDismissMode="on-drag"
+                  bounces={false}
+                >
+                  {/* Modal Header */}
+                  <View style={styles.modalHeader}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={styles.manualModalIconBox}>
+                        <LogIn color="#059669" size={19} strokeWidth={2.2} />
+                      </View>
+                      <View style={{ marginLeft: 10 }}>
+                        <Text style={styles.modalTitle}>Manual Punch-In</Text>
+                        <Text style={styles.manualModalSub}>MD & HR Authority Only</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity onPress={() => setIsManualPunchModalOpen(false)} style={styles.modalCloseBtn}>
+                      <X color="#475569" size={18} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Authority Info Banner */}
+                  <View style={{ backgroundColor: '#ECFDF5', borderColor: '#A7F3D0', borderWidth: 1, borderRadius: 10, padding: 10, marginBottom: 14 }}>
+                    <Text style={{ fontSize: 12, color: '#065F46', lineHeight: 17 }}>
+                      <Text style={{ fontWeight: '700' }}>Management Override: </Text>
+                      Record missed punch-in for employee, TL, or yourself. Anti-tamper cryptographic seal will be applied.
+                    </Text>
+                  </View>
+
+                  {/* Employee Selection */}
+                  <Text style={styles.label}>Select Person (Employee, TL, or HR) *</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 2, paddingHorizontal: 2 }} style={{ marginBottom: 14 }}>
+                    {/* Include logged-in user explicitly so HR/MD can pick themselves */}
+                    {user ? (
+                      <TouchableOpacity
+                        key={String(user._id)}
+                        onPress={() => handleSelectManualPunchEmployee(String(user._id))}
+                        style={[styles.memberChip, manualPunchData.userId === String(user._id) && styles.memberChipSelected]}
+                        activeOpacity={0.7}
+                      >
+                        <View style={[styles.memberAvatar, manualPunchData.userId === String(user._id) && styles.memberAvatarSelected]}>
+                          <Text style={[styles.memberAvatarText, manualPunchData.userId === String(user._id) && styles.memberAvatarTextSelected]}>
+                            ME
+                          </Text>
+                        </View>
+                        <View style={{ flexShrink: 1, maxWidth: 140 }}>
+                          <Text style={[styles.memberChipText, manualPunchData.userId === String(user._id) && styles.memberChipTextSelected]} numberOfLines={1}>
+                            ⭐ {user.name} (You)
+                          </Text>
+                          <Text style={[styles.memberChipSub, manualPunchData.userId === String(user._id) && styles.memberChipSubSelected]} numberOfLines={1}>
+                            {user.role === 'super_admin' ? 'MD' : user.role === 'hr' ? 'HR' : user.role}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    ) : null}
+
+                    {workspaceMembers.filter(m => String(m.user?._id || m.user) !== String(user?._id)).map((m) => {
+                      const uId = String(m.user?._id || m.user);
+                      const isSelected = manualPunchData.userId === uId;
+                      const empName = m.user?.name || 'Employee';
+                      const initials = empName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'EM';
+                      return (
+                        <TouchableOpacity
+                          key={uId}
+                          onPress={() => handleSelectManualPunchEmployee(uId)}
+                          style={[styles.memberChip, isSelected && styles.memberChipSelected]}
+                          activeOpacity={0.7}
+                        >
+                          <View style={[styles.memberAvatar, isSelected && styles.memberAvatarSelected]}>
+                            <Text style={[styles.memberAvatarText, isSelected && styles.memberAvatarTextSelected]}>
+                              {initials}
+                            </Text>
+                          </View>
+                          <View style={{ flexShrink: 1, maxWidth: 140 }}>
+                            <Text style={[styles.memberChipText, isSelected && styles.memberChipTextSelected]} numberOfLines={1}>
+                              {empName}
+                            </Text>
+                            {m.user?.designation ? (
+                              <Text style={[styles.memberChipSub, isSelected && styles.memberChipSubSelected]} numberOfLines={1}>
+                                {m.user?.designation}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+
+                  {/* Interactive Calendar Date Picker */}
+                  <InlineCalendarPicker
+                    label="Attendance Date *"
+                    selectedDate={manualPunchData.date}
+                    onSelectDate={handleSelectManualPunchDate}
+                    accentColor="#059669"
+                  />
+
+                  {/* Punch In Time */}
+                  <Text style={styles.label}>Punch-In Time (HH:mm) *</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                    {['09:00', '09:30', '09:40', '10:00', '10:30'].map(t => (
+                      <TouchableOpacity
+                        key={t}
+                        onPress={() => setManualPunchData({ ...manualPunchData, punchInTime: t })}
+                        style={[
+                          { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#CBD5E1', backgroundColor: '#F8FAFC' },
+                          manualPunchData.punchInTime === t && { backgroundColor: '#059669', borderColor: '#059669' }
+                        ]}
+                      >
+                        <Text style={[{ fontSize: 12, fontWeight: '600', color: '#475569' }, manualPunchData.punchInTime === t && { color: '#ffffff' }]}>
+                          {t}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={manualPunchData.punchInTime}
+                    onChangeText={(val) => setManualPunchData({ ...manualPunchData, punchInTime: val })}
+                    placeholder="e.g. 09:30"
+                    placeholderTextColor="#94A3B8"
+                  />
+
+                  {/* Optional Punch-Out Time */}
+                  <TouchableOpacity
+                    onPress={() => setManualPunchData({ ...manualPunchData, includePunchOut: !manualPunchData.includePunchOut })}
+                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      borderWidth: 1.5,
+                      borderColor: manualPunchData.includePunchOut ? '#059669' : '#94A3B8',
+                      backgroundColor: manualPunchData.includePunchOut ? '#059669' : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: 8
+                    }}>
+                      {manualPunchData.includePunchOut && <Check color="#fff" size={12} strokeWidth={3} />}
+                    </View>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#1E293B' }}>
+                      Include Punch-Out Time (Optional)
+                    </Text>
+                  </TouchableOpacity>
+
+                  {manualPunchData.includePunchOut && (
+                    <View style={{ backgroundColor: '#F8FAFC', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 12 }}>
+                      <Text style={[styles.label, { marginTop: 0 }]}>Punch-Out Time (HH:mm)</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                        {['17:00', '17:30', '18:00', '18:30', '19:00'].map(t => (
+                          <TouchableOpacity
+                            key={t}
+                            onPress={() => setManualPunchData({ ...manualPunchData, punchOutTime: t })}
+                            style={[
+                              { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#CBD5E1', backgroundColor: '#FFFFFF' },
+                              manualPunchData.punchOutTime === t && { backgroundColor: '#059669', borderColor: '#059669' }
+                            ]}
+                          >
+                            <Text style={[{ fontSize: 12, fontWeight: '600', color: '#475569' }, manualPunchData.punchOutTime === t && { color: '#ffffff' }]}>
+                              {t}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <TextInput
+                        style={[styles.input, { marginBottom: 0 }]}
+                        value={manualPunchData.punchOutTime}
+                        onChangeText={(val) => setManualPunchData({ ...manualPunchData, punchOutTime: val })}
+                        placeholder="e.g. 18:00"
+                        placeholderTextColor="#94A3B8"
+                      />
+                    </View>
+                  )}
+
+                  {/* Status Selection */}
+                  <Text style={styles.label}>Status</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+                    {['Present', 'Half-Day'].map(st => (
+                      <TouchableOpacity
+                        key={st}
+                        onPress={() => setManualPunchData({ ...manualPunchData, status: st })}
+                        style={[
+                          { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#CBD5E1', alignItems: 'center', backgroundColor: '#F8FAFC' },
+                          manualPunchData.status === st && { backgroundColor: '#059669', borderColor: '#059669' }
+                        ]}
+                      >
+                        <Text style={[{ fontSize: 13, fontWeight: '600', color: '#475569' }, manualPunchData.status === st && { color: '#ffffff' }]}>
+                          {st}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  {/* Reason */}
+                  <Text style={styles.label}>Reason / Note *</Text>
+                  <TextInput
+                    style={[styles.input, { height: 75, textAlignVertical: 'top' }]}
+                    multiline
+                    value={manualPunchData.reason}
+                    onChangeText={(val) => setManualPunchData({ ...manualPunchData, reason: val })}
+                    placeholder="e.g. Forgot to punch in on arrival, approved by HR..."
+                    placeholderTextColor="#94A3B8"
+                  />
+
+                  {/* Action Buttons */}
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, marginBottom: 12 }}>
+                    <TouchableOpacity
+                      style={[styles.submitBtn, { flex: 1, backgroundColor: '#F1F5F9', marginTop: 0 }]}
+                      onPress={() => setIsManualPunchModalOpen(false)}
+                    >
+                      <Text style={[styles.submitBtnText, { color: '#475569' }]}>Cancel</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.submitBtn, { flex: 2, backgroundColor: '#059669', marginTop: 0 }]}
+                      onPress={handleSaveManualPunch}
+                      disabled={manualPunchSaving}
+                    >
+                      {manualPunchSaving ? (
+                        <ActivityIndicator color="#ffffff" size="small" />
+                      ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <LogIn color="#ffffff" size={16} strokeWidth={2.2} style={{ marginRight: 6 }} />
+                          <Text style={styles.submitBtnText}>Save Punch-In</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -1565,7 +2038,7 @@ const styles = StyleSheet.create({
     color: '#64748B' 
   },
   
-  recordName: { fontSize: 12, fontWeight: '700', marginBottom: 2, color: '#111827', fontSize: 14 },
+  recordName: { fontWeight: '700', marginBottom: 2, color: '#111827', fontSize: 14 },
   
   sectionTitle: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16, color: '#64748B' },
   emptyText: { fontSize: 14, fontStyle: 'italic', color: '#64748B' },
@@ -1602,6 +2075,84 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 12, padding: 14, fontSize: 14, marginBottom: 16, backgroundColor: '#F1F5F9', borderColor: '#E2E8F0', color: '#111827' },
   submitBtn: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8, backgroundColor: PRIMARY },
   submitBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
+
+  // Manual Punch In styles
+  headerManualPunchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  headerManualPunchText: {
+    color: '#059669',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  addManualPunchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  addManualPunchButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  manualPunchBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    borderColor: '#A7F3D0',
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginTop: 3,
+    alignSelf: 'flex-start',
+  },
+  manualPunchBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  forgotPunchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingVertical: 4,
+    alignSelf: 'center',
+  },
+  forgotPunchBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#059669',
+    textDecorationLine: 'underline',
+  },
+  manualModalIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#D1FAE5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  manualModalSub: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#059669',
+    marginTop: 1,
+  },
 
   // Overtime (OT) styles
   headerOtBtn: {

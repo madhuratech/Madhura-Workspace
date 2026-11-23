@@ -84,6 +84,7 @@ router.get('/', async (req, res) => {
     const records = await Attendance.find(filter)
       .populate('user', 'name email designation shiftStartTime shiftEndTime avatar')
       .populate('overtimeApprovedBy', 'name email designation role')
+      .populate('manualPunchInBy', 'name email designation role')
       .sort({ date: -1 });
 
     // Process records: handle auto-shift corrections and verify cryptographic seals
@@ -494,6 +495,180 @@ router.delete('/:recordId/overtime', async (req, res) => {
   } catch (error) {
     console.error('Error removing overtime:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ── Manual Punch In: Entered & Managed ONLY by MD (super_admin) and HR ─────
+router.post('/manual-punch', async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    const { userId, date, punchInTime, punchOutTime, status, reason } = req.body;
+
+    const workspace = await Workspace.findById(workspaceId).populate('members.user');
+    if (!workspace) return res.status(404).json({ message: 'Workspace not found' });
+
+    const currentMember = workspace.members.find(m => m.user && m.user._id.toString() === req.user._id.toString());
+    const isMDorHR = req.user.role === 'super_admin' || req.user.role === 'hr' || 
+                     (currentMember && ['super_admin', 'hr'].includes(currentMember.role));
+
+    if (!isMDorHR) {
+      return res.status(403).json({ message: 'Access denied: Only Managing Director (MD) and HR can manually enter punch-in.' });
+    }
+
+    if (!userId || !date || !punchInTime) {
+      return res.status(400).json({ message: 'Employee, date, and punch-in time are required.' });
+    }
+
+    const employee = await User.findById(userId);
+    if (!employee) {
+      return res.status(404).json({ message: 'Target user not found.' });
+    }
+
+    // Parse punch-in time in IST
+    const [inHourStr, inMinStr] = punchInTime.split(':');
+    const inH = (parseInt(inHourStr, 10) || 0).toString().padStart(2, '0');
+    const inM = (parseInt(inMinStr, 10) || 0).toString().padStart(2, '0');
+    const checkInDate = new Date(`${date}T${inH}:${inM}:00+05:30`);
+
+    // Calculate Late based on employee's shiftStartTime (default: '09:40')
+    const userShiftStart = employee.shiftStartTime || '09:40';
+    const [startHourStr, startMinStr] = userShiftStart.split(':');
+    const targetStartHour = parseInt(startHourStr, 10) || 9;
+    const targetStartMin = parseInt(startMinStr, 10) || 40;
+    const totalShiftStartMinutes = targetStartHour * 60 + targetStartMin;
+    const totalCheckInMinutes = (parseInt(inHourStr, 10) || 0) * 60 + (parseInt(inMinStr, 10) || 0);
+
+    let isLate = false;
+    let lateMinutes = 0;
+    if (totalCheckInMinutes > totalShiftStartMinutes) {
+      isLate = true;
+      lateMinutes = totalCheckInMinutes - totalShiftStartMinutes;
+    }
+
+    // Parse optional punch-out time
+    let checkOutDate = null;
+    let isEarlyLeave = false;
+    let isAutoCheckOut = false;
+    if (punchOutTime) {
+      const [outHourStr, outMinStr] = punchOutTime.split(':');
+      const outH = (parseInt(outHourStr, 10) || 0).toString().padStart(2, '0');
+      const outM = (parseInt(outMinStr, 10) || 0).toString().padStart(2, '0');
+      checkOutDate = new Date(`${date}T${outH}:${outM}:00+05:30`);
+
+      const userShiftEnd = employee.shiftEndTime || '18:00';
+      const [endHourStr, endMinStr] = userShiftEnd.split(':');
+      const targetEndHour = parseInt(endHourStr, 10) || 18;
+      const targetEndMin = parseInt(endMinStr, 10) || 0;
+      const totalShiftEndMinutes = targetEndHour * 60 + targetEndMin;
+      const totalCheckOutMinutes = (parseInt(outHourStr, 10) || 0) * 60 + (parseInt(outMinStr, 10) || 0);
+
+      if (totalCheckOutMinutes < totalShiftEndMinutes) {
+        isEarlyLeave = true;
+      } else {
+        isAutoCheckOut = true;
+      }
+    }
+
+    const manualReason = reason || 'Forgot to punch in - manually recorded by HR/MD';
+
+    let record = await Attendance.findOne({ workspace: workspaceId, user: userId, date });
+    if (!record) {
+      record = new Attendance({
+        workspace: workspaceId,
+        user: userId,
+        date,
+        checkIn: checkInDate,
+        checkOut: checkOutDate || null,
+        status: status || 'Present',
+        isLate,
+        lateMinutes,
+        isEarlyLeave,
+        isAutoCheckOut,
+        isManualPunchIn: true,
+        manualPunchInBy: req.user._id,
+        manualPunchInAt: new Date(),
+        manualPunchInReason: manualReason
+      });
+    } else {
+      record.checkIn = checkInDate;
+      if (checkOutDate) {
+        record.checkOut = checkOutDate;
+        record.isEarlyLeave = isEarlyLeave;
+        record.isAutoCheckOut = isAutoCheckOut;
+      }
+      record.status = status || record.status || 'Present';
+      record.isLate = isLate;
+      record.lateMinutes = lateMinutes;
+      record.isManualPunchIn = true;
+      record.manualPunchInBy = req.user._id;
+      record.manualPunchInAt = new Date();
+      record.manualPunchInReason = manualReason;
+    }
+
+    record._allowManualPunchIn = true;
+    await record.save();
+
+    await record.populate('user', 'name email designation shiftStartTime shiftEndTime avatar');
+    await record.populate('overtimeApprovedBy', 'name email designation role');
+    await record.populate('manualPunchInBy', 'name email designation role');
+
+    // Create Audit Log
+    try {
+      const roleTitle = (req.user.role === 'super_admin' || currentMember?.role === 'super_admin') ? 'Managing Director (MD)' : 'HR';
+      await AuditLog.create({
+        workspace: workspaceId,
+        user: req.user._id,
+        action: 'MANUAL_PUNCH_IN',
+        entityType: 'Attendance',
+        entityId: record._id,
+        details: `Manual punch-in recorded by ${req.user.name} (${roleTitle}) for ${employee.name} on ${date} at ${inH}:${inM}. Reason: ${manualReason}`
+      });
+    } catch (auditErr) {
+      console.error('Failed to log audit for manual punch:', auditErr);
+    }
+
+    // Send notifications
+    try {
+      const isSelf = String(userId) === String(req.user._id);
+      if (!isSelf) {
+        // Notify employee/TL that HR/MD recorded their punch in
+        await sendNotification(
+          req,
+          userId,
+          'general',
+          'Punch-In Recorded Manually',
+          `Your punch-in for ${date} was manually recorded by ${req.user.name} (${req.user.role === 'super_admin' ? 'MD' : 'HR'}).`,
+          '/attendance'
+        );
+      } else {
+        // HR recorded her own punch in -> Notify MD
+        const mds = await User.find({ role: 'super_admin', _id: { $ne: req.user._id } }).select('_id');
+        for (const md of mds) {
+          await sendNotification(
+            req,
+            md._id,
+            'general',
+            'HR Manual Punch-In',
+            `HR ${req.user.name} has recorded a manual punch-in for herself on ${date} at ${inH}:${inM}.`,
+            '/attendance'
+          );
+        }
+      }
+    } catch (notifErr) {
+      console.error('Failed to send notifications for manual punch:', notifErr);
+    }
+
+    if (req.io) {
+      req.io.emit('attendance_updated', record);
+    }
+
+    res.status(200).json({
+      message: `Manual punch-in successfully recorded for ${employee.name}`,
+      record
+    });
+  } catch (error) {
+    console.error('Error recording manual punch-in:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 

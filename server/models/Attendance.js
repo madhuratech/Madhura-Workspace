@@ -65,6 +65,22 @@ const attendanceSchema = new mongoose.Schema({
   overtimeApprovedAt: {
     type: Date
   },
+  // ── Manual Punch In by HR / MD ──────────────────────────────────────────
+  isManualPunchIn: {
+    type: Boolean,
+    default: false
+  },
+  manualPunchInBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  manualPunchInAt: {
+    type: Date
+  },
+  manualPunchInReason: {
+    type: String,
+    default: ''
+  },
   // ── Cryptographic Anti-Tamper Security ──────────────────────────────────────
   tamperSeal: {
     type: String, // HMAC-SHA256 signature calculated from canonical record state
@@ -109,8 +125,8 @@ attendanceSchema.pre('save', function () {
   const { generateAttendanceSeal, createEncryptedVault } = require('../utils/attendanceSecurity');
 
   if (!this.isNew) {
-    // 1. Check-in cannot be edited once punched in
-    if (this._initialCheckIn !== null && this.checkIn) {
+    // 1. Check-in cannot be edited once punched in (unless authorized manual punch-in by HR/MD)
+    if (this._initialCheckIn !== null && this.checkIn && !this._allowManualPunchIn) {
       const currentCheckInTime = new Date(this.checkIn).getTime();
       if (currentCheckInTime !== this._initialCheckIn) {
         throw new Error('IMMUTABLE_PUNCH_IN: Punch-in timestamp is permanently locked and cannot be edited.');
@@ -134,8 +150,8 @@ attendanceSchema.pre('save', function () {
   // 3. Mark punch in permanently locked
   if (this.checkIn) {
     this.isPunchInLocked = true;
-    // Lock original punch-in state inside encrypted vault if not already locked
-    if (!this.encryptedVault) {
+    // Lock original punch-in state inside encrypted vault if not already locked (or refresh on manual punch authorized)
+    if (!this.encryptedVault || this._allowManualPunchIn) {
       this.encryptedVault = createEncryptedVault(this);
     }
   }
