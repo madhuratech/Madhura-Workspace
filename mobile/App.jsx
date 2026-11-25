@@ -223,6 +223,12 @@ function RootNavigator() {
 
   useEffect(() => {
     if (user) {
+      // In Expo Go on Android (SDK 53+), remote push notifications were removed by Expo
+      if (isRunningInExpoGo() && Platform.OS === 'android') {
+        console.log('[PUSH] Android push notifications are disabled in Expo Go. Use EAS/development build for push.');
+        return;
+      }
+
       // 1. Prompt and register for push notifications
       registerForPushNotificationsAsync().catch(err => {
         console.log('[PUSH] Registration skipped or failed:', err?.message);
