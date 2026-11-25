@@ -1,11 +1,13 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   Modal,
   StyleSheet,
-  TouchableOpacity,
+  View,
   Animated,
   StatusBar,
   Dimensions,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -18,43 +20,54 @@ const INTRO_HTML = `<!DOCTYPE html>
 <style>
 :root{--bg1:#ffffff;--bg2:#e9edf6;--navy:#212d52;--gold:#ffc61c;--tag:#5b6075;--sh:rgba(33,45,82,.22);box-sizing:border-box;-webkit-user-select:none;user-select:none}
 @media (prefers-color-scheme:dark){:root{--bg1:#171f3b;--bg2:#080b16;--navy:#f2f5ff;--tag:#a9b0cc;--sh:rgba(0,0,0,.55)}}
-html,body{height:100%;margin:0;padding:0;overflow:hidden}
-body{background:radial-gradient(ellipse at 50% 42%,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-.stage{perspective:1400px;width:min(80vw,320px);position:relative;display:flex;align-items:center;justify-content:center}
-.logo{position:relative;width:100%;aspect-ratio:400/105;transform-style:preserve-3d;container-type:inline-size;transition:transform 0.15s ease-out}
-.ly,.emb{position:absolute;inset:0;transform-style:preserve-3d;opacity:0}
+*{box-sizing:border-box}
+html,body{height:100%;width:100%;margin:0;padding:0;overflow:hidden}
+body{background:radial-gradient(ellipse at 50% 42%,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;cursor:pointer}
+.stage{-webkit-perspective:1200px;perspective:1200px;width:min(86vw,340px);position:relative;display:flex;align-items:center;justify-content:center}
+.logo{position:relative;width:100%;aspect-ratio:400/105;-webkit-transform-style:preserve-3d;transform-style:preserve-3d;transition:transform 0.15s ease-out}
+.ly,.emb{position:absolute;inset:0;-webkit-transform-style:preserve-3d;transform-style:preserve-3d;opacity:0}
 .ly svg{width:100%;height:100%;display:block;overflow:visible}
 .nv{fill:var(--navy)}.gd{fill:var(--gold)}
-.emb{transform-origin:13% 52%}
+.emb{transform-origin:13% 52%;-webkit-transform-origin:13% 52%}
 .emb .ly{opacity:1}
-.disc svg{filter:drop-shadow(0 1.2cqw 1.6cqw rgba(255,198,28,.38))}
-.wave{transform:translateZ(14px)}
+.disc svg{filter:drop-shadow(0 4px 6px rgba(255,198,28,.38));-webkit-filter:drop-shadow(0 4px 6px rgba(255,198,28,.38))}
+.wave{-webkit-transform:translateZ(14px);transform:translateZ(14px)}
 .wave path{fill:none;stroke:#212d52;stroke-width:4.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1}
-.wave circle{fill:#212d52;transform-box:fill-box;transform-origin:center;transform:scale(0)}
-.sw{transform-origin:0 50%}
+.wave circle{fill:#212d52;transform-box:fill-box;transform-origin:center;-webkit-transform-origin:center;transform:scale(0);-webkit-transform:scale(0)}
+.sw{transform-origin:0 50%;-webkit-transform-origin:0 50%}
 .sw line{stroke:var(--gold);stroke-width:3;stroke-linecap:round}
-.l0{transform-origin:36% 50%}.l1{transform-origin:47% 50%}.hook{transform-origin:60% 50%}.l3{transform-origin:69% 50%}.l4{transform-origin:83% 50%}.l6{transform-origin:97% 50%}
-.tag{position:absolute;right:1%;top:68%;font-weight:600;font-size:2.55cqw;letter-spacing:.07em;color:var(--tag);white-space:nowrap;opacity:0}
+.l0{transform-origin:36% 50%;-webkit-transform-origin:36% 50%}.l1{transform-origin:47% 50%;-webkit-transform-origin:47% 50%}.hook{transform-origin:60% 50%;-webkit-transform-origin:60% 50%}.l3{transform-origin:69% 50%;-webkit-transform-origin:69% 50%}.l4{transform-origin:83% 50%;-webkit-transform-origin:83% 50%}.l6{transform-origin:97% 50%;-webkit-transform-origin:97% 50%}
+.tag{position:absolute;right:1%;top:68%;font-weight:600;font-size:min(2.8vw,11px);letter-spacing:.07em;color:var(--tag);white-space:nowrap;opacity:0}
 .ring{position:absolute;left:13%;top:52%;width:24%;aspect-ratio:1;margin:-12% 0 0 -12%;border-radius:50%;border:2px solid var(--gold);opacity:0}
-.floor{position:absolute;left:8%;right:8%;bottom:-14%;height:8%;border-radius:50%;background:radial-gradient(ellipse,var(--sh),transparent 70%);opacity:0;transform:scale(.6)}
-.play .floor{animation:floor 1.6s ease-out 2.6s forwards}
-.play .ring{animation:ring 1.3s ease-out 2.05s forwards}
-.play .emb{animation:emb 2.1s cubic-bezier(.16,.84,.24,1) .2s forwards,float 5s ease-in-out 3.2s infinite}
-.play .wave path{animation:draw 1.2s cubic-bezier(.5,0,.3,1) 1.5s forwards}
-.play .wave circle{animation:pop .6s cubic-bezier(.3,1.9,.5,1) 2.55s forwards}
-.play .l0,.play .l1,.play .hook,.play .l3,.play .l4,.play .l6{animation:letter 1.1s cubic-bezier(.2,.9,.25,1.08) forwards}
-.play .l0{animation-delay:2.2s}.play .l1{animation-delay:2.33s}.play .hook{animation-delay:2.46s}.play .l3{animation-delay:2.59s}.play .l4{animation-delay:2.72s}.play .l6{animation-delay:2.85s}
-.play .sw{animation:wipe 1s cubic-bezier(.3,.7,.2,1) 3.3s forwards}
-.play .tag{animation:tag 1.1s ease-out 3.75s forwards}
-@keyframes emb{0%{opacity:0;transform:translateZ(-1400px) translateX(-25%) rotateY(-720deg) rotateX(30deg) scale(.3)}45%{opacity:1}100%{opacity:1;transform:none}}
-@keyframes float{0%,100%{transform:translateY(0) rotateY(-6deg)}50%{transform:translateY(-1.6%) rotateY(6deg)}}
+.floor{position:absolute;left:8%;right:8%;bottom:-14%;height:8%;border-radius:50%;background:radial-gradient(ellipse,var(--sh),transparent 70%);opacity:0;transform:scale(.6);-webkit-transform:scale(.6)}
+.play .floor{animation:floor 1.6s ease-out 2.6s forwards;-webkit-animation:floor 1.6s ease-out 2.6s forwards}
+.play .ring{animation:ring 1.3s ease-out 2.05s forwards;-webkit-animation:ring 1.3s ease-out 2.05s forwards}
+.play .emb{animation:emb 2.1s cubic-bezier(.16,.84,.24,1) .2s forwards,float 5s ease-in-out 3.2s infinite;-webkit-animation:emb 2.1s cubic-bezier(.16,.84,.24,1) .2s forwards,float 5s ease-in-out 3.2s infinite}
+.play .wave path{animation:draw 1.2s cubic-bezier(.5,0,.3,1) 1.5s forwards;-webkit-animation:draw 1.2s cubic-bezier(.5,0,.3,1) 1.5s forwards}
+.play .wave circle{animation:pop .6s cubic-bezier(.3,1.9,.5,1) 2.55s forwards;-webkit-animation:pop .6s cubic-bezier(.3,1.9,.5,1) 2.55s forwards}
+.play .l0,.play .l1,.play .hook,.play .l3,.play .l4,.play .l6{animation:letter 1.1s cubic-bezier(.2,.9,.25,1.08) forwards;-webkit-animation:letter 1.1s cubic-bezier(.2,.9,.25,1.08) forwards}
+.play .l0{animation-delay:2.2s;-webkit-animation-delay:2.2s}.play .l1{animation-delay:2.33s;-webkit-animation-delay:2.33s}.play .hook{animation-delay:2.46s;-webkit-animation-delay:2.46s}.play .l3{animation-delay:2.59s;-webkit-animation-delay:2.59s}.play .l4{animation-delay:2.72s;-webkit-animation-delay:2.72s}.play .l6{animation-delay:2.85s;-webkit-animation-delay:2.85s}
+.play .sw{animation:wipe 1s cubic-bezier(.3,.7,.2,1) 3.3s forwards;-webkit-animation:wipe 1s cubic-bezier(.3,.7,.2,1) 3.3s forwards}
+.play .tag{animation:tag 1.1s ease-out 3.75s forwards;-webkit-animation:tag 1.1s ease-out 3.75s forwards}
+@keyframes emb{0%{opacity:0;transform:translate3d(-15%,0,-400px) rotateY(-540deg) rotateX(25deg) scale(.4)}45%{opacity:1}100%{opacity:1;transform:translate3d(0,0,0) rotateY(0deg) rotateX(0deg) scale(1)}}
+@-webkit-keyframes emb{0%{opacity:0;-webkit-transform:translate3d(-15%,0,-400px) rotateY(-540deg) rotateX(25deg) scale(.4)}45%{opacity:1}100%{opacity:1;-webkit-transform:translate3d(0,0,0) rotateY(0deg) rotateX(0deg) scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0) rotateY(-5deg)}50%{transform:translateY(-1.5%) rotateY(5deg)}}
+@-webkit-keyframes float{0%,100%{-webkit-transform:translateY(0) rotateY(-5deg)}50%{-webkit-transform:translateY(-1.5%) rotateY(5deg)}}
 @keyframes draw{to{stroke-dashoffset:0}}
-@keyframes pop{to{transform:scale(1)}}
-@keyframes ring{0%{opacity:.8;transform:scale(.7)}100%{opacity:0;transform:scale(1.6)}}
-@keyframes letter{0%{opacity:0;transform:translate3d(0,35%,-800px) rotateX(-95deg)}100%{opacity:1;transform:none}}
-@keyframes wipe{from{opacity:1;clip-path:inset(-10% 100% -10% 0)}to{opacity:1;clip-path:inset(-10% -2% -10% 0)}}
-@keyframes tag{from{opacity:0;transform:translateY(40%);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
-@keyframes floor{to{opacity:1;transform:scale(1)}}
+@-webkit-keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{to{transform:scale(1);-webkit-transform:scale(1)}}
+@-webkit-keyframes pop{to{transform:scale(1);-webkit-transform:scale(1)}}
+@keyframes ring{0%{opacity:.8;transform:scale(.7);-webkit-transform:scale(.7)}100%{opacity:0;transform:scale(1.6);-webkit-transform:scale(1.6)}}
+@-webkit-keyframes ring{0%{opacity:.8;-webkit-transform:scale(.7)}100%{opacity:0;-webkit-transform:scale(1.6)}}
+@keyframes letter{0%{opacity:0;transform:translate3d(0,30%,-300px) rotateX(-90deg)}100%{opacity:1;transform:translate3d(0,0,0) rotateX(0deg)}}
+@-webkit-keyframes letter{0%{opacity:0;-webkit-transform:translate3d(0,30%,-300px) rotateX(-90deg)}100%{opacity:1;-webkit-transform:translate3d(0,0,0) rotateX(0deg)}}
+@keyframes wipe{from{opacity:1;clip-path:inset(-10% 100% -10% 0);-webkit-clip-path:inset(-10% 100% -10% 0)}to{opacity:1;clip-path:inset(-10% -2% -10% 0);-webkit-clip-path:inset(-10% -2% -10% 0)}}
+@-webkit-keyframes wipe{from{opacity:1;-webkit-clip-path:inset(-10% 100% -10% 0)}to{opacity:1;-webkit-clip-path:inset(-10% -2% -10% 0)}}
+@keyframes tag{from{opacity:0;transform:translateY(30%);-webkit-transform:translateY(30%)}to{opacity:1;transform:none;-webkit-transform:none}}
+@-webkit-keyframes tag{from{opacity:0;-webkit-transform:translateY(30%)}to{opacity:1;-webkit-transform:none}}
+@keyframes floor{to{opacity:1;transform:scale(1);-webkit-transform:scale(1)}}
+@-webkit-keyframes floor{to{opacity:1;-webkit-transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.play *{animation-duration:.01s!important;animation-delay:0s!important;-webkit-animation-duration:.01s!important;-webkit-animation-delay:0s!important}}
 </style></head><body>
 <div class="stage"><div class="logo play" id="logo">
 <div class="floor"></div><div class="ring"></div>
@@ -67,25 +80,45 @@ body{background:radial-gradient(ellipse at 50% 42%,var(--bg1),var(--bg2));displa
 <div class="tag">Technologies Pvt. Ltd.</div>
 </div></div>
 <script>
+function sendClose(){
+  try{
+    if(window.ReactNativeWebView && window.ReactNativeWebView.postMessage){
+      window.ReactNativeWebView.postMessage('close');
+    }
+  }catch(e){}
+}
+document.addEventListener('click',sendClose);
+document.addEventListener('touchstart',sendClose,{passive:true});
 var logo=document.getElementById('logo');
-window.addEventListener('click',function(){
-  if(window.ReactNativeWebView){
-    window.ReactNativeWebView.postMessage('close');
-  }
-});
 window.addEventListener('touchmove',function(e){
-  if(e.touches.length>0){
+  if(e.touches && e.touches.length>0){
     var t=e.touches[0];
-    logo.style.transform='rotateY('+((t.clientX/innerWidth-.5)*16)+'deg) rotateX('+((t.clientY/innerHeight-.5)*-12)+'deg)';
+    var rotY=((t.clientX/window.innerWidth)-.5)*16;
+    var rotX=((t.clientY/window.innerHeight)-.5)*-12;
+    logo.style.transform='rotateY('+rotY+'deg) rotateX('+rotX+'deg)';
   }
 },{passive:true});
 window.addEventListener('touchend',function(){
   logo.style.transform='rotateY(0deg) rotateX(0deg)';
-});
+},{passive:true});
 </script></body></html>`;
 
-const LogoIntroContent = ({ onClose, autoDismissAfter = 5000 }) => {
+const LogoIntroContent = ({ onClose, autoDismissAfter = 4500 }) => {
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [webViewLoaded, setWebViewLoaded] = useState(false);
+  const dismissedRef = useRef(false);
+
+  const handleDismiss = () => {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      if (onClose) onClose();
+    });
+  };
 
   useEffect(() => {
     let timer;
@@ -99,27 +132,18 @@ const LogoIntroContent = ({ onClose, autoDismissAfter = 5000 }) => {
     };
   }, [autoDismissAfter]);
 
-  const handleDismiss = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 350,
-      useNativeDriver: true,
-    }).start(() => {
-      if (onClose) onClose();
-    });
-  };
-
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent />
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={handleDismiss}
+      
+      {/* WebView Container */}
+      <View 
         style={StyleSheet.absoluteFillObject}
+        onTouchEnd={handleDismiss}
       >
         <WebView
           originWhitelist={['*']}
-          source={{ html: INTRO_HTML }}
+          source={{ html: INTRO_HTML, baseUrl: 'https://localhost' }}
           style={styles.webview}
           javaScriptEnabled={true}
           domStorageEnabled={true}
@@ -128,13 +152,33 @@ const LogoIntroContent = ({ onClose, autoDismissAfter = 5000 }) => {
           overScrollMode="never"
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
+          androidHardwareAccelerationDisabled={false}
+          androidLayerType="hardware"
+          mixedContentMode="always"
+          onLoadEnd={() => setWebViewLoaded(true)}
+          onError={() => handleDismiss()}
+          onHttpError={() => handleDismiss()}
           onMessage={(e) => {
             if (e.nativeEvent.data === 'close') {
               handleDismiss();
             }
           }}
         />
-      </TouchableOpacity>
+      </View>
+
+      {/* Smooth native fallback while WebView engine boots up (guarantees zero blank screen) */}
+      {!webViewLoaded && (
+        <View style={styles.placeholderContainer} pointerEvents="none">
+          <View style={styles.logoBadge}>
+            <Image
+              source={require('../../assets/logo.jpeg')}
+              style={styles.placeholderLogo}
+              resizeMode="contain"
+            />
+          </View>
+          <ActivityIndicator size="small" color="#1b2b4c" style={{ marginTop: 16 }} />
+        </View>
+      )}
     </Animated.View>
   );
 };
@@ -149,12 +193,12 @@ export const LogoIntroModal = ({ visible, onClose }) => {
       transparent={false}
       onRequestClose={onClose}
     >
-      <LogoIntroContent onClose={onClose} autoDismissAfter={5000} />
+      <LogoIntroContent onClose={onClose} autoDismissAfter={4500} />
     </Modal>
   );
 };
 
-export const LogoIntroSplash = ({ onFinish, autoDismissAfter = 5000 }) => {
+export const LogoIntroSplash = ({ onFinish, autoDismissAfter = 4500 }) => {
   return (
     <LogoIntroContent
       onClose={onFinish}
@@ -172,7 +216,34 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: '#ffffff',
+  },
+  placeholderContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  logoBadge: {
+    width: 88,
+    height: 88,
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#1b2b4c',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 6,
+    borderWidth: 1.5,
+    borderColor: '#f1f5f9',
+  },
+  placeholderLogo: {
+    width: 68,
+    height: 68,
+    borderRadius: 18,
   },
 });
 
