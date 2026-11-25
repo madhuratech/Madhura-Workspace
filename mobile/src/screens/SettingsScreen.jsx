@@ -6,10 +6,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Settings, LogOut, User, Bell, Shield, HelpCircle,
-  ChevronRight, ArrowLeft, Info, UserPlus, Lock, Key, Mail, MessageSquare, Phone
+  ChevronRight, ArrowLeft, Info, UserPlus, Lock, Key, Mail, MessageSquare, Phone, Sparkles
 } from 'lucide-react-native';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
+import LogoIntroModal from '../components/LogoIntroModal';
 
 const PRIMARY = '#1b2b4c';
 const ACCENT = '#ffca22';
@@ -59,6 +60,7 @@ export default function SettingsScreen({ navigation }) {
   
   const [isHelpModalVisible, setHelpModalVisible] = useState(false);
   const [isAboutModalVisible, setAboutModalVisible] = useState(false);
+  const [isIntroModalVisible, setIntroModalVisible] = useState(false);
   
   const [isPersonalInfoModalVisible, setPersonalInfoModalVisible] = useState(false);
   const [isNotificationsModalVisible, setNotificationsModalVisible] = useState(false);
@@ -88,6 +90,7 @@ export default function SettingsScreen({ navigation }) {
     {
       title: 'Support',
       items: [
+        { icon: Sparkles,    label: 'Workspace 3D Intro',   sub: 'Experience the 3D animated intro', iconBg: '#FEF9C3', iconColor: '#CA8A04', onPress: () => setIntroModalVisible(true) },
         { icon: HelpCircle,  label: 'Help & Support',       sub: 'FAQs and contact us',           iconBg: '#F8FAFC', iconColor: '#64748B', onPress: () => setHelpModalVisible(true) },
         { icon: Info,        label: 'About',                sub: 'App version and licenses',       iconBg: '#F1F5F9', iconColor: '#475569', onPress: () => setAboutModalVisible(true) },
       ],
@@ -361,21 +364,56 @@ export default function SettingsScreen({ navigation }) {
               </TouchableOpacity>
             </View>
             <View style={{ alignItems: 'center', marginBottom: 20 }}>
-              <View style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: PRIMARY, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => {
+                  setAboutModalVisible(false);
+                  setIntroModalVisible(true);
+                }}
+                style={{ width: 80, height: 80, borderRadius: 20, backgroundColor: PRIMARY, justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}
+              >
                 <Text style={{ color: '#fff', fontSize: 32, fontWeight: '800' }}>M</Text>
-              </View>
+              </TouchableOpacity>
               <Text style={{ fontSize: 20, fontWeight: '700', color: '#111827' }}>Madhura Workspace</Text>
               <Text style={{ fontSize: 14, color: '#64748B', marginTop: 4 }}>Version 1.0.0 (Build 42)</Text>
             </View>
+
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                setAboutModalVisible(false);
+                setIntroModalVisible(true);
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                backgroundColor: '#ffca22',
+                paddingVertical: 12,
+                borderRadius: 14,
+                marginBottom: 16,
+              }}
+            >
+              <Sparkles color="#1b2b4c" size={18} />
+              <Text style={{ color: '#1b2b4c', fontWeight: '800', fontSize: 14 }}>Play 3D Workspace Intro</Text>
+            </TouchableOpacity>
+
             <Text style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', lineHeight: 20 }}>
               © 2026 Madhura Technologies. All rights reserved.
             </Text>
-            <TouchableOpacity style={[styles.saveBtn, { marginTop: 24 }]} onPress={() => setAboutModalVisible(false)}>
+            <TouchableOpacity style={[styles.saveBtn, { marginTop: 16 }]} onPress={() => setAboutModalVisible(false)}>
               <Text style={styles.saveBtnText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+
+      {/* 3D Logo Intro Fullscreen Modal */}
+      <LogoIntroModal
+        visible={isIntroModalVisible}
+        onClose={() => setIntroModalVisible(false)}
+      />
 
     </SafeAreaView>
   );

@@ -3,12 +3,13 @@ import axios from 'axios';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2, HelpCircle, Sparkles } from 'lucide-react';
 import GlobalQuickNotes from './GlobalQuickNotes';
 import Avatar from './Avatar';
 import NotificationCenter from './notifications/NotificationCenter';
 import NotificationToast from './notifications/NotificationToast';
 import HelpGuideModal from './HelpGuideModal';
+import LogoIntro from './LogoIntro';
 
 const Layout = () => {
   const { user, logout, socket, updateUserStatus } = useContext(AuthContext);
@@ -21,6 +22,13 @@ const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showQuickNote, setShowQuickNote] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
+  const [showIntroModal, setShowIntroModal] = useState(false);
+
+  useEffect(() => {
+    const handleOpenIntro = () => setShowIntroModal(true);
+    window.addEventListener('open-workspace-intro', handleOpenIntro);
+    return () => window.removeEventListener('open-workspace-intro', handleOpenIntro);
+  }, []);
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -215,8 +223,12 @@ const Layout = () => {
 
         {/* Logo area */}
         <div className="flex items-center md:w-[240px]">
-          <div className="bg-white rounded-xl flex items-center justify-center hidden sm:flex px-2 py-1 w-fit shadow-sm">
-            <img src="/Madhura-logo.webp" alt="Madhura Logo" className="h-9 w-auto object-contain" />
+          <div 
+            onClick={() => setShowIntroModal(true)}
+            title="Click to play Workspace 3D Intro"
+            className="bg-white rounded-xl flex items-center justify-center hidden sm:flex px-2 py-1 w-fit shadow-sm cursor-pointer hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
+          >
+            <img src="/Madhura-logo.webp" alt="Madhura Logo" className="h-9 w-auto object-contain transition-transform group-hover:scale-105" />
           </div>
         </div>
 
@@ -536,6 +548,41 @@ const Layout = () => {
                       <HelpCircle size={15} style={{ color: '#4285F4' }} />
                       <span>Knowledge Transfer (KT) Guide</span>
                     </button>
+
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        setShowIntroModal(true);
+                      }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '9px 12px',
+                        background: 'rgba(255,198,28,0.1)',
+                        border: '1px solid rgba(255,198,28,0.25)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        color: '#ffc61c',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textAlign: 'left',
+                        marginTop: '6px',
+                        transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'rgba(255, 198, 28, 0.2)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 198, 28, 0.45)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'rgba(255, 198, 28, 0.1)';
+                        e.currentTarget.style.borderColor = 'rgba(255, 198, 28, 0.25)';
+                      }}
+                    >
+                      <Sparkles size={15} style={{ color: '#ffc61c' }} />
+                      <span>Workspace 3D Intro</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -704,12 +751,19 @@ const Layout = () => {
           </nav>
 
           {/* KT & Help Center Button at bottom of sidebar */}
-          <div className="p-3 border-t border-border/50 mt-auto">
+          <div className="p-3 border-t border-border/50 mt-auto flex flex-col gap-2">
+            <button
+              onClick={() => setShowIntroModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-[#ffc61c] bg-[#ffc61c]/10 hover:bg-[#ffc61c]/20 border border-[#ffc61c]/30 transition-all cursor-pointer shadow-sm active:scale-95 group"
+            >
+              <Sparkles size={14} className="group-hover:scale-110 transition-transform text-[#ffc61c]" />
+              <span>Workspace 3D Intro</span>
+            </button>
             <button
               onClick={() => setShowHelpGuide(true)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 transition-all cursor-pointer shadow-sm active:scale-95 group"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 transition-all cursor-pointer shadow-sm active:scale-95 group"
             >
-              <HelpCircle size={15} className="group-hover:scale-110 transition-transform" />
+              <HelpCircle size={14} className="group-hover:scale-110 transition-transform" />
               <span>KT & Help Center</span>
             </button>
           </div>
@@ -735,6 +789,14 @@ const Layout = () => {
 
       {/* Global Knowledge Transfer & Help Guide Modal */}
       <HelpGuideModal isOpen={showHelpGuide} onClose={() => setShowHelpGuide(false)} />
+
+      {/* Global 3D Logo Intro Modal */}
+      {showIntroModal && (
+        <LogoIntro
+          onClose={() => setShowIntroModal(false)}
+          autoDismissAfter={5200}
+        />
+      )}
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-bg-sidebar border-t border-border shadow-[0_-4px_10px_rgba(0,0,0,0.1)] z-40 pb-[env(safe-area-inset-bottom)]">

@@ -208,119 +208,12 @@ function TabNavigator() {
   );
 }
 
-const AnimatedSplashScreen = ({ onFinish }) => {
-  const logoScale = useRef(new Animated.Value(0.7)).current;
-  const logoOpacity = useRef(new Animated.Value(0)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const textTranslateY = useRef(new Animated.Value(15)).current;
-  const tagOpacity = useRef(new Animated.Value(0)).current;
-  const containerOpacity = useRef(new Animated.Value(1)).current;
 
-  useEffect(() => {
-    // 1. Logo scale & fade in
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(logoOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.spring(logoScale, { toValue: 1, friction: 6, tension: 50, useNativeDriver: true })
-      ]),
-      // 2. Text slide and fade in
-      Animated.parallel([
-        Animated.timing(textOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.spring(textTranslateY, { toValue: 0, friction: 6, tension: 60, useNativeDriver: true })
-      ]),
-      // 3. Tagline fade in
-      Animated.timing(tagOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-      // 4. Hold briefly for a smooth clean look
-      Animated.delay(400),
-      // 5. Fade out splash cleanly
-      Animated.timing(containerOpacity, { toValue: 0, duration: 300, useNativeDriver: true })
-    ]).start(() => {
-      if (onFinish) onFinish();
-    });
-  }, []);
-
-  return (
-    <Animated.View style={[splashStyles.container, { opacity: containerOpacity }]}>
-      <StatusBar style="dark" backgroundColor="transparent" translucent />
-      <Animated.View style={[splashStyles.logoContainer, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
-        <Image 
-          source={require('./assets/logo.jpeg')} 
-          style={splashStyles.logo}
-          resizeMode="contain"
-        />
-      </Animated.View>
-
-      <Animated.View style={[splashStyles.textContainer, { opacity: textOpacity, transform: [{ translateY: textTranslateY }] }]}>
-        <Text style={splashStyles.brandTitle}>
-          Madhura<Text style={{ color: '#ffca22' }}>Workspace</Text>
-        </Text>
-      </Animated.View>
-
-      <Animated.View style={[splashStyles.tagContainer, { opacity: tagOpacity }]}>
-        <Text style={splashStyles.tagText}>ENTERPRISE WORKSPACE</Text>
-        <ActivityIndicator size="small" color="#1b2b4c" style={{ marginTop: 16 }} />
-      </Animated.View>
-    </Animated.View>
-  );
-};
-
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const splashStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
-  },
-  logoContainer: {
-    width: 104,
-    height: 104,
-    borderRadius: 30,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#1b2b4c',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 8,
-    borderWidth: 1.5,
-    borderColor: '#F1F5F9',
-    marginBottom: 22,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 22,
-  },
-  textContainer: {
-    alignItems: 'center',
-  },
-  brandTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#1b2b4c',
-    letterSpacing: -0.5,
-  },
-  tagContainer: {
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#64748B',
-    letterSpacing: 3,
-  }
-});
 
 import * as Notifications from 'expo-notifications';
 import { isRunningInExpoGo } from 'expo';
 import { registerForPushNotificationsAsync } from './src/utils/notifications';
+import { LogoIntroSplash } from './src/components/LogoIntroModal';
 
 const navigationRef = React.createRef();
 
@@ -416,7 +309,7 @@ export default function App() {
                 <RootNavigator />
               </NavigationContainer>
             ) : (
-              <AnimatedSplashScreen onFinish={() => setSplashFinished(true)} />
+              <LogoIntroSplash onFinish={() => setSplashFinished(true)} autoDismissAfter={5000} />
             )}
           </View>
           <Toast />

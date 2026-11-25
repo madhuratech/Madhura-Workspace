@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ScrollView, Animated,
@@ -6,9 +6,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   FileText, Users, Settings, ChevronRight,
-  CalendarDays, Mail, Clock, LogOut, User, BarChart3, LifeBuoy, Megaphone, StickyNote, CheckSquare
+  CalendarDays, Mail, Clock, LogOut, User, BarChart3, LifeBuoy, Megaphone, StickyNote, CheckSquare, Sparkles
 } from 'lucide-react-native';
 import { AuthContext } from '../context/AuthContext';
+import LogoIntroModal from '../components/LogoIntroModal';
 
 const PRIMARY = '#5B5BD6';
 
@@ -47,6 +48,7 @@ const MenuItem = ({ item, onPress, delay }) => {
 
 export default function MoreScreen({ navigation }) {
   const { logout, user } = useContext(AuthContext);
+  const [isIntroModalVisible, setIntroModalVisible] = useState(false);
 
   const role = user?.role || 'employee';
   const rc = ROLE_CFG[role] || ROLE_CFG.employee;
@@ -83,6 +85,7 @@ export default function MoreScreen({ navigation }) {
     {
       section: 'Account',
       items: [
+        { icon: Sparkles,     label: 'Workspace 3D Intro', sub: 'Experience the 3D animated intro', action: () => setIntroModalVisible(true), iconBg: '#FEF9C3', iconColor: '#CA8A04' },
         { icon: Settings,     label: 'Settings',          sub: 'App preferences',                 route: 'Settings',        iconBg: '#F9FAFB', iconColor: '#6B7280'   },
       ],
     },
@@ -142,10 +145,10 @@ export default function MoreScreen({ navigation }) {
               d += 35;
               return (
                 <MenuItem
-                  key={item.route}
+                  key={item.route || item.label}
                   item={item}
                   delay={delay}
-                  onPress={() => navigation.navigate(item.route)}
+                  onPress={() => (item.action ? item.action() : navigation.navigate(item.route))}
                 />
               );
             })}
@@ -163,9 +166,17 @@ export default function MoreScreen({ navigation }) {
           </TouchableOpacity>
         </Animated.View>
 
-        <Text style={styles.versionText}>Madhura Workspace · v1.0.0</Text>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => setIntroModalVisible(true)}>
+          <Text style={styles.versionText}>Madhura Workspace · v1.0.0 (Tap for 3D Intro)</Text>
+        </TouchableOpacity>
         <View style={{ height: 140 }} />
       </ScrollView>
+
+      {/* 3D Logo Intro Fullscreen Modal */}
+      <LogoIntroModal
+        visible={isIntroModalVisible}
+        onClose={() => setIntroModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }

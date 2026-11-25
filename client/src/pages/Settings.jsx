@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Save, Building, Users, Bell, Shield, Key, Lock, HelpCircle, Info, Mail, MessageSquare, Eye, EyeOff, Book, ArrowRight, FileText, Heart } from 'lucide-react';
+import { Save, Building, Users, Bell, Shield, Key, Lock, HelpCircle, Info, Mail, MessageSquare, Eye, EyeOff, Book, ArrowRight, FileText, Heart, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 
@@ -698,15 +698,28 @@ const Settings = () => {
                 
                 {/* Brand / Logo Section */}
                 <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
-                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-bg-secondary to-bg-primary border border-border flex items-center justify-center text-text-primary text-5xl font-bold shadow-xl mb-6 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-accent-blue/10"></div>
+                  <div 
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-workspace-intro'))}
+                    title="Click to play 3D Logo Intro"
+                    className="w-24 h-24 rounded-3xl bg-gradient-to-br from-bg-secondary to-bg-primary border border-border flex items-center justify-center text-text-primary text-5xl font-bold shadow-xl mb-4 relative overflow-hidden cursor-pointer hover:scale-105 active:scale-95 transition-all group"
+                  >
+                    <div className="absolute inset-0 bg-accent-blue/10 group-hover:bg-accent-blue/20 transition-colors"></div>
                     <span className="relative z-10 font-outfit">M</span>
                   </div>
                   
                   <h2 className="text-3xl font-bold text-text-primary tracking-tight font-outfit mb-2">Madhura Workspace</h2>
-                  <p className="text-sm text-text-secondary max-w-sm leading-relaxed mb-6">
+                  <p className="text-sm text-text-secondary max-w-sm leading-relaxed mb-4">
                     A premium, minimalist workspace management solution engineered for modern teams. Built with a focus on speed, aesthetics, and flawless collaboration.
                   </p>
+
+                  <button
+                    type="button"
+                    onClick={() => window.dispatchEvent(new CustomEvent('open-workspace-intro'))}
+                    className="mb-6 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#212d52] dark:bg-[#ffc61c] text-white dark:text-[#141b33] font-bold text-xs shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+                  >
+                    <Sparkles size={16} className="text-[#ffc61c] dark:text-[#141b33] animate-pulse" />
+                    <span>Play 3D Workspace Intro</span>
+                  </button>
 
                   <div className="flex items-center space-x-4 text-xs font-bold text-text-secondary uppercase tracking-wider">
                     <a href="#" className="hover:text-accent-blue transition-colors">Terms</a>

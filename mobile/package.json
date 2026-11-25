@@ -29,6 +29,7 @@
     "react-native-screens": "4.25.2",
     "react-native-svg": "^15.15.4",
     "react-native-toast-message": "^2.4.0",
+    "react-native-webview": "^14.0.1",
     "socket.io-client": "^4.8.3"
   },
   "scripts": {
