@@ -220,17 +220,8 @@ const Layout = () => {
         >
           <Menu size={22} />
         </button>
-
-        {/* Logo area */}
-        <div className="flex items-center md:w-[240px]">
-          <div 
-            onClick={() => setShowIntroModal(true)}
-            title="Click to play Workspace 3D Intro"
-            className="bg-white rounded-xl flex items-center justify-center hidden sm:flex px-2 py-1 w-fit shadow-sm cursor-pointer hover:shadow-md hover:scale-105 active:scale-95 transition-all group"
-          >
-            <img src="/Madhura-logo.webp" alt="Madhura Logo" className="h-9 w-auto object-contain transition-transform group-hover:scale-105" />
-          </div>
-        </div>
+  
+        
 
         {/* Global Search */}
         <div className="flex-1 max-w-xl mx-4 relative hidden sm:block" ref={searchRef}>
