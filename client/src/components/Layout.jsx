@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext';
-import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2, HelpCircle, Sparkles } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Settings, Users, CalendarDays, FileText, Search, Bell, Mail, Sun, Moon, BarChart3, Clock, CheckSquare, Circle, MessageSquare, Menu, X, Activity, Ticket, Megaphone, StickyNote, ChevronRight, Check, ExternalLink, UserCircle2, HelpCircle } from 'lucide-react';
 import GlobalQuickNotes from './GlobalQuickNotes';
 import Avatar from './Avatar';
 import NotificationCenter from './notifications/NotificationCenter';
@@ -539,41 +539,6 @@ const Layout = () => {
                       <HelpCircle size={15} style={{ color: '#4285F4' }} />
                       <span>Knowledge Transfer (KT) Guide</span>
                     </button>
-
-                    <button
-                      onClick={() => {
-                        setShowProfileMenu(false);
-                        setShowIntroModal(true);
-                      }}
-                      style={{
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '9px 12px',
-                        background: 'rgba(255,198,28,0.1)',
-                        border: '1px solid rgba(255,198,28,0.25)',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        color: '#ffc61c',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        textAlign: 'left',
-                        marginTop: '6px',
-                        transition: 'all 0.15s'
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.background = 'rgba(255, 198, 28, 0.2)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 198, 28, 0.45)';
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.background = 'rgba(255, 198, 28, 0.1)';
-                        e.currentTarget.style.borderColor = 'rgba(255, 198, 28, 0.25)';
-                      }}
-                    >
-                      <Sparkles size={15} style={{ color: '#ffc61c' }} />
-                      <span>Workspace 3D Intro</span>
-                    </button>
                   </div>
                 </div>
               </div>
@@ -742,14 +707,7 @@ const Layout = () => {
           </nav>
 
           {/* KT & Help Center Button at bottom of sidebar */}
-          <div className="p-3 border-t border-border/50 mt-auto flex flex-col gap-2">
-            <button
-              onClick={() => setShowIntroModal(true)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-[#ffc61c] bg-[#ffc61c]/10 hover:bg-[#ffc61c]/20 border border-[#ffc61c]/30 transition-all cursor-pointer shadow-sm active:scale-95 group"
-            >
-              <Sparkles size={14} className="group-hover:scale-110 transition-transform text-[#ffc61c]" />
-              <span>Workspace 3D Intro</span>
-            </button>
+          <div className="p-3 border-t border-border/50 mt-auto">
             <button
               onClick={() => setShowHelpGuide(true)}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20 border border-accent-blue/20 transition-all cursor-pointer shadow-sm active:scale-95 group"
