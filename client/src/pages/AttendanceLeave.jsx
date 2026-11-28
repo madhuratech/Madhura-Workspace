@@ -43,8 +43,21 @@ const AttendanceLeave = () => {
   const { user, socket } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   const [logView, setLogView] = useState('mine');
-  const [workspace, setWorkspace] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [workspace, setWorkspace] = useState(() => {
+    try {
+      const saved = localStorage.getItem('active_workspace');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem('active_workspace');
+    } catch {
+      return true;
+    }
+  });
   const [currentUserRole, setCurrentUserRole] = useState('employee');
   const [activeTab, setActiveTab] = useState('attendance');
   
@@ -100,6 +113,11 @@ const AttendanceLeave = () => {
   const isMDorHR = currentUserRole === 'super_admin' || currentUserRole === 'hr' || user?.role === 'super_admin' || user?.role === 'hr';
 
   useEffect(() => {
+    if (workspace?._id) {
+      fetchAttendance(workspace._id);
+      fetchLeaves(workspace._id);
+      fetchEarlyLeaves(workspace._id);
+    }
     fetchWorkspaceData();
   }, []);
 
@@ -133,9 +151,12 @@ const AttendanceLeave = () => {
   const fetchWorkspaceData = async () => {
     try {
       const wsRes = await axios.get('/workspaces');
-      if (wsRes.data.length > 0) {
+      if (wsRes.data && wsRes.data.length > 0) {
         const currentWs = wsRes.data[0];
         setWorkspace(currentWs);
+        try {
+          localStorage.setItem('active_workspace', JSON.stringify(currentWs));
+        } catch {}
         
         fetchAttendance(currentWs._id);
         fetchLeaves(currentWs._id);
@@ -149,9 +170,14 @@ const AttendanceLeave = () => {
         if (me) {
           setCurrentUserRole(me.role);
         }
+      } else if (Array.isArray(wsRes.data) && wsRes.data.length === 0) {
+        setWorkspace(null);
+        localStorage.removeItem('active_workspace');
       }
     } catch (error) {
       console.error('Error fetching workspace:', error);
+      // On error (such as 401 or network drop), preserve cached workspace state
+      // If session expired, AuthContext interceptor cleanly handles logout
     } finally {
       setLoading(false);
     }
@@ -881,7 +907,24 @@ const AttendanceLeave = () => {
       <p className="text-text-secondary font-medium">Loading workspace...</p>
     </div>
   );
-  if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
+  if (!workspace) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-bg-primary">
+        <div className="bg-bg-secondary p-8 rounded-3xl border border-border max-w-md w-full shadow-soft animate-in fade-in duration-200">
+          <h2 className="text-xl font-bold text-text-primary mb-2 font-outfit">No Workspace Found</h2>
+          <p className="text-text-secondary text-sm mb-6">
+            {isMDorHR ? 'Please create a workspace to manage attendance and leaves.' : 'Please contact your administrator to assign you to a workspace.'}
+          </p>
+          <button 
+            onClick={() => { setLoading(true); fetchWorkspaceData(); }} 
+            className="px-5 py-2.5 bg-accent-blue hover:bg-accent-indigo text-white rounded-xl font-semibold text-sm transition-all shadow-md active:scale-95"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col font-sans overflow-hidden bg-bg-primary">

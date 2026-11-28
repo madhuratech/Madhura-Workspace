@@ -64,10 +64,23 @@ const Team = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
   const location = useLocation();
-  const [workspace, setWorkspace] = useState(null);
+  const [workspace, setWorkspace] = useState(() => {
+    try {
+      const saved = localStorage.getItem('active_workspace');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [members, setMembers] = useState([]);
   const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !localStorage.getItem('active_workspace');
+    } catch {
+      return true;
+    }
+  });
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('tab') || localStorage.getItem('team_active_tab') || 'members';
@@ -300,12 +313,14 @@ const Team = () => {
 
   const fetchWorkspaceData = async () => {
     try {
-      setLoading(true);
       // Fetch all workspaces to get the first one for context
       const wsRes = await axios.get('/workspaces');
-      if (wsRes.data.length > 0) {
+      if (wsRes.data && wsRes.data.length > 0) {
         const currentWs = wsRes.data[0];
         setWorkspace(currentWs);
+        try {
+          localStorage.setItem('active_workspace', JSON.stringify(currentWs));
+        } catch {}
         
         // Fetch full workspace details and teams in parallel for high speed
         const [detailRes, teamsRes] = await Promise.all([
@@ -323,9 +338,13 @@ const Team = () => {
         if (me) {
           setCurrentUserRole(me.role);
         }
+      } else if (Array.isArray(wsRes.data) && wsRes.data.length === 0) {
+        setWorkspace(null);
+        localStorage.removeItem('active_workspace');
       }
     } catch (error) {
       console.error('Error fetching workspace:', error);
+      // On error (401 or network), retain cached workspace
     } finally {
       setLoading(false);
     }
@@ -461,7 +480,24 @@ const Team = () => {
       <p className="text-sm text-text-secondary font-medium">Loading workspace...</p>
     </div>
   );
-  if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
+  if (!workspace) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-bg-primary">
+        <div className="bg-bg-secondary p-8 rounded-3xl border border-border max-w-md w-full shadow-soft animate-in fade-in duration-200">
+          <h2 className="text-xl font-bold text-text-primary mb-2 font-outfit">No Workspace Found</h2>
+          <p className="text-text-secondary text-sm mb-6">
+            Please contact your administrator to assign you to a workspace or create one to manage team members.
+          </p>
+          <button 
+            onClick={() => { setLoading(true); fetchWorkspaceData(); }} 
+            className="px-5 py-2.5 bg-accent-blue hover:bg-accent-indigo text-white rounded-xl font-semibold text-sm transition-all shadow-md active:scale-95"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col font-sans">

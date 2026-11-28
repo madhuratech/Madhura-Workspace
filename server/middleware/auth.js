@@ -26,7 +26,7 @@ const protect = async (req, res, next) => {
       console.error('Auth verification error:', error.message);
       return res.status(401).json({ 
         message: error.name === 'TokenExpiredError' 
-          ? 'Session expired after 2 days. Please log in again.' 
+          ? 'Session expired. Please log in again.' 
           : 'Not authorized, token failed', 
         expired: true 
       });

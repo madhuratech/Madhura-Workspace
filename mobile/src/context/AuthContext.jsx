@@ -12,8 +12,8 @@ export const API_URL = 'https://api.workspace.madhuratech.com/api';
 // Set global base URL
 axios.defaults.baseURL = API_URL;
 
-// Session lifetime: 2 days (48 hours in milliseconds)
-export const SESSION_LIFETIME_MS = 2 * 24 * 60 * 60 * 1000;
+// Session lifetime: 30 days (in milliseconds) for continuous employee attendance and workspace usage
+export const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * Robust date helper returning Asia/Kolkata (IST) date string YYYY-MM-DD
@@ -98,11 +98,11 @@ export const AuthProvider = ({ children }) => {
       const storedUser = await AsyncStorage.getItem('user');
       const loginTime = await AsyncStorage.getItem('login_time');
 
-      // Check 2-day session expiration
+      // Check 30-day session expiration
       if (loginTime) {
         const elapsed = Date.now() - parseInt(loginTime, 10);
         if (elapsed > SESSION_LIFETIME_MS) {
-          console.log('[AUTH] 2-day session expired on mobile. Logging out.');
+          console.log('[AUTH] Session expired on mobile. Logging out.');
           await AsyncStorage.multiRemove(['token', 'user', 'login_time', '@mw_workspace_cache']);
           delete axios.defaults.headers.common['Authorization'];
           setUser(null);

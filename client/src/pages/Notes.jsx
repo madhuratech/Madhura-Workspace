@@ -17,7 +17,14 @@ const COLORS = [
 const Notes = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
-  const [workspace, setWorkspace] = useState(null);
+  const [workspace, setWorkspace] = useState(() => {
+    try {
+      const saved = localStorage.getItem('active_workspace');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   

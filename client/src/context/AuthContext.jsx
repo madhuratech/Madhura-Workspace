@@ -4,11 +4,23 @@ import { io } from 'socket.io-client';
 
 export const AuthContext = createContext();
 
-// Session duration: 2 days (48 hours in milliseconds)
-export const SESSION_LIFETIME_MS = 2 * 24 * 60 * 60 * 1000;
+// Session duration: 30 days (in milliseconds) for continuous workplace operations
+export const SESSION_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Simple Global API Cache to prevent redundant fetching and loading spinners
 const apiCache = new Map();
+
+/**
+ * Update active timestamp for sliding user session
+ */
+export const touchSession = () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (token) {
+      localStorage.setItem('login_time', Date.now().toString());
+    }
+  } catch {}
+};
 
 /**
  * Safely parse JWT payload without external dependencies
@@ -34,7 +46,7 @@ export const parseJwt = (token) => {
 };
 
 /**
- * Check if current session has exceeded 2 days or token is expired
+ * Check if current session has exceeded 30 days or token is expired
  */
 export const isSessionExpired = () => {
   try {
@@ -42,7 +54,7 @@ export const isSessionExpired = () => {
     const user = localStorage.getItem('user');
     if (!token || !user) return false;
 
-    // 1. Check login timestamp (auto-signout after 2 days of login)
+    // 1. Check login timestamp (auto-signout after 30 days of inactivity)
     const loginTime = localStorage.getItem('login_time');
     if (loginTime) {
       const elapsed = Date.now() - parseInt(loginTime, 10);
@@ -85,13 +97,19 @@ export const clearSessionStorage = () => {
 // Global Request Interceptor
 axios.interceptors.request.use(
   (config) => {
-    // If session has exceeded 2 days or expired, clear session and redirect
+    // If session has exceeded 30 days or expired, clear session and redirect
     if (isSessionExpired()) {
       clearSessionStorage();
       if (window.location.pathname !== '/login') {
         window.location.href = '/login?expired=true';
       }
-      return Promise.reject(new axios.Cancel('Session expired after 2 days.'));
+      return Promise.reject(new axios.Cancel('Session expired. Please log in again.'));
+    }
+
+    // Slide session window on active user traffic (throttle to once every 10 minutes)
+    const loginTime = localStorage.getItem('login_time');
+    if (!loginTime || Date.now() - parseInt(loginTime, 10) > 10 * 60 * 1000) {
+      touchSession();
     }
 
     // Ensure Bearer Authorization token is attached to headers
@@ -216,14 +234,14 @@ export const AuthProvider = ({ children }) => {
     axios.defaults.headers.common['Authorization'] = `Bearer ${initialToken}`;
   }
 
-  // Periodic and Event-Driven check for 2-day session expiration
+  // Periodic and Event-Driven check for session expiration
   useEffect(() => {
     if (!user) return;
 
     const checkSession = () => {
       if (isSessionExpired()) {
-        console.warn('[AUTH] 2-day session limit reached. Auto signing out.');
-        logout('Your session has expired after 2 days. Please log in again.');
+        console.warn('[AUTH] Session limit reached. Auto signing out.');
+        logout('Your session has expired. Please log in again.');
       }
     };
 
@@ -233,6 +251,9 @@ export const AuthProvider = ({ children }) => {
     // Check when user resumes or unlocks window/tab
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        if (!isSessionExpired()) {
+          touchSession();
+        }
         checkSession();
       }
     };
@@ -257,7 +278,7 @@ export const AuthProvider = ({ children }) => {
     if (!token || !storedUser) return;
 
     if (isSessionExpired()) {
-      logout('Your session has expired after 2 days. Please log in again.');
+      logout('Your session has expired. Please log in again.');
       return;
     }
 

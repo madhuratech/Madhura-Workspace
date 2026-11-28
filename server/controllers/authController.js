@@ -2,10 +2,10 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { logActivity } = require('./auditController');
 
-// Generate JWT
+// Generate JWT (Standard 30-day session for enterprise attendance & workspace)
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '2d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '30d',
   });
 };
 

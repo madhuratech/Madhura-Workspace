@@ -147,7 +147,7 @@ const Dashboard = () => {
           meetings: todayMeetings.length || 0, 
           members: ws.members?.length || 1 
         });
-      } else {
+      } else if (Array.isArray(wsRes.data) && wsRes.data.length === 0) {
         setAllWorkspaces([]);
         setWorkspace(null);
         localStorage.removeItem('active_workspace');
@@ -155,6 +155,7 @@ const Dashboard = () => {
       }
     } catch (err) { 
       console.error('Error fetching dashboard data:', err); 
+      // On error (such as 401 or temporary network issue), do not destroy cached workspace
     } finally {
       setLoading(false); 
     }

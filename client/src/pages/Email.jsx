@@ -16,7 +16,14 @@ const Email = () => {
   const { user } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext) || { showToast: (msg) => console.log(msg) };
   
-  const [workspace, setWorkspace] = useState(null);
+  const [workspace, setWorkspace] = useState(() => {
+    try {
+      const saved = localStorage.getItem('active_workspace');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [emails, setEmails] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);

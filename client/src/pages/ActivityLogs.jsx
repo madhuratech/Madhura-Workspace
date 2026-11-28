@@ -10,7 +10,14 @@ const ActivityLogs = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [workspaceId, setWorkspaceId] = useState(null);
+  const [workspaceId, setWorkspaceId] = useState(() => {
+    try {
+      const saved = localStorage.getItem('active_workspace');
+      return saved ? JSON.parse(saved)._id : null;
+    } catch {
+      return null;
+    }
+  });
   
   // Filters
   const [actionFilter, setActionFilter] = useState('');

@@ -757,7 +757,24 @@ const Chat = () => {
     </div>
   );
 
-  if (!workspace) return <div className="p-8 text-danger">Please create a workspace first.</div>;
+  if (!workspace) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center bg-bg-primary">
+        <div className="bg-bg-secondary p-8 rounded-3xl border border-border max-w-md w-full shadow-soft animate-in fade-in duration-200">
+          <h2 className="text-xl font-bold text-text-primary mb-2 font-outfit">No Workspace Found</h2>
+          <p className="text-text-secondary text-sm mb-6">
+            {isSuperAdminOrHr ? 'Please create a workspace to start chatting.' : 'Please contact your administrator to assign you to a workspace.'}
+          </p>
+          <button 
+            onClick={() => { setLoading(true); fetchWorkspaceAndChannels(); }} 
+            className="px-5 py-2.5 bg-accent-blue hover:bg-accent-indigo text-white rounded-xl font-semibold text-sm transition-all shadow-md active:scale-95"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="h-full flex font-sans overflow-hidden bg-bg-primary">
 

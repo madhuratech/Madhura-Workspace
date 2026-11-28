@@ -109,7 +109,7 @@ const Login = () => {
             <div className="bg-accent-blue/10 border border-accent-blue/20 text-accent-blue px-4 py-3 rounded-xl mb-6 text-sm flex items-center justify-between animate-fade-in">
               <div className="flex items-center gap-2">
                 <Clock size={16} className="shrink-0 text-accent-blue" />
-                <span>Your session expired after 2 days. Please sign in again.</span>
+                <span>Your session has expired. Please sign in again to continue.</span>
               </div>
               <button 
                 type="button" 
